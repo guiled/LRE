@@ -41,9 +41,7 @@ function lre(_arg) {
 
     const initComponent = function (rawComponent, lreContainer) {
         let realId = '';
-        if (lreContainer.type() === 'entry') {
-            realId = lreContainer.realId() + repeaterIdSeparator + rawComponent.index() + repeaterIdSeparator;
-        } else if (lreContainer.type() === 'repeater') {
+        if (lreContainer.type() === 'entry' || lreContainer.type() === 'repeater') {
             realId = lreContainer.realId() + repeaterIdSeparator;
         }
         realId += rawComponent.id();
