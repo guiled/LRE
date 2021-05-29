@@ -106,8 +106,8 @@ function lre(_arg) {
             //'change': 'update'
         }
 
-        const runEvents = function (component, eventName) {
-            return function (_rawTarget, args) {
+        const runEvents = function (component, eventName, delegated) {
+            return function (rawTarget, args) {
                 if (!eventStates[eventName]) return;
                 if (arguments.length < 2) {
                     args = [];
@@ -115,25 +115,45 @@ function lre(_arg) {
                 if (!events[eventName]) {
                     return;
                 }
-                let argsWithComponent = [component].concat(args);
+                let argsWithComponent = [];
+                if (delegated && rawTarget.index()) {
+                    argsWithComponent.push(component.find(rawTarget.index() + repeaterIdSeparator + rawTarget.id()));
+                } else if (delegated) {
+                    argsWithComponent.push(component.find(rawTarget.id()));
+                } else {
+                    argsWithComponent.push(component);
+                }
+                argsWithComponent = argsWithComponent.concat(args);
                 each(events[eventName], function (fcn) {
                     fcn.apply(component, argsWithComponent);
                 });
             };
         };
 
-        this.on = function (event, handler) {
+        this.on = function (event, subComponent, handler) {
+            let delegated = false;
+            let eventName = event;
+            if (arguments.length === 3) {
+                eventName = event + repeaterIdSeparator + subComponent;
+                delegated = true;
+            } else if (arguments.length === 2) {
+                handler = subComponent;
+            }
             if (synonyms.hasOwnProperty(event)) {
                 event = synonyms[event];
             }
-            if (!events.hasOwnProperty(event)) {
-                events[event] = [];
+            if (!events.hasOwnProperty(eventName)) {
+                events[eventName] = [];
                 if (existingRawEvents.includes(event)) {
-                    component.raw().on(event, runEvents(component, event))
+                    if (delegated) {
+                        component.raw().on(event, subComponent, runEvents(component, eventName, true))
+                    } else {
+                        component.raw().on(event, runEvents(component, eventName, false))
+                    }
                 }
             }
-            eventStates[event] = true;
-            events[event].push(handler);
+            eventStates[eventName] = true;
+            events[eventName].push(handler);
         };
 
         this.disableEvent = function (event) {
@@ -156,7 +176,7 @@ function lre(_arg) {
         };
 
         this.trigger = function (eventName) {
-            return runEvents(component, eventName)(component.raw(), Array.prototype.slice.call(arguments, 1));
+            return runEvents(component, eventName, false)(component.raw(), Array.prototype.slice.call(arguments, 1));
         };
     };
 
