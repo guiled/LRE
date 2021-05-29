@@ -8,6 +8,10 @@ function strlen(str) {
     return str.split('').length;
 };
 
+function isNaN(val) {
+    return Number.isNaN(parseInt(val));
+};
+
 // Main container
 function lre(_arg) {
     const sheets = {};
@@ -444,7 +448,6 @@ function lre(_arg) {
         }
 
         const clickHandler = function (component) {
-            log('Click handler');
             const newValues = component.value();
             each(newValues, function (entryData, entryId) {
                 if (!entries.hasOwnProperty(entryId)) {
@@ -459,7 +462,6 @@ function lre(_arg) {
                     component.trigger('edit', cmp, entryId, entryData);
                 }
             });
-            log('save current state')
             saveCurrentState(component);
         };
 
@@ -545,7 +547,7 @@ function lre(_arg) {
             let strId, cmp;
             if (typeof id === 'string' || id instanceof String) {
                 strId = id;
-            } else if (!isNan(id)) {
+            } else if (!isNaN(id)) {
                 strId = '' + id;
             } else {
                 return null;
