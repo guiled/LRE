@@ -146,7 +146,8 @@ function lre(_arg) {
                 events[eventName] = [];
                 if (existingRawEvents.includes(event)) {
                     if (delegated) {
-                        component.raw().on(event, subComponent, runEvents(component, eventName, true))
+                        // there is a bug in Let's role that prevent adding delegated event on same instance
+                        component.sheet().raw().get(component.realId()).on(event, subComponent, runEvents(component, eventName, true))
                     } else {
                         component.raw().on(event, runEvents(component, eventName, false))
                     }
