@@ -17,6 +17,7 @@ function lre(_arg) {
     const sheets = {};
     const editingEntryText = 'Done';
     const repeaterIdSeparator = '.'
+    const asyncCacheDelay = 20;
 
     /**
      * Here a list of LRE limitation description
@@ -89,8 +90,20 @@ function lre(_arg) {
             return components[realId]
         };
 
+        this.unset = function (realId) {
+            delete components[realId];
+        };
+
         this.inCache = function (realId) {
-            return components.hasOwnProperty(realId);
+            // Why * at 0 ? Because it is quite slow to test realId[strlen(realId)] as realId.length doesn't work
+            if (realId.charAt(0) === '*') {
+                for (k in components) {
+                    if (k.indexOf(realId.substr(1) + repeaterIdSeparator) === 0) {
+                        return components[k];
+                    }
+                }
+            }
+            return components.hasOwnProperty(realId) ? components[realId] : false;
         };
     }
 
@@ -552,6 +565,8 @@ function lre(_arg) {
      ** * * * * * * * * * * * * * * * * * * * * * */
     const lreSheet = function (_args) {
         const sheet = _args[0];
+        const toRemember = [];
+        const toDelete = [];
         const components = new ComponentContainer(this);
 
         this.getVariable = sheet.getVariable;
@@ -632,6 +647,59 @@ function lre(_arg) {
         this.type = function () {
             return 'sheet';
         }
+
+        const rememberOneFromQueue = function () {
+            wait(asyncCacheDelay, (function () {
+                if (toRemember.length === 0) return;
+                let realId = toRemember.shift();
+                this.get(realId);
+                if (toRemember.length > 0) {
+                    rememberOneFromQueue.call(this);
+                }
+            }).bind(this));
+        };
+
+        this.remember = function(realId) {
+            if (!components.inCache(realId) && !toRemember.includes(realId)) {
+                toRemember.push(realId);
+                let posToDelete = toDelete.indexOf(realId);
+                if (posToDelete !== -1) {
+                    toDelete.splice(posToDelete, 1);
+                }
+                rememberOneFromQueue.call(this);
+            }
+        };
+
+        let startDelete;
+
+        const forgetOneFromQueue = function () {
+            wait(asyncCacheDelay, (function () {
+                if (toDelete.length === 0) return;
+                // Find if there is one sub component in cache
+                let cmp = components.inCache('*' + toDelete[0]);
+                if (cmp) {
+                    components.unset(cmp.realId());
+                } else {
+                    components.unset(toDelete.shift());
+                    log(Date.now() - startDelete)
+                }
+                if (toDelete.length > 0) {
+                    forgetOneFromQueue.call(this);
+                }
+            }).bind(this));
+        };
+
+        this.forget = function (realId) {
+            if (components.inCache(realId) && !toDelete.includes(realId)) {
+                startDelete = Date.now();
+                toDelete.push(realId);
+                let posToRemember = toRemember.indexOf(realId);
+                if (posToRemember !== -1) {
+                    toRemember.splice(posToRemember, 1);
+                }
+                forgetOneFromQueue.call(this);
+            }
+        };
     };
 
     if (typeof _arg === 'function') {
