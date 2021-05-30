@@ -524,6 +524,7 @@ function lre(_arg) {
             each(entries, function (entryData, entryId) {
                 if (!newValues.hasOwnProperty(entryId)) {
                     component.trigger('delete', entryId, entryData);
+                    component.sheet().forget(component.realId() + repeaterIdSeparator + entryId);
                 } else if (!objectsEqual(entryData, newValues[entryId])) {
                     let cmp = component.find(entryId);
                     component.trigger('change', cmp, entryId, newValues[entryId], entryData);
@@ -670,8 +671,6 @@ function lre(_arg) {
             }
         };
 
-        let startDelete;
-
         const forgetOneFromQueue = function () {
             wait(asyncCacheDelay, (function () {
                 if (toDelete.length === 0) return;
@@ -681,7 +680,6 @@ function lre(_arg) {
                     components.unset(cmp.realId());
                 } else {
                     components.unset(toDelete.shift());
-                    log(Date.now() - startDelete)
                 }
                 if (toDelete.length > 0) {
                     forgetOneFromQueue.call(this);
@@ -691,7 +689,6 @@ function lre(_arg) {
 
         this.forget = function (realId) {
             if (components.inCache(realId) && !toDelete.includes(realId)) {
-                startDelete = Date.now();
                 toDelete.push(realId);
                 let posToRemember = toRemember.indexOf(realId);
                 if (posToRemember !== -1) {
