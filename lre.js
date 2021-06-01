@@ -268,6 +268,10 @@ function lre(_arg) {
             return component;
         }
 
+        this.hasData = function (name) {
+            return _data.hasOwnProperty(name);
+        }
+
         this.data = function (name, value) {
             if (arguments.length === 1) {
                 return _data[name];
