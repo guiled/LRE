@@ -36,8 +36,28 @@ function lre(_arg) {
         return sheets[name];
     }
 
-    const isRepeaterLikeValue = function (value) {
-        return (typeof value === 'object' && value !== null && !(value instanceof Array) && !(value instanceof Function));
+    const isRepeater = function (cmp) {
+        if (!cmp || !cmp.id()) return false;
+        let val = cmp.value();
+        let result = false;
+        if (typeof val === 'object' && val !== null) return true;
+        if (/**/typeof val === 'undefined' && /**/cmp.text() === 'Add...') {
+            try {
+                try {
+                    // Try catch for following line only works inside a try catch
+                    cmp.value({ '42LRE': { a: 1 } });
+                    cmp.value(null);
+                } catch (e) {
+                    // Only repeaters throw an Exception here
+                    cmp.value({});
+                    result = true;
+                }
+            } catch (e) {
+                cmp.value({});
+                result = true;
+            }
+        }
+        return result;
     };
 
     const initComponent = function (rawComponent, lreContainer) {
@@ -56,7 +76,7 @@ function lre(_arg) {
         if (lreContainer.type() === 'repeater') {
             cmp = Object.assign(cmp, new lreRepeaterEntry());
             cmp.repeater(lreContainer);
-        } else if (isRepeaterLikeValue(rawComponent.value())) {
+        } else if (isRepeater(rawComponent)) {
             // it is a repeater
             cmp = Object.assign(cmp, new lreRepeater);
         }
