@@ -521,11 +521,13 @@ function lre(_arg) {
                     cmp.data('entryId', entryId);
                     if (!cmp.data('initiated')) {
                         cmp.data('initiated', true);
+                        cmp.data('saved', false);
                         cmp.data('children', component.sheet().knownChildren(cmp));
                         component.trigger('init', cmp, entryId, entryData);
                     }
                 } else if (component.raw().find(entryId).text() !== texts[entryId]) {
                     let cmp = component.find(entryId);
+                    cmp.data('saved', false);
                     cmp.data('children', component.sheet().knownChildren(cmp));
                     component.trigger('edit', cmp, entryId, entryData);
                 }
@@ -566,6 +568,10 @@ function lre(_arg) {
                     if (!objectsEqual(entryData, newValues[entryId])) {
                         let cmp = component.find(entryId);
                         component.trigger('change', cmp, entryId, newValues[entryId], entryData);
+                    }
+                    if (!cmp.data('saved')) {
+                        cmp.data('saved', true);
+                        component.trigger('save', cmp, entryId, newValues[entryId], entryData);
                     }
                     // Forget element added from edit view
                     if (cmp.hasData('children')) {
