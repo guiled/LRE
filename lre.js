@@ -110,6 +110,16 @@ function lre(_arg) {
             return components[realId]
         };
 
+        this.children = function (realId) {
+            let realIds = [];
+            for (k in components) {
+                if (k.indexOf(realId + repeaterIdSeparator) === 0) {
+                    realIds.push(k);
+                }
+            }
+            return realIds;
+        };
+
         this.unset = function (realId) {
             delete components[realId];
         };
@@ -511,10 +521,12 @@ function lre(_arg) {
                     cmp.data('entryId', entryId);
                     if (!cmp.data('initiated')) {
                         cmp.data('initiated', true);
+                        cmp.data('children', component.sheet().knownChildren(cmp));
                         component.trigger('init', cmp, entryId, entryData);
                     }
                 } else if (component.raw().find(entryId).text() !== texts[entryId]) {
                     let cmp = component.find(entryId);
+                    cmp.data('children', component.sheet().knownChildren(cmp));
                     component.trigger('edit', cmp, entryId, entryData);
                 }
             });
@@ -549,9 +561,25 @@ function lre(_arg) {
                 if (!newValues.hasOwnProperty(entryId)) {
                     component.trigger('delete', entryId, entryData);
                     component.sheet().forget(component.realId() + repeaterIdSeparator + entryId);
-                } else if (!objectsEqual(entryData, newValues[entryId])) {
+                } else {
                     let cmp = component.find(entryId);
-                    component.trigger('change', cmp, entryId, newValues[entryId], entryData);
+                    if (!objectsEqual(entryData, newValues[entryId])) {
+                        let cmp = component.find(entryId);
+                        component.trigger('change', cmp, entryId, newValues[entryId], entryData);
+                    }
+                    // Forget element added from edit view
+                    if (cmp.hasData('children')) {
+                        const oldChildren = cmp.data('children');
+                        if (typeof oldChildren !== 'array') {
+                            oldChildren = [];
+                        }
+                        const addedChildren = component.sheet().knownChildren(cmp);
+                        each(addedChildren, function (realId) {
+                            if (!oldChildren.includes(realId)) {
+                                component.sheet().forget(realId);
+                            }
+                        });
+                    }
                 }
             });
             saveCurrentState(component);
@@ -684,7 +712,7 @@ function lre(_arg) {
             }).bind(this));
         };
 
-        this.remember = function(realId) {
+        this.remember = function (realId) {
             if (!components.inCache(realId) && !toRemember.includes(realId)) {
                 toRemember.push(realId);
                 let posToDelete = toDelete.indexOf(realId);
@@ -720,6 +748,10 @@ function lre(_arg) {
                 }
                 forgetOneFromQueue.call(this);
             }
+        };
+
+        this.knownChildren = function (cmp) {
+            return components.children(cmp.realId());
         };
     };
 
