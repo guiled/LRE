@@ -37,11 +37,12 @@ function lre(_arg) {
 
     function getLreSheet(sheet) {
         const name = sheet.name();
-        if (!sheets[name]) {
-            lreLog('Init sheet ' + name);
-            sheets[name] = new lreSheet(sheet);
+        const id = sheet.getSheetId();
+        if (!sheets[id]) {
+            lreLog('Init sheet ' + name + ' ('+ id +')');
+            sheets[id] = new lreSheet(sheet);
         }
-        return sheets[name];
+        return sheets[id];
     }
 
     const isRepeater = function (cmp) {
