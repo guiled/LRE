@@ -47,24 +47,41 @@ function lre(_arg) {
 
     const isRepeater = function (cmp) {
         if (!cmp || !cmp.id()) return false;
-        let val = cmp.value();
+        let val;
+        try {
+            try {
+                val = cmp.value();
+            } catch (e) {
+                return false;
+            }
+        } catch (e) {
+        }
         let result = false;
         if (typeof val === 'object' && val !== null) return true;
-        if (/**/typeof val === 'undefined' && /**/cmp.text() === 'Add...') {
+        if ((typeof val === 'undefined' || val === null) && cmp.text() === 'Add...') {
             try {
                 try {
                     // Try catch for following line only works inside a try catch
-                    cmp.value({ '42LRE': { a: 1 } });
+                    const newId = '42LRE';
+                    const newValue = {}
+                    newValue[newId] = {a: 1};
+                    cmp.value(newValue);
+                    const entry = cmp.find(newId);
+                    // Only repeaters can have a component from an array value
+                    result = entry && entry.id && entry.id() === newId;
                     cmp.value(null);
                 } catch (e) {
-                    // Only repeaters throw an Exception here
-                    cmp.value({});
+                    // Only repeaters may throw an Exception here
                     result = true;
                 }
             } catch (e) {
-                cmp.value({});
                 result = true;
             }
+        }
+        if (result) {
+            cmp.value({});      // Init data for repeaters
+        } else {
+            cmp.value(typeof val !== 'undefined' ? val : null);
         }
         return result;
     };
