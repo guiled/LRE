@@ -193,9 +193,11 @@ function lre(_arg) {
                     argsWithComponent.push(component);
                 }
                 argsWithComponent = argsWithComponent.concat(args);
+                let results = [];
                 each(events[eventName], function (fcn) {
-                    fcn.apply(component, argsWithComponent);
+                    results.push(fcn.apply(component, argsWithComponent));
                 });
+                return results;
             };
         };
 
@@ -591,15 +593,27 @@ function lre(_arg) {
                     component.sheet().forget(component.realId() + repeaterIdSeparator + entryId);
                 } else {
                     let cmp = component.find(entryId);
+                    let newData = {};
                     if (!objectsEqual(entryData, newValues[entryId])) {
                         let cmp = component.find(entryId);
-                        component.trigger('change', cmp, entryId, newValues[entryId], entryData);
+                        const results = component.trigger('change', cmp, entryId, newValues[entryId], entryData);
+                        each(results, function (v) {
+                            Object.assign(newData, v);
+                        })
                     }
                     if (!cmp.data('saved')) {
                         cmp.data('saved', true);
-                        component.trigger('save', cmp, entryId, newValues[entryId], entryData);
+                        const results = component.trigger('save', cmp, entryId, newValues[entryId], entryData);
+                        each(results, function (v) {
+                            Object.assign(newData, v);
+                        })
                     }
-                    // Forget element added from edit view
+                    each(newData, function (v, k) {
+                        const dest = cmp.find(k);
+                        if (dest && dest.id && dest.id()) {
+                            dest.value(v);
+                        }
+                    });
                     if (cmp.hasData('children')) {
                         const oldChildren = cmp.data('children');
                         if (typeof oldChildren !== 'array') {
