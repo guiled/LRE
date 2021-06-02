@@ -14,6 +14,14 @@ function isNaN(val) {
 
 // Main container
 function lre(_arg) {
+    const _log = log;
+
+    log = function () {
+        each(arguments, function (v) {
+            _log(v);
+        });
+    };
+
     const sheets = {};
     const editingEntryText = 'Done';
     const repeaterIdSeparator = '.'
