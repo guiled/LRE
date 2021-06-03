@@ -601,7 +601,7 @@ function lre(_arg) {
                             Object.assign(newData, v);
                         })
                     }
-                    if (!cmp.data('saved')) {
+                    if (cmp.hasData('saved') && !cmp.data('saved')) {
                         cmp.data('saved', true);
                         const results = component.trigger('save', cmp, entryId, newValues[entryId], entryData);
                         each(results, function (v) {
