@@ -550,8 +550,8 @@ function lre(_arg) {
         const clickHandler = function (component) {
             const newValues = component.value();
             each(newValues, function (entryData, entryId) {
+				let cmp = component.find(entryId);
                 if (!entries.hasOwnProperty(entryId)) {
-                    let cmp = component.find(entryId);
                     cmp.data('entryId', entryId);
                     if (!cmp.data('initiated')) {
                         cmp.data('initiated', true);
@@ -559,11 +559,12 @@ function lre(_arg) {
                         cmp.data('children', component.sheet().knownChildren(cmp));
                         component.trigger('init', cmp, entryId, entryData);
                     }
-                } else if (textSimplification(component.raw().find(entryId).text()) !== texts[entryId]) {
-                    let cmp = component.find(entryId);
-                    cmp.data('saved', false);
-                    cmp.data('children', component.sheet().knownChildren(cmp));
-                    component.trigger('edit', cmp, entryId, entryData);
+                } else if (textSimplification(cmp.text()) !== texts[entryId]
+					&& (!cmp.hasData('saved') || cmp.data('saved'))) {
+					let cmp = component.find(entryId);
+					cmp.data('saved', false);
+					cmp.data('children', component.sheet().knownChildren(cmp));
+					component.trigger('edit', cmp, entryId, entryData);
                 }
             });
             saveCurrentState(component);
