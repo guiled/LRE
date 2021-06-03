@@ -543,6 +543,10 @@ function lre(_arg) {
             return true;
         }
 
+		const textSimplification = function (txt) {
+			return txt.replace(/\s+/g, ' ').trim();
+		};
+
         const clickHandler = function (component) {
             const newValues = component.value();
             each(newValues, function (entryData, entryId) {
@@ -555,7 +559,7 @@ function lre(_arg) {
                         cmp.data('children', component.sheet().knownChildren(cmp));
                         component.trigger('init', cmp, entryId, entryData);
                     }
-                } else if (component.raw().find(entryId).text() !== texts[entryId]) {
+                } else if (textSimplification(component.raw().find(entryId).text()) !== texts[entryId]) {
                     let cmp = component.find(entryId);
                     cmp.data('saved', false);
                     cmp.data('children', component.sheet().knownChildren(cmp));
@@ -580,12 +584,17 @@ function lre(_arg) {
         const saveCurrentState = function (component) {
             entries = deepClone(component.value());
             each(component.value(), function (data, entryId) {
-                texts[entryId] = component.raw().find(entryId).text();
+                texts[entryId] = textSimplification(component.raw().find(entryId).text());
                 if (texts[entryId] === editingEntryText) {
                     lreLog(component.realId() + repeaterIdSeparator + entryId + limitations.badText)
                 }
             })
         };
+
+		const initStates = function (component) {
+			component.off('mouseenter', initStates);
+			saveCurrentState(component);
+		};
 
         const updateHandler = function (component) {
             const newValues = component.value();
@@ -640,7 +649,10 @@ function lre(_arg) {
         this.initiate = function () {
             lreLog('Initiate Repeater ' + this.realId());
             this.type('repeater');
-            saveCurrentState(this);
+			// This following code because saveCurrentState doesn't work well with repeater in tabs
+			// Because repeaters don't have their real texts when in a tab that is not yet displayed
+            //saveCurrentState(this);
+			this.on('mouseenter', initStates);
             this.on('click', clickHandler);
             this.on('update', updateHandler);
             this.setInitiated(true);
