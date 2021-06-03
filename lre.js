@@ -655,8 +655,9 @@ function lre(_arg) {
                 callback = arguments[1];
                 cmpId = repeaterIdSeparator + arguments[0];
             }
+            let val = this.value();
             if (val === null || typeof val !== 'array' || typeof val !== 'object') return;
-            each(this.value(), (function (entryData, entryId) {
+            each(val, (function (entryData, entryId) {
                 callback(this.find(entryId + cmpId), entryData, entryId);
             }).bind(this));
         };
