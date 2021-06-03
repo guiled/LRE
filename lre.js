@@ -45,31 +45,33 @@ function lre(_arg) {
         return sheets[id];
     }
 
-    const isRepeater = function (cmp) {
-        if (!cmp || !cmp.id()) return false;
+    const isRepeater = function (rawCmp) {
+        if (!rawCmp || !rawCmp.id()) return false;
         let val;
         try {
             try {
-                val = cmp.value();
+                val = rawCmp.value();
             } catch (e) {
                 return false;
             }
         } catch (e) {
         }
         let result = false;
+        let valueSet = false;
         if (typeof val === 'object' && val !== null) return true;
-        if ((typeof val === 'undefined' || val === null) && cmp.text() === 'Add...') {
+        if ((typeof val === 'undefined' || val === null) && rawCmp.text() === 'Add...') {
             try {
                 try {
                     // Try catch for following line only works inside a try catch
                     const newId = '42LRE';
                     const newValue = {}
                     newValue[newId] = {a: 1};
-                    cmp.value(newValue);
-                    const entry = cmp.find(newId);
+                    valueSet = true;
+                    rawCmp.value(newValue);
+                    const entry = rawCmp.find(newId);
                     // Only repeaters can have a component from an array value
                     result = entry && entry.id && entry.id() === newId;
-                    cmp.value(null);
+                    rawCmp.value(null);
                 } catch (e) {
                     // Only repeaters may throw an Exception here
                     result = true;
@@ -79,9 +81,9 @@ function lre(_arg) {
             }
         }
         if (result) {
-            cmp.value({});      // Init data for repeaters
-        } else {
-            cmp.value(typeof val !== 'undefined' ? val : null);
+            rawCmp.value({});      // Init data for repeaters
+        } else if (valueSet) {
+            rawCmp.value(typeof val !== 'undefined' ? val : null);
         }
         return result;
     };
