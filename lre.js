@@ -59,7 +59,7 @@ function lre(_arg) {
         let result = false;
         let valueSet = false;
         if (typeof val === 'object' && val !== null) return true;
-        if ((typeof val === 'undefined' || val === null) && rawCmp.text() === 'Add...') {
+        if ((typeof val === 'undefined' || val === null) && rawCmp.text().replace(/\s+/g, '').trim() === 'Add...') {
             try {
                 try {
                     // Try catch for following line only works inside a try catch
