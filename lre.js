@@ -699,7 +699,6 @@ function lre(_arg) {
                     if (!container || !rawCmp) return null;
                 }
                 cmp = initComponent(rawCmp, container);
-                cmp.realId();
                 components.set(cmp.realId(), cmp);
             } else {
                 cmp = components.get(strId);
