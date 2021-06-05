@@ -35,10 +35,10 @@ function lre(_arg) {
         badText: 'this repeater entry has a text similar to ' + editingEntryText + '. That will cause some problem with edit event.',
     };
 
-    function getLreSheet(sheet) {
+    function getLreSheet(sheet, reset) {
         const name = sheet.name();
         const id = sheet.getSheetId();
-        if (!sheets[id]) {
+        if (!sheets[id] || reset) {
             lreLog('Init sheet ' + name + ' ('+ id +')');
             sheets[id] = new lreSheet(sheet);
         }
@@ -821,7 +821,7 @@ function lre(_arg) {
     if (typeof _arg === 'function') {
         return function (_sheet) {
             lreLog('INIT on ' + _sheet.id() + '(' + _sheet.name() + ')');
-            _arg.call(this, getLreSheet(_sheet));
+            _arg.call(this, getLreSheet(_sheet, true));
         }
     }
 }
