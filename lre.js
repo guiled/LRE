@@ -90,18 +90,18 @@ function lre(_arg) {
 
     const initComponent = function (rawComponent, lreContainer) {
         let realId = '';
-        if (lreContainer.type() === 'entry' || lreContainer.type() === 'repeater') {
+        if (lreContainer.lreType() === 'entry' || lreContainer.lreType() === 'repeater') {
             realId = lreContainer.realId() + repeaterIdSeparator;
         }
         realId += rawComponent.id();
         let cmp = new lreComponent(lreContainer.sheet(), rawComponent, realId);
         cmp.parent(lreContainer);
         cmp = Object.assign(cmp, new EventOwner(cmp));
-        if (lreContainer.type() === 'entry') {
+        if (lreContainer.lreType() === 'entry') {
             cmp.entry(lreContainer);
             cmp.repeater(lreContainer.repeater());
         }
-        if (lreContainer.type() === 'repeater') {
+        if (lreContainer.lreType() === 'repeater') {
             cmp = Object.assign(cmp, new lreRepeaterEntry());
             cmp.repeater(lreContainer);
         } else if (isRepeater(rawComponent)) {
@@ -334,7 +334,7 @@ function lre(_arg) {
         this.isInitiated = function () {
             return initiated;
         };
-        this.type = function (type) {
+        this.lreType = function (type) {
             if (arguments.length > 0) {
                 this._type = type;
             }
@@ -429,7 +429,7 @@ function lre(_arg) {
         };
 
         this.initiate = function () {
-            this.type('choice');
+            this.lreType('choice');
             this.setInitiated(true);
         }
 
@@ -453,7 +453,7 @@ function lre(_arg) {
 
         this.initiate = function () {
             valuesForMax = this.raw().value();
-            this.type('multichoice');
+            this.lreType('multichoice');
             this.setInitiated(true);
         };
 
@@ -507,7 +507,7 @@ function lre(_arg) {
      ** * * * * * * * * * * * * * * * * * * * * * */
     const lreRepeaterEntry = function () {
         this.initiate = function () {
-            this.type('entry');
+            this.lreType('entry');
             this.setInitiated(true);
         };
 
@@ -649,7 +649,7 @@ function lre(_arg) {
 
         this.initiate = function () {
             lreLog('Initiate Repeater ' + this.realId());
-            this.type('repeater');
+            this.lreType('repeater');
 			// This following code because saveCurrentState doesn't work well with repeater in tabs
 			// Because repeaters don't have their real texts when in a tab that is not yet displayed
             //saveCurrentState(this);
@@ -691,6 +691,7 @@ function lre(_arg) {
         this.prompt = sheet.prompt;
         this.id = sheet.id;
         this.getSheetId = sheet.getSheetId;
+        this.getSheetType = sheet.getSheetType
         this.name = sheet.name;
 
         this.get = function (id) {
@@ -759,7 +760,7 @@ function lre(_arg) {
             return this;
         };
 
-        this.type = function () {
+        this.lreType = function () {
             return 'sheet';
         }
 
