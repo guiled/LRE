@@ -19,4 +19,4 @@ init = lre(function (sheet) {
     // something
 }));
 ```
-By calling `lre()` your sheet will have some new features. Please read the wiki https://github.com/guiled/LRE/wiki for more details
+By calling `lre()` your sheet and script will have some new features. Please read the wiki https://github.com/guiled/LRE/wiki for more details
