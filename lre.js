@@ -853,7 +853,7 @@ function lre(_arg) {
             wait(0, function () {
                 let data = _sheet.getData();
                 let sheet = getLreSheet(_sheet, true);
-                if (!sheet.persistingData('initialised') && firstInit) {
+                if (!sheet.persistingData('initialised') && typeof firstInit !== 'undefined') {
                     sheet.persistingData('initialised', true);
                     firstInit(sheet);
                 }
