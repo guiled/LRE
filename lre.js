@@ -39,7 +39,7 @@ function lre(_arg) {
         const name = sheet.name();
         const id = sheet.getSheetId();
         if (!sheets[id] || reset) {
-            lreLog('Init sheet ' + name + ' ('+ id +')');
+            lreLog('Init sheet ' + name + ' (' + id + ')');
             let cmp = new lreSheet(sheet);
             sheets[id] = Object.assign(cmp, new DataHolder(cmp));
         }
@@ -66,7 +66,7 @@ function lre(_arg) {
                     // Try catch for following line only works inside a try catch
                     const newId = '42LRE';
                     const newValue = {}
-                    newValue[newId] = {a: 1};
+                    newValue[newId] = { a: 1 };
                     valueSet = true;
                     rawCmp.value(newValue);
                     const entry = rawCmp.find(newId);
@@ -279,7 +279,7 @@ function lre(_arg) {
                 return;
             }
         };
-        
+
         const setData = function (name, value) {
             _data[name] = value;
             deletePersistent(name);
@@ -616,14 +616,14 @@ function lre(_arg) {
             return true;
         }
 
-		const textSimplification = function (txt) {
-			return txt.replace(/\s+/g, ' ').trim();
-		};
+        const textSimplification = function (txt) {
+            return txt.replace(/\s+/g, ' ').trim();
+        };
 
         const clickHandler = function (component) {
             const newValues = component.value();
             each(newValues, function (entryData, entryId) {
-				let cmp = component.find(entryId);
+                let cmp = component.find(entryId);
                 if (!entries.hasOwnProperty(entryId)) {
                     cmp.data('entryId', entryId);
                     if (!cmp.data('initiated')) {
@@ -633,11 +633,11 @@ function lre(_arg) {
                         component.trigger('init', cmp, entryId, entryData);
                     }
                 } else if (textSimplification(cmp.text()) !== texts[entryId]
-					&& (!cmp.hasData('saved') || cmp.data('saved'))) {
-					let cmp = component.find(entryId);
-					cmp.data('saved', false);
-					cmp.data('children', component.sheet().knownChildren(cmp));
-					component.trigger('edit', cmp, entryId, entryData);
+                    && (!cmp.hasData('saved') || cmp.data('saved'))) {
+                    let cmp = component.find(entryId);
+                    cmp.data('saved', false);
+                    cmp.data('children', component.sheet().knownChildren(cmp));
+                    component.trigger('edit', cmp, entryId, entryData);
                 }
             });
             saveCurrentState(component);
@@ -665,10 +665,10 @@ function lre(_arg) {
             })
         };
 
-		const initStates = function (component) {
-			component.off('mouseenter', initStates);
-			saveCurrentState(component);
-		};
+        const initStates = function (component) {
+            component.off('mouseenter', initStates);
+            saveCurrentState(component);
+        };
 
         const updateHandler = function (component) {
             const newValues = component.value();
@@ -723,10 +723,10 @@ function lre(_arg) {
         this.initiate = function () {
             lreLog('Initiate Repeater ' + this.realId());
             this.lreType('repeater');
-			// This following code because saveCurrentState doesn't work well with repeater in tabs
-			// Because repeaters don't have their real texts when in a tab that is not yet displayed
+            // This following code because saveCurrentState doesn't work well with repeater in tabs
+            // Because repeaters don't have their real texts when in a tab that is not yet displayed
             //saveCurrentState(this);
-			this.on('mouseenter', initStates);
+            this.on('mouseenter', initStates);
             this.on('click', clickHandler);
             this.on('update', updateHandler);
             this.setInitiated(true);
