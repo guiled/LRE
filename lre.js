@@ -1,4 +1,4 @@
-//region LRE 3.0
+//region LRE 4.0
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -40,7 +40,8 @@ function lre(_arg) {
         const id = sheet.getSheetId();
         if (!sheets[id] || reset) {
             lreLog('Init sheet ' + name + ' ('+ id +')');
-            sheets[id] = new lreSheet(sheet);
+            let cmp = new lreSheet(sheet);
+            sheets[id] = Object.assign(cmp, new DataHolder(cmp));
         }
         return sheets[id];
     }
@@ -97,6 +98,7 @@ function lre(_arg) {
         let cmp = new lreComponent(lreContainer.sheet(), rawComponent, realId);
         cmp.parent(lreContainer);
         cmp = Object.assign(cmp, new EventOwner(cmp));
+        cmp = Object.assign(cmp, new DataHolder(cmp));
         if (lreContainer.lreType() === 'entry') {
             cmp.entry(lreContainer);
             cmp.repeater(lreContainer.repeater());
@@ -255,6 +257,91 @@ function lre(_arg) {
     };
 
     /** * * * * * * * * * * * * * * * * * * * * * *
+     *                 DataHolder                 *
+     ** * * * * * * * * * * * * * * * * * * * * * */
+    const DataHolder = function (_args) {
+        const component = _args[0];
+        const sheet = component.sheet();
+        const _data = {};
+        let _persistent;
+
+        this.hasData = function (name) {
+            return _data.hasOwnProperty(name) || _persistent.hasOwnProperty(name);
+        }
+
+        const getData = function (name) {
+            loadPersistent();
+            if (_data.hasOwnProperty(name)) {
+                return _data[name];
+            } else if (_persistent.hasOwnProperty(name)) {
+                return _persistent[name];
+            } else {
+                return;
+            }
+        };
+        
+        const setData = function (name, value) {
+            _data[name] = value;
+            deletePersistent(name);
+        };
+
+        const deleteData = function (name) {
+            if (_data.hasOwnProperty(name)) {
+                delete _data[name];
+            }
+        }
+
+        const loadPersistent = function (force) {
+            if (typeof _persistent === 'undefined' || (arguments.length > 0 && force)) {
+                _persistent = sheet.persistingCmpData(component.realId());
+            }
+            return _persistent;
+        }
+
+        const savePersistent = function () {
+            sheet.persistingCmpData(component.realId(), _persistent);
+        };
+
+        const setPersistent = function (name, value) {
+            loadPersistent();
+            _persistent[name] = value;
+            deleteData(name);
+            savePersistent();
+        };
+
+        const deletePersistent = function (name) {
+            loadPersistent();
+            if (_persistent.hasOwnProperty(name)) {
+                delete _persistent[name];
+                savePersistent();
+            }
+        }
+
+        this.data = function (name, value, persistent) {
+            if (arguments.length === 1) {
+                return getData.call(this, name);
+            }
+            _data[name] = value;
+            if (arguments.length === 3 && persistent) {
+                setPersistent.call(this, name, value);
+            } else {
+                setData.call(this, name, value);
+            }
+            return this;
+        }
+
+        this.deleteData = function (name, persistent) {
+            if (arguments.length === 2 && persistent) {
+                loadPersistent();
+                deletePersistent.call(this, name);
+            } else {
+                deleteData.call(this, name);
+            }
+            return this;
+        }
+    };
+
+    /** * * * * * * * * * * * * * * * * * * * * * *
      *                 LreComponent               *
      ** * * * * * * * * * * * * * * * * * * * * * */
     const lreComponent = function (_args) {
@@ -267,8 +354,6 @@ function lre(_arg) {
         let parent;
         let lreEntry;
         let lreRepeater;
-
-        const _data = {};
 
         this.addClass = component.addClass;
         this.find = function (id) {
@@ -306,18 +391,6 @@ function lre(_arg) {
 
         this.raw = function () {
             return component;
-        }
-
-        this.hasData = function (name) {
-            return _data.hasOwnProperty(name);
-        }
-
-        this.data = function (name, value) {
-            if (arguments.length === 1) {
-                return _data[name];
-            }
-            _data[name] = value;
-            return this;
         }
         this.toggle = function () {
             if (component.visible()) {
@@ -824,7 +897,7 @@ function lre(_arg) {
                 cmpData: {},
             };
             if (data.hasOwnProperty(rawSheet.id())) {
-                Object.assign(result,data[rawSheet.id()]);
+                Object.assign(result, data[rawSheet.id()]);
             }
             return result;
         };
@@ -842,6 +915,19 @@ function lre(_arg) {
                 return null;
             }
             return persistingData[dataName];
+        }
+
+        this.persistingCmpData = function () {
+            const dataName = arguments[0];
+            if (arguments.length > 1) {
+                persistingData.cmpData[dataName] = arguments[1];
+                const newData = {};
+                newData[this.id()] = persistingData;
+                this.setData(newData);
+            } else if (!persistingData.cmpData.hasOwnProperty(dataName)) {
+                return null;
+            }
+            return persistingData.cmpData[dataName];
         }
     };
 
