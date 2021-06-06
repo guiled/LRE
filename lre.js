@@ -1,4 +1,4 @@
-//region LRE 2.0
+//region LRE 3.0
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -816,12 +816,49 @@ function lre(_arg) {
         this.knownChildren = function (cmp) {
             return components.children(cmp.realId());
         };
+
+        const loadPersistingData = function (rawSheet) {
+            const data = rawSheet.getData();
+            let result = {
+                initialised: false,
+                cmpData: {},
+            };
+            if (data.hasOwnProperty(rawSheet.id())) {
+                Object.assign(result,data[rawSheet.id()]);
+            }
+            return result;
+        };
+        let persistingData = loadPersistingData(sheet);
+
+        this.persistingData = function () {
+            const dataName = arguments[0];
+            if (arguments.length > 1) {
+                persistingData[dataName] = arguments[1];
+                const newData = {};
+                newData[this.id()] = persistingData;
+                this.setData(newData);
+            }
+            if (!persistingData.hasOwnProperty(dataName)) {
+                return null;
+            }
+            return persistingData[dataName];
+        }
     };
 
     if (typeof _arg === 'function') {
         return function (_sheet) {
-            lreLog('INIT on ' + _sheet.id() + '(' + _sheet.name() + ')');
-            _arg.call(this, getLreSheet(_sheet, true));
+            const id = _sheet.id()
+            lreLog('INIT on ' + id + '(' + _sheet.name() + ' #' + _sheet.getSheetId() + ')');
+            // The wait may allow a faster display
+            wait(0, function () {
+                let data = _sheet.getData();
+                let sheet = getLreSheet(_sheet, true);
+                if (!sheet.persistingData('initialised') && firstInit) {
+                    sheet.persistingData('initialised', true);
+                    firstInit(sheet);
+                }
+                _arg.call(this, sheet);
+            })
         }
     }
 }
