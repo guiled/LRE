@@ -1,4 +1,4 @@
-//region LRE 4.0
+//region LRE 5.0
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -26,6 +26,9 @@ function lre(_arg) {
     const editingEntryText = 'Done';
     const repeaterIdSeparator = '.'
     const asyncCacheDelay = 20;
+    const asyncDataSetDelay = 50;
+    const asyncDataSetAgainDelay = 20;
+    const maxDataSet = 20;
 
     /**
      * Here a list of LRE limitation description
@@ -260,8 +263,8 @@ function lre(_arg) {
      *                 DataHolder                 *
      ** * * * * * * * * * * * * * * * * * * * * * */
     const DataHolder = function (_args) {
-        const component = _args[0];
-        const sheet = component.sheet();
+        const sheet = _args[0];
+        const realId = _args[1];
         const _data = {};
         let _persistent;
 
@@ -292,14 +295,14 @@ function lre(_arg) {
         }
 
         const loadPersistent = function (force) {
-            if (typeof _persistent === 'undefined' || (arguments.length > 0 && force)) {
-                _persistent = sheet.persistingCmpData(component.realId());
+            if (typeof _persistent === 'undefined' || (arguments.length > 0 && typeof force !== 'undefined' && force)) {
+                _persistent = sheet.persistingCmpData(realId);
             }
             return _persistent;
         }
 
         const savePersistent = function () {
-            sheet.persistingCmpData(component.realId(), _persistent);
+            sheet.persistingCmpData(realId, _persistent);
         };
 
         const setPersistent = function (name, value) {
@@ -379,7 +382,20 @@ function lre(_arg) {
         this.hide = component.hide;
         this.show = component.show;
         this.removeClass = component.removeClass;
-        this.value = component.value;
+        this.value = function () {
+            if (arguments.length > 0) {
+                result = component.value.apply(component, arguments);
+                let data = {};
+                data[this.realId()] = arguments[0];
+                sheet.setData(data);
+            } else {
+                let val = sheet.getPendingData(this.realId());
+                if (typeof val === 'undefined') {
+                    return component.value();
+                }
+                return val;
+            }
+        };
         this.rawValue = component.rawValue;
         this.virtualValue = component.virtualValue;
         this.text = component.text;
@@ -759,10 +775,51 @@ function lre(_arg) {
         const components = new ComponentContainer(this);
 
         this.getVariable = sheet.getVariable;
-        this.setData = sheet.setData;
+
+        let isDataSetPending = false;
+        let pendingDataToSet = [];
+        let pendingDataToSetIndex = {};
+
+        const groupedDataSet = function () {
+            const dataToSend = {};
+            for (i = 0; i < maxDataSet && pendingDataToSet.length > 0; i++) {
+                let data = pendingDataToSet.shift();
+                delete pendingDataToSetIndex[data.k];
+                dataToSend[data.k] = data.v;
+            }
+            sheet.setData(dataToSend);
+            isDataSetPending = (pendingDataToSet.length > 0);
+            if (isDataSetPending) {
+                wait(asyncDataSetAgainDelay, groupedDataSet);
+            }
+        };
+
+        this.setData = function (data) {
+            each(data, function (v, k) {
+                if (pendingDataToSetIndex.hasOwnProperty(k)) {
+                    pendingDataToSet[pendingDataToSetIndex[k]] = v;
+                } else {
+                    pendingDataToSetIndex[k] = pendingDataToSet.length;
+                    pendingDataToSet.push({ k: k, v: v });
+                }
+            });
+            if (!isDataSetPending && pendingDataToSet.length > 0) {
+                isDataSetPending = true;
+                wait(asyncDataSetDelay, groupedDataSet);
+            }
+        };
+
+        this.getPendingData = function (id) {
+            if (pendingDataToSetIndex.hasOwnProperty(id)) {
+                return pendingDataToSet[pendingDataToSetIndex[id]].v;
+            }
+            return;
+        };
+
         this.getData = sheet.getData;
         this.prompt = sheet.prompt;
         this.id = sheet.id;
+        this.realId = sheet.id;
         this.getSheetId = sheet.getSheetId;
         this.getSheetType = sheet.getSheetType
         this.name = sheet.name;
@@ -814,7 +871,7 @@ function lre(_arg) {
         };
 
         this.initMultiChoice = function (id) {
-            let cmp = getComponent(this, id)
+            let cmp = getComponent(this, id);
             if (!Array.isArray(cmp.value())) {
                 lreLog('Unable to initialize multichoice : ' + id + ' is not a Choice component');
                 return;
@@ -917,6 +974,15 @@ function lre(_arg) {
             return persistingData[dataName];
         }
 
+        this.deletePersistingData = function (dataName) {
+            if (persistingData.hasOwnProperty(dataName)) {
+                delete persistingData[dataName];
+                const newData = {};
+                newData[this.id()] = persistingData;
+                this.setData(newData);
+            }
+        };
+
         this.persistingCmpData = function () {
             const dataName = arguments[0];
             if (arguments.length > 1) {
@@ -925,7 +991,7 @@ function lre(_arg) {
                 newData[this.id()] = persistingData;
                 this.setData(newData);
             } else if (!persistingData.cmpData.hasOwnProperty(dataName)) {
-                return null;
+                return {};
             }
             return persistingData.cmpData[dataName];
         }
