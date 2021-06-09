@@ -47,7 +47,7 @@ function lre(_arg) {
         if (!sheets[id] || reset) {
             lreLog('Init sheet ' + name + ' (' + id + ')');
             let cmp = new lreSheet(sheet);
-            sheets[id] = Object.assign(cmp, new DataHolder(cmp));
+            sheets[id] = Object.assign(cmp, new DataHolder(sheet, cmp.realId()));
         }
         return sheets[id];
     }
@@ -104,7 +104,7 @@ function lre(_arg) {
         let cmp = new lreComponent(lreContainer.sheet(), rawComponent, realId);
         cmp.parent(lreContainer);
         cmp = Object.assign(cmp, new EventOwner(cmp));
-        cmp = Object.assign(cmp, new DataHolder(cmp));
+        cmp = Object.assign(cmp, new DataHolder(cmp.sheet(), realId));
         if (lreContainer.lreType() === 'entry') {
             cmp.entry(lreContainer);
             cmp.repeater(lreContainer.repeater());
