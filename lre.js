@@ -1,4 +1,4 @@
-//region LRE 5.0
+//region LRE 5.1
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -113,9 +113,9 @@ function lre(_arg) {
         if (lreContainer.lreType() === 'repeater') {
             cmp = Object.assign(cmp, new lreRepeaterEntry());
             cmp.repeater(lreContainer);
-        } else if (isRepeater(rawComponent)) {
-            // it is a repeater
-            cmp = Object.assign(cmp, new lreRepeater);
+        //} else if (isRepeater(rawComponent)) {
+                // it is a repeater
+        //        cmp = Object.assign(cmp, new lreRepeater);
         }
         cmp.initiate();
         return cmp;
@@ -884,6 +884,13 @@ function lre(_arg) {
             Object.assign(cmp, new lreChoice);
             Object.assign(cmp, new lreMultiChoice);
 
+            return cmp;
+        };
+
+        this.initRepeater = function (id) {
+            let cmp = getComponent(this, id);
+            Object.assign(cmp, new lreRepeater);
+            cmp.initiate();
             return cmp;
         };
 
