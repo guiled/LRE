@@ -272,6 +272,7 @@ function lre(_arg) {
         let _persistent;
 
         this.hasData = function (name) {
+            loadPersistent();
             return _data.hasOwnProperty(name) || _persistent.hasOwnProperty(name);
         }
 
