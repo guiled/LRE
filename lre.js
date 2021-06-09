@@ -12,6 +12,9 @@ function isNaN(val) {
     return Number.isNaN(parseInt(val));
 };
 
+function firstInit(shee) {
+};
+
 // Main container
 function lre(_arg) {
     const _log = log;
