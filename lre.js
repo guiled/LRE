@@ -13,6 +13,7 @@ function isNaN(val) {
 };
 
 function firstInit(shee) {
+    return false;
 };
 
 // Main container
@@ -1010,8 +1011,7 @@ function lre(_arg) {
                 let data = _sheet.getData();
                 let sheet = getLreSheet(_sheet, true);
                 if (!sheet.persistingData('initialised') && typeof firstInit !== 'undefined') {
-                    sheet.persistingData('initialised', true);
-                    firstInit(sheet);
+                    sheet.persistingData('initialised', firstInit(sheet));
                 }
                 _arg.call(this, sheet);
             })
