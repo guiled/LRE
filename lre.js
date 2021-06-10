@@ -747,6 +747,9 @@ function lre(_arg) {
             // This following code because saveCurrentState doesn't work well with repeater in tabs
             // Because repeaters don't have their real texts when in a tab that is not yet displayed
             //saveCurrentState(this);
+            if (typeof this.value() !== 'object' || this.value() === null) {
+                this.value({});
+            }
             this.on('mouseenter', initStates);
             this.on('click', clickHandler);
             this.on('update', updateHandler);
