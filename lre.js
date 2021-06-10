@@ -805,7 +805,7 @@ function lre(_arg) {
         this.setData = function (data) {
             each(data, function (v, k) {
                 if (pendingDataToSetIndex.hasOwnProperty(k)) {
-                    pendingDataToSet[pendingDataToSetIndex[k]] = v;
+                    pendingDataToSet[pendingDataToSetIndex[k]].v = v;
                 } else {
                     pendingDataToSetIndex[k] = pendingDataToSet.length;
                     pendingDataToSet.push({ k: k, v: v });
