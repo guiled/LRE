@@ -790,21 +790,28 @@ function lre(_arg) {
 
         const groupedDataSet = function () {
             const dataToSend = {};
-            for (i = 0; i < maxDataSet && pendingDataToSet.length > 0; i++) {
+            let added = 0;
+            for (let i = 0; i < maxDataSet && pendingDataToSet.length > 0; i++) {
                 let data = pendingDataToSet.shift();
                 delete pendingDataToSetIndex[data.k];
                 dataToSend[data.k] = data.v;
+                added++;
             }
             sheet.setData(dataToSend);
             isDataSetPending = (pendingDataToSet.length > 0);
             if (isDataSetPending) {
+                for (k in pendingDataToSetIndex) {
+                    if (pendingDataToSetIndex[k] >= added) {
+                        pendingDataToSetIndex[k] -= added;
+                    }
+                }
                 wait(asyncDataSetAgainDelay, groupedDataSet);
             }
         };
 
         this.setData = function (data) {
             each(data, function (v, k) {
-                if (pendingDataToSetIndex.hasOwnProperty(k)) {
+                if (pendingDataToSetIndex.hasOwnProperty(k) && typeof pendingDataToSet[pendingDataToSetIndex[k]] !== 'undefined') {
                     pendingDataToSet[pendingDataToSetIndex[k]].v = v;
                 } else {
                     pendingDataToSetIndex[k] = pendingDataToSet.length;
