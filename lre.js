@@ -797,7 +797,6 @@ function lre(_arg) {
                 dataToSend[data.k] = data.v;
                 added++;
             }
-            sheet.setData(dataToSend);
             isDataSetPending = (pendingDataToSet.length > 0);
             if (isDataSetPending) {
                 for (k in pendingDataToSetIndex) {
@@ -807,6 +806,7 @@ function lre(_arg) {
                 }
                 wait(asyncDataSetAgainDelay, groupedDataSet);
             }
+            sheet.setData(dataToSend);
         };
 
         this.setData = function (data) {
