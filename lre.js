@@ -45,6 +45,10 @@ function lre(_arg) {
     function getLreSheet(sheet, reset) {
         const name = sheet.name();
         const id = sheet.getSheetId();
+        if (!id) {
+            lreLog('Init sheet ' + name);
+            return new lreSheet(sheet);
+        }
         if (!sheets[id] || reset) {
             lreLog('Init sheet ' + name + ' (' + id + ')');
             let cmp = new lreSheet(sheet);
