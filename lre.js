@@ -961,7 +961,7 @@ function lre(_arg) {
         };
 
         this.initChoice = function (id) {
-            Object.assign(getComponent(this, id), new lreChoice);
+            const cmp = Object.assign(getComponent(this, id), new lreChoice);
 
             return cmp;
         };
