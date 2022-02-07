@@ -1,4 +1,4 @@
-//region LRE 5.1
+//region LRE 6
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -140,9 +140,9 @@ function lre(_arg) {
         if (lreContainer.lreType() === 'repeater') {
             cmp = Object.assign(cmp, new lreRepeaterEntry());
             cmp.repeater(lreContainer);
-        //} else if (isRepeater(rawComponent)) {
-                // it is a repeater
-        //        cmp = Object.assign(cmp, new lreRepeater);
+            //} else if (isRepeater(rawComponent)) {
+            // it is a repeater
+            //        cmp = Object.assign(cmp, new lreRepeater);
         }
         cmp.initiate();
         return cmp;
@@ -554,6 +554,7 @@ function lre(_arg) {
             this.setInitiated(true);
         }
 
+        Object.assign(this, new lreDataReceiver);
     };
 
     /** * * * * * * * * * * * * * * * * * * * * * *
@@ -761,6 +762,7 @@ function lre(_arg) {
                     }
                 }
             });
+            component.trigger('dataChange', component);
             saveCurrentState(component);
         };
 
@@ -798,6 +800,58 @@ function lre(_arg) {
                 callback(this.find(entryId + cmpId), entryData, entryId);
             }).bind(this));
         };
+
+        Object.assign(this, new lreDataCollection(function (_cb) {
+            let data = [];
+            each(this.value(), function (item, key) {
+                data.push(_cb(item, key));
+            })
+            return data;
+        }));
+    };
+
+    /** * * * * * * * * * * * * * * * * * * * * * *
+     *                DataReceiver                *
+     ** * * * * * * * * * * * * * * * * * * * * * */
+    const lreDataReceiver = function (_args) {
+        let dataOrigin;
+        let dataMapping;
+        let dataSetter;
+
+        const populate = function (source) {
+            source.mapData(dataMapping, dataSetter);
+        };
+
+        this.populateFrom = function (collection, mapping, setter) {
+            if (dataOrigin) {
+                dataOrigin.off('dataChange', populate);
+            }
+            dataOrigin = collection;
+            dataMapping = mapping;
+            dataSetter = setter;
+            collection.on('dataChange', populate);
+            populate(collection);
+        };
+    };
+
+    /** * * * * * * * * * * * * * * * * * * * * * *
+     *                DataCollection              *
+     ** * * * * * * * * * * * * * * * * * * * * * */
+    const lreDataCollection = function (_args) {
+        let dataMapper = _args[0];
+
+        this.mapData = function (transform, setter) {
+            if (dataMapper) {
+                setter(dataMapper(transform));
+            }
+        };
+    };
+
+    /** * * * * * * * * * * * * * * * * * * * * * *
+     *                   LreTable                 *
+     ** * * * * * * * * * * * * * * * * * * * * * */
+    const lreTable = function (_args) {
+
     };
 
     /** * * * * * * * * * * * * * * * * * * * * * *
