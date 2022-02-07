@@ -6,7 +6,7 @@ Let's Role Enhanced
 Put the content of this file https://raw.githubusercontent.com/guiled/LRE/main/lre.js at the beginning of your script.
 (Note: you can reduce the code by clicking on the `>` next to the first line `//region LRE 2.0`)
 
-Your edit was like 
+Your script was like 
 ```js
 init = function (sheet) {
     // something
