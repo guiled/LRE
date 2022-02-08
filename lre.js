@@ -39,6 +39,39 @@ function deepEqual(x, y) {
         return false;
 };
 
+function stringify(obj, indent) {
+    if (arguments.length === 1) {
+        indent = '';
+    }
+    let indent_ = indent + '  ';
+    let recursive = function (obj) {
+        return stringify(obj, indent_);
+    }
+    if (typeof obj !== 'object' || obj === null || obj instanceof Array) {
+        switch(typeof obj) {
+            case 'function':
+                return '"function(){}"';
+            case 'string':
+                return '"' + obj.replace(/\\/g, '\\\\').replace('"', '\\"') + '"';
+            case 'number': 
+            case 'boolean':
+                return '' + obj;
+            case 'function':
+                return 'null';
+            case 'object':
+                if (obj instanceof Date)  return '"' + obj.toISOString() + '"';
+                if (obj instanceof Array) return "[\n" + obj.map(recursive).join(",\n") + "\n" + indent + "]";
+                if (obj === null)         return 'null';
+            default:
+                return recursive(obj);
+        }
+    }
+
+    return "{\n" + Object.keys(obj).map(function (k) {
+        return indent_ + '"' + k + '": ' + recursive(obj[k]);
+    }).join(",\n") + "\n" + indent + "}";
+};
+
 // Main container
 function lre(_arg) {
     const _log = log;
