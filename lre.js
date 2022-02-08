@@ -551,10 +551,9 @@ function lre(_arg) {
 
         this.initiate = function () {
             this.lreType('choice');
+            Object.assign(this, new lreDataReceiver(this.setChoices));
             this.setInitiated(true);
         }
-
-        Object.assign(this, new lreDataReceiver);
     };
 
     /** * * * * * * * * * * * * * * * * * * * * * *
@@ -782,6 +781,7 @@ function lre(_arg) {
             this.on('mouseenter', initStates);
             this.on('click', clickHandler);
             this.on('update', updateHandler);
+            Object.assign(this, new lreDataCollection(dataMapper.bind(this)));
             this.setInitiated(true);
         };
 
@@ -801,13 +801,22 @@ function lre(_arg) {
             }).bind(this));
         };
 
-        Object.assign(this, new lreDataCollection(function (_cb) {
-            let data = [];
-            each(this.value(), function (item, key) {
-                data.push(_cb(item, key));
-            })
-            return data;
-        }));
+        this.map = function (cb) {
+            let val = this.value();
+            let result = {};
+            each(val, function (entryData, entryId) {
+                result[entryId] = cb(entryData, entryId);
+            });
+            return result;
+        };
+
+        const dataMapper = function (cb) {
+            const result = {};
+            each(this.value(), function (entryData, entryId) {
+                Object.assign(result, cb(entryData, entryId) || {});
+            });
+            return result;
+        };
     };
 
     /** * * * * * * * * * * * * * * * * * * * * * *
@@ -816,21 +825,20 @@ function lre(_arg) {
     const lreDataReceiver = function (_args) {
         let dataOrigin;
         let dataMapping;
-        let dataSetter;
+        let dataSetter = _args[0];
 
         const populate = function (source) {
             source.mapData(dataMapping, dataSetter);
         };
 
-        this.populateFrom = function (collection, mapping, setter) {
+        this.populateFrom = function (collection, mapping) {
             if (dataOrigin) {
                 dataOrigin.off('dataChange', populate);
             }
             dataOrigin = collection;
             dataMapping = mapping;
-            dataSetter = setter;
             collection.on('dataChange', populate);
-            populate(collection);
+            populate(dataOrigin);
         };
     };
 
@@ -841,9 +849,8 @@ function lre(_arg) {
         let dataMapper = _args[0];
 
         this.mapData = function (transform, setter) {
-            if (dataMapper) {
-                setter(dataMapper(transform));
-            }
+            if (!dataMapper) return;
+            setter(dataMapper(transform));
         };
     };
 
@@ -961,8 +968,9 @@ function lre(_arg) {
         };
 
         this.initChoice = function (id) {
-            const cmp = Object.assign(getComponent(this, id), new lreChoice);
-
+            let cmp = getComponent(this, id);
+            Object.assign(cmp, new lreChoice);
+            cmp.initiate();
             return cmp;
         };
 
