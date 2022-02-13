@@ -808,6 +808,9 @@ function lre(_arg) {
                     }
                 }
             });
+            // 20220214 This might be trigger when editing a field in editable view
+            // without click anywhere (so no 'clickHandler', no 'init' event triggered)
+            // and clicking on "Done" directly (the new entry is then created just at that click)
             each(newValues, function (newEntryData, entryId) {
                 if (!entries.hasOwnProperty(entryId)) {
                     const cmp = component.find(entryId);
@@ -817,11 +820,29 @@ function lre(_arg) {
                         cmp.data('saved', false);
                         cmp.data('children', component.sheet().knownChildren(cmp));
                         // Save the data beforce potential changes in init event
-                        const valueSave = deepClone(entryData);
-                        component.trigger('init', cmp, entryId, entryData);
+                        const valueSave = deepClone(newEntryData);
+                        component.trigger('init', cmp, entryId, newEntryData);
                         each(valueSave, function (val, id) {
-                            cmp.find(id).value(val);
+                            const child = cmp.find(id);
+                            // The child may not exists as the edit view is being closed by click on "Done"
+                            if (child.exists()) {
+                                child.value(val);
+                            }
                         })
+                        // As explained, this case happened when click directly on "Done" without triggering any other event
+                        // So 'save' event must be triggered
+                        cmp.data('saved', true);
+                        const results = component.trigger('save', cmp, entryId, newValues[entryId], {});
+                        let newData = {};
+                        each(results, function (v) {
+                            Object.assign(newData, v);
+                        })
+                        each(newData, function (v, k) {
+                        const dest = cmp.find(k);
+                        if (dest && dest.id && dest.id()) {
+                            dest.value(v);
+                        }
+                    });
                     }
                 }
             });
