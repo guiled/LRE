@@ -1,4 +1,4 @@
-//region LRE 6
+//region LRE 6.0
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -711,7 +711,12 @@ function lre(_arg) {
                         cmp.data('initiated', true);
                         cmp.data('saved', false);
                         cmp.data('children', component.sheet().knownChildren(cmp));
+                        // Save the data beforce potential changes in init event
+                        const valueSave = deepClone(entryData);
                         component.trigger('init', cmp, entryId, entryData);
+                        each(valueSave, function (val, id) {
+                            cmp.find(id).value(val);
+                        })
                     }
                 } else if (textSimplification(cmp.text()) !== texts[entryId]
                     && (!cmp.hasData('saved') || cmp.data('saved'))) {
@@ -791,6 +796,23 @@ function lre(_arg) {
                                 component.sheet().forget(realId);
                             }
                         });
+                    }
+                }
+            });
+            each(newValues, function (newEntryData, entryId) {
+                if (!entries.hasOwnProperty(entryId)) {
+                    const cmp = component.find(entryId);
+                    cmp.data('entryId', entryId);
+                    if (!cmp.hasData('initiated', true) || !cmp.data('initiated')) {
+                        cmp.data('initiated', true);
+                        cmp.data('saved', false);
+                        cmp.data('children', component.sheet().knownChildren(cmp));
+                        // Save the data beforce potential changes in init event
+                        const valueSave = deepClone(entryData);
+                        component.trigger('init', cmp, entryId, entryData);
+                        each(valueSave, function (val, id) {
+                            cmp.find(id).value(val);
+                        })
                     }
                 }
             });
