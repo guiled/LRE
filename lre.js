@@ -39,6 +39,7 @@ function deepEqual(x, y) {
         return false;
 };
 
+// Can be remove when JSON.stringify() is available
 function stringify(obj, indent) {
     if (arguments.length === 1) {
         indent = '';
@@ -723,9 +724,7 @@ function lre(_arg) {
                         // Save the data beforce potential changes in init event
                         const valueSave = deepClone(entryData);
                         component.trigger('init', cmp, entryId, entryData);
-                        each(valueSave, function (val, id) {
-                            cmp.find(id).value(val);
-                        })
+                        applyValuesToEntry(cmp, valueSave);
                     }
                 } else if (textSimplification(cmp.text()) !== texts[entryId]
                     && (!cmp.hasData('saved') || cmp.data('saved'))) {
@@ -735,7 +734,6 @@ function lre(_arg) {
                     component.trigger('edit', cmp, entryId, entryData);
                 }
             });
-            saveCurrentState(component);
         };
 
         const deepClone = function (val) {
@@ -750,9 +748,12 @@ function lre(_arg) {
             }
         };
 
-        const saveCurrentState = function (component) {
-            entries = deepClone(component.value());
-            each(component.value(), function (data, entryId) {
+        const saveValues = function (component, value) {
+            if (arguments.length === 1) {
+                value = component.value();
+            }
+            entries = deepClone(value);
+            each(value, function (data, entryId) {
                 texts[entryId] = textSimplification(component.raw().find(entryId).text());
                 if (texts[entryId] === editingEntryText) {
                     lreLog(component.realId() + repeaterIdSeparator + entryId + limitations.badText)
@@ -762,38 +763,49 @@ function lre(_arg) {
 
         const initStates = function (component) {
             component.off('mouseenter', initStates);
-            saveCurrentState(component);
+            saveValues(component);
+        };
+
+        const applyValuesToEntry = function (entry, data) {
+            each(data, function (val, id) {
+                const child = entry.find(id);
+                // The child may not exists as the edit view is being closed by click on "Done"
+                if (child.exists()) {
+                    child.value(val);
+                }
+            });
+        };
+
+        const overloadObject = function (dest, data) {
+            each(data, function (obj) {
+                Object.assign(dest, obj);
+            });
+            return dest;
         };
 
         const updateHandler = function (component) {
             const newValues = component.value();
+            let somethingHasChanged = false;
             each(entries, function (entryData, entryId) {
                 if (!newValues.hasOwnProperty(entryId)) {
                     component.trigger('delete', entryId, entryData);
                     component.sheet().forget(component.realId() + repeaterIdSeparator + entryId);
+                    somethingHasChanged = true;
                 } else {
                     let cmp = component.find(entryId);
                     let newData = {};
                     if (!objectsEqual(entryData, newValues[entryId])) {
                         let cmp = component.find(entryId);
                         const results = component.trigger('change', cmp, entryId, newValues[entryId], entryData);
-                        each(results, function (v) {
-                            Object.assign(newData, v);
-                        })
+                        overloadObject(newData, results);
+                        somethingHasChanged = true;
                     }
                     if (cmp.hasData('saved') && !cmp.data('saved')) {
                         cmp.data('saved', true);
                         const results = component.trigger('save', cmp, entryId, newValues[entryId], entryData);
-                        each(results, function (v) {
-                            Object.assign(newData, v);
-                        })
+                        overloadObject(newData, results);
                     }
-                    each(newData, function (v, k) {
-                        const dest = cmp.find(k);
-                        if (dest && dest.id && dest.id()) {
-                            dest.value(v);
-                        }
-                    });
+                    applyValuesToEntry(cmp, newData);
                     if (cmp.hasData('children')) {
                         const oldChildren = cmp.data('children');
                         if (typeof oldChildren !== 'array') {
@@ -808,46 +820,20 @@ function lre(_arg) {
                     }
                 }
             });
-            // 20220214 This might be trigger when editing a field in editable view
-            // without click anywhere (so no 'clickHandler', no 'init' event triggered)
-            // and clicking on "Done" directly (the new entry is then created just at that click)
-            each(newValues, function (newEntryData, entryId) {
+            // New entries
+            each(newValues, function (entryData, entryId) {
                 if (!entries.hasOwnProperty(entryId)) {
-                    const cmp = component.find(entryId);
-                    cmp.data('entryId', entryId);
-                    if (!cmp.hasData('initiated', true) || !cmp.data('initiated')) {
-                        cmp.data('initiated', true);
-                        cmp.data('saved', false);
-                        cmp.data('children', component.sheet().knownChildren(cmp));
-                        // Save the data beforce potential changes in init event
-                        const valueSave = deepClone(newEntryData);
-                        component.trigger('init', cmp, entryId, newEntryData);
-                        each(valueSave, function (val, id) {
-                            const child = cmp.find(id);
-                            // The child may not exists as the edit view is being closed by click on "Done"
-                            if (child.exists()) {
-                                child.value(val);
-                            }
-                        })
-                        // As explained, this case happened when click directly on "Done" without triggering any other event
-                        // So 'save' event must be triggered
-                        cmp.data('saved', true);
-                        const results = component.trigger('save', cmp, entryId, newValues[entryId], {});
-                        let newData = {};
-                        each(results, function (v) {
-                            Object.assign(newData, v);
-                        })
-                        each(newData, function (v, k) {
-                        const dest = cmp.find(k);
-                        if (dest && dest.id && dest.id()) {
-                            dest.value(v);
-                        }
-                    });
-                    }
+                    let cmp = component.find(entryId);
+                    cmp.data('saved', true);
+                    const results = component.trigger('save', cmp, entryId, entryData, {});
+                    applyValuesToEntry(cmp, results);
+                    somethingHasChanged = true;
                 }
-            });
-            component.trigger('dataChange', component);
-            saveCurrentState(component);
+            })
+            if (somethingHasChanged) {
+                component.trigger('dataChange', component);
+            }
+            saveValues(component);
         };
 
         this.find = function (id) {
@@ -857,9 +843,9 @@ function lre(_arg) {
         this.initiate = function () {
             lreLog('Initiate Repeater ' + this.realId());
             this.lreType('repeater');
-            // This following code because saveCurrentState doesn't work well with repeater in tabs
+            // This following code because saveValues doesn't work well with repeater in tabs
             // Because repeaters don't have their real texts when in a tab that is not yet displayed
-            //saveCurrentState(this);
+            //saveValues(this);
             if (typeof this.value() !== 'object' || this.value() === null) {
                 this.value({});
             }
