@@ -507,15 +507,16 @@ function lre(_arg) {
             }
             return lreRepeater;
         };
-        // This method may be useful at some very particular moment
         this.exists = function () {
+            // in let's role, return in a try{} doesn't exit from function block, so use a variable instead
+            let result = true;
             try {
                 sheet.get(realId).addClass('__lre_dummy');
                 sheet.get(realId).removeClass('__lre_dummy');
-                return true;
             } catch (e) {
-                return false;
+                result = false;
             }
+            return result;
         };
     };
 
