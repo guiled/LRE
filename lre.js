@@ -528,7 +528,6 @@ function lre(_arg) {
         let refresh;
         let choices = {};
 
-
         const refreshFromChoices = function () {
             return choices;
         };
@@ -725,7 +724,7 @@ function lre(_arg) {
                         // Save the data beforce potential changes in init event
                         const valueSave = deepClone(entryData);
                         component.trigger('init', cmp, entryId, entryData);
-                        applyValuesToEntry(cmp, valueSave);
+                        applyValuesToEntry(component, entryId, valueSave);
                     }
                 } else if (textSimplification(cmp.text()) !== texts[entryId]
                     && (!cmp.hasData('saved') || cmp.data('saved'))) {
@@ -767,8 +766,17 @@ function lre(_arg) {
             saveValues(component);
         };
 
-        const applyValuesToEntry = function (entry, data) {
+        const applyValuesToEntry = function (repeater, entryId, data) {
+            const entry = repeater.find(entryId);
+            if (!entry.exists()) {
+                return;
+            }
+            const values = repeater.value();
+            if (!values.hasOwnProperty(entryId)) {
+                values[entryId] = {};
+            }
             each(data, function (val, id) {
+                values[entryId][id] = val;
                 const child = entry.find(id);
                 // The child may not exists as the edit view is being closed by click on "Done"
                 if (child.exists()) {
@@ -806,7 +814,7 @@ function lre(_arg) {
                         const results = component.trigger('save', cmp, entryId, newValues[entryId], entryData);
                         overloadObject(newData, results);
                     }
-                    applyValuesToEntry(cmp, newData);
+                    applyValuesToEntry(component, entryId, newData);
                     if (cmp.hasData('children')) {
                         const oldChildren = cmp.data('children');
                         if (typeof oldChildren !== 'array') {
@@ -824,10 +832,12 @@ function lre(_arg) {
             // New entries
             each(newValues, function (entryData, entryId) {
                 if (!entries.hasOwnProperty(entryId)) {
+                    let newData = {};
                     let cmp = component.find(entryId);
                     cmp.data('saved', true);
                     const results = component.trigger('save', cmp, entryId, entryData, {});
-                    applyValuesToEntry(cmp, results);
+                    overloadObject(newData, results);
+                    applyValuesToEntry(component, entryId, newData);
                     somethingHasChanged = true;
                 }
             })
