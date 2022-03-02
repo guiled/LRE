@@ -108,8 +108,7 @@ function lre(_arg) {
         }
         if (!sheets[id] || reset) {
             lreLog('Init sheet ' + name + ' (' + id + ')');
-            let cmp = new lreSheet(sheet);
-            sheets[id] = Object.assign(cmp, new DataHolder(sheet, cmp.realId()));
+            sheets[id] = new lreSheet(sheet);
         }
         return sheets[id];
     }
@@ -165,8 +164,6 @@ function lre(_arg) {
         realId += rawComponent.id();
         let cmp = new lreComponent(lreContainer.sheet(), rawComponent, realId);
         cmp.parent(lreContainer);
-        cmp = Object.assign(cmp, new EventOwner(cmp));
-        cmp = Object.assign(cmp, new DataHolder(cmp.sheet(), realId));
         if (lreContainer.lreType() === 'entry') {
             cmp.entry(lreContainer);
             cmp.repeater(lreContainer.repeater());
@@ -239,7 +236,6 @@ function lre(_arg) {
      *                  EventOwner                *
      ** * * * * * * * * * * * * * * * * * * * * * */
     const EventOwner = function (args) {
-        const component = args[0];
         const existingRawEvents = ['click', 'update', 'mouseenter', 'mouseleave', 'keyup'];
         const events = {};
         const eventStates = {};
@@ -290,9 +286,9 @@ function lre(_arg) {
                 if (existingRawEvents.includes(event)) {
                     if (delegated) {
                         // there is a bug in Let's role that prevent adding delegated event on same instance
-                        component.sheet().raw().get(component.realId()).on(event, subComponent, runEvents(component, eventName, true))
+                        this.sheet().raw().get(this.realId()).on(event, subComponent, runEvents(this, eventName, true))
                     } else {
-                        component.raw().on(event, runEvents(component, eventName, false))
+                        this.raw().on(event, runEvents(this, eventName, false))
                     }
                 }
             }
@@ -320,7 +316,7 @@ function lre(_arg) {
         };
 
         this.trigger = function (eventName) {
-            return runEvents(component, eventName, false)(component.raw(), Array.prototype.slice.call(arguments, 1));
+            return runEvents(this, eventName, false)(this.raw(), Array.prototype.slice.call(arguments, 1));
         };
     };
 
@@ -423,6 +419,9 @@ function lre(_arg) {
         let parent;
         let lreEntry;
         let lreRepeater;
+
+        Object.assign(this, new EventOwner);
+        Object.assign(this, new DataHolder(sheet, realId));
 
         this.addClass = component.addClass;
         this.find = function (id) {
@@ -605,6 +604,8 @@ function lre(_arg) {
     const lreMultiChoice = function () {
         let nbMax;
         let valuesForMax;
+
+        Object.assign(this, new lreChoice);
 
         const checkMax = function () {
             if (this.value().length > nbMax && nbMax > 0) {
@@ -952,6 +953,8 @@ function lre(_arg) {
         const toDelete = [];
         const components = new ComponentContainer(this);
 
+        Object.assign(this, new DataHolder(sheet, sheet.id()))
+
         this.getVariable = sheet.getVariable;
 
         let isDataSetPending = false;
@@ -1062,9 +1065,8 @@ function lre(_arg) {
                 lreLog('Unable to initialize multichoice : ' + id + ' is not a Choice component');
                 return;
             }
-            Object.assign(cmp, new lreChoice);
             Object.assign(cmp, new lreMultiChoice);
-
+            cmp.initiate();
             return cmp;
         };
 
