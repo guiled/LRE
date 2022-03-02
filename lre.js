@@ -551,6 +551,12 @@ function lre(_arg) {
             return choices;
         }
 
+        this.setChoices = function (newChoices) {
+            choices = newChoices;
+            this.raw().setChoices(choices);
+            this.trigger('update', this);
+        };
+
         this.getChoices = function () {
             if (!choices || Object.keys(choices).length === 0) {
                 lreLog(this.id() + ' : ' + limitations.noChoice);
@@ -593,9 +599,9 @@ function lre(_arg) {
 
         this.initiate = function () {
             this.lreType('choice');
-            Object.assign(this, new lreDataReceiver(this.setChoices));
+            Object.assign(this, new lreDataReceiver(this.setChoices.bind(this)));
             this.setInitiated(true);
-        }
+        };
     };
 
     /** * * * * * * * * * * * * * * * * * * * * * *
@@ -604,6 +610,8 @@ function lre(_arg) {
     const lreMultiChoice = function () {
         let nbMax;
         let valuesForMax;
+        let checkedDataCollection;
+        let uncheckedDataCollection;
 
         Object.assign(this, new lreChoice);
 
@@ -619,6 +627,15 @@ function lre(_arg) {
         this.initiate = function () {
             valuesForMax = this.raw().value();
             this.lreType('multichoice');
+            Object.assign(this, new lreDataReceiver(this.setChoices.bind(this)));
+            this.on('update', function () {
+                if (checkedDataCollection) {
+                    checkedDataCollection && checkedDataCollection.trigger('dataChange', checkedDataCollection);
+                }
+                if (uncheckedDataCollection) {
+                    uncheckedDataCollection && uncheckedDataCollection.trigger('dataChange', uncheckedDataCollection);
+                }
+            })
             this.setInitiated(true);
         };
 
@@ -664,6 +681,41 @@ function lre(_arg) {
             this.value(all.filter(function (v) {
                 return !val.includes(v);
             }));
+        };
+
+        const getChecked = function (cb) {
+            const result = {};
+            const choices = this.getChoices();
+            each(this.value(), function (checkedValue) {
+                Object.assign(result, cb(choices[checkedValue], checkedValue) || {});
+            });
+            return result;
+        };
+
+        const getUnchecked = function (cb) {
+            const result = {};
+            const choices = this.getChoices();
+            const values = this.value();
+            each(choices, function (choiceLbl, choiceVal) {
+                if (!values || !values.includes || !values.includes(choiceVal)) {
+                    Object.assign(result, cb(choiceLbl, choiceVal) || {});
+                }
+            })
+            return result;
+        };
+
+        this.checked = function () {
+            if (!checkedDataCollection) {
+                checkedDataCollection = new lreDerivedDataCollection(this, getChecked.bind(this));
+            }
+            return checkedDataCollection;
+        };
+
+        this.unchecked = function () {
+            if (!uncheckedDataCollection) {
+                uncheckedDataCollection = new lreDerivedDataCollection(this, getUnchecked.bind(this));
+            }
+            return uncheckedDataCollection;
         };
     };
 
@@ -907,7 +959,11 @@ function lre(_arg) {
      ** * * * * * * * * * * * * * * * * * * * * * */
     const lreDataReceiver = function (_args) {
         let dataOrigin;
-        let dataMapping;
+        let dataMapping = function (item, key) {
+            const result = {}
+            result[key] = item;
+            return result;
+        };
         let dataSetter = _args[0];
 
         const populate = function (source) {
@@ -919,8 +975,10 @@ function lre(_arg) {
                 dataOrigin.off('dataChange', populate);
             }
             dataOrigin = collection;
-            dataMapping = mapping;
-            collection.on('dataChange', populate);
+            if (arguments.length > 1) {
+                dataMapping = mapping
+            }
+            dataOrigin.on('dataChange', populate);
             populate(dataOrigin);
         };
     };
@@ -929,13 +987,22 @@ function lre(_arg) {
      *                DataCollection              *
      ** * * * * * * * * * * * * * * * * * * * * * */
     const lreDataCollection = function (_args) {
-        let dataMapper = _args[0];
+        const dataMapper = _args[0];
 
         this.mapData = function (transform, setter) {
             if (!dataMapper) return;
             setter(dataMapper(transform));
         };
     };
+
+    const lreDerivedDataCollection = function (_args) {
+        const dataSource = _args[0];
+
+        this.raw = dataSource.raw;
+
+        Object.assign(this, new EventOwner);
+        Object.assign(this, new lreDataCollection(_args[1]))
+    }
 
     /** * * * * * * * * * * * * * * * * * * * * * *
      *                   LreTable                 *
