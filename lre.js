@@ -522,6 +522,23 @@ function lre(_arg) {
     /** * * * * * * * * * * * * * * * * * * * * * *
      *                  LreChoice                 *
      ** * * * * * * * * * * * * * * * * * * * * * */
+    const setChoicesFromDataProvider = function (data) {
+        const newChoices = {};
+        let somethingHasChanged = false;
+        if (data) {
+            each(data, function (d) {
+                if (d && (!newChoices.hasOwnProperty(d.id) || newChoices[d.id] !== d.val)) {
+                    newChoices[d.id] = d.val;
+                    somethingHasChanged = true;
+                }
+            });
+        }
+        this.setChoices(newChoices);
+        if (somethingHasChanged && this.hasOwnProperty('triggerDataChange')) {
+            this.triggerDataChange();
+        }
+    };
+
     const lreChoice = function () {
         let tableSource;
         let refresh;
@@ -599,7 +616,7 @@ function lre(_arg) {
 
         this.initiate = function () {
             this.lreType('choice');
-            Object.assign(this, new lreDataReceiver(this.setChoices.bind(this)));
+            Object.assign(this, new lreDataReceiver(setChoicesFromDataProvider.bind(this)));
             this.setInitiated(true);
         };
     };
@@ -610,8 +627,6 @@ function lre(_arg) {
     const lreMultiChoice = function () {
         let nbMax;
         let valuesForMax;
-        let checkedDataCollection;
-        let uncheckedDataCollection;
 
         Object.assign(this, new lreChoice);
 
@@ -627,15 +642,9 @@ function lre(_arg) {
         this.initiate = function () {
             valuesForMax = this.raw().value();
             this.lreType('multichoice');
-            Object.assign(this, new lreDataReceiver(this.setChoices.bind(this)));
-            this.on('update', function () {
-                if (checkedDataCollection) {
-                    checkedDataCollection && checkedDataCollection.trigger('dataChange', checkedDataCollection);
-                }
-                if (uncheckedDataCollection) {
-                    uncheckedDataCollection && uncheckedDataCollection.trigger('dataChange', uncheckedDataCollection);
-                }
-            })
+            Object.assign(this, new lreDataReceiver(setChoicesFromDataProvider.bind(this)));
+            Object.assign(this, new lreDataCollection(this, dataMapper.bind(this)));
+            this.on('update', this.triggerDataChange);
             this.setInitiated(true);
         };
 
@@ -683,39 +692,16 @@ function lre(_arg) {
             }));
         };
 
-        const getChecked = function (cb) {
-            const result = {};
-            const choices = this.getChoices();
-            each(this.value(), function (checkedValue) {
-                Object.assign(result, cb(choices[checkedValue], checkedValue) || {});
-            });
-            return result;
-        };
-
-        const getUnchecked = function (cb) {
-            const result = {};
-            const choices = this.getChoices();
-            const values = this.value();
-            each(choices, function (choiceLbl, choiceVal) {
-                if (!values || !values.includes || !values.includes(choiceVal)) {
-                    Object.assign(result, cb(choiceLbl, choiceVal) || {});
-                }
-            })
-            return result;
-        };
-
         this.checked = function () {
-            if (!checkedDataCollection) {
-                checkedDataCollection = new lreDerivedDataCollection(this, getChecked.bind(this));
-            }
-            return checkedDataCollection;
+            return this.filter((function (d, k) {
+                return this.value().includes(k);
+            }).bind(this));
         };
 
         this.unchecked = function () {
-            if (!uncheckedDataCollection) {
-                uncheckedDataCollection = new lreDerivedDataCollection(this, getUnchecked.bind(this));
-            }
-            return uncheckedDataCollection;
+            return this.filter((function (d, k) {
+                return !this.value().includes(k);
+            }).bind(this));
         };
     };
 
@@ -916,7 +902,7 @@ function lre(_arg) {
             this.on('mouseenter', initStates);
             this.on('click', clickHandler);
             this.on('update', updateHandler);
-            Object.assign(this, new lreDataCollection(dataMapper.bind(this)));
+            Object.assign(this, new lreDataCollection(this, dataMapper.bind(this)));
             this.setInitiated(true);
         };
 
@@ -945,10 +931,13 @@ function lre(_arg) {
             return result;
         };
 
-        const dataMapper = function (cb) {
-            const result = {};
+        const dataMapper = function (cb, filter) {
+            const result = [];
+            const useFilter = (arguments.length > 1);
             each(this.value(), function (entryData, entryId) {
-                Object.assign(result, cb(entryData, entryId) || {});
+                if (!useFilter || filter(entryData, entryId)) {
+                    result.push(cb(entryData, entryId));
+                }
             });
             return result;
         };
@@ -960,9 +949,10 @@ function lre(_arg) {
     const lreDataReceiver = function (_args) {
         let dataOrigin;
         let dataMapping = function (item, key) {
-            const result = {}
-            result[key] = item;
-            return result;
+            return {
+                id: key,
+                val: item,
+            };
         };
         let dataSetter = _args[0];
 
@@ -987,21 +977,43 @@ function lre(_arg) {
      *                DataCollection              *
      ** * * * * * * * * * * * * * * * * * * * * * */
     const lreDataCollection = function (_args) {
-        const dataMapper = _args[0];
+        const dataSource = _args[0];
+        const dataMapper = _args[1];
 
         this.mapData = function (transform, setter) {
             if (!dataMapper) return;
-            setter(dataMapper(transform));
+            setter(dataMapper({cb: transform}));
+        };
+
+        const getFilteredDataMapper = function (filter) {
+            return function (args) {
+                const newArgs = Object.assign({}, args, {filter: filter});
+                return dataMapper(newArgs);
+            };
+        };
+
+        this.filter = function (filter) {
+            return new lreDerivedDataCollection(dataSource, getFilteredDataMapper(filter));
+        };
+
+        this.triggerDataChange = function () {
+            this.trigger('dataChange');
         };
     };
 
     const lreDerivedDataCollection = function (_args) {
         const dataSource = _args[0];
+        const dataMapper = _args[1];
+        const _this = this;
 
         this.raw = dataSource.raw;
 
         Object.assign(this, new EventOwner);
-        Object.assign(this, new lreDataCollection(_args[1]))
+        Object.assign(this, new lreDataCollection(dataSource, dataMapper))
+
+        dataSource.on('dataChange', function (source) {
+            _this.triggerDataChange();
+        });
     }
 
     /** * * * * * * * * * * * * * * * * * * * * * *
