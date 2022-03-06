@@ -524,16 +524,21 @@ function lre(_arg) {
      ** * * * * * * * * * * * * * * * * * * * * * */
     const setChoicesFromDataProvider = function (data) {
         const newChoices = {};
+        const newChoiceData = {};
         let somethingHasChanged = false;
         if (data) {
             each(data, function (d) {
                 if (d && (!newChoices.hasOwnProperty(d.id) || newChoices[d.id] !== d.val)) {
                     newChoices[d.id] = d.val;
+                    newChoiceData[d.id] = d.data;
                     somethingHasChanged = true;
                 }
             });
         }
         this.setChoices(newChoices);
+        each(newChoiceData, (function (newData, id) {
+            this.setChoiceData(id, newData);
+        }).bind(this));
         if (somethingHasChanged && this.hasOwnProperty('triggerDataChange')) {
             this.triggerDataChange();
         }
@@ -543,6 +548,7 @@ function lre(_arg) {
         let tableSource;
         let refresh;
         let choices = {};
+        let choiceData = {}
 
         const refreshFromChoices = function () {
             return choices;
@@ -579,6 +585,17 @@ function lre(_arg) {
                 lreLog(this.id() + ' : ' + limitations.noChoice);
             }
             return choices;
+        };
+
+        this.getChoiceData = function () {
+            if (arguments.length === 0) {
+                return choiceData;
+            }
+            return choiceData.hasOwnProperty(arguments[0]) ? choiceData[arguments[0]] : null;
+        }
+
+        this.setChoiceData = function (k, data) {
+            choiceData[k] = data;
         };
 
         this.populate = function (tableOrCb, lbl) {
@@ -643,9 +660,22 @@ function lre(_arg) {
             valuesForMax = this.raw().value();
             this.lreType('multichoice');
             Object.assign(this, new lreDataReceiver(setChoicesFromDataProvider.bind(this)));
-            Object.assign(this, new lreDataCollection(this, getDataMapper(this.getChoices.bind(this)).bind(this)));
+            Object.assign(this, new lreDataCollection(this, getDataMapper(getDataValue.bind(this)).bind(this)));
             this.on('update', this.triggerDataChange);
             this.setInitiated(true);
+        };
+
+        const getDataValue = function () {
+            const result = {};
+            const choiceData = this.getChoiceData();
+            each(this.getChoices(), function (v, k) {
+                result[k] = {
+                    id: k,
+                    val: v,
+                    data: choiceData[k],
+                };
+            });
+            return result;
         };
 
         this.maxChoiceNb = function (nb) {
@@ -902,8 +932,20 @@ function lre(_arg) {
             this.on('mouseenter', initStates);
             this.on('click', clickHandler);
             this.on('update', updateHandler);
-            Object.assign(this, new lreDataCollection(this, getDataMapper(this.value.bind(this)).bind(this)));
+            Object.assign(this, new lreDataCollection(this, getDataMapper(getDataValue.bind(this)).bind(this)));
             this.setInitiated(true);
+        };
+
+        const getDataValue = function () {
+            const result = {};
+            each(this.value(), function (v, k) {
+                result[k] = {
+                    id: k,
+                    val: v,
+                    data: v
+                };
+            });
+            return result;
         };
 
         this.each = function () {
@@ -941,6 +983,7 @@ function lre(_arg) {
             return {
                 id: key,
                 val: item,
+                data: item,
             };
         };
         let dataSetter = _args[0];
