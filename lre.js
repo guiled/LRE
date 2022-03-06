@@ -624,6 +624,13 @@ function lre(_arg) {
             return choices[this.value()];
         };
 
+        this.valueData = function () {
+            if (choiceData) {
+                let val = this.value();
+                return this.getChoiceData(val);
+            }
+        };
+
         this.row = function () {
             if (tableSource && tableSource.rows) {
                 let val = this.value();
@@ -979,11 +986,11 @@ function lre(_arg) {
      ** * * * * * * * * * * * * * * * * * * * * * */
     const lreDataReceiver = function (_args) {
         let dataOrigin;
-        let dataMapping = function (item, key) {
+        let dataMapping = function (item, key, data) {
             return {
                 id: key,
                 val: item,
-                data: item,
+                data: data,
             };
         };
         let dataSetter = _args[0];
@@ -1023,7 +1030,7 @@ function lre(_arg) {
                         id: id,
                         val: value.val,
                         data: value.data,
-                        result: cb(value.val, id),
+                        result: cb(value.val, id, value.data),
                     });
                 }
             });
