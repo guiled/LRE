@@ -643,7 +643,7 @@ function lre(_arg) {
             valuesForMax = this.raw().value();
             this.lreType('multichoice');
             Object.assign(this, new lreDataReceiver(setChoicesFromDataProvider.bind(this)));
-            Object.assign(this, new lreDataCollection(this, dataMapper.bind(this)));
+            Object.assign(this, new lreDataCollection(this, getDataMapper(this.getChoices.bind(this)).bind(this)));
             this.on('update', this.triggerDataChange);
             this.setInitiated(true);
         };
@@ -902,7 +902,7 @@ function lre(_arg) {
             this.on('mouseenter', initStates);
             this.on('click', clickHandler);
             this.on('update', updateHandler);
-            Object.assign(this, new lreDataCollection(this, dataMapper.bind(this)));
+            Object.assign(this, new lreDataCollection(this, getDataMapper(this.value.bind(this)).bind(this)));
             this.setInitiated(true);
         };
 
@@ -927,17 +927,6 @@ function lre(_arg) {
             let result = {};
             each(val, function (entryData, entryId) {
                 result[entryId] = cb(entryData, entryId);
-            });
-            return result;
-        };
-
-        const dataMapper = function (cb, filter) {
-            const result = [];
-            const useFilter = (arguments.length > 1);
-            each(this.value(), function (entryData, entryId) {
-                if (!useFilter || filter(entryData, entryId)) {
-                    result.push(cb(entryData, entryId));
-                }
             });
             return result;
         };
@@ -976,6 +965,28 @@ function lre(_arg) {
     /** * * * * * * * * * * * * * * * * * * * * * *
      *                DataCollection              *
      ** * * * * * * * * * * * * * * * * * * * * * */
+    const getDataMapper = function (valueGetter) {
+        return function (args) {
+            const cb = args.cb;
+            const result = [];
+            const useFilter = (args.hasOwnProperty('filter'));
+            each(valueGetter(), function (value, id) {
+                if (!useFilter || args.filter(value.val, id)) {
+                    result.push({
+                        id: id,
+                        val: value.val,
+                        data: value.data,
+                        result: cb(value.val, id),
+                    });
+                }
+            });
+            if (args.hasOwnProperty('sorter') && args.sorter) {
+                result.sort(args.sorter);
+            }
+            return result.map(onlyResult);
+        };
+    };
+
     const lreDataCollection = function (_args) {
         const dataSource = _args[0];
         const dataMapper = _args[1];
