@@ -1008,6 +1008,10 @@ function lre(_arg) {
     /** * * * * * * * * * * * * * * * * * * * * * *
      *                DataCollection              *
      ** * * * * * * * * * * * * * * * * * * * * * */
+    const onlyResult = function (resultVal) {
+        return resultVal.result;
+    };
+
     const getDataMapper = function (valueGetter) {
         return function (args) {
             const cb = args.cb;
@@ -1046,8 +1050,19 @@ function lre(_arg) {
             };
         };
 
+        const getSortedDataMapper = function (sorter) {
+            return function (args) {
+                const newArgs = Object.assign({}, args, {sorter: sorter});
+                return dataMapper(newArgs);
+            };
+        };
+
         this.filter = function (filter) {
             return new lreDerivedDataCollection(dataSource, getFilteredDataMapper(filter));
+        };
+
+        this.sort = function (sorter) {
+            return new lreDerivedDataCollection(dataSource, getSortedDataMapper(sorter));
         };
 
         this.triggerDataChange = function () {
