@@ -781,7 +781,7 @@ function lre(_arg) {
             };
 
             return true;
-        }
+        };
 
         const textSimplification = function (txt) {
             return txt.replace(/\s+/g, ' ').trim();
@@ -993,6 +993,15 @@ function lre(_arg) {
                 data: data,
             };
         };
+        const dataMappingKeepData = function (_cb) {
+            return function (item, key, data) {
+                return Object.assign({
+                    id: key,
+                    val: item,
+                    data: data,
+                }, _cb(item, key, data));
+            };
+        };
         let dataSetter = _args[0];
 
         const populate = function (source) {
@@ -1005,7 +1014,7 @@ function lre(_arg) {
             }
             dataOrigin = collection;
             if (arguments.length > 1) {
-                dataMapping = mapping
+                dataMapping = dataMappingKeepData(mapping);
             }
             dataOrigin.on('dataChange', populate);
             populate(dataOrigin);
