@@ -522,26 +522,56 @@ function lre(_arg) {
     /** * * * * * * * * * * * * * * * * * * * * * *
      *                  LreChoice                 *
      ** * * * * * * * * * * * * * * * * * * * * * */
-    const setChoicesFromDataProvider = function (data) {
-        const newChoices = {};
-        const newChoiceData = {};
-        let somethingHasChanged = false;
-        if (data) {
-            each(data, function (d) {
-                if (d && (!newChoices.hasOwnProperty(d.id) || newChoices[d.id] !== d.val)) {
-                    newChoices[d.id] = d.val;
-                    newChoiceData[d.id] = d.data;
-                    somethingHasChanged = true;
+    const choiceCommon = {
+        // For choices, if a delegated event is used ('on' called with 3 parameters)
+        // The first arg is eventName
+        // This second is the "value" to attach the event
+        // The third is the callback
+         getEventArgs: function (args) {
+            let newArgs = [];
+            if (args.length === 3) {
+                newArgs = [
+                    args[0] + '[' + args[1] + ']',
+                    args[2],
+                ];
+            } else {
+                for (i = 0; i < args.length; i++) {
+                    newArgs[i] = args[i];
                 }
-            });
-        }
-        this.setChoices(newChoices);
-        each(newChoiceData, (function (newData, id) {
-            this.setChoiceData(id, newData);
-        }).bind(this));
-        if (somethingHasChanged && this.hasOwnProperty('triggerDataChange')) {
-            this.triggerDataChange();
-        }
+            }
+            return newArgs;
+        },
+        overloadEvents: function (container) {
+            container.on = this.on;
+            container.off = this.off;
+            this.on = (function (event, subComponent, handler) {
+                container.on.apply(this, choiceCommon.getEventArgs(arguments));
+            }).bind(this);
+            this.off = (function (event, subComponent, handler) {
+                container.off.apply(this, choiceCommon.getEventArgs(arguments));
+            }).bind(this);
+        },
+        setChoicesFromDataProvider: function (data) {
+            const newChoices = {};
+            const newChoiceData = {};
+            let somethingHasChanged = false;
+            if (data) {
+                each(data, function (d) {
+                    if (d && (!newChoices.hasOwnProperty(d.id) || newChoices[d.id] !== d.val)) {
+                        newChoices[d.id] = d.val;
+                        newChoiceData[d.id] = d.data;
+                        somethingHasChanged = true;
+                    }
+                });
+            }
+            this.setChoices(newChoices);
+            each(newChoiceData, (function (newData, id) {
+                this.setChoiceData(id, newData);
+            }).bind(this));
+            if (somethingHasChanged && this.hasOwnProperty('triggerDataChange')) {
+                this.triggerDataChange();
+            }
+        },
     };
 
     const lreChoice = function () {
@@ -549,6 +579,8 @@ function lre(_arg) {
         let refresh;
         let choices = {};
         let choiceData = {}
+        let currentValue = null;
+        const eventOverload = {};
 
         const refreshFromChoices = function () {
             return choices;
@@ -638,9 +670,22 @@ function lre(_arg) {
             }
         };
 
+        const checkChanges = function (cmp) {
+            const newValue = cmp.value();
+            if (newValue !== currentValue) {
+                this.trigger('select[' + newValue + ']');
+                this.trigger('unselect[' + currentValue + ']');
+            }
+            this.trigger('click[' + newValue + ']');
+            currentValue = newValue;
+        };
+
         this.initiate = function () {
+            choiceCommon.overloadEvents.call(this, eventOverload);
+            currentValue = this.value();
             this.lreType('choice');
-            Object.assign(this, new lreDataReceiver(setChoicesFromDataProvider.bind(this)));
+            Object.assign(this, new lreDataReceiver(choiceCommon.setChoicesFromDataProvider.bind(this)));
+            this.on('update', checkChanges.bind(this));
             this.setInitiated(true);
         };
     };
@@ -651,6 +696,8 @@ function lre(_arg) {
     const lreMultiChoice = function () {
         let nbMax;
         let valuesForMax;
+        const eventOverload = {};
+        const currentValue = [];
 
         Object.assign(this, new lreChoice);
 
@@ -663,12 +710,31 @@ function lre(_arg) {
             valuesForMax = this.value();
         };
 
+        const checkChanges = function (cmp) {
+            const newValue = cmp.value();
+            const selected = newValue.filter(function (x) {
+                return !currentValue.includes(x);
+            });
+            const unselected = currentValue.filter(function (x) {
+                return !newValue.includes(x);
+            });
+            each(selected, (function (val) {
+                this.trigger('select[' + val + ']');
+            }).bind(this));
+            each(unselected, (function (val) {
+                this.trigger('unselect[' + val + ']');
+            }).bind(this));
+            currentValue = newValue.slice();
+        };
+
         this.initiate = function () {
+            choiceCommon.overloadEvents.call(this, eventOverload);
             valuesForMax = this.raw().value();
             this.lreType('multichoice');
-            Object.assign(this, new lreDataReceiver(setChoicesFromDataProvider.bind(this)));
+            Object.assign(this, new lreDataReceiver(choiceCommon.setChoicesFromDataProvider.bind(this)));
             Object.assign(this, new lreDataCollection(this, getDataMapper(getDataValue.bind(this)).bind(this)));
             this.on('update', this.triggerDataChange);
+            this.on('update', checkChanges.bind(this));
             this.setInitiated(true);
         };
 
