@@ -670,6 +670,10 @@ function lre(_arg) {
             }
         };
 
+        this.refresh = function () {
+            this.raw().setChoices(choices);
+        };
+
         const checkChanges = function (cmp) {
             const newValue = cmp.value();
             if (newValue !== currentValue) {
@@ -695,7 +699,10 @@ function lre(_arg) {
      ** * * * * * * * * * * * * * * * * * * * * * */
     const lreMultiChoice = function () {
         let nbMax;
-        let sumCalculator;
+        const defaultCalculator = function () {
+            return 1;
+        };
+        let sumCalculator = defaultCalculator
         let valuesForMax;
         const eventOverload = {};
         let currentValue = [];
@@ -802,9 +809,7 @@ function lre(_arg) {
             if (arguments.length === 0) {
                 return nbMax
             }
-            sumCalculator = arguments.length > 1 ? calculator : function () {
-                return 1;
-            };
+            sumCalculator = arguments.length > 1 ? calculator : defaultCalculator;
             nbMax = nb;
             if (nb > 0 || typeof nb === 'object' || typeof nb === 'function') {
                 this.on('update', checkMax);
