@@ -576,14 +576,13 @@ function lre(_arg) {
 
     const lreChoice = function () {
         let tableSource;
-        let refresh;
         let choices = {};
         let choiceData = {}
         let currentValue = null;
         const eventOverload = {};
 
         const refreshFromChoices = function () {
-            return choices;
+            this.setChoices(choices);
         };
 
         const loadFromTableIds = function (tableName) {
@@ -634,22 +633,23 @@ function lre(_arg) {
             if (typeof tableOrCb === 'string') {
                 if (arguments.length === 1) {
                     this.choices = loadFromTableIds(tableOrCb);
-                    refresh = refreshFromChoices;
+                    this.refresh = refreshFromChoices.bind(this);
                 } else if (arguments.length === 2) {
                     this.choices = loadFromTable(tableOrCb, lbl);
-                    refresh = refreshFromChoices;
+                    this.refresh = refreshFromChoices.bind(this);
                 }
             } else {
-                refresh = function () {
+                this.refresh = (function () {
                     choices = tableOrCb();
+                    this.setChoices(choices);
                     return choices;
-                };
+                }).bind(this);
             }
             this.repopulate();
         };
 
         this.repopulate = function () {
-            this.setChoices(refresh());
+            this.refresh();
         }
 
         this.label = function () {
@@ -695,16 +695,63 @@ function lre(_arg) {
      ** * * * * * * * * * * * * * * * * * * * * * */
     const lreMultiChoice = function () {
         let nbMax;
+        let sumCalculator;
         let valuesForMax;
         const eventOverload = {};
-        const currentValue = [];
+        let currentValue = [];
 
         Object.assign(this, new lreChoice);
 
+        const addObjectProperties = function (a, b) {
+            const result = a;
+            each(b, function (v, k) {
+                if (!result.hasOwnProperty(k)) {
+                    result[k] = 0;
+                }
+                result[k] += 1.0 * v;
+            });
+            return result;
+        };
+
+        const objectExceedComparison = function (a, b) {
+            let exceeded = false;
+            Object.keys(a).some(function (k) {
+                if (b.hasOwnProperty(k) && b[k] > a[k]) {
+                    exceeded = true;
+                    return true;
+                }
+            })
+            return exceeded;
+        };
+
         const checkMax = function () {
-            if (this.value().length > nbMax && nbMax > 0) {
+            let result = 0;
+            let data = this.getChoiceData();
+            const choices = this.getChoices();
+            each(this.value(), function (id) {
+                let val = sumCalculator(choices[id], id, (data.hasOwnProperty(id) ? data[id] : undefined), result);
+                if (isObject(val)) {
+                    if (!isObject(result)) result = {};
+                    result = addObjectProperties(result, val);
+                } else {
+                    result += 1.0 * val;
+                }
+            });
+            let maxValue = nbMax;
+            if (typeof nbMax === 'function') {
+                maxValue = nbMax();
+            }
+            let exceeded = false;
+            if (isObject(maxValue)) {
+                exceeded = objectExceedComparison(maxValue, result);
+            } else {
+                exceeded = (result > maxValue && maxValue > 0);
+            }
+            if (exceeded) {
                 this.trigger('limit');
-                this.value(valuesForMax.slice(0, nbMax));
+                this.disableEvent('update');
+                this.value(valuesForMax.slice());
+                this.enableEvent('update');
                 return;
             }
             valuesForMax = this.value();
@@ -751,12 +798,15 @@ function lre(_arg) {
             return result;
         };
 
-        this.maxChoiceNb = function (nb) {
+        this.maxChoiceNb = function (nb, calculator) {
             if (arguments.length === 0) {
                 return nbMax
             }
+            sumCalculator = arguments.length > 1 ? calculator : function () {
+                return 1;
+            };
             nbMax = nb;
-            if (nb > 0) {
+            if (nb > 0 || typeof nb === 'object' || typeof nb === 'function') {
                 this.on('update', checkMax);
             } else {
                 this.off('update', checkMax);
@@ -1083,6 +1133,11 @@ function lre(_arg) {
                 dataMapping = dataMappingKeepData(mapping);
             }
             dataOrigin.on('dataChange', populate);
+            this.refresh = refresh;
+            this.refresh();
+        };
+
+        const refresh = function () {
             populate(dataOrigin);
         };
     };
