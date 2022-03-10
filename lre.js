@@ -735,7 +735,8 @@ function lre(_arg) {
             let result = 0;
             let data = this.getChoiceData();
             const choices = this.getChoices();
-            each(this.value(), function (id) {
+            const newValue = this.value();
+            each(newValue, function (id) {
                 let val = sumCalculator(choices[id], id, (data.hasOwnProperty(id) ? data[id] : undefined), result);
                 if (isObject(val)) {
                     if (!isObject(result)) result = {};
@@ -754,14 +755,14 @@ function lre(_arg) {
             } else {
                 exceeded = (result > maxValue && maxValue > 0);
             }
-            if (exceeded) {
+            if (exceeded && newValue.length > valuesForMax.length) {
                 this.trigger('limit');
                 this.disableEvent('update');
                 this.value(valuesForMax.slice());
                 this.enableEvent('update');
                 return;
             }
-            valuesForMax = this.value();
+            valuesForMax = newValue;
         };
 
         const checkChanges = function (cmp) {
