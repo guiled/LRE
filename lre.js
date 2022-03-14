@@ -1240,6 +1240,14 @@ function lre(_arg) {
             return new lreDerivedDataCollection(dataSource, getSortedDataMapper(sorter));
         };
 
+        this.sortBy = function (sortedValueExtractor) {
+            return new lreDerivedDataCollection(dataSource, getSortedDataMapper(function (a, b) {
+                const valA = sortedValueExtractor(a.val, a.id, a.data);
+                const valB = sortedValueExtractor(b.val, a.id, a.data);
+                return valA < valB ? -1 : (valA > valB ? 1 : 0);
+            }));
+        };
+
         this.triggerDataChange = function () {
             this.trigger('dataChange');
         };
