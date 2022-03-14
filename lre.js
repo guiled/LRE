@@ -249,14 +249,19 @@ function lre(_arg) {
         const synonyms = {
             //'change': 'update'
         }
+        const canceledEvents = [];
+
+        const eventIsEnabled = function (eventName) {
+            return !eventStates.hasOwnProperty(eventName) || eventStates[eventName] || !canceledEvents.includes(eventName);
+        };
 
         const runEvents = function (component, eventName, delegated) {
             return function (rawTarget, args) {
-                if (!eventStates[eventName]) return;
+                if (!eventIsEnabled(eventName)) return;
                 if (arguments.length < 2) {
                     args = [];
                 }
-                if (!events[eventName]) {
+                if (!events.hasOwnProperty(eventName) || !events[eventName] || events[eventName].length === 0) {
                     return;
                 }
                 let argsWithComponent = [];
@@ -269,9 +274,14 @@ function lre(_arg) {
                 }
                 argsWithComponent = argsWithComponent.concat(args);
                 let results = [];
-                each(events[eventName], function (fcn) {
+                events[eventName].some(function (fcn) {
+                    if (!eventIsEnabled(eventName)) {
+                        return true;
+                    }
                     results.push(fcn.apply(component, argsWithComponent));
+                    return false;
                 });
+                uncancelEvent(eventName);
                 return results;
             };
         };
@@ -302,6 +312,21 @@ function lre(_arg) {
             eventStates[eventName] = true;
             events[eventName].push(handler);
         };
+
+        // Cancel the next callbacks of an evet
+        // Cancel happens only "once" per trigger
+        this.cancelEvent = function (event) {
+            if (!canceledEvents.includes(event)) {
+                canceledEvents.push(event);
+            }
+        };
+
+        uncancelEvent = function (event) {
+            const pos = canceledEvents.indexOf(event);
+            if (pos !== -1) {
+                canceledEvents.splice(pos, 1);
+            }
+        }
 
         this.disableEvent = function (event) {
             eventStates[event] = false;
