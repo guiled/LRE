@@ -685,7 +685,12 @@ function lre(_arg) {
         }
 
         this.label = function () {
-            return choices[this.value()];
+            if (arguments.length === 0) {
+                return choices[this.value()];
+            } else if (choices.hasOwnProperty(arguments[0])) {
+                return choices[arguments[0]];
+            }
+            return null;
         };
 
         this.valueData = function () {
@@ -710,7 +715,9 @@ function lre(_arg) {
             const newValue = cmp.value();
             if (newValue !== currentValue) {
                 this.trigger('select[' + newValue + ']');
+                this.trigger('select', newValue);
                 this.trigger('unselect[' + currentValue + ']');
+                this.trigger('unselect', currentValue);
             }
             this.trigger('click[' + newValue + ']');
             currentValue = newValue;
@@ -799,6 +806,33 @@ function lre(_arg) {
             valuesForMax = newValue;
         };
 
+        // trigger eventName and eventName[val]
+        // Event callback parameters are : component, changedValue, changedLabel, changedData
+        const handleSelectEvent = function (eventName, values) {
+            if (values.length > 0) {
+                const args = [eventName];
+                if (values.length === 1) {
+                    args.push(values[0]);
+                    args.push(this.label(values[0]));
+                    args.push(this.getChoiceData(values[0]))
+                } else {
+                    const label = {};
+                    const data = {};
+                    const choiceData = this.getChoiceData();
+                    args.push(values);
+                    values.forEach((function (v) {
+                        label[v] = this.label(v);
+                        data[v] = choiceData[v];
+                    }).bind(this));
+                    args.push(data);
+                }
+                this.trigger.apply(this, args);
+            }
+            each(values, (function (val) {
+                this.trigger(eventName +'[' + val + ']');
+            }).bind(this));
+        };
+
         const checkChanges = function (cmp) {
             const newValue = cmp.value();
             const selected = newValue.filter(function (x) {
@@ -807,12 +841,8 @@ function lre(_arg) {
             const unselected = currentValue.filter(function (x) {
                 return !newValue.includes(x);
             });
-            each(selected, (function (val) {
-                this.trigger('select[' + val + ']');
-            }).bind(this));
-            each(unselected, (function (val) {
-                this.trigger('unselect[' + val + ']');
-            }).bind(this));
+            handleSelectEvent.call(this, 'select', selected);
+            handleSelectEvent.call(this, 'unselect', unselected);
             currentValue = newValue.slice();
         };
 
