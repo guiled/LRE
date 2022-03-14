@@ -1,4 +1,4 @@
-//region LRE 6.0
+//region LRE 6.1
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -79,6 +79,7 @@ function lre(_arg) {
 
     const initLre = function () {
         overloadLog(log);
+        overloadTables(Tables);
     };
 
     const sheets = {};
@@ -1300,7 +1301,83 @@ function lre(_arg) {
     /** * * * * * * * * * * * * * * * * * * * * * *
      *                   LreTable                 *
      ** * * * * * * * * * * * * * * * * * * * * * */
+    const overloadTables = function (_Tables) {
+        const tableList = {};
+        Tables = {
+            get: function (_id, preload) {
+                if (arguments.length < 2) {
+                    preload = false;
+                }
+                if (!tableList.hasOwnProperty(_id)) {
+                    tableList[_id] = new lreTable(_Tables.get(_id), _id, preload);
+                }
+                if (preload && !tableList[_id].loaded()) {
+                    tableList[_id].load();
+                }
+                return tableList[_id];
+            }
+        };
+    };
+
     const lreTable = function (_args) {
+        const rawTable = _args[0];
+        const id = _args[1];
+        const preload = _args[2];
+        const ids = [];
+        const rows = {};
+        let loaded = false;
+
+        this.get = rawTable.get;
+        this.random = rawTable.random;
+
+        this.id = function () {
+            return id;
+        };
+
+        this.each = function (cb) {
+            this.load();
+            ids.every(function (id) {
+                const result = cb(rows[id]);
+                return (result === undefined || result != false);
+            });
+        };
+
+        this.loaded = function () {
+            return loaded;
+        }
+
+        this.load = function () {
+            if (loaded) {
+                return;
+            }
+            rawTable.each(function (row) {
+                ids.push(row.id);
+                rows[row.id] = row;
+            })
+            loaded = true;
+        };
+
+        const getDataValue = function () {
+            this.load();
+            const result = {};
+            ids.forEach(function (id) {
+                result[id] = {
+                    id: id,
+                    val: rows[id],
+                    data: rows[id],
+                };
+            });
+            return result;
+        };
+
+        if (preload === true) {
+            this.load();
+        } else {
+            wait(200, this.load)
+        }
+
+        Object.assign(this, new EventOwner);
+        Object.assign(this, new lreDataCollection(this, getDataMapper(getDataValue.bind(this)).bind(this)));
 
     };
 
