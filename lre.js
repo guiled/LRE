@@ -730,6 +730,7 @@ function lre(_arg) {
      *               LreMultiChoice               *
      ** * * * * * * * * * * * * * * * * * * * * * */
     const lreMultiChoice = function () {
+        let checkMaxEnabled = false;
         let nbMax;
         const defaultCalculator = function () {
             return 1;
@@ -792,6 +793,7 @@ function lre(_arg) {
                 this.disableEvent('update');
                 this.value(valuesForMax.slice());
                 this.enableEvent('update');
+                this.cancelEvent('update');
                 return;
             }
             valuesForMax = newValue;
@@ -820,6 +822,7 @@ function lre(_arg) {
             this.lreType('multichoice');
             Object.assign(this, new lreDataReceiver(choiceCommon.setChoicesFromDataProvider.bind(this)));
             Object.assign(this, new lreDataCollection(this, getDataMapper(getDataValue.bind(this)).bind(this)));
+            this.on('update', checkMax);
             this.on('update', this.triggerDataChange);
             this.on('update', checkChanges.bind(this));
             this.setInitiated(true);
@@ -844,11 +847,7 @@ function lre(_arg) {
             }
             sumCalculator = arguments.length > 1 ? calculator : defaultCalculator;
             nbMax = nb;
-            if (nb > 0 || typeof nb === 'object' || typeof nb === 'function') {
-                this.on('update', checkMax);
-            } else {
-                this.off('update', checkMax);
-            }
+            checkMaxEnabled = (nb > 0 || typeof nb === 'object' || typeof nb === 'function');
         };
 
         // value is overloaded because value changing need to set choices again to be viewed
