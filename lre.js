@@ -12,7 +12,7 @@ function isNaN(val) {
     return Number.isNaN(parseInt(val));
 };
 
-function firstInit(shee) {
+function firstInit(sheet) {
     return false;
 };
 
