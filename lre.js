@@ -74,13 +74,11 @@ function stringify(obj, indent) {
 };
 
 // Main container
+let lreIntiated = false;
 function lre(_arg) {
-    const _log = log;
 
-    log = function () {
-        each(arguments, function (v) {
-            _log(v);
-        });
+    const initLre = function () {
+        overloadLog(log);
     };
 
     const sheets = {};
@@ -98,6 +96,15 @@ function lre(_arg) {
         noChoice: 'this component has no choice available for LRE. If this Choice component is filled with a table, we recommend to use script to fill it (see choiceComponent.populate()) instead of built-in "Table/ List Label" parameters',
         badText: 'this repeater entry has a text similar to ' + editingEntryText + '. That will cause some problem with edit event.',
     };
+
+    const overloadLog = function (_log) {
+        const save = _log;
+        log = function () {
+            each(arguments, function (v) {
+                save(v);
+            });
+        };
+    }
 
     function getLreSheet(sheet, reset) {
         const name = sheet.name();
@@ -1482,6 +1489,11 @@ function lre(_arg) {
             return persistingData.cmpData[dataName];
         }
     };
+
+    if (!lreIntiated) {
+        initLre();
+        lreIntiated = true;
+    }
 
     if (typeof _arg === 'function') {
         return function (_sheet) {
