@@ -1264,6 +1264,19 @@ function lre(_arg) {
             return dataMapper({ cb: transform });
         }
 
+        const toRow = function (valObject) {
+            if (valObject && valObject.data) {
+                const result = Object.assign({}, valObject);
+                Object.keys(valObject.data).forEach(function (v) {
+                    if (!result.hasOwnProperty(v)) {   // prevent accidental overwrite
+                        result[v] = valObject.data[v];
+                    }
+                });
+                return result;
+            }
+            return valObject;
+        }
+
         this.mapData = function (transform, setter) {
             if (!dataMapper) return;
             setter(mapper(transform));
@@ -1301,6 +1314,127 @@ function lre(_arg) {
 
         this.triggerDataChange = function () {
             this.trigger('dataChange');
+        };
+
+        this.find = function (searcher) {
+            const result = mapper(function (item, key, data) {
+                if (searcher(item, key, data)) {
+                    return toRow({
+                        id: key,
+                        val: item,
+                        data: data,
+                    });
+                }
+            });
+            return result.filter(Boolean);
+        };
+
+        this.toArray = function () {
+            return mapper(function (item, key, data) {
+                return toRow({
+                    id: key,
+                    val: item,
+                    data: data,
+                });
+            });
+        };
+
+        this.count = function () {
+            let cnt = 0;
+
+            mapper(function (item, key, data) {
+                cnt++;
+            });
+
+            return cnt;
+        };
+
+        const getValueGetter = function (args) {
+            let valueGetter = function (item, key, data) {
+                return item;
+            };
+            if (args.length > 0) {
+                if (typeof args[0] === 'string') {
+                    valueGetter = function (item, key, data) {
+                        return data[args[0]];
+                    };
+                } else if (typeof args[0] === 'function') {
+                    valueGetter = args[0];
+                }
+            }
+            return valueGetter;
+        };
+
+        const findByComparison = function (valueGetter, comparator) {
+            let foundObject, foundValue = null;
+
+            mapper(function (item, key, data) {
+                const val = valueGetter(item, key, data);
+                if (foundValue === null || comparator(val, foundValue)) {
+                    foundValue = val;
+                    foundObject = {
+                        id: key,
+                        val: item,
+                        data: data,
+                    };
+                }
+            });
+
+            return toRow(foundObject);
+        }
+
+        this.min = function (_column) {
+            return findByComparison(getValueGetter(arguments), function (a, b) {
+                return (a < b);
+            });
+        };
+
+        this.max = function (_column) {
+            return findByComparison(getValueGetter(arguments), function (a, b) {
+                return (a > b);
+            });
+        };
+
+        this.countDistinct = function (_column) {
+            const values = {};
+            const getValue = getValueGetter(arguments);
+
+            mapper(function (item, key, data) {
+                values[getValue(item, key, data)] = 1;
+            });
+
+            return Object.keys(values).length;
+        };
+
+        this.sum = function (_column) {
+            let sum = 0;
+            const getValue = getValueGetter(arguments);
+
+            mapper(function (item, key, data) {
+                let val = getValue(item, key, data);
+                if (!isNaN(val)) {
+                    sum += 1 * val;
+                }
+            });
+
+            return sum;
+        };
+
+        this.getBy = function (_column, value) {
+            const getValue = getValueGetter(arguments);
+            const foundObject = null;
+            mapper(function (item, key, data) {
+                let val = getValue(item, key, data);
+                if (val === value) {
+                    foundObject = {
+                        id: key,
+                        val: item,
+                        data: data,
+                    };
+                    return DataCollection.STOP_RESULT;
+                }
+            });
+            return toRow(foundObject);
         };
     };
 
