@@ -49,20 +49,20 @@ function stringify(obj, indent) {
         return stringify(obj, indent_);
     }
     if (typeof obj !== 'object' || obj === null || obj instanceof Array) {
-        switch(typeof obj) {
+        switch (typeof obj) {
             case 'function':
                 return '"function(){}"';
             case 'string':
                 return '"' + obj.replace(/\\/g, '\\\\').replace('"', '\\"') + '"';
-            case 'number': 
+            case 'number':
             case 'boolean':
                 return '' + obj;
             case 'function':
                 return 'null';
             case 'object':
-                if (obj instanceof Date)  return '"' + obj.toISOString() + '"';
+                if (obj instanceof Date) return '"' + obj.toISOString() + '"';
                 if (obj instanceof Array) return "[\n" + obj.map(recursive).join(",\n") + "\n" + indent + "]";
-                if (obj === null)         return 'null';
+                if (obj === null) return 'null';
             default:
                 return recursive(obj);
         }
@@ -560,7 +560,7 @@ function lre(_arg) {
         // The first arg is eventName
         // This second is the "value" to attach the event
         // The third is the callback
-         getEventArgs: function (args) {
+        getEventArgs: function (args) {
             let newArgs = [];
             if (args.length === 3) {
                 newArgs = [
@@ -830,7 +830,7 @@ function lre(_arg) {
                 this.trigger.apply(this, args);
             }
             each(values, (function (val) {
-                this.trigger(eventName +'[' + val + ']');
+                this.trigger(eventName + '[' + val + ']');
             }).bind(this));
         };
 
@@ -1250,14 +1250,14 @@ function lre(_arg) {
 
         const getFilteredDataMapper = function (filter) {
             return function (args) {
-                const newArgs = Object.assign({}, args, {filter: filter});
+                const newArgs = Object.assign({}, args, { filter: filter });
                 return dataMapper(newArgs);
             };
         };
 
         const getSortedDataMapper = function (sorter) {
             return function (args) {
-                const newArgs = Object.assign({}, args, {sorter: sorter});
+                const newArgs = Object.assign({}, args, { sorter: sorter });
                 return dataMapper(newArgs);
             };
         };
