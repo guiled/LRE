@@ -852,7 +852,7 @@ function lre(_arg) {
             valuesForMax = this.raw().value();
             this.lreType('multichoice');
             Object.assign(this, new lreDataReceiver(choiceCommon.setChoicesFromDataProvider.bind(this)));
-            Object.assign(this, new lreDataCollection(this, getDataMapper(getDataValue.bind(this)).bind(this)));
+            Object.assign(this, new lreDataCollection(this, DataCollection.getDataMapper(getDataValue.bind(this)).bind(this)));
             this.on('update', checkMax);
             this.on('update', this.triggerDataChange);
             this.on('update', checkChanges.bind(this));
@@ -1123,7 +1123,7 @@ function lre(_arg) {
             this.on('mouseenter', initStates);
             this.on('click', clickHandler);
             this.on('update', updateHandler);
-            Object.assign(this, new lreDataCollection(this, getDataMapper(getDataValue.bind(this)).bind(this)));
+            Object.assign(this, new lreDataCollection(this, DataCollection.getDataMapper(getDataValue.bind(this)).bind(this)));
             this.setInitiated(true);
         };
 
@@ -1213,31 +1213,47 @@ function lre(_arg) {
     /** * * * * * * * * * * * * * * * * * * * * * *
      *                DataCollection              *
      ** * * * * * * * * * * * * * * * * * * * * * */
-    const onlyResult = function (resultVal) {
-        return resultVal.result;
-    };
-
-    const getDataMapper = function (valueGetter) {
-        return function (args) {
-            const cb = args.cb;
-            const result = [];
-            const useFilter = (args.hasOwnProperty('filter'));
-            each(valueGetter(), function (value, id) {
-                if (!useFilter || args.filter(value.val, id)) {
-                    result.push({
-                        id: id,
-                        val: value.val,
-                        data: value.data,
-                        result: cb(value.val, id, value.data),
-                    });
+    const DataCollection = {
+        STOP: '__lreMustStop__',
+        STOP_RESULT:{},  // as of it is impossible to initialise with { [STOP]: true }, this object will be initialised just after
+        onlyResult: function (resultVal) {
+            return resultVal.result;
+        },
+        getDataMapper: function (valueGetter) {
+            return function (args) {
+                const cb = args.cb;
+                const result = [];
+                const useFilter = (args.hasOwnProperty('filter'));
+                const values = valueGetter();
+                let hasBeenStopped = false;
+                Object.keys(values).some(function (id) {
+                    let value = values[id];
+                    if (value.hasOwnProperty(DataCollection.STOP) && value[DataCollection.STOP]) {
+                        hasBeenStopped = true;
+                        return true;
+                    }
+                    if (!useFilter || args.filter(value.val, id, value.data)) {
+                        let res = cb(value.val, id, value.data)
+                        result.push({
+                            id: id,
+                            val: value.val,
+                            data: value.data,
+                            result: res,
+                        });
+                        if (res && res.hasOwnProperty(DataCollection.STOP) && res[DataCollection.STOP]) {
+                            hasBeenStopped = true;
+                            return true;
+                        }
+                    }
+                })
+                if (!hasBeenStopped && args.hasOwnProperty('sorter') && args.sorter) {
+                    result.sort(args.sorter);
                 }
-            });
-            if (args.hasOwnProperty('sorter') && args.sorter) {
-                result.sort(args.sorter);
-            }
-            return result.map(onlyResult);
-        };
-    };
+                return result.map(DataCollection.onlyResult);
+            };
+        },
+    }
+    DataCollection.STOP_RESULT[DataCollection.STOP] = true;
 
     const lreDataCollection = function (_args) {
         const dataSource = _args[0];
@@ -1377,7 +1393,7 @@ function lre(_arg) {
         }
 
         Object.assign(this, new EventOwner);
-        Object.assign(this, new lreDataCollection(this, getDataMapper(getDataValue.bind(this)).bind(this)));
+        Object.assign(this, new lreDataCollection(this, DataCollection.getDataMapper(getDataValue.bind(this)).bind(this)));
 
     };
 
