@@ -1259,9 +1259,14 @@ function lre(_arg) {
         const dataSource = _args[0];
         const dataMapper = _args[1];
 
+        const mapper = function (transform) {
+            if (!dataMapper) return;
+            return dataMapper({ cb: transform });
+        }
+
         this.mapData = function (transform, setter) {
             if (!dataMapper) return;
-            setter(dataMapper({cb: transform}));
+            setter(mapper(transform));
         };
 
         const getFilteredDataMapper = function (filter) {
