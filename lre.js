@@ -1316,7 +1316,7 @@ function lre(_arg) {
             this.trigger('dataChange');
         };
 
-        this.find = function (searcher) {
+        this.search = function (searcher) {
             const result = mapper(function (item, key, data) {
                 if (searcher(item, key, data)) {
                     return toRow({
