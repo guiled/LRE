@@ -489,7 +489,9 @@ function lre(_arg) {
             } else {
                 let val = sheet.getPendingData(this.realId());
                 if (typeof val === 'undefined') {
-                    return component.value();
+                    try {  // component.value() may failed
+                        val = component.value();
+                    } catch(e) {}
                 }
                 return val;
             }
