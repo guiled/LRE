@@ -491,7 +491,7 @@ function lre(_arg) {
                 if (typeof val === 'undefined') {
                     try {  // component.value() may failed
                         val = component.value();
-                    } catch(e) {}
+                    } catch (e) { }
                 }
                 return val;
             }
@@ -1179,14 +1179,26 @@ function lre(_arg) {
                 data: data,
             };
         };
-        const dataMappingKeepData = function (_cb) {
-            return function (item, key, data) {
-                return Object.assign({
-                    id: key,
-                    val: item,
-                    data: data,
-                }, _cb(item, key, data));
-            };
+        const dataMappingKeepData = function (_mapper) {
+            if (typeof _mapper === 'function') {
+                return function (item, key, data) {
+                    return Object.assign({
+                        id: key,
+                        val: item,
+                        data: data,
+                    }, _mapper(item, key, data));
+                };
+            } else if (typeof _mapper === 'string') {
+                return function (item, key, data) {
+                    return {
+                        id: key,
+                        val: data[_mapper],
+                        data: data,
+                    };
+                };
+            } else {
+                log('[LRE] Invalid data mapper. Must be a string or a function. ' + (typeof _mapper) + ' given.')
+            }
         };
         let dataSetter = _args[0];
 
@@ -1194,7 +1206,7 @@ function lre(_arg) {
             source.mapData(dataMapping, dataSetter);
         };
 
-        this.populateFrom = function (collection, mapping) {
+        this.populateFrom = function (collection, mapping, dependencies) {
             if (dataOrigin) {
                 dataOrigin.off('dataChange', populate);
             }
@@ -1203,6 +1215,11 @@ function lre(_arg) {
                 dataMapping = dataMappingKeepData(mapping);
             }
             dataOrigin.on('dataChange', populate);
+            if (dependencies && dependencies.forEach) {
+                dependencies.forEach(function (cmp) {
+                    cmp.on('update', refresh);
+                });
+            }
             this.refresh = refresh;
             this.refresh();
         };
@@ -1217,7 +1234,7 @@ function lre(_arg) {
      ** * * * * * * * * * * * * * * * * * * * * * */
     const DataCollection = {
         STOP: '__lreMustStop__',
-        STOP_RESULT:{},  // as of it is impossible to initialise with { [STOP]: true }, this object will be initialised just after
+        STOP_RESULT: {},  // as of it is impossible to initialise with { [STOP]: true }, this object will be initialised just after
         onlyResult: function (resultVal) {
             return resultVal.result;
         },
