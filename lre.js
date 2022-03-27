@@ -1308,7 +1308,30 @@ function lre(_arg) {
             };
         };
 
+        const valSorter = function (a, b) {
+            return a.val < b.val ? -1 : (a.val > b.val ? 1 : 0);
+        }
+
+        const columnSorter = function (column) {
+            return function (a, b) {
+                let aval, bval;
+                if (a && isObject(a.data) && b && isObject(b.data)) {
+                    aval = a.data[column];
+                    bval = b.data[column];
+                } else if (a && isObject(a.val) && b && isObject(b.val)) {
+                    aval = a.val[column];
+                    bval = b.val[column];
+                }
+                return aval < bval ? -1 : (aval > bval ? 1 : 0);
+            }
+        };
+
         const getSortedDataMapper = function (sorter) {
+            if (arguments.length === 0 || typeof sorter === 'undefinde' || !sorter) {
+                sorter = valSorter;
+            } else if (typeof sorter === 'string') {
+                sorter = columnSorter(sorter)
+            }
             return function (args) {
                 const newArgs = Object.assign({}, args, { sorter: sorter });
                 return dataMapper(newArgs);
@@ -1320,7 +1343,13 @@ function lre(_arg) {
         };
 
         this.sort = function (sorter) {
-            return new lreDerivedDataCollection(dataSource, getSortedDataMapper(sorter));
+            let sortedDataMapper;
+            if (arguments.length === 0) {
+                sortedDataMapper = getSortedDataMapper();
+            } else {
+                sortedDataMapper = getSortedDataMapper(sorter);
+            }
+            return new lreDerivedDataCollection(dataSource, sortedDataMapper);
         };
 
         this.sortBy = function (sortedValueExtractor) {
