@@ -28,7 +28,7 @@ function profilingEnd(name) {
 };
 
 function isNaN(val) {
-    return Number.isNaN(parseInt(val));
+    return Number.isNaN(Number(val));
 };
 
 function firstInit(sheet) {
@@ -59,6 +59,7 @@ function deepEqual(x, y) {
 };
 
 // Can be remove when JSON.stringify() is available
+let LRE_AUTONUM = false;
 function stringify(obj, indent) {
     if (arguments.length === 1) {
         indent = '';
@@ -513,6 +514,9 @@ function lre(_arg) {
                     try {  // component.value() may failed
                         val = component.value();
                     } catch (e) { }
+                }
+                if (LRE_AUTONUM && !isNaN(val)) {
+                    return Number(val)
                 }
                 return val;
             }
