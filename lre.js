@@ -330,7 +330,9 @@ function lre(_arg) {
                 }
             }
             eventStates[eventName] = true;
-            events[eventName].push(handler);
+            if (!events[eventName].includes(handler)) {
+                events[eventName].push(handler);
+            }
         };
 
         // Cancel the next callbacks of an evet
