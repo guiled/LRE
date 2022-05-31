@@ -1627,17 +1627,21 @@ function lre(_arg) {
         const groupedDataSet = function () {
             const dataToSend = {};
             let added = 0;
-            for (let i = 0; i < maxDataSet && pendingDataToSet.length > 0; i++) {
+            let analysed = 0;
+            while (added < maxDataSet && pendingDataToSet.length > 0) {
                 let data = pendingDataToSet.shift();
                 delete pendingDataToSetIndex[data.k];
-                dataToSend[data.k] = data.v;
-                added++;
+                if (typeof data.v !== 'undefined' && !isNaN(data.v)) {
+                    dataToSend[data.k] = data.v;
+                    added++;
+                }
+                analysed++;
             }
             isDataSetPending = (pendingDataToSet.length > 0);
             if (isDataSetPending) {
                 for (k in pendingDataToSetIndex) {
-                    if (pendingDataToSetIndex[k] >= added) {
-                        pendingDataToSetIndex[k] -= added;
+                    if (pendingDataToSetIndex[k] >= analysed) {
+                        pendingDataToSetIndex[k] -= analysed;
                     }
                 }
                 wait(asyncDataSetAgainDelay, groupedDataSet);
