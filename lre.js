@@ -8,6 +8,25 @@ function strlen(str) {
     return str.split('').length;
 };
 
+function time(fcn) {
+    const start = Date.now();
+    fcn();
+    log('Time : ' + (Date.now() - start) + 'ms')
+};
+
+const lreProfiling = {};
+
+function profilingStart(name) {
+    if (!lreProfiling.hasOwnProperty(name)) {
+        lreProfiling[name] = 0;
+    }
+    lreProfiling[name] -= Date.now();
+};
+
+function profilingEnd(name) {
+    lreProfiling[name] += Date.now();
+};
+
 function isNaN(val) {
     return Number.isNaN(parseInt(val));
 };
