@@ -1621,6 +1621,8 @@ function lre(_arg) {
         let isDataSetPending = false;
         let pendingDataToSet = [];
         let pendingDataToSetIndex = {};
+        let pendingDataProcessed;
+
 
         const groupedDataSet = function () {
             const dataToSend = {};
@@ -1641,6 +1643,13 @@ function lre(_arg) {
                 wait(asyncDataSetAgainDelay, groupedDataSet);
             }
             sheet.setData(dataToSend);
+            if (!isDataSetPending && pendingDataProcessed) {
+                try {
+                    pendingDataProcessed();
+                } catch (e) {
+                    lreLog('Error occured in pendingDataProcessed : ' + e.toString())
+                }
+            }
         };
 
         this.setData = function (data) {
@@ -1663,6 +1672,10 @@ function lre(_arg) {
                 return pendingDataToSet[pendingDataToSetIndex[id]].v;
             }
             return;
+        };
+
+        this.onPendingDataProcessed = function (cb) {
+            pendingDataProcessed = cb;
         };
 
         this.getData = sheet.getData;
