@@ -504,7 +504,6 @@ function lre(_arg) {
         this.removeClass = component.removeClass;
         this.value = function () {
             if (arguments.length > 0) {
-                result = component.value.apply(component, arguments);
                 let data = {};
                 data[this.realId()] = arguments[0];
                 sheet.setData(data);
