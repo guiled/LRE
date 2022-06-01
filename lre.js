@@ -1554,7 +1554,22 @@ function lre(_arg) {
         const rows = {};
         let loaded = false;
 
-        this.get = rawTable.get;
+        // transformData is called at every "data get"
+        // in order to allow LRE_AUTONUM changes on runtime
+        const transformData = function (row) {
+            if (!LRE_AUTONUM) return row;
+            const result = {};
+            for (k in row) {
+                result[k] = isNaN(row[k]) ? row[k] : Number(row[k]);
+            }
+            return result;
+        };
+
+        this.get = function (id) {
+            // id can be number so we force it as string because LR only accepts string 
+            return transformData(loaded ? rows[id] : rawTable.get('' + id));
+        };
+
         this.random = rawTable.random;
 
         this.id = function () {
@@ -1564,7 +1579,7 @@ function lre(_arg) {
         this.each = function (cb) {
             this.load();
             ids.every(function (id) {
-                const result = cb(rows[id]);
+                const result = cb(transformData(rows[id]));
                 return (result === undefined || result != false);
             });
         };
@@ -1590,8 +1605,8 @@ function lre(_arg) {
             ids.forEach(function (id) {
                 result[id] = {
                     id: id,
-                    val: rows[id],
-                    data: rows[id],
+                    val: transformData(rows[id]),
+                    data: transformData(rows[id]),
                 };
             });
             return result;
