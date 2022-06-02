@@ -59,7 +59,6 @@ function deepEqual(x, y) {
 };
 
 // Can be remove when JSON.stringify() is available
-let LRE_AUTONUM = false;
 function stringify(obj, indent) {
     if (arguments.length === 1) {
         indent = '';
@@ -93,6 +92,7 @@ function stringify(obj, indent) {
     }).join(",\n") + "\n" + indent + "}";
 };
 
+let LRE_AUTONUM = false;
 // Main container
 let lreIntiated = false;
 function lre(_arg) {
@@ -330,10 +330,10 @@ function lre(_arg) {
                     }
                 }
             }
-            eventStates[eventName] = true;
             if (!events[eventName].includes(handler)) {
                 events[eventName].push(handler);
             }
+            eventStates[eventName] = true;
         };
 
         // Cancel the next callbacks of an evet
@@ -520,7 +520,13 @@ function lre(_arg) {
                 return val;
             }
         };
-        this.rawValue = component.rawValue;
+        this.rawValue = function () {
+            const val = component.rawValue();
+            if (LRE_AUTONUM && !isNaN(val)) {
+                return Number(val)
+            }
+            return val;
+        }
         this.virtualValue = component.virtualValue;
         this.text = component.text;
         this.visible = component.visible;
