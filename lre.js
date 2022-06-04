@@ -1655,7 +1655,7 @@ function lre(_arg) {
             while (added < maxDataSet && pendingDataToSet.length > 0) {
                 let data = pendingDataToSet.shift();
                 delete pendingDataToSetIndex[data.k];
-                if (typeof data.v !== 'undefined' && !isNaN(data.v)) {
+                if (typeof data.v !== 'undefined' && !Number.isNaN(data.v)) {
                     dataToSend[data.k] = data.v;
                     added++;
                 }
