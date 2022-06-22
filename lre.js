@@ -58,6 +58,18 @@ function deepEqual(x, y) {
         return false;
 };
 
+function deepClone(val) {
+    if (typeof val === 'object' || typeof val === 'array') {
+        let result = Array.isArray(val) ? [] : {};
+        each(val, function (v, k) {
+            result[k] = deepClone(v);
+        });
+        return result;
+    } else {
+        return val;
+    }
+};
+
 // Can be remove when JSON.stringify() is available
 function stringify(obj, indent) {
     if (arguments.length === 1) {
@@ -1026,18 +1038,6 @@ function lre(_arg) {
                     component.trigger('edit', cmp, entryId, entryData);
                 }
             });
-        };
-
-        const deepClone = function (val) {
-            if (typeof val === 'object' || typeof val === 'array') {
-                let result = Array.isArray(val) ? [] : {};
-                each(val, function (v, k) {
-                    result[k] = deepClone(v);
-                });
-                return result;
-            } else {
-                return val;
-            }
         };
 
         const saveValues = function (component, value) {
