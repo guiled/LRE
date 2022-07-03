@@ -242,7 +242,7 @@ function lre(_arg) {
             if (!this.inCache(realId)) {
                 return null;
             }
-            return components[realId]
+            return components[realId];
         };
 
         this.children = function (realId) {
@@ -1198,6 +1198,100 @@ function lre(_arg) {
     };
 
     /** * * * * * * * * * * * * * * * * * * * * * *
+     *                  LreIcon                   *
+     ** * * * * * * * * * * * * * * * * * * * * * */
+    const lreIcon = function () {
+        let currentTogglingValue = null;
+        let togglingValues = [];
+        let togglingData = {};
+        let cmpValue = null;
+
+        const setTogglingValue = function (val) {
+            if (!val || !togglingData[val]) {
+                return;
+            }
+            if (currentTogglingValue && togglingData[currentTogglingValue] && togglingData[currentTogglingValue].hasOwnProperty('classes')) {
+                each(togglingData[currentTogglingValue].classes, this.removeClass);
+            }
+            if (togglingData[val].hasOwnProperty('icon')) {
+                cmpValue(togglingData[val].icon);
+            } else if (typeof togglingData[val] === 'string') {
+                cmpValue(togglingData[val]);
+            }
+            if (togglingData[val].hasOwnProperty('classes')) {
+                each(togglingData[val].classes, this.addClass);
+            }
+            currentTogglingValue = val;
+            this.data('togglingValue', val, true);
+        };
+
+        const iconValue = function () {
+            if (!togglingValues) {
+                return this.value.call(this, arguments);
+            }
+            if (arguments.length === 0) {
+                return currentTogglingValue;
+            } else {
+                setTogglingValue.call(this, arguments[0]);
+            }
+        };
+
+        const handleToggleClick = function () {
+            const index = togglingValues.findIndex(function (e) {
+                return currentTogglingValue === e;
+            });
+            if (typeof index === 'undefined') {
+                index = -1;
+            }
+            index++;
+            if (index >= togglingValues.length) {
+                index = 0;
+            }
+            setTogglingValue.call(this, togglingValues[index]);
+        };
+
+        this.toggling = function (data, defaultValue) {
+            togglingData = data;
+            if (togglingValues.length === 0) {
+                // Add click handler only if component is not yet toggling
+                this.on('click', handleToggleClick);
+            }
+            togglingValues = Object.keys(data);
+            if (togglingValues.length === 0) {
+                return;
+            }
+            const savedValue = this.data('togglingValue');
+            if (savedValue && togglingValues.includes(savedValue)) {
+                setTogglingValue.call(this, savedValue);
+            } else if (togglingValues.includes(defaultValue)) {
+                setTogglingValue.call(this, defaultValue);
+            } else {
+                const rawValue = this.raw().value();
+                const newVal = togglingValues.find(function (k) {
+                    return k === rawValue;
+                });
+                if (typeof newVal !== 'undefined') {
+                    setTogglingValue.call(this, defaultValue);
+                }
+            }
+
+        };
+
+        this.untoggling = function () {
+            togglingData = {};
+            togglingValues = [];
+            this.off('click', handleClick);
+        };
+
+        this.initiate = function () {
+            this.lreType('icon');
+            cmpValue = this.value.bind(this);
+            this.value = iconValue.bind(this);
+            this.setInitiated(true);
+        };
+    };
+
+    /** * * * * * * * * * * * * * * * * * * * * * *
      *                DataReceiver                *
      ** * * * * * * * * * * * * * * * * * * * * * */
     const lreDataReceiver = function (_args) {
@@ -1772,6 +1866,13 @@ function lre(_arg) {
             return cmp;
         };
 
+        this.initIcon = function (id) {
+            let cmp = getComponent(this, id);
+            Object.assign(cmp, new lreIcon);
+            cmp.initiate();
+            return cmp;
+        };
+
         this.initRepeater = function (id) {
             let cmp = getComponent(this, id);
             Object.assign(cmp, new lreRepeater);
@@ -1901,8 +2002,9 @@ function lre(_arg) {
 
     if (typeof _arg === 'function') {
         return function (_sheet) {
-            const id = _sheet.id()
-            lreLog('INIT on ' + id + '(' + _sheet.name() + ' #' + _sheet.getSheetId() + ')');
+            const id = _sheet.id();
+            const sheetId = _sheet.getSheetId();
+            lreLog('INIT on ' + id + '(' + _sheet.name() + (sheetId ? ' #' + sheetId : '') + ')');
             // The wait may allow a faster display
             wait(0, function () {
                 let data = _sheet.getData();
