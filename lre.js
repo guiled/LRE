@@ -1188,6 +1188,8 @@ function lre(_arg) {
                     cmp.data('saved', true);
                     const results = component.trigger('save', cmp, entryId, entryData, {});
                     overloadObject(newData, results);
+                    const resultNew = component.trigger('new', cmp, entryId, entryData, {});
+                    overloadObject(newData, resultNew);
                     applyValuesToEntry(component, entryId, newData);
                     somethingHasChanged = true;
                 }
