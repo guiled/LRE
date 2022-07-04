@@ -287,39 +287,54 @@ function lre(_arg) {
     /** * * * * * * * * * * * * * * * * * * * * * *
      *                  EventOwner                *
      ** * * * * * * * * * * * * * * * * * * * * * */
+    const existingRawEvents = ['click', 'update', 'mouseenter', 'mouseleave', 'keyup'];
     const EventOwner = function (args) {
-        const existingRawEvents = ['click', 'update', 'mouseenter', 'mouseleave', 'keyup'];
         const events = {};
-        const eventStates = {};
         const synonyms = {
             //'change': 'update'
         }
         const canceledEvents = [];
 
         const eventIsEnabled = function (eventName) {
-            return !eventStates.hasOwnProperty(eventName) || eventStates[eventName] || !canceledEvents.includes(eventName);
+            return !events.hasOwnProperty(eventName) || events[eventName].state || !canceledEvents.includes(eventName);
         };
 
-        const runEvents = function (component, eventName, delegated) {
+        const containingRepeater = function (rawCmp) {
+            let current = rawCmp.parent().find(rawCmp.id()).parent();
+            let i = 0;
+            let found = false;
+            while (current && !found && i < 100) {
+                // current is the entry containing rawCmp, current's parent is the repeater
+                found = (current.id() === rawCmp.index());
+                current = current.parent();
+                i++;
+            }
+            return current;
+        };
+
+        const runEvents = function (component, eventName) {
             return function (rawTarget, args) {
                 if (!eventIsEnabled(eventName)) return;
                 if (arguments.length < 2) {
                     args = [];
                 }
-                if (!events.hasOwnProperty(eventName) || !events[eventName] || events[eventName].length === 0) {
+                if (!events.hasOwnProperty(eventName) || !events[eventName] || !Array.isArray(events[eventName].handlers) || events[eventName].handlers.length === 0) {
                     return;
                 }
+                const event = events[eventName];
                 let argsWithComponent = [];
-                if (delegated && rawTarget.index()) {
-                    argsWithComponent.push(component.find(rawTarget.index() + repeaterIdSeparator + rawTarget.id()));
-                } else if (delegated) {
-                    argsWithComponent.push(component.find(rawTarget.id()));
+                let cmp = null;
+                if (event.delegated && rawTarget.index()) {
+                    cmp = component.find(rawTarget.index() + repeaterIdSeparator + rawTarget.id());
+                } else if (event.delegated) {
+                    cmp = component.find(rawTarget.id());
                 } else {
-                    argsWithComponent.push(component);
+                    cmp = component;
                 }
+                argsWithComponent.push(cmp);
                 argsWithComponent = argsWithComponent.concat(args);
                 let results = [];
-                events[eventName].some(function (fcn) {
+                event.handlers.some(function (fcn) {
                     if (!eventIsEnabled(eventName)) {
                         return true;
                     }
@@ -343,21 +358,28 @@ function lre(_arg) {
             if (synonyms.hasOwnProperty(event)) {
                 event = synonyms[event];
             }
-            if (!events.hasOwnProperty(eventName)) {
-                events[eventName] = [];
+            if (!events.hasOwnProperty(eventName) || events[eventName].handlers.length === 0) {
+                events[eventName] = {
+                    name: eventName,
+                    event: event,
+                    delegated: delegated,
+                    subComponent: delegated ? subComponent : null,
+                    state: true,
+                    handlers: [],
+                    rawHandler: runEvents(this, eventName),
+                };
                 if (existingRawEvents.includes(event)) {
                     if (delegated) {
                         // there is a bug in Let's role that prevent adding delegated event on same instance
-                        this.sheet().raw().get(this.realId()).on(event, subComponent, runEvents(this, eventName, true))
+                        this.sheet().raw().get(this.realId()).on(event, subComponent, events[eventName].rawHandler);
                     } else {
-                        this.raw().on(event, runEvents(this, eventName, false))
+                        this.raw().on(event, events[eventName].rawHandler);
                     }
                 }
             }
-            if (!events[eventName].includes(handler)) {
-                events[eventName].push(handler);
+            if (!events[eventName].handlers.includes(handler)) {
+                events[eventName].handlers.push(handler);
             }
-            eventStates[eventName] = true;
         };
 
         // Cancel the next callbacks of an evet
@@ -376,26 +398,42 @@ function lre(_arg) {
         }
 
         this.disableEvent = function (event) {
-            eventStates[event] = false;
+            events[event].state = false;
         };
 
         this.enableEvent = function (event) {
-            eventStates[event] = true;
+            events[event].state = true;
         }
 
-        this.off = function (event, handler) {
+        this.off = function (eventName, handler) {
+            if (!events.hasOwnProperty(eventName)) {
+                return;
+            }
+            const event = events[eventName];
             if (handler !== undefined) {
-                const idx = events[event].indexOf(handler);
+                const idx = event.handlers.indexOf(handler);
                 if (handler !== -1) {
-                    events[event].splice(idx, 1);
+                    event.handlers.splice(idx, 1);
                 }
             } else {
-                events[event] = []
+                event.handlers = []
+            }
+            if (event.handlers.length === 0) {
+                this.raw().off(eventName);
+
             }
         };
 
         this.trigger = function (eventName) {
-            return runEvents(this, eventName, false)(this.raw(), Array.prototype.slice.call(arguments, 1));
+            return runEvents(this, eventName)(this.raw(), Array.prototype.slice.call(arguments, 1));
+        };
+
+        this.transferEvents = function (rawCmp) {
+            each(events, (function (event) {
+                if (!event.delegated) {  // delegated event are automaticaly transfered
+                    rawCmp.on(event.event, event.rawHandler);
+                }
+            }).bind(this));
         };
     };
 
