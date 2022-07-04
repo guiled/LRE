@@ -1153,6 +1153,13 @@ function lre(_arg) {
                         overloadObject(newData, results);
                         somethingHasChanged = true;
                     }
+                    // Refresh all raw component of each entry children
+                    cmp.knownChildren().forEach(function (realId) {
+                        const child = cmp.sheet().get(realId);
+                        if (child && child.exists()) {
+                            child.refreshRaw();
+                        }
+                    });
                     if (cmp.hasData('saved') && !cmp.data('saved')) {
                         cmp.data('saved', true);
                         const results = component.trigger('save', cmp, entryId, newValues[entryId], entryData);
@@ -1165,8 +1172,8 @@ function lre(_arg) {
                             oldChildren = [];
                         }
                         const addedChildren = component.sheet().knownChildren(cmp);
-                        each(addedChildren, function (realId) {
-                            if (!oldChildren.includes(realId)) {
+                        each(oldChildren, function (realId) {
+                            if (!addedChildren.includes(realId)) {
                                 component.sheet().forget(realId);
                             }
                         });
