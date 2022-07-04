@@ -600,6 +600,12 @@ function lre(_arg) {
         this.raw = function () {
             return component;
         }
+        this.refreshRaw = function () {
+            const newRaw = sheet.raw().get(realId);
+            this.transferEvents(newRaw)
+            component = newRaw;
+            return this;
+        };
         this.toggle = function () {
             if (component.visible()) {
                 return this.hide();
@@ -1928,6 +1934,14 @@ function lre(_arg) {
 
         this.raw = function () {
             return sheet;
+        };
+
+        this.refreshRaw = function () {
+            const newRaw = sheet.raw().get(realId);
+            this.transferEvents(newRaw)
+            component = newRaw;
+
+            return this;
         };
 
         this.sheet = function () {
