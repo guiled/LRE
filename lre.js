@@ -104,6 +104,18 @@ function stringify(obj, indent) {
     }).join(",\n") + "\n" + indent + "}";
 };
 
+function componentExists(sheet, realId) {
+    // in let's role, return in a try{} doesn't exit from function block, so use a variable instead
+    let result = true;
+    try {
+        sheet.raw().get(realId).addClass('__lre_dummy');
+        sheet.raw().get(realId).removeClass('__lre_dummy');
+    } catch (e) {
+        result = false;
+    }
+    return result;
+};
+
 let LRE_AUTONUM = false;
 // Main container
 let lreIntiated = false;
@@ -584,15 +596,8 @@ function lre(_arg) {
             return lreRepeater;
         };
         this.exists = function () {
-            // in let's role, return in a try{} doesn't exit from function block, so use a variable instead
-            let result = true;
-            try {
-                sheet.get(realId).addClass('__lre_dummy');
-                sheet.get(realId).removeClass('__lre_dummy');
-            } catch (e) {
-                result = false;
-            }
-            return result;
+            return componentExists(sheet, realId);
+
         };
     };
 
