@@ -597,7 +597,10 @@ function lre(_arg) {
         };
         this.exists = function () {
             return componentExists(sheet, realId);
+        };
 
+        this.knownChildren = function () {
+            return sheet.knownChildren(this);
         };
     };
 
