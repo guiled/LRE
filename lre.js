@@ -1936,6 +1936,7 @@ function lre(_arg) {
 
         this.initRepeater = function (id) {
             let cmp = getComponent(this, id);
+            if (cmp && cmp.lreType && cmp.lreType() === 'repeater') return cmp;
             Object.assign(cmp, new lreRepeater);
             cmp.initiate();
             return cmp;
