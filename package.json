@@ -1,0 +1,19 @@
+{
+  "name": "letsroleenhanced",
+  "version": "7.0.0",
+  "main": "src/lre.ts",
+  "license": "MIT",
+  "devDependencies": {
+    "@swc/cli": "^0.1.57",
+    "@swc/core": "^1.2.226",
+    "@types/node": "^18.7.14",
+    "colors": "^1.4.0",
+    "diff": "^5.1.0",
+    "esbuild": "^0.15.3",
+    "json-colorizer": "^2.2.2"
+  },
+  "scripts": {
+    "build": "node esbuild.config.mjs >/dev/null && npx tsx transpile.ts > build/lre.js",
+    "test": "npx tsx test.ts"
+  }
+}
