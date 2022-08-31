@@ -10,7 +10,8 @@
     "colors": "^1.4.0",
     "diff": "^5.1.0",
     "esbuild": "^0.15.3",
-    "json-colorizer": "^2.2.2"
+    "json-colorizer": "^2.2.2",
+    "tsx": "^3.9.0"
   },
   "scripts": {
     "build": "node esbuild.config.mjs >/dev/null && npx tsx transpile.ts > build/lre.js",
