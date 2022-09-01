@@ -1267,21 +1267,76 @@ function lre(_arg) {
         let togglingData = {};
         let cmpValue = null;
 
+        const applyTogglingData = function (data) {
+            const sheet = this.sheet();
+            if (data.hasOwnProperty('classes')) {
+                each(data.classes, this.addClass);
+            }
+            if (data.hasOwnProperty('showflex')) {
+                each(data.showflex, function (id) {
+                    sheet.get(id).addClass('d-flex').removeClass('d-none');
+                });
+            }
+            if (data.hasOwnProperty('show')) {
+                each(data.show, function (id) {
+                    sheet.get(id).removeClass('d-none');
+                });
+            }
+            if (data.hasOwnProperty('hideflex')) {
+                each(data.hideflex, function (id) {
+                    sheet.get(id).removeClass('d-flex').addClass('d-none');
+                });
+            }
+            if (data.hasOwnProperty('hide')) {
+                each(data.hide, function (id) {
+                    sheet.get(id).addClass('d-none');
+                });
+            }
+        };
+
+        const unapplyTogglingData = function (data) {
+            const sheet = this.sheet();
+            if (data.hasOwnProperty('classes')) {
+                each(data.classes, this.removeClass);
+            }
+            if (data.hasOwnProperty('showflex')) {
+                each(data.showflex, function (id) {
+                    sheet.get(id).removeClass('d-flex').addClass('d-none');
+                });
+            }
+            if (data.hasOwnProperty('show')) {
+                each(data.show, function (id) {
+                    sheet.get(id).addClass('d-none');
+                });
+            }
+            if (data.hasOwnProperty('hideflex')) {
+                each(data.hideflex, function (id) {
+                    sheet.get(id).addClass('d-flex').removeClass('d-none');
+                });
+            }
+            if (data.hasOwnProperty('hide')) {
+                each(data.hide, function (id) {
+                    sheet.get(id).removeClass('d-none');
+                });
+            }
+        };
+
         const setTogglingValue = function (val) {
             if (!val || !togglingData[val]) {
                 return;
             }
-            if (currentTogglingValue && togglingData[currentTogglingValue] && togglingData[currentTogglingValue].hasOwnProperty('classes')) {
-                each(togglingData[currentTogglingValue].classes, this.removeClass);
-            }
+            togglingValues.filter(function (v) {
+                return ((currentTogglingValue === null && v !== val) || v === currentTogglingValue);
+            }).forEach((function (v) {
+                unapplyTogglingData.call(this, togglingData[v]);
+            }).bind(this));
+
             if (togglingData[val].hasOwnProperty('icon')) {
                 cmpValue(togglingData[val].icon);
             } else if (typeof togglingData[val] === 'string') {
                 cmpValue(togglingData[val]);
             }
-            if (togglingData[val].hasOwnProperty('classes')) {
-                each(togglingData[val].classes, this.addClass);
-            }
+            applyTogglingData.call(this, togglingData[val]);
             currentTogglingValue = val;
             this.data('togglingValue', val, true);
         };
@@ -1315,7 +1370,7 @@ function lre(_arg) {
             togglingData = data;
             if (togglingValues.length === 0) {
                 // Add click handler only if component is not yet toggling
-                this.on('click', handleToggleClick);
+                this.on('click', handleToggleClick.bind(this));
             }
             togglingValues = Object.keys(data);
             if (togglingValues.length === 0) {
@@ -1335,7 +1390,6 @@ function lre(_arg) {
                     setTogglingValue.call(this, defaultValue);
                 }
             }
-
         };
 
         this.untoggling = function () {
