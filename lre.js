@@ -35,6 +35,18 @@ function firstInit(sheet) {
     return false;
 };
 
+function arrayDiff(a, b) {
+    if (!Array.isArray(a) || !Array.isArray(b)) return [];
+    return a.filter(function (i) {
+        return !b.includes(i);
+    });
+}
+
+function arrayMergeUnique(a, b) {
+    if (!Array.isArray(a) || !Array.isArray(b)) return [];
+    return a.concat(b.filter(function (v) { return !a.includes(v) }));
+}
+
 function deepEqual(x, y) {
     if (x === y) {
         return true;
@@ -1266,69 +1278,51 @@ function lre(_arg) {
         let togglingValues = [];
         let togglingData = {};
         let cmpValue = null;
+        let saveTogglingData;
 
-        const applyTogglingData = function (data) {
-            const sheet = this.sheet();
-            if (data.hasOwnProperty('classes')) {
-                each(data.classes, this.addClass);
-            }
-            if (data.hasOwnProperty('showflex')) {
-                each(data.showflex, function (id) {
-                    sheet.get(id).addClass('d-flex').removeClass('d-none');
-                });
-            }
-            if (data.hasOwnProperty('show')) {
-                each(data.show, function (id) {
-                    sheet.get(id).removeClass('d-none');
-                });
-            }
-            if (data.hasOwnProperty('hideflex')) {
-                each(data.hideflex, function (id) {
-                    sheet.get(id).removeClass('d-flex').addClass('d-none');
-                });
-            }
-            if (data.hasOwnProperty('hide')) {
-                each(data.hide, function (id) {
-                    sheet.get(id).addClass('d-none');
-                });
-            }
+        const manageAddedRemoved = function (oldData, newData, prop, addCB, delCB) {
+            const oldArray = oldData.hasOwnProperty(prop) ? oldData[prop] : [];
+            const newArray = newData.hasOwnProperty(prop) ? newData[prop] : [];
+            arrayDiff(oldArray, newArray).forEach(delCB);
+            arrayDiff(newArray, oldArray).forEach(addCB);
         };
 
-        const unapplyTogglingData = function (data) {
-            const sheet = this.sheet();
-            if (data.hasOwnProperty('classes')) {
-                each(data.classes, this.removeClass);
-            }
-            if (data.hasOwnProperty('showflex')) {
-                each(data.showflex, function (id) {
-                    sheet.get(id).removeClass('d-flex').addClass('d-none');
-                });
-            }
-            if (data.hasOwnProperty('show')) {
-                each(data.show, function (id) {
-                    sheet.get(id).addClass('d-none');
-                });
-            }
-            if (data.hasOwnProperty('hideflex')) {
-                each(data.hideflex, function (id) {
+        const changeTogglingData = function (oldData, newData) {
+            wait(0, function () {
+                const sheet = this.sheet();
+                const showflex = function (id) {
                     sheet.get(id).addClass('d-flex').removeClass('d-none');
-                });
-            }
-            if (data.hasOwnProperty('hide')) {
-                each(data.hide, function (id) {
+                };
+                const hideflex = function (id) {
+                    sheet.get(id).addClass('d-none').removeClass('d-flex');
+                }
+                const show = function (id) {
                     sheet.get(id).removeClass('d-none');
-                });
-            }
+                };
+                const hide = function (id) {
+                    sheet.get(id).addClass('d-none');
+                }
+                manageAddedRemoved(oldData, newData, 'classes', this.addClass, this.removeClass);
+                manageAddedRemoved(oldData, newData, 'showflex', showflex, hideflex);
+                manageAddedRemoved(oldData, newData, 'hideflex', hideflex, showflex);
+                manageAddedRemoved(oldData, newData, 'show', show, hide);
+                manageAddedRemoved(oldData, newData, 'hide', hide, show);
+            }.bind(this));
         };
 
         const setTogglingValue = function (val) {
             if (!val || !togglingData[val]) {
                 return;
             }
+            const oldData = {
+                classes: [], show: [], hide: [], showflex: [], hideflex: [],
+            };
             togglingValues.filter(function (v) {
                 return ((currentTogglingValue === null && v !== val) || v === currentTogglingValue);
             }).forEach((function (v) {
-                unapplyTogglingData.call(this, togglingData[v]);
+                for (k in oldData) {
+                    oldData[k] = arrayMergeUnique(oldData[k], togglingData[v][k]);
+                }
             }).bind(this));
 
             if (togglingData[val].hasOwnProperty('icon')) {
@@ -1336,9 +1330,9 @@ function lre(_arg) {
             } else if (typeof togglingData[val] === 'string') {
                 cmpValue(togglingData[val]);
             }
-            applyTogglingData.call(this, togglingData[val]);
+            changeTogglingData.call(this, oldData, togglingData[val]);
             currentTogglingValue = val;
-            this.data('togglingValue', val, true);
+            saveTogglingData && this.data('togglingValue', val, true);
         };
 
         const iconValue = function () {
@@ -1366,7 +1360,7 @@ function lre(_arg) {
             setTogglingValue.call(this, togglingValues[index]);
         };
 
-        this.toggling = function (data, defaultValue) {
+        this.toggling = function (data, defaultValue, save) {
             togglingData = data;
             if (togglingValues.length === 0) {
                 // Add click handler only if component is not yet toggling
@@ -1376,7 +1370,14 @@ function lre(_arg) {
             if (togglingValues.length === 0) {
                 return;
             }
-            const savedValue = this.data('togglingValue');
+            if (arguments.length < 3) {
+                save = true;
+            }
+            if (arguments.length < 2) {
+                defaultValue = togglingValues[0];
+            }
+            saveTogglingData = save;
+            const savedValue = saveTogglingData ? this.data('togglingValue') : null;
             if (savedValue && togglingValues.includes(savedValue)) {
                 setTogglingValue.call(this, savedValue);
             } else if (togglingValues.includes(defaultValue)) {
