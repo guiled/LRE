@@ -19,6 +19,7 @@ import {
   VariableDeclaration,
 } from "@swc/core";
 import Visitor from "@swc/core/Visitor";
+import undefinedidentifier from "./node/undefinedidentifier";
 import { CONSTRUCTOR_ARG_NAME } from "./utils/paramToVariableDeclarator";
 
 
@@ -128,7 +129,7 @@ class ClassToFunction extends Visitor {
             },
             property: n.key,
           },
-          right: n.value,
+          right: n.value ?? undefinedidentifier({span: n.span}),
         },
       };
     } else {
