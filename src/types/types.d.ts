@@ -28,6 +28,7 @@ declare namespace LetsRole {
   export type Selector = LetsRole.ComponentID | LetsRole.ClassSelector;
 
   export type ViewID = string;
+  export type SheetID = ViewID;
   export type ComponentID = string;
   export type VariableID = string;
 
@@ -103,6 +104,9 @@ declare namespace LetsRole {
 
   export type Variable = {};
 
-  export type InitCallback = (sheet: LetsRole.Sheet) => void;
-  export function log(input: any): void;
+  export type InitCallback<T =  LetsRole.Sheet> = (sheet: T) => void;
 }
+declare function log(input: any): void;
+declare function wait(delay: number, callback: (...args: any[]) => void);
+declare function each(data: Array|Object, callback: (d: any, k?: any) => void);
+declare var init: LetsRole.InitCallback;

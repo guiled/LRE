@@ -1,11 +1,11 @@
 import esbuild from 'esbuild';
 
 esbuild.build({
-    entryPoints: ['src/lre.ts'],
+    entryPoints: ['src/index.ts'],
     bundle: true,
     minify: false,
     outfile: 'build/lre.tmp.js',
-    format: 'esm',
+    format: 'iife',
     define: {
         'console.log': 'log',
     }
