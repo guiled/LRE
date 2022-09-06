@@ -1,6 +1,8 @@
 import { Options, plugins } from "@swc/core";
 import classExtend from "./src/swc/ClassExtend";
 import classToFunction from "./src/swc/ClassToFunction";
+import defaultVisitor from "./src/swc/DefaulVisitor";
+import noArraySpreading from "./src/swc/NoArraySpreading";
 import noVoid0 from "./src/swc/NoVoid0";
 
 const conf: Options = {
@@ -21,10 +23,9 @@ const conf: Options = {
     ignoreDynamic: false,
   },
   plugin: plugins([
-    //defaultParameter(),
+    noArraySpreading(),
     classExtend(),
     classToFunction(),
-    //noVoid0(),
   ]),
   sourceMaps: false,
 };
