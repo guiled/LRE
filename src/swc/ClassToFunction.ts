@@ -1,4 +1,5 @@
 import {
+  CallExpression,
   ClassDeclaration,
   ClassExpression,
   ClassMember,
@@ -20,6 +21,9 @@ import {
 } from "@swc/core";
 import Visitor from "@swc/core/Visitor";
 import onevariable from "./node/declaration/onevariable";
+import member from "./node/expression/member";
+import thisexpression from "./node/expression/thisexpression";
+import identifier from "./node/identifier";
 import undefinedidentifier from "./node/undefinedidentifier";
 import { CONSTRUCTOR_ARG_NAME } from "./utils/paramToVariableDeclarator";
 
@@ -239,6 +243,25 @@ class ClassToFunction extends Visitor {
       );
     }
     return this.visitMemberExpression(n);
+  }
+
+  visitCallExpression(n: CallExpression): Expression {
+      if (n.callee.type === "MemberExpression"
+      && n.callee.object.type === "ThisExpression"
+      && n.callee.property.type === "PrivateName") {
+        n.arguments.unshift({
+          spread: undefined,
+          expression: thisexpression({span: n.callee.object.span}),
+        });
+        n.callee.object = member({
+          ...n.callee,
+        });
+        n.callee.property = identifier({
+          span: n.callee.span,
+          value: "call"
+        });
+      }
+      return super.visitCallExpression(n);
   }
 
   visitStatements(stmts: Statement[]): Statement[] {
