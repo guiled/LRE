@@ -19,15 +19,31 @@ import {
   VariableDeclaration,
 } from "@swc/core";
 import Visitor from "@swc/core/Visitor";
+import onevariable from "./node/declaration/onevariable";
 import undefinedidentifier from "./node/undefinedidentifier";
 import { CONSTRUCTOR_ARG_NAME } from "./utils/paramToVariableDeclarator";
 
-
-
 class ClassToFunction extends Visitor {
-  #methodToFunction (
+  #methodToFunction(
     n: ClassMethod | PrivateMethod
-  ): ExpressionStatement {
+  ): ExpressionStatement | VariableDeclaration {
+    const f: FunctionExpression = {
+      type: "FunctionExpression",
+      params: n.function.params,
+      decorators: [],
+      span: n.function.span,
+      body: n.function.body,
+      generator: false,
+      async: false,
+    };
+    if (n.key.type === "PrivateName") {
+      return onevariable({
+        span: n.span,
+        id: this.#transformPrivateIdentifier(n.key.id),
+        kind: "const",
+        init: f,
+      });
+    }
     return {
       type: "ExpressionStatement",
       span: n.span,
@@ -35,18 +51,15 @@ class ClassToFunction extends Visitor {
         type: "AssignmentExpression",
         span: n.span,
         operator: "=",
-        left:
-          n.key.type === "PrivateName"
-            ? n.key.id
-            : {
-                type: "MemberExpression",
-                span: n.span,
-                object: {
-                  type: "ThisExpression",
-                  span: n.span,
-                },
-                property: n.key,
-              },
+        left: {
+          type: "MemberExpression",
+          span: n.span,
+          object: {
+            type: "ThisExpression",
+            span: n.span,
+          },
+          property: n.key,
+        },
         right: {
           type: "FunctionExpression",
           params: n.function.params,
@@ -58,9 +71,9 @@ class ClassToFunction extends Visitor {
         },
       },
     };
-  };
-  
-  #ConstructorToFunction (n: Constructor): ExpressionStatement {
+  }
+
+  #ConstructorToFunction(n: Constructor): ExpressionStatement {
     return {
       type: "ExpressionStatement",
       span: n.span,
@@ -108,7 +121,7 @@ class ClassToFunction extends Visitor {
         ],
       },
     };
-  };
+  }
   #propertyToVariable(
     n: ClassProperty | PrivateProperty
   ): ExpressionStatement | VariableDeclaration {
@@ -129,7 +142,7 @@ class ClassToFunction extends Visitor {
             },
             property: n.key,
           },
-          right: n.value ?? undefinedidentifier({span: n.span}),
+          right: n.value ?? undefinedidentifier({ span: n.span }),
         },
       };
     } else {
@@ -149,7 +162,7 @@ class ClassToFunction extends Visitor {
         ],
       };
     }
-  };
+  }
 
   #transformClassToFunction<T extends ClassExpression | ClassDeclaration>(
     n: T

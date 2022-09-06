@@ -1,8 +1,15 @@
-export default class Component implements LetsRole.Component {
-  #raw: LetsRole.Component;
+import EventHolder from "./eventholder";
+import HasRaw from "./hasraw";
+import applyMixins from "./swc/utils/applyMixins";
 
+export default interface Component extends HasRaw<LetsRole.ComponentValue>, EventHolder {};
+
+export default class Component<T = LetsRole.ComponentValue>
+  implements Omit<LetsRole.Component<T>, "on" | "off">
+{
   constructor(raw: LetsRole.Component) {
-    this.#raw = raw;
+    Object.assign(this, new HasRaw(raw));
+    Object.assign(this, new EventHolder(this));
   }
   id(): string {
     throw new Error("Method not implemented.");
@@ -20,23 +27,6 @@ export default class Component implements LetsRole.Component {
     throw new Error("Method not implemented.");
   }
   find(id: string): LetsRole.Component<LetsRole.ComponentValue> {
-    throw new Error("Method not implemented.");
-  }
-  on(
-    event: LetsRole.EventType,
-    callback: (cmp: LetsRole.Component<LetsRole.ComponentValue>) => void
-  ): void;
-  on(
-    event: LetsRole.EventType,
-    delegate: string,
-    callback: (cmp: LetsRole.Component<LetsRole.ComponentValue>) => void
-  ): void;
-  on(event: unknown, delegate: unknown, callback?: unknown): void {
-    throw new Error("Method not implemented.");
-  }
-  off(event: LetsRole.EventType): void;
-  off(event: LetsRole.EventType, delegate: string): void;
-  off(event: unknown, delegate?: unknown): void {
     throw new Error("Method not implemented.");
   }
   hide(): void {
@@ -76,3 +66,4 @@ export default class Component implements LetsRole.Component {
     throw new Error("Method not implemented.");
   }
 }
+/*#__PURE__*/applyMixins(Component, [HasRaw<LetsRole.ComponentValue>, EventHolder]);
