@@ -15,7 +15,7 @@
     "tsx": "^3.9.0"
   },
   "scripts": {
-    "build": "node esbuild.config.mjs >/dev/null && npx tsx transpile.ts > build/lre.js",
-    "test": "npx tsx test.ts"
+    "test": "npx tsx test.ts",
+    "build": "npx tsx build.ts"
   }
 }
