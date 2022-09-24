@@ -4,32 +4,16 @@ import {
   AssignmentPatternProperty,
   BinaryExpression,
   BindingIdentifier,
-  CallExpression,
-  ConditionalExpression,
   Expression,
   Identifier,
   ObjectPatternProperty,
-  OptionalChainingCall,
-  OptionalChainingExpression,
   Pattern,
   Program,
-  UnaryExpression,
-  VariableDeclaration,
   VariableDeclarator,
 } from "@swc/core";
 import Visitor from "@swc/core/Visitor";
-import onevariable from "./node/declaration/onevariable";
-import iife from "./node/expression/iife";
-import identifier from "./node/identifier";
-import returnstmt from "./node/statement/returnstmt";
-import member from "./node/expression/member";
-import conditional from "./node/expression/conditional";
-import and from "./node/expression/binary/and";
 import undefinedidentifier from "./node/undefinedidentifier";
-import { hasArrayItemWithValue, hasPropWithValue } from "./ParamDefaultValue";
 import typeofexpression from "./node/expression/unary/typeofexpression";
-
-const TMP_VAR = "__tmp";
 
 class NoVoid0 extends Visitor {
   #changeVoid0ToUndefined<T extends Expression | undefined>(

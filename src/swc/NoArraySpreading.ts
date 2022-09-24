@@ -4,6 +4,7 @@ import {
   Expression,
   ExprOrSpread,
   Program,
+  TsType,
 } from "@swc/core";
 import Visitor from "@swc/core/Visitor";
 import call from "./node/expression/call";
@@ -73,6 +74,10 @@ class NoArraySpreading extends Visitor {
       return super.visitExpression(res);
     }
     return super.visitArrayExpression(e);
+  }
+
+  visitTsType(n: TsType): TsType {
+      return n;
   }
 }
 

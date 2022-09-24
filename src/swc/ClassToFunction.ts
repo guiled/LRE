@@ -1,36 +1,79 @@
 import {
+  AssignmentExpression,
   CallExpression,
+  Class,
   ClassDeclaration,
   ClassExpression,
   ClassMember,
   ClassMethod,
   ClassProperty,
   Constructor,
+  Declaration,
+  DefaultDecl,
+  ExportDefaultDeclaration,
+  ExportDefaultExpression,
   Expression,
   ExpressionStatement,
   FunctionDeclaration,
   FunctionExpression,
   Identifier,
   MemberExpression,
-  Param,
+  ModuleDeclaration,
   PrivateMethod,
   PrivateProperty,
   Program,
+  Span,
   Statement,
   VariableDeclaration,
+  VariableDeclarator,
 } from "@swc/core";
 import Visitor from "@swc/core/Visitor";
 import onevariable from "./node/declaration/onevariable";
+import assignment from "./node/expression/assignment";
+import call from "./node/expression/call";
+import iife from "./node/expression/iife";
 import member from "./node/expression/member";
 import thisexpression from "./node/expression/thisexpression";
 import identifier from "./node/identifier";
+import returnstmt from "./node/statement/returnstmt";
 import undefinedidentifier from "./node/undefinedidentifier";
 import { CONSTRUCTOR_ARG_NAME } from "./utils/paramToVariableDeclarator";
 
+type PublicMethodToFunctionStatement = ExpressionStatement & {
+  expression: AssignmentExpression & {
+    operator: "=";
+    left: MemberExpression;
+    right: FunctionExpression;
+  };
+};
+
+type PrivateMethodToFunctionStatement = VariableDeclaration & {
+  declarations: (Declaration & {
+    init: FunctionExpression;
+  })[]
+}
+
+type MethodToFunctionStatement = PublicMethodToFunctionStatement | PrivateMethodToFunctionStatement;
+
+type PublicPropertyToVariable = ExpressionStatement & {
+  expression: AssignmentExpression & {
+    operator: "=",
+    left: MemberExpression,
+  }
+};
+
+type PrivatePropertyToVariable = VariableDeclaration & {
+  kind: "let",
+}
+
+type PropertyToVariable = PublicPropertyToVariable | PrivatePropertyToVariable;
+
 class ClassToFunction extends Visitor {
+  #privateMethods: Array<Identifier["value"]> = [];
+
   #methodToFunction(
     n: ClassMethod | PrivateMethod
-  ): ExpressionStatement | VariableDeclaration {
+  ): MethodToFunctionStatement {
     const f: FunctionExpression = {
       type: "FunctionExpression",
       params: n.function.params,
@@ -46,7 +89,7 @@ class ClassToFunction extends Visitor {
         id: this.#transformPrivateIdentifier(n.key.id),
         kind: "const",
         init: f,
-      });
+      }) as PrivateMethodToFunctionStatement;
     }
     return {
       type: "ExpressionStatement",
@@ -128,7 +171,7 @@ class ClassToFunction extends Visitor {
   }
   #propertyToVariable(
     n: ClassProperty | PrivateProperty
-  ): ExpressionStatement | VariableDeclaration {
+  ): PropertyToVariable {
     if (n.type === "ClassProperty") {
       return {
         type: "ExpressionStatement",
@@ -140,10 +183,7 @@ class ClassToFunction extends Visitor {
           left: {
             type: "MemberExpression",
             span: n.span,
-            object: {
-              type: "ThisExpression",
-              span: n.span,
-            },
+            object: thisexpression({ span: n.span }),
             property: n.key,
           },
           right: n.value ?? undefinedidentifier({ span: n.span }),
@@ -168,29 +208,37 @@ class ClassToFunction extends Visitor {
     }
   }
 
-  #transformClassToFunction<T extends ClassExpression | ClassDeclaration>(
-    n: T
-  ): FunctionExpression {
-    const res =
-      n.type === "ClassExpression"
-        ? this.visitClassExpression(n)
-        : this.visitClassDeclaration(n);
-
-    let methods: ExpressionStatement[] = [];
-    let properties: (ExpressionStatement | VariableDeclaration)[] = [];
+  #transformClassBodyToFunction(
+    body: Class["body"],
+    span: Span,
+    _identifier?: Identifier
+  ): FunctionExpression | CallExpression {
+    let methods: Array<MethodToFunctionStatement> = [];
+    let staticMethods: Array<MethodToFunctionStatement> = [];
+    let properties: Array<PropertyToVariable> = [];
+    let staticProperties: Array<PropertyToVariable> = [];
     let constructorFunctionStatement: ExpressionStatement | undefined;
-    let constructorParams: Param[] = [];
-
-    res.body.forEach((n: ClassMember) => {
+    let staticStmts: Statement[] = [];
+    const publicStatic: Array<PublicMethodToFunctionStatement | PublicPropertyToVariable> = [];
+    const privateStatic: Array<PrivateMethodToFunctionStatement | PrivatePropertyToVariable> = [];
+    body.forEach((n: ClassMember) => {
       if (n.type === "Constructor" && n.body) {
         constructorFunctionStatement = this.#ConstructorToFunction(n);
-        constructorParams = n.params;
       } else if (n.type === "ClassMethod" || n.type === "PrivateMethod") {
-        methods.push(this.#methodToFunction(n));
+        if (n.isStatic) {
+          staticMethods.push(this.#methodToFunction(n));
+        } else {
+          methods.push(this.#methodToFunction(n));
+        }
       } else if (n.type === "PrivateProperty" || n.type === "ClassProperty") {
-        properties.push(this.#propertyToVariable(n));
+        if (n.isStatic) {
+          staticProperties.push(this.#propertyToVariable(n));
+        } else {
+          properties.push(this.#propertyToVariable(n));
+        }
       } else if (n.type === "StaticBlock") {
         // todo?
+        staticStmts = n.body.stmts;
       }
     });
 
@@ -198,32 +246,148 @@ class ClassToFunction extends Visitor {
     if (constructorFunctionStatement) {
       stmts.push(constructorFunctionStatement);
     }
-
-    return {
+    let classFunction: FunctionExpression = {
       type: "FunctionExpression",
-      identifier: res.identifier,
+      identifier: _identifier,
       params: [
         {
           type: "Parameter",
-          span: n.span,
+          span,
           decorators: [],
           pat: {
             type: "Identifier",
-            span: n.span,
+            span,
             value: CONSTRUCTOR_ARG_NAME,
             optional: false,
           },
         },
       ],
-      span: res.span,
+      span,
       body: {
         type: "BlockStatement",
-        span: res.span,
+        span,
         stmts,
       },
       generator: false,
       async: false,
     };
+
+    if (
+      staticMethods.length + staticProperties.length + staticStmts.length >
+      0
+    ) {
+      const tmpClassFunctionId = identifier({
+        span: classFunction.span,
+        value: "__lreClass" + classFunction.identifier?.value,
+      });
+      const publicStatic: Array<PublicMethodToFunctionStatement | PublicPropertyToVariable> = [
+        ...(staticMethods.filter(
+          (m: MethodToFunctionStatement) =>
+            m.type === "ExpressionStatement"
+        ) as Array<PublicMethodToFunctionStatement>),
+        ...(staticProperties.filter(
+          (m: PropertyToVariable) =>
+            m.type === "ExpressionStatement"
+        ) as Array<PublicPropertyToVariable>),
+      ];
+      const privateStatic: Array<PrivateMethodToFunctionStatement | PrivatePropertyToVariable> = [
+        ...(staticMethods.filter(
+          (m: MethodToFunctionStatement) =>
+            m.type === "VariableDeclaration"
+        ) as Array<PrivateMethodToFunctionStatement>),
+        ...(staticProperties.filter(
+          (m: PropertyToVariable) =>
+            m.type === "VariableDeclaration"
+        ) as Array<PrivatePropertyToVariable>),
+      ];
+      return iife({
+        span: classFunction.span,
+        stmts: [
+          ...privateStatic,
+          onevariable({
+            span: classFunction.span,
+            id: tmpClassFunctionId,
+            init: classFunction,
+          }),
+          ...publicStatic.map((e: PublicMethodToFunctionStatement) => {
+            return {
+              ...e,
+              expression: {
+                ...e.expression,
+                left: {
+                  ...e.expression.left,
+                  object: tmpClassFunctionId,
+                }
+              }
+            };
+          }),
+          ...staticStmts,
+          returnstmt({
+            span: classFunction.span,
+            argument: tmpClassFunctionId,
+          }),
+        ],
+      });
+    }
+
+    return classFunction;
+  }
+
+  #transformClassToFunction<T extends ClassExpression | ClassDeclaration>(
+    n: T
+  ): VariableDeclaration | VariableDeclarator["init"] {
+    const classDefinition =
+      n.type === "ClassExpression"
+        ? this.visitClassExpression(n)
+        : (this.visitClassDeclaration(n) as ClassDeclaration);
+
+    return this.#transformClassBodyToFunction(n, n.span, n.identifier);
+
+    let finalResult: VariableDeclaration | VariableDeclarator["init"] =
+      classFunction;
+    if (classFunction.identifier) {
+      finalResult = onevariable({
+        span: n.span,
+        id: n.identifier,
+        init: classFunction,
+      });
+    }
+
+    if (
+      staticMethods.length + staticProperties.length + staticStmts.length >
+      0
+    ) {
+      const stmts: Statement[] = [...staticStmts];
+      let classId;
+
+      if (
+        finalResult.type === "FunctionExpression" &&
+        !finalResult.identifier
+      ) {
+        classId = identifier({
+          span: finalResult.span,
+          value: "__unnamedClass",
+        });
+        // assign unnamed class to a tmp variable
+        finalResult = onevariable({
+          span: finalResult.span,
+          id: classId,
+          init: finalResult,
+          kind: "const",
+        });
+      } else {
+        classId = finalResult.identifier;
+      }
+
+      stmts.push(finalResult);
+      finalResult = iife({
+        span: n.span,
+        stmts: [],
+        identifier: n.identifier,
+      });
+    }
+
+    return finalResult;
   }
 
   #transformPrivateIdentifier(i: Identifier): Identifier {
@@ -238,30 +402,69 @@ class ClassToFunction extends Visitor {
       n.object.type === "ThisExpression" &&
       n.property.type === "PrivateName"
     ) {
-      return this.visitExpression(
-        this.#transformPrivateIdentifier(n.property.id)
-      );
+      if (this.#privateMethods.includes(n.property.id.value)) {
+        return this.visitExpression(
+          call({
+            span: n.span,
+            callee: member({
+              span: n.span,
+              object: this.#transformPrivateIdentifier(n.property.id),
+              property: identifier({
+                span: n.span,
+                value: "bind",
+              }),
+            }),
+            args: [
+              {
+                spread: undefined,
+                expression: thisexpression({ span: n.span }),
+              },
+            ],
+          })
+        );
+      } else {
+        return this.visitExpression(
+          this.#transformPrivateIdentifier(n.property.id)
+        );
+      }
     }
     return this.visitMemberExpression(n);
   }
 
-  visitCallExpression(n: CallExpression): Expression {
-      if (n.callee.type === "MemberExpression"
-      && n.callee.object.type === "ThisExpression"
-      && n.callee.property.type === "PrivateName") {
-        n.arguments.unshift({
-          spread: undefined,
-          expression: thisexpression({span: n.callee.object.span}),
-        });
-        n.callee.object = member({
-          ...n.callee,
-        });
-        n.callee.property = identifier({
-          span: n.callee.span,
-          value: "call"
-        });
+  visitClass<T extends Class>(n: T): T {
+      return super.visitClass(n);
+  }
+
+  visitClassBody(members: ClassMember[]): ClassMember[] {
+    this.#privateMethods = [];
+    members.forEach((m) => {
+      if (m.type === "PrivateMethod") {
+        this.#privateMethods.push(m.key.id.value);
       }
-      return super.visitCallExpression(n);
+    });
+    members = super.visitClassBody(members);
+    return super.visitClassBody(members);
+  }
+
+  visitCallExpression(n: CallExpression): Expression {
+    if (
+      n.callee.type === "MemberExpression" &&
+      n.callee.object.type === "ThisExpression" &&
+      n.callee.property.type === "PrivateName"
+    ) {
+      n.arguments.unshift({
+        spread: undefined,
+        expression: thisexpression({ span: n.callee.object.span }),
+      });
+      n.callee.object = member({
+        ...n.callee,
+      });
+      n.callee.property = identifier({
+        span: n.callee.span,
+        value: "call",
+      });
+    }
+    return super.visitCallExpression(n);
   }
 
   visitStatements(stmts: Statement[]): Statement[] {
@@ -289,15 +492,95 @@ class ClassToFunction extends Visitor {
     );
   }
 
+  #transformClassExpression(
+    n: ClassExpression
+  ): FunctionExpression | CallExpression {
+    return this.#transformClassBodyToFunction(n.body, n.span, n.identifier);
+  }
+
+  #transformClassDeclaration(decl: ClassDeclaration): VariableDeclaration {
+    return onevariable({
+      span: decl.span,
+      id: decl.identifier,
+      init: this.#transformClassBodyToFunction(
+        decl.body,
+        decl.span,
+        decl.identifier
+      ),
+      declare: decl.declare,
+      kind: "const",
+    });
+  }
+
   visitExpression(n: Expression): Expression {
     switch (n.type) {
       case "ClassExpression":
-        return this.#transformClassToFunction(n);
+        n = this.visitClassExpression(n);
+        return super.visitExpression(this.#transformClassExpression(n));
       case "MemberExpression":
-        return this.#changePrivateMember(n);
+        return super.visitExpression(this.#changePrivateMember(n));
       default:
         return super.visitExpression(n);
     }
+  }
+
+  visitExportDefaultDeclaration(
+    n: ExportDefaultDeclaration
+  ): ModuleDeclaration {
+    return super.visitExportDefaultDeclaration(n);
+  }
+
+  visitDefaultDeclaration(n: DefaultDecl): DefaultDecl {
+    if (n.type === "ClassExpression") {
+      n = super.visitClassExpression(n);
+      const res = this.#transformClassExpression(n)
+      if (res.type === "CallExpression") {
+      }
+      return super.visitExpression(this.#transformClassExpression(n)) as FunctionExpression;
+    }
+    return super.visitDefaultDeclaration(n);
+  }
+
+  visitModuleDeclaration(n: ModuleDeclaration): ModuleDeclaration {
+      if (n.type === "ExportDefaultDeclaration" && n.decl.type === "ClassExpression") {
+        n.decl = this.visitClassDeclaration(n.decl);
+        const res = this.#transformClassExpression(n.decl);
+        if (res.type === "CallExpression") {
+          const decl: ExportDefaultExpression = {
+            type: "ExportDefaultExpression",
+            span: n.span,
+            expression: assignment({
+              span: n.span,
+              left: n.decl.identifier ?? identifier({span: n.span, value: "__tmpLreUnnamedClass"}),
+              right: res,
+              operator: "=",
+            })
+          };
+          return super.visitModuleDeclaration(decl);
+        } else {
+          return super.visitModuleDeclaration({
+            ...n,
+            decl: res,
+          });
+        }
+      }
+      return super.visitModuleDeclaration(n);
+  }
+
+  visitDeclaration(decl: Declaration): Declaration {
+    if (decl.type === "ClassDeclaration") {
+      decl = this.visitClassDeclaration(decl) as ClassDeclaration;
+      return super.visitDeclaration(this.#transformClassDeclaration(decl));
+    }
+    return super.visitDeclaration(decl);
+  }
+
+  visitProgram(n: Program): Program {
+    return super.visitProgram(n);
+  }
+
+  visitTsType(n: TsType): TsType {
+    return n;
   }
 }
 

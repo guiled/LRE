@@ -9,14 +9,14 @@ type VARIABLE_PARAM = {
   init?: VariableDeclarator["init"]
 };
 
-export default ({
+export default function onevariable({
   span,
   id,
   init = undefined,
   definite = false,
   declare = false,
   kind = "var",
-}: VARIABLE_PARAM): VariableDeclaration => {
+}: VARIABLE_PARAM): VariableDeclaration {
   return {
     type: "VariableDeclaration",
     span,

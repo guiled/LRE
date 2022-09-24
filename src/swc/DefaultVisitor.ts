@@ -282,7 +282,7 @@ class DefaultVisitor extends Visitor {
     return super.visitFunctionExpression(n);
   }
   visitClassExpression(n: ClassExpression): ClassExpression {
-    console.log("visitClassExpression");
+    console.log("visitClassExpression", n.identifier?.value);
     return super.visitClassExpression(n);
   }
   visitExportDeclaration(n: ExportDeclaration): ModuleDeclaration {
@@ -520,7 +520,7 @@ class DefaultVisitor extends Visitor {
     return super.visitFunctionDeclaration(decl);
   }
   visitClassDeclaration(decl: ClassDeclaration): Declaration {
-    console.log("visitClassDeclaration");
+    console.log("visitClassDeclaration", decl.identifier.value);
     return super.visitClassDeclaration(decl);
   }
   visitClassBody(members: ClassMember[]): ClassMember[] {
@@ -967,7 +967,7 @@ class DefaultVisitor extends Visitor {
   }
   visitTsType(n: TsType): TsType {
     console.log("visitTsType");
-    return super.visitTsType(n);
+    return n;
   }
   visitPatterns(nodes: Pattern[]): Pattern[] {
     console.log("visitPatterns");

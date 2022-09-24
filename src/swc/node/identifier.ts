@@ -7,12 +7,12 @@ type Identifier_Param = {
   typeAnnotation?: BindingIdentifier["typeAnnotation"];
 };
 
-export default ({
+export default function identifier({
   span,
   value,
   optional = false,
   typeAnnotation = undefined,
-}: Identifier_Param): BindingIdentifier | Identifier => {
+}: Identifier_Param): BindingIdentifier | Identifier {
   if (typeAnnotation) {
     return {
       type: "Identifier" as BindingIdentifier["type"],

@@ -213,7 +213,9 @@ class ClassExtend extends Visitor {
     return res;
   }
 
-  /**/
+  visitTsType(n: TsType): TsType {
+    return n;
+  }
 }
 
 export default function classExtend() {
