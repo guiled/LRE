@@ -70,6 +70,7 @@ type PropertyToVariable = PublicPropertyToVariable | PrivatePropertyToVariable;
 
 class ClassToFunction extends Visitor {
   #privateMethods: Array<Identifier["value"]> = [];
+  #inPrivateCallExpression = false;
 
   #methodToFunction(
     n: ClassMethod | PrivateMethod
@@ -402,7 +403,7 @@ class ClassToFunction extends Visitor {
       n.object.type === "ThisExpression" &&
       n.property.type === "PrivateName"
     ) {
-      if (this.#privateMethods.includes(n.property.id.value)) {
+      if (this.#privateMethods.includes(n.property.id.value) && !this.#inPrivateCallExpression) {
         return this.visitExpression(
           call({
             span: n.span,
@@ -447,11 +448,14 @@ class ClassToFunction extends Visitor {
   }
 
   visitCallExpression(n: CallExpression): Expression {
+    const oldInPrivateCallExpression = this.#inPrivateCallExpression;
+    this.#inPrivateCallExpression = false;
     if (
       n.callee.type === "MemberExpression" &&
       n.callee.object.type === "ThisExpression" &&
       n.callee.property.type === "PrivateName"
     ) {
+      this.#inPrivateCallExpression = true;
       n.arguments.unshift({
         spread: undefined,
         expression: thisexpression({ span: n.callee.object.span }),
@@ -464,7 +468,9 @@ class ClassToFunction extends Visitor {
         value: "call",
       });
     }
-    return super.visitCallExpression(n);
+    const result = super.visitCallExpression(n);
+    this.#inPrivateCallExpression = oldInPrivateCallExpression;
+    return result;
   }
 
   visitStatements(stmts: Statement[]): Statement[] {
