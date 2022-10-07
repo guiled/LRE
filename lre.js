@@ -306,6 +306,7 @@ function lre(_arg) {
             //'change': 'update'
         }
         const canceledEvents = [];
+        let lastUpdateEventValue;
 
         const eventIsEnabled = function (eventName) {
             return !events.hasOwnProperty(eventName) || events[eventName].state || !canceledEvents.includes(eventName);
@@ -324,7 +325,10 @@ function lre(_arg) {
             return current;
         };
 
-        const runEvents = function (component, eventName) {
+        const runEvents = function (component, eventName, manuallyTriggered) {
+            if (arguments.length < 3) {
+                manuallyTriggered = false;
+            }
             return function (rawTarget, args) {
                 if (!eventIsEnabled(eventName)) return;
                 if (arguments.length < 2) {
@@ -343,6 +347,10 @@ function lre(_arg) {
                 } else {
                     cmp = component;
                 }
+                if (eventName === 'update' && !manuallyTriggered && rawTarget.value() === lastUpdateEventValue) {
+                    return false;
+                }
+                lastUpdateEventValue = rawTarget.value();
                 argsWithComponent.push(cmp);
                 argsWithComponent = argsWithComponent.concat(args);
                 let results = [];
@@ -437,7 +445,7 @@ function lre(_arg) {
         };
 
         this.trigger = function (eventName) {
-            return runEvents(this, eventName)(this.raw(), Array.prototype.slice.call(arguments, 1));
+            return runEvents(this, eventName, true)(this.raw(), Array.prototype.slice.call(arguments, 1));
         };
 
         this.transferEvents = function (rawCmp) {
@@ -578,9 +586,14 @@ function lre(_arg) {
         this.removeClass = component.removeClass;
         this.value = function () {
             if (arguments.length > 0) {
+                const oldValue = this.value();
                 let data = {};
                 data[this.realId()] = arguments[0];
                 sheet.setData(data);
+                if (oldValue !== arguments[0]) {
+                    this.text(arguments[0])
+                    this.trigger('update');
+                }
             } else {
                 let val = sheet.getPendingData(this.realId());
                 if (typeof val === 'undefined') {
