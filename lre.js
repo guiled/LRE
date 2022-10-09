@@ -350,7 +350,7 @@ function lre(_arg) {
                 if (eventName === 'update' && !manuallyTriggered && rawTarget.value() === lastUpdateEventValue) {
                     return false;
                 }
-                lastUpdateEventValue = rawTarget.value();
+                lastUpdateEventValue = deepClone(rawTarget.value());
                 argsWithComponent.push(cmp);
                 argsWithComponent = argsWithComponent.concat(args);
                 let results = [];
