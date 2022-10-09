@@ -1068,6 +1068,11 @@ function lre(_arg) {
         let entries = {};
         let texts = {};
 
+        // protect repeater : overwrite repeater "text" will break it (unable to setData on it)
+        this.text = function () {
+            return this.raw().text();
+        }
+
         function objectsEqual(object1, object2) {
             const keys1 = Object.keys(object1);
             const keys2 = Object.keys(object2);
