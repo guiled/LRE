@@ -1343,14 +1343,18 @@ function lre(_arg) {
                 }
             }).bind(this));
 
+            changeTogglingData.call(this, oldData, togglingData[val]);
+            currentTogglingValue = val;
+            saveTogglingData && this.data('togglingValue', val, true);
             if (togglingData[val].hasOwnProperty('icon')) {
                 cmpValue(togglingData[val].icon);
             } else if (typeof togglingData[val] === 'string') {
                 cmpValue(togglingData[val]);
+            } else {
+                // update event is triggered by changing icon value, but is not triggered if only style change, etc.
+                // So we trigger update event manually if icon value is not changed but the toggle value changed
+                this.trigger('update');
             }
-            changeTogglingData.call(this, oldData, togglingData[val]);
-            currentTogglingValue = val;
-            saveTogglingData && this.data('togglingValue', val, true);
         };
 
         const iconValue = function () {
