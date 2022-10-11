@@ -600,6 +600,9 @@ function lre(_arg) {
                     try {  // component.value() may failed
                         val = component.value();
                     } catch (e) { }
+                } else if (this._type === 'repeater') {
+                    // a repeater with a pending value set, we must set it immediately when we need it because it has impact on existing elements
+                    sheet.sendPendingDataFor(this.realId());
                 }
                 if (LRE_AUTONUM && !isNaN(val)) {
                     return Number(val)
@@ -1231,6 +1234,8 @@ function lre(_arg) {
         };
 
         this.find = function (id) {
+            // Apply new repeater values if pending, in order to have up to date entries
+            this.sheet().sendPendingDataFor(this.realId());
             return this.sheet().get(this.realId() + repeaterIdSeparator + id);
         };
 
@@ -1880,8 +1885,10 @@ function lre(_arg) {
         let pendingDataProcessed;
 
 
-        const groupedDataSet = function () {
-            const dataToSend = {};
+        const groupedDataSet = function (dataToSend) {
+            if (arguments.length === 0) {
+                dataToSend = {};
+            }
             let added = 0;
             let analysed = 0;
             while (added < maxDataSet && pendingDataToSet.length > 0) {
@@ -1900,7 +1907,9 @@ function lre(_arg) {
                         pendingDataToSetIndex[k] -= analysed;
                     }
                 }
-                wait(asyncDataSetAgainDelay, groupedDataSet);
+                if (arguments.length === 0) {
+                    wait(asyncDataSetAgainDelay, groupedDataSet);
+                }
             }
             sheet.setData(dataToSend);
             if (!isDataSetPending && pendingDataProcessed) {
@@ -1933,6 +1942,30 @@ function lre(_arg) {
             }
             return;
         };
+
+        const removePendingData = function (id) {
+            if (pendingDataToSetIndex.hasOwnProperty(id)) {
+                const pos = pendingDataToSetIndex[id];
+                delete pendingDataToSetIndex[id];
+                pendingDataToSet = pendingDataToSet.splice(pos, 1);
+                for (k in pendingDataToSetIndex) {
+                    if (pendingDataToSetIndex[k] >= pos) {
+                        pendingDataToSetIndex[k]--;
+                    }
+                }
+            }
+            return;
+        };
+
+        this.sendPendingDataFor = function (id) {
+            if (pendingDataToSetIndex.hasOwnProperty(id)) {
+                const val = pendingDataToSet[pendingDataToSetIndex[id]].v;
+                removePendingData(id);
+                const data = {};
+                data[id] = val;
+                groupedDataSet(data);
+            }
+        }
 
         this.onPendingDataProcessed = function (cb) {
             pendingDataProcessed = cb;
