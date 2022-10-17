@@ -1994,12 +1994,27 @@ function lre(_arg) {
                 if (tabId.length === 1) {
                     container = this;
                     rawCmp = this.raw().get(strId);
-                    if (!rawCmp) return null;
+                    if (!rawCmp) {
+                        lreLog('Sheet.get returns null object for ' + strId);
+                    } else if (!rawCmp.id()) {
+                        lreLog('Unable to find ' + strId);
+                        return rawCmp;
+                    }
                 } else {
                     let finalId = tabId.pop();
-                    container = this.get(tabId.join(repeaterIdSeparator));
+                    let containerId = tabId.join(repeaterIdSeparator);
+                    container = this.get(containerId);
                     rawCmp = container.raw().find(finalId);
-                    if (!container || !rawCmp) return null;
+                    if (!container) {
+                        lreLog('Sheet.get returns null container for ' + containerId);
+                        return null;
+                    } else if (!rawCmp) {
+                        lreLog('Sheet.get returns null object for ' + strId);
+                        return null;
+                    } else if (!rawCmp.id()) {
+                        lreLog('Unable to find ' + strId);
+                        return rawCmp;
+                    }
                 }
                 cmp = initComponent(rawCmp, container);
                 components.set(cmp.realId(), cmp);
