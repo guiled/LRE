@@ -399,6 +399,7 @@ function lre(_arg) {
             }
             if (!events[eventName].handlers.includes(handler)) {
                 events[eventName].handlers.push(handler);
+                this.trigger('eventhandleradded', event, subComponent, handler);
             }
         };
 
@@ -1113,6 +1114,7 @@ function lre(_arg) {
                         // Save the data beforce potential changes in init event
                         const valueSave = deepClone(entryData);
                         component.trigger('init', cmp, entryId, entryData);
+                        component.trigger('initedit', cmp, entryId, entryData);
                         applyValuesToEntry(component, entryId, valueSave);
                     }
                 } else if (textSimplification(cmp.text()) !== texts[entryId]
@@ -1121,6 +1123,7 @@ function lre(_arg) {
                     cmp.data('saved', false);
                     cmp.data('children', component.sheet().knownChildren(cmp));
                     component.trigger('edit', cmp, entryId, entryData);
+                    component.trigger('initedit', cmp, entryId, entryData);
                 }
             });
         };
@@ -1135,7 +1138,7 @@ function lre(_arg) {
                 if (texts[entryId] === editingEntryText) {
                     lreLog(component.realId() + repeaterIdSeparator + entryId + limitations.badText)
                 }
-            })
+            });
         };
 
         const initStates = function (component) {
@@ -1195,7 +1198,9 @@ function lre(_arg) {
                     });
                     if (cmp.hasData('saved') && !cmp.data('saved')) {
                         cmp.data('saved', true);
-                        const results = component.trigger('save', cmp, entryId, newValues[entryId], entryData);
+                        let results = component.trigger('save', cmp, entryId, newValues[entryId], entryData);
+                        overloadObject(newData, results);
+                        results = component.trigger('initread', cmp, entryId, newValues[entryId]);
                         overloadObject(newData, results);
                     }
                     applyValuesToEntry(component, entryId, newData);
@@ -1219,14 +1224,16 @@ function lre(_arg) {
                     let newData = {};
                     let cmp = component.find(entryId);
                     cmp.data('saved', true);
-                    const results = component.trigger('save', cmp, entryId, entryData, {});
+                    let results = component.trigger('save', cmp, entryId, entryData, {});
+                    overloadObject(newData, results);
+                    results = component.trigger('initread', cmp, entryId, entryData);
                     overloadObject(newData, results);
                     const resultNew = component.trigger('new', cmp, entryId, entryData, {});
                     overloadObject(newData, resultNew);
                     applyValuesToEntry(component, entryId, newData);
                     somethingHasChanged = true;
                 }
-            })
+            });
             if (somethingHasChanged) {
                 component.trigger('dataChange', component);
             }
@@ -1241,6 +1248,7 @@ function lre(_arg) {
 
         this.initiate = function () {
             lreLog('Initiate Repeater ' + this.realId());
+            this.on('eventhandleradded', runInitReadEvent.bind(this));
             this.lreType('repeater');
             // This following code because saveValues doesn't work well with repeater in tabs
             // Because repeaters don't have their real texts when in a tab that is not yet displayed
@@ -1253,6 +1261,15 @@ function lre(_arg) {
             this.on('update', updateHandler);
             Object.assign(this, new lreDataCollection(this, DataCollection.getDataMapper(getDataValue.bind(this)).bind(this)));
             this.setInitiated(true);
+        };
+
+        const runInitReadEvent = function (cmp, event, subComponent, callback) {
+            if (event === 'initread') {
+                const val = this.value();
+                for (entryId in val) {
+                    callback.apply(this,this, entryId, val[entryId]);
+                }
+            }
         };
 
         const getDataValue = function () {
