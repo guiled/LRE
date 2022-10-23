@@ -116,18 +116,6 @@ function stringify(obj, indent) {
     }).join(",\n") + "\n" + indent + "}";
 };
 
-function componentExists(sheet, realId) {
-    // in let's role, return in a try{} doesn't exit from function block, so use a variable instead
-    let result = true;
-    try {
-        sheet.raw().get(realId).addClass('__lre_dummy');
-        sheet.raw().get(realId).removeClass('__lre_dummy');
-    } catch (e) {
-        result = false;
-    }
-    return result;
-};
-
 let LRE_AUTONUM = false;
 // Main container
 let lreIntiated = false;
@@ -549,7 +537,7 @@ function lre(_arg) {
      ** * * * * * * * * * * * * * * * * * * * * * */
     const lreComponent = function (_args) {
         const sheet = _args[0];
-        const component = _args[1];
+        let component = _args[1];
         let realId = _args.length >= 3 ? _args[2] : component.id();
         this._realId = realId;
         this._type = 'component';
@@ -562,11 +550,11 @@ function lre(_arg) {
         Object.assign(this, new DataHolder(sheet, realId));
 
         this.addClass = component.addClass;
-        this.find = function (id) {
-            const tabId = id.split(repeaterIdSeparator);
-            tabId.pop();
-            const realId = tabId.join(repeaterIdSeparator) + (tabId.length > 0 ? repeaterIdSeparator : '') + id;
-            return this.sheet().get(realId)
+        this.find = function (completeId) {
+            const tabId = completeId.split(repeaterIdSeparator);
+            const id = tabId.pop();
+            const sRealId = tabId.join(repeaterIdSeparator) + (tabId.length > 0 ? repeaterIdSeparator : '') + id;
+            return this.sheet().get(sRealId)
         };
         this.hide = component.hide;
         this.id = component.id;
@@ -669,7 +657,7 @@ function lre(_arg) {
             return lreRepeater;
         };
         this.exists = function () {
-            return componentExists(sheet, realId);
+            return sheet.componentExists(realId);
         };
 
         this.knownChildren = function () {
@@ -2039,6 +2027,18 @@ function lre(_arg) {
                 cmp = components.get(strId);
             }
             return cmp;
+        };
+
+        this.componentExists = function (realId) {
+            // in let's role, return in a try{} doesn't exit from function block, so use a variable instead
+            let result = true;
+            try {
+                sheet.get(realId).addClass('__lre_dummy');
+                sheet.get(realId).removeClass('__lre_dummy');
+            } catch (e) {
+                result = false;
+            }
+            return result;
         };
 
         this.find = this.get;
