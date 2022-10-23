@@ -1880,7 +1880,7 @@ function lre(_arg) {
         const toDelete = [];
         const components = new ComponentContainer(this);
 
-        Object.assign(this, new DataHolder(sheet, sheet.id()))
+        Object.assign(this, new DataHolder(this, sheet.id()))
 
         this.getVariable = sheet.getVariable;
 
