@@ -580,7 +580,10 @@ function lre(_arg) {
                 data[this.realId()] = arguments[0];
                 sheet.setData(data);
                 if (oldValue !== arguments[0]) {
-                    this.text(arguments[0])
+                    // This line doesn't work with repeater, choice…
+                    //if (typeof arguments[0] !== "object"
+                    //    && component.text() === component.value()
+                    //    && !['repeater', 'choice', 'multichoice'].include(this._type !== 'repeater')) this.text(arguments[0]);
                     this.trigger('update');
                 }
             } else {
