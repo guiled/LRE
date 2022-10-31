@@ -1191,7 +1191,7 @@ function lre(_arg) {
                         cmp.data('saved', true);
                         let results = component.trigger('save', cmp, entryId, newValues[entryId], entryData);
                         overloadObject(newData, results);
-                        results = component.trigger('initread', cmp, entryId, newValues[entryId]);
+                        results = component.trigger('initread', cmp, entryId, newValues[entryId], entryData);
                         overloadObject(newData, results);
                     }
                     applyValuesToEntry(component, entryId, newData);
@@ -1217,7 +1217,7 @@ function lre(_arg) {
                     cmp.data('saved', true);
                     let results = component.trigger('save', cmp, entryId, entryData, {});
                     overloadObject(newData, results);
-                    results = component.trigger('initread', cmp, entryId, entryData);
+                    results = component.trigger('initread', cmp, entryId, entryData, {});
                     overloadObject(newData, results);
                     const resultNew = component.trigger('new', cmp, entryId, entryData, {});
                     overloadObject(newData, resultNew);
@@ -1371,8 +1371,8 @@ function lre(_arg) {
         };
 
         const iconValue = function () {
-            if (!togglingValues) {
-                return this.value.call(this, arguments);
+            if (!togglingValues || togglingValues.length === 0) {
+                return cmpValue.apply(this, arguments);
             }
             if (arguments.length === 0) {
                 return currentTogglingValue;
