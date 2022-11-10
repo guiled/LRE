@@ -2190,6 +2190,29 @@ function lre(_arg) {
         };
         let persistingData = loadPersistingData(sheet);
 
+        const cleanCmpData = function () {
+            const realIdToChecked = Object.keys(persistingData.cmpData);
+            const realIdToForget = [];
+            const analyzeRealId = (function () {
+                const checking = realIdToChecked.splice(0, 20);
+                checking.forEach((function (realId) {
+                    if (!this.componentExists(realId)) {
+                        realIdToForget.push(realId);
+                    }
+                }).bind(this));
+                if (realIdToChecked.length > 0) {
+                    wait(200, analyzeRealId);
+                } else {
+                    realIdToForget.forEach(function (realId) {
+                        delete persistingData.cmpData[realId];
+                    });
+                    savePersistingData();
+                }
+            }).bind(this);
+            wait(200, analyzeRealId);
+        };
+        cleanCmpData.call(this);
+
         const savePersistingData = (function () {
             const newData = {};
             newData[this.id()] = persistingData;
