@@ -1059,9 +1059,9 @@ function lre(_arg) {
     /** * * * * * * * * * * * * * * * * * * * * * *
      *                 LreRepeater                *
      ** * * * * * * * * * * * * * * * * * * * * * */
-    const lreRepeater = function () {
+    const lreRepeater = function (args) {
         let entries = {};
-        let texts = {};
+        const readViewId = args[0];
 
         // protect repeater : overwrite repeater "text" will break it (unable to setData on it)
         this.text = function () {
@@ -1088,10 +1088,6 @@ function lre(_arg) {
             return true;
         };
 
-        const textSimplification = function (txt) {
-            return txt.replace(/\s+/g, ' ').trim();
-        };
-
         const clickHandler = function (component) {
             const newValues = component.value();
             each(newValues, function (entryData, entryId) {
@@ -1108,11 +1104,18 @@ function lre(_arg) {
                         component.trigger('initedit', cmp, entryId, entryData);
                         applyValuesToEntry(component, entryId, valueSave);
                     }
-                } else if (textSimplification(cmp.text()) !== texts[entryId]
+                } else if (!cmp.find(readViewId).id()
                     && (!cmp.hasData('saved') || cmp.data('saved'))) {
                     let cmp = component.find(entryId);
                     cmp.data('saved', false);
                     cmp.data('children', component.sheet().knownChildren(cmp));
+                    // Refresh all raw component of each entry children
+                    cmp.knownChildren().forEach(function (realId) {
+                        const child = cmp.sheet().get(realId);
+                        if (child && child.exists()) {
+                            child.refreshRaw();
+                        }
+                    });
                     component.trigger('edit', cmp, entryId, entryData);
                     component.trigger('initedit', cmp, entryId, entryData);
                 }
@@ -1124,12 +1127,6 @@ function lre(_arg) {
                 value = component.value();
             }
             entries = deepClone(value);
-            each(value, function (data, entryId) {
-                texts[entryId] = textSimplification(component.raw().find(entryId).text());
-                if (texts[entryId] === editingEntryText) {
-                    lreLog(component.realId() + repeaterIdSeparator + entryId + limitations.badText)
-                }
-            });
         };
 
         const initStates = function (component) {
@@ -1924,7 +1921,7 @@ function lre(_arg) {
                 try {
                     pendingDataProcessed();
                 } catch (e) {
-                    lreLog('Error occured in pendingDataProcessed : ' + e.toString())
+                    lreLog('Error occurred in pendingDataProcessed : ' + e.toString())
                 }
             }
         };
@@ -2079,10 +2076,13 @@ function lre(_arg) {
             return cmp;
         };
 
-        this.initRepeater = function (id) {
+        this.initRepeater = function (id, readViewId) {
+            if (arguments.length < 2) {
+                lreLog('Error : initRepeater for ' + id + ' needs a second argument to specify the read view id.')
+            }
             let cmp = getComponent(this, id);
             if (cmp && cmp.lreType && cmp.lreType() === 'repeater') return cmp;
-            Object.assign(cmp, new lreRepeater);
+            Object.assign(cmp, new lreRepeater(readViewId));
             cmp.initiate();
             return cmp;
         };
