@@ -2094,11 +2094,11 @@ function lre(_arg) {
         };
 
         this.initRepeater = function (id, readViewId) {
+            let cmp = getComponent(this, id);
+            if (cmp && cmp.lreType && cmp.lreType() === 'repeater') return cmp;
             if (arguments.length < 2) {
                 lreLog('Error : initRepeater for ' + id + ' needs a second argument to specify the read view id.')
             }
-            let cmp = getComponent(this, id);
-            if (cmp && cmp.lreType && cmp.lreType() === 'repeater') return cmp;
             Object.assign(cmp, new lreRepeater(readViewId));
             cmp.initiate();
             return cmp;
