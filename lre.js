@@ -2031,13 +2031,29 @@ function lre(_arg) {
         };
 
         this.componentExists = function (realId) {
+            const parts = realId.split(repeaterIdSeparator);
             // in let's role, return in a try{} doesn't exit from function block, so use a variable instead
             let result = true;
+            let cmp;
             try {
-                sheet.get(realId).addClass('__lre_dummy');
-                sheet.get(realId).removeClass('__lre_dummy');
+                cmp = sheet.get(parts[0])
+                cmp.addClass('__lre_dummy');
+                sheet.get(parts[0]).removeClass('__lre_dummy');
             } catch (e) {
                 result = false;
+            }
+            if (result && parts.length > 1) {
+                const val = cmp.value();
+                if (!val.hasOwnProperty(parts[1])) {
+                    result = false;
+                } else {
+                    try {
+                        sheet.get(realId).addClass('__lre_dummy');
+                        sheet.get(realId).removeClass('__lre_dummy');
+                    } catch (e) {
+                        result = false;
+                    }
+                }
             }
             return result;
         };
