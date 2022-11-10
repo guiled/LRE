@@ -2190,13 +2190,17 @@ function lre(_arg) {
         };
         let persistingData = loadPersistingData(sheet);
 
+        const savePersistingData = (function () {
+            const newData = {};
+            newData[this.id()] = persistingData;
+            this.setData(newData);
+        }).bind(this);
+
         this.persistingData = function () {
             const dataName = arguments[0];
             if (arguments.length > 1) {
                 persistingData[dataName] = arguments[1];
-                const newData = {};
-                newData[this.id()] = persistingData;
-                this.setData(newData);
+                savePersistingData();
             }
             if (!persistingData.hasOwnProperty(dataName)) {
                 return null;
@@ -2207,23 +2211,21 @@ function lre(_arg) {
         this.deletePersistingData = function (dataName) {
             if (persistingData.hasOwnProperty(dataName)) {
                 delete persistingData[dataName];
-                const newData = {};
-                newData[this.id()] = persistingData;
-                this.setData(newData);
+                savePersistingData();
             }
         };
 
         this.persistingCmpData = function () {
-            const dataName = arguments[0];
+            const componentId = arguments[0];
             if (arguments.length > 1) {
-                persistingData.cmpData[dataName] = arguments[1];
+                persistingData.cmpData[componentId] = arguments[1];
                 const newData = {};
                 newData[this.id()] = persistingData;
                 this.setData(newData);
-            } else if (!persistingData.cmpData.hasOwnProperty(dataName)) {
+            } else if (!persistingData.cmpData.hasOwnProperty(componentId)) {
                 return {};
             }
-            return persistingData.cmpData[dataName];
+            return persistingData.cmpData[componentId];
         }
     };
 
