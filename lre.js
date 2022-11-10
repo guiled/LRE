@@ -2009,11 +2009,12 @@ function lre(_arg) {
                     let finalId = tabId.pop();
                     let containerId = tabId.join(repeaterIdSeparator);
                     container = this.get(containerId);
-                    rawCmp = container.raw().find(finalId);
                     if (!container) {
                         lreLog('Sheet.get returns null container for ' + containerId);
                         return null;
-                    } else if (!rawCmp) {
+                    }
+                    rawCmp = container.raw().find(finalId);
+                    if (!rawCmp) {
                         lreLog('Sheet.get returns null object for ' + strId);
                         return null;
                     } else if (!rawCmp.id()) {
