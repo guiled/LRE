@@ -1051,8 +1051,11 @@ function lre(_arg) {
             this.setInitiated(true);
         };
 
-        this.find = function (id) {
-            return this.sheet().get(this.realId() + repeaterIdSeparator + id);
+        this.find = function (id, silent) {
+            if (arguments.length < 2) {
+                silent = false;
+            }
+            return this.sheet().get(this.realId() + repeaterIdSeparator + id, silent);
         };
     };
 
@@ -1104,7 +1107,7 @@ function lre(_arg) {
                         component.trigger('initedit', cmp, entryId, entryData);
                         applyValuesToEntry(component, entryId, valueSave);
                     }
-                } else if (!cmp.find(readViewId).id()
+                } else if (!cmp.find(readViewId, true).id()
                     && (!cmp.hasData('saved') || cmp.data('saved'))) {
                     let cmp = component.find(entryId);
                     cmp.data('saved', false);
@@ -1228,10 +1231,13 @@ function lre(_arg) {
             saveValues(component);
         };
 
-        this.find = function (id) {
+        this.find = function (id, silent) {
+            if (arguments.length < 2) {
+                silent = false;
+            }
             // Apply new repeater values if pending, in order to have up to date entries
             this.sheet().sendPendingDataFor(this.realId());
-            return this.sheet().get(this.realId() + repeaterIdSeparator + id);
+            return this.sheet().get(this.realId() + repeaterIdSeparator + id, silent);
         };
 
         this.initiate = function () {
@@ -1984,7 +1990,10 @@ function lre(_arg) {
         this.getSheetType = sheet.getSheetType
         this.name = sheet.name;
 
-        this.get = function (id) {
+        this.get = function (id, silent) {
+            if (arguments.length < 2) {
+                silent = false;
+            }
             let strId, cmp;
             if (typeof id === 'string' || id instanceof String) {
                 strId = id;
@@ -2000,9 +2009,9 @@ function lre(_arg) {
                     container = this;
                     rawCmp = this.raw().get(strId);
                     if (!rawCmp) {
-                        lreLog('Sheet.get returns null object for ' + strId);
+                        !silent && lreLog('Sheet.get returns null object for ' + strId);
                     } else if (!rawCmp.id()) {
-                        lreLog('Unable to find ' + strId);
+                        !silent && lreLog('Unable to find ' + strId);
                         return rawCmp;
                     }
                 } else {
@@ -2010,15 +2019,15 @@ function lre(_arg) {
                     let containerId = tabId.join(repeaterIdSeparator);
                     container = this.get(containerId);
                     if (!container) {
-                        lreLog('Sheet.get returns null container for ' + containerId);
+                        !silent && lreLog('Sheet.get returns null container for ' + containerId);
                         return null;
                     }
                     rawCmp = container.raw().find(finalId);
                     if (!rawCmp) {
-                        lreLog('Sheet.get returns null object for ' + strId);
+                        !silent && lreLog('Sheet.get returns null object for ' + strId);
                         return null;
                     } else if (!rawCmp.id()) {
-                        lreLog('Unable to find ' + strId);
+                        !silent && lreLog('Unable to find ' + strId);
                         return rawCmp;
                     }
                 }
