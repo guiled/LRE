@@ -2205,7 +2205,14 @@ function lre(_arg) {
             const analyzeRealId = (function () {
                 const checking = realIdToChecked.splice(0, 20);
                 checking.forEach((function (realId) {
-                    if (!this.componentExists(realId)) {
+                    const parts = realId.split(repeaterIdSeparator);
+                    const length = parts.length;
+                    const base = parts.pop();
+                    if (length === 1 && !this.componentExists(base)) {
+                        // forget data for non-existing components
+                        realIdToForget.push(realId);
+                    } else if (length === 3 && !this.componentExists(parts.join(repeaterIdSeparator))) {
+                        // forget data for components in non-existing repeater entries
                         realIdToForget.push(realId);
                     }
                 }).bind(this));
