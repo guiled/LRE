@@ -1261,7 +1261,7 @@ function lre(_arg) {
             if (event === 'initread') {
                 const val = this.value();
                 for (entryId in val) {
-                    callback.apply(this,this, entryId, val[entryId]);
+                    callback.call(this,this, entryId, val[entryId]);
                 }
             }
         };
