@@ -2055,7 +2055,7 @@ function lre(_arg) {
                 const val = cmp.value();
                 if (!val.hasOwnProperty(parts[1])) {
                     result = false;
-                } else {
+                } else if (parts.length > 2) {
                     try {
                         sheet.get(realId).addClass('__lre_dummy');
                         sheet.get(realId).removeClass('__lre_dummy');
