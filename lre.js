@@ -1,4 +1,4 @@
-//region LRE 6.1
+//region LRE 6.2
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -352,6 +352,22 @@ function lre(_arg) {
                 uncancelEvent(eventName);
                 return results;
             };
+        };
+
+        this.once = function (event, subComponent, handler) {
+            if (arguments.length === 2) {
+                const onceHandler = (function () {
+                    this.off(event, subComponent);
+                }).bind(this);
+                this.on(event, subComponent);
+                this.on(event, onceHandler);
+            } else {
+                const onceHandler = (function () {
+                    this.off(event, subComponent, handler);
+                }).bind(this);
+                this.on(event, subComponent, handler);
+                this.on(event, subComponent, onceHandler);
+            }
         };
 
         this.on = function (event, subComponent, handler) {
