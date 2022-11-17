@@ -561,11 +561,20 @@ function lre(_arg) {
         let parent;
         let lreEntry;
         let lreRepeater;
+        let mustSaveClasses = false;
+        let classChanges = {}; // object of key=className and value=0 deleted =1 added
 
         Object.assign(this, new EventOwner);
         Object.assign(this, new DataHolder(sheet, realId));
 
-        this.addClass = component.addClass;
+        this.addClass = function (className) {
+            classChanges[className] = 1;
+            if (mustSaveClasses) {
+                saveClassChanges();
+            }
+            component.addClass(className);
+        }
+
         this.find = function (completeId) {
             const tabId = completeId.split(repeaterIdSeparator);
             const id = tabId.pop();
@@ -588,7 +597,13 @@ function lre(_arg) {
         };
         this.hide = component.hide;
         this.show = component.show;
-        this.removeClass = component.removeClass;
+        this.removeClass = function (className) {
+            classChanges[className] = 1;
+            if (mustSaveClasses) {
+                saveClassChanges();
+            }
+            component.removeClass(className);
+        }
         this.value = function () {
             if (arguments.length > 0) {
                 const oldValue = this.value();
@@ -681,6 +696,14 @@ function lre(_arg) {
 
         this.knownChildren = function () {
             return sheet.knownChildren(this);
+        };
+        const saveClassChanges = function () {
+            classChanges = sheet.persistingCmpClasses(realId, classChanges);
+        };
+
+        this.autoSaveClasses = function () {
+            mustSaveClasses = true;
+            saveClassChanges();
         };
     };
 
@@ -2207,6 +2230,7 @@ function lre(_arg) {
             let result = {
                 initialised: false,
                 cmpData: {},
+                cmpClasses: {},
             };
             if (data.hasOwnProperty(rawSheet.id())) {
                 Object.assign(result, data[rawSheet.id()]);
@@ -2216,7 +2240,7 @@ function lre(_arg) {
         let persistingData = loadPersistingData(sheet);
 
         const cleanCmpData = function () {
-            const realIdToChecked = Object.keys(persistingData.cmpData);
+            const realIdToChecked = [].concat(Object.keys(persistingData.cmpData), Object.keys(persistingData.cmpClasses));
             const realIdToForget = [];
             const analyzeRealId = (function () {
                 const checking = realIdToChecked.splice(0, 20);
@@ -2237,6 +2261,7 @@ function lre(_arg) {
                 } else {
                     realIdToForget.forEach(function (realId) {
                         delete persistingData.cmpData[realId];
+                        delete persistingData.cmpClasses[realId];
                     });
                     savePersistingData();
                 }
@@ -2282,6 +2307,19 @@ function lre(_arg) {
             }
             return persistingData.cmpData[componentId];
         }
+
+        this.persistingCmpClasses = function () {
+            const componentId = arguments[0];
+            if (arguments.length > 1) {
+                persistingData.cmpClasses[componentId] = arguments[1];
+                const newData = {};
+                newData[this.id()] = persistingData;
+                this.setData(newData);
+            } else if (!persistingData.cmpClasses.hasOwnProperty(componentId)) {
+                return {};
+            }
+            return persistingData.cmpClasses[componentId];
+        };
     };
 
     if (!lreIntiated) {
