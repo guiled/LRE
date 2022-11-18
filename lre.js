@@ -573,6 +573,8 @@ function lre(_arg) {
                 saveClassChanges();
             }
             component.addClass(className);
+
+            return this;
         }
 
         this.find = function (completeId) {
@@ -603,6 +605,8 @@ function lre(_arg) {
                 saveClassChanges();
             }
             component.removeClass(className);
+
+            return this;
         }
         this.value = function () {
             if (arguments.length > 0) {
