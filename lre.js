@@ -1923,6 +1923,7 @@ function lre(_arg) {
      ** * * * * * * * * * * * * * * * * * * * * * */
     const lreSheet = function (_args) {
         const sheet = _args[0];
+        const silentFind = sheet.get(sheet.id()).find;
         const toRemember = [];
         const toDelete = [];
         const components = new ComponentContainer(this);
@@ -2086,9 +2087,9 @@ function lre(_arg) {
             let result = true;
             let cmp;
             try {
-                cmp = sheet.get(parts[0])
+                cmp = silentFind(parts[0])
                 cmp.addClass('__lre_dummy');
-                sheet.get(parts[0]).removeClass('__lre_dummy');
+                silentFind(parts[0]).removeClass('__lre_dummy');
             } catch (e) {
                 result = false;
             }
@@ -2098,8 +2099,8 @@ function lre(_arg) {
                     result = false;
                 } else if (parts.length > 2) {
                     try {
-                        sheet.get(realId).addClass('__lre_dummy');
-                        sheet.get(realId).removeClass('__lre_dummy');
+                        silentFind(realId).addClass('__lre_dummy');
+                        silentFind(realId).removeClass('__lre_dummy');
                     } catch (e) {
                         result = false;
                     }
