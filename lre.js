@@ -1137,33 +1137,31 @@ function lre(_arg) {
         const clickHandler = function (component) {
             const newValues = component.value();
             each(newValues, function (entryData, entryId) {
-                let cmp = component.find(entryId);
+                let entry = component.find(entryId);
                 if (!entries.hasOwnProperty(entryId)) {
-                    cmp.data('entryId', entryId);
-                    if (!cmp.data('initiated')) {
-                        cmp.data('initiated', true);
-                        cmp.data('saved', false);
-                        cmp.data('children', component.sheet().knownChildren(cmp));
+                    if (!entry.data('initiated')) {
+                        entry.data('initiated', true);
+                        entry.data('saved', false);
+                        entry.data('children', component.sheet().knownChildren(entry));
                         // Save the data beforce potential changes in init event
                         const valueSave = deepClone(entryData);
-                        component.trigger('init', cmp, entryId, entryData);
-                        component.trigger('initedit', cmp, entryId, entryData);
+                        component.trigger('init', entry, entryId, entryData);
+                        component.trigger('initedit', entry, entryId, entryData);
                         applyValuesToEntry(component, entryId, valueSave);
                     }
-                } else if (!cmp.find(readViewId, true).id()
-                    && (!cmp.hasData('saved') || cmp.data('saved'))) {
-                    let cmp = component.find(entryId);
-                    cmp.data('saved', false);
-                    cmp.data('children', component.sheet().knownChildren(cmp));
+                } else if (!entry.find(readViewId, true).id()
+                    && (!entry.hasData('saved') || entry.data('saved'))) {
+                    entry.data('saved', false);
+                    entry.data('children', component.sheet().knownChildren(entry));
                     // Refresh all raw component of each entry children
-                    cmp.knownChildren().forEach(function (realId) {
-                        const child = cmp.sheet().get(realId);
+                    entry.knownChildren().forEach(function (realId) {
+                        const child = entry.sheet().get(realId, true);
                         if (child && child.exists()) {
                             child.refreshRaw();
                         }
                     });
-                    component.trigger('edit', cmp, entryId, entryData);
-                    component.trigger('initedit', cmp, entryId, entryData);
+                    component.trigger('edit', entry, entryId, entryData);
+                    component.trigger('initedit', entry, entryId, entryData);
                 }
             });
         };
