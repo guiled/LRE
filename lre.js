@@ -798,6 +798,18 @@ function lre(_arg) {
         }
 
         this.setChoices = function (newChoices) {
+            const currentValue = this.value();
+            if (newChoices && !newChoices.hasOwnProperty(currentValue)) {
+                const availableValues = Object.keys(choices);
+                const newValues = Object.keys(newChoices);
+                if (availableValues.length && newValues.length && !newValues.includes(currentValue)) {
+                    const tmpChoices = {};
+                    tmpChoices[currentValue] = choices[currentValue];
+                    tmpChoices[newValues[0]] = newChoices[newValues[0]];
+                    this.raw().setChoices(tmpChoices);
+                    this.value(newValues[0]);
+                }
+            }
             choices = newChoices;
             this.raw().setChoices(choices);
             this.trigger('update', this);
