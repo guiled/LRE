@@ -833,13 +833,21 @@ function lre(_arg) {
             choiceData[k] = data;
         };
 
-        this.populate = function (tableOrCb, lbl) {
+        this.populate = function (tableOrCb, lbl, optional) {
+            let opt = false
+            if (arguments.length >= 3) {
+                opt = optional;
+            }
             if (typeof tableOrCb === 'string') {
+                const newChoices = {};
+                if (opt) {
+                    newChoices[0] = '';
+                }
                 if (arguments.length === 1) {
-                    this.choices = loadFromTableIds(tableOrCb);
+                    choices = Object.assign(newChoices, loadFromTableIds(tableOrCb));
                     this.refresh = refreshFromChoices.bind(this);
-                } else if (arguments.length === 2) {
-                    this.choices = loadFromTable(tableOrCb, lbl);
+                } else if (arguments.length >= 2) {
+                    choices = Object.assign(newChoices, loadFromTable(tableOrCb, lbl));
                     this.refresh = refreshFromChoices.bind(this);
                 }
             } else {
