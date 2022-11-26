@@ -2103,30 +2103,34 @@ function lre(_arg) {
 
         this.componentExists = function (realId) {
             const parts = realId.split(repeaterIdSeparator);
-            // in let's role, return in a try{} doesn't exit from function block, so use a variable instead
-            let result = true;
-            let cmp;
-            try {
-                cmp = silentFind(parts[0])
-                cmp.addClass('__lre_dummy');
-                silentFind(parts[0]).removeClass('__lre_dummy');
-            } catch (e) {
-                result = false;
+            const cmp = silentFind(parts[0])
+            if (!cmp || !cmp.id()) {
+                return false;
             }
-            if (result && parts.length > 1) {
-                const val = cmp.value();
-                if (!val.hasOwnProperty(parts[1])) {
-                    result = false;
-                } else if (parts.length > 2) {
+            if (parts.length > 1) {
+                const val = sheet.getData()[parts[0]];
+                if (!val || !val.hasOwnProperty(parts[1])) {
+                    return false;
+                }
+                if (parts.length > 2) {
+                    let tmp = silentFind(realId);
+                    if (!tmp || !tmp.id()) {
+                        return false;
+                    }
+                    tmp = sheet.get(realId);
+                    let result = true;
                     try {
-                        silentFind(realId).addClass('__lre_dummy');
-                        silentFind(realId).removeClass('__lre_dummy');
+                        tmp.addClass('__lre_dummy')
+                        tmp.removeClass('__lre_dummy')
                     } catch (e) {
-                        result = false;
+                        result = false
+                    }
+                    if (!result) {
+                        return false;
                     }
                 }
             }
-            return result;
+            return true;
         };
 
         this.find = this.get;
