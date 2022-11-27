@@ -1,4 +1,4 @@
-//region LRE 6.3
+//region LRE 6.4
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -1372,6 +1372,7 @@ function lre(_arg) {
         let currentTogglingValue = null;
         let togglingValues = [];
         let togglingData = {};
+        let cmpResfreshRaw = null;
         let cmpValue = null;
         let saveTogglingData;
 
@@ -1405,20 +1406,23 @@ function lre(_arg) {
             }.bind(this));
         };
 
-        const setTogglingValue = function (val) {
+        const setTogglingValue = function (val, force) {
             if (!val || !togglingData[val]) {
                 return;
             }
+            force = arguments.length >= 2 ? force : false;
             const oldData = {
                 classes: [], show: [], hide: [], showflex: [], hideflex: [],
             };
-            togglingValues.filter(function (v) {
-                return ((currentTogglingValue === null && v !== val) || v === currentTogglingValue);
-            }).forEach((function (v) {
-                for (k in oldData) {
-                    oldData[k] = arrayMergeUnique(oldData[k], togglingData[v][k]);
-                }
-            }).bind(this));
+            if (!force) {
+                togglingValues.filter(function (v) {
+                    return ((currentTogglingValue === null && v !== val) || v === currentTogglingValue);
+                }).forEach((function (v) {
+                    for (k in oldData) {
+                        oldData[k] = arrayMergeUnique(oldData[k], togglingData[v][k]);
+                    }
+                }).bind(this));
+            }
 
             changeTogglingData.call(this, oldData, togglingData[val]);
             currentTogglingValue = val;
@@ -1498,10 +1502,20 @@ function lre(_arg) {
             this.off('click', handleClick);
         };
 
+        const refreshRaw = function () {
+            cmpResfreshRaw();
+            if (togglingValues) {
+                setTogglingValue.call(this, currentTogglingValue, true);
+            }
+            return this;
+        };
+
         this.initiate = function () {
             this.lreType('icon');
             cmpValue = this.value.bind(this);
             this.value = iconValue.bind(this);
+            cmpResfreshRaw = this.refreshRaw.bind(this);
+            this.refreshRaw = refreshRaw.bind(this);
             this.setInitiated(true);
         };
     };
