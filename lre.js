@@ -628,6 +628,7 @@ function lre(_arg) {
         };
         this.hide = component.hide;
         this.show = component.show;
+        this.setTooltip = component.setTooltip;
         this.removeClass = function (className) {
             classChanges[className] = 1;
             if (mustSaveClasses) {
