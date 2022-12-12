@@ -658,7 +658,7 @@ function lre(_arg) {
                     } catch (e) { }
                 } else if (this._type === 'repeater') {
                     // a repeater with a pending value set, we must set it immediately when we need it because it has impact on existing elements
-                    sheet.sendPendingDataFor(this.realId());
+                    //sheet.sendPendingDataFor(this.realId());
                 }
                 if (LRE_AUTONUM && !isNaN(val)) {
                     return Number(val)
@@ -1351,7 +1351,7 @@ function lre(_arg) {
             if (event === 'initread') {
                 const val = this.value();
                 for (entryId in val) {
-                    callback.call(this,this, entryId, val[entryId]);
+                    callback.call(this, this, entryId, val[entryId]);
                 }
             }
         };
@@ -2005,7 +2005,7 @@ function lre(_arg) {
             if (arguments.length === 0) {
                 dataToSend = {};
             }
-            let added = 0;
+            let added = Object.keys(dataToSend).length;
             let analysed = 0;
             while (added < maxDataSet && pendingDataToSet.length > 0) {
                 let data = pendingDataToSet.shift();
@@ -2063,7 +2063,7 @@ function lre(_arg) {
             if (pendingDataToSetIndex.hasOwnProperty(id)) {
                 const pos = pendingDataToSetIndex[id];
                 delete pendingDataToSetIndex[id];
-                pendingDataToSet = pendingDataToSet.splice(pos, 1);
+                pendingDataToSet.splice(pos, 1);
                 for (k in pendingDataToSetIndex) {
                     if (pendingDataToSetIndex[k] >= pos) {
                         pendingDataToSetIndex[k]--;
