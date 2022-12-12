@@ -116,6 +116,35 @@ function stringify(obj, indent) {
     }).join(",\n") + "\n" + indent + "}";
 };
 
+// convert a number to a string of letters
+function intToAlpha(n) {
+    let s = '';
+    const K = 26;
+    const charBase = [65, 97];
+    while (n >= K * 2) {
+        const m = ~~(n / (K * 2));
+        const r = n - m * K * 2;
+        s = String.fromCharCode(charBase[~~(r / K)] + r%K) + s;
+        n = m;
+    }
+    s = String.fromCharCode(charBase[~~(n / K)] + n%K) + s;
+    return s;
+};
+
+// convert a string of letters to a number
+function alphaToNum(s) {
+    let n = 0;
+    let c;
+    let K = 1;
+    let length = s.split('').length;
+    for (let i = 0; i < length; i++) {
+        c = s.charCodeAt(length - 1 - i);
+        n += (c - ((c & 96) === 96 ? 97-26 : 65)) * K; 
+        K = K * 52;
+    }
+    return n;
+};
+
 let LRE_AUTONUM = false;
 // Main container
 let lreIntiated = false;
