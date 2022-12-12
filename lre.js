@@ -1991,6 +1991,7 @@ function lre(_arg) {
         const toRemember = [];
         const toDelete = [];
         const components = new ComponentContainer(this);
+        const sheetAlphaId = intToAlpha(sheet.getSheetId());
 
         Object.assign(this, new DataHolder(this, sheet.id()))
 
@@ -2093,6 +2094,9 @@ function lre(_arg) {
         this.id = sheet.id;
         this.realId = sheet.id;
         this.getSheetId = sheet.getSheetId;
+        this.getSheetAlphaId = function () {
+            return sheetAlphaId;
+        };
         this.getSheetType = sheet.getSheetType
         this.name = sheet.name;
 
