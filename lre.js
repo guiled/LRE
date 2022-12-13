@@ -1,4 +1,4 @@
-//region LRE 6.4
+//region LRE 6.5
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -364,10 +364,10 @@ function lre(_arg) {
                 } else {
                     cmp = component;
                 }
-                if (eventName === 'update' && !manuallyTriggered && rawTarget.value() === lastUpdateEventValue) {
+                if (eventName === 'update' && !manuallyTriggered && rawTarget.value && rawTarget.value() === lastUpdateEventValue) {
                     return false;
                 }
-                lastUpdateEventValue = deepClone(rawTarget.value());
+                lastUpdateEventValue = rawTarget.value && deepClone(rawTarget.value());
                 argsWithComponent.push(cmp);
                 argsWithComponent = argsWithComponent.concat(args);
                 let results = [];
@@ -1994,6 +1994,7 @@ function lre(_arg) {
         const sheetAlphaId = intToAlpha(sheet.getSheetId());
 
         Object.assign(this, new DataHolder(this, sheet.id()))
+        Object.assign(this, new EventOwner);
 
         this.getVariable = sheet.getVariable;
 
