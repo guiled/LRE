@@ -147,7 +147,7 @@ function alphaToNum(s) {
 
 let LRE_AUTONUM = false;
 // Main container
-let lreIntiated = false;
+let lreInitiated = false;
 function lre(_arg) {
 
     const initLre = function () {
@@ -1705,20 +1705,20 @@ function lre(_arg) {
 
         const columnSorter = function (column) {
             return function (a, b) {
-                let aval, bval;
+                let aVal, bVal;
                 if (a && isObject(a.data) && b && isObject(b.data)) {
-                    aval = a.data[column];
-                    bval = b.data[column];
+                    aVal = a.data[column];
+                    bVal = b.data[column];
                 } else if (a && isObject(a.val) && b && isObject(b.val)) {
-                    aval = a.val[column];
-                    bval = b.val[column];
+                    aVal = a.val[column];
+                    bVal = b.val[column];
                 }
-                return aval < bval ? -1 : (aval > bval ? 1 : 0);
+                return aVal < bVal ? -1 : (aVal > bVal ? 1 : 0);
             }
         };
 
         const getSortedDataMapper = function (sorter) {
-            if (arguments.length === 0 || typeof sorter === 'undefinde' || !sorter) {
+            if (arguments.length === 0 || typeof sorter === 'undefined' || !sorter) {
                 sorter = valSorter;
             } else if (typeof sorter === 'string') {
                 sorter = columnSorter(sorter)
@@ -2406,9 +2406,9 @@ function lre(_arg) {
         };
     };
 
-    if (!lreIntiated) {
+    if (!lreInitiated) {
         initLre();
-        lreIntiated = true;
+        lreInitiated = true;
     }
 
     if (typeof _arg === 'function') {
