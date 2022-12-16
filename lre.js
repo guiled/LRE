@@ -1322,6 +1322,14 @@ function lre(_arg) {
             saveValues(component);
         };
 
+        this.readOnly = function (readOnly) {
+            if (arguments.length === 0 || readOnly) {
+                this.addClass('no-add').addClass('no-edit');
+            } else {
+                this.removeClass('no-add').removeClass('no-edit');
+            }
+        }
+
         this.find = function (id, silent) {
             if (arguments.length < 2) {
                 silent = false;
