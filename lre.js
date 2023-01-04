@@ -2424,8 +2424,8 @@ function lre(_arg) {
             wait(0, function () {
                 let data = _sheet.getData();
                 let sheet = getLreSheet(_sheet, true);
-                if (!sheet.persistingData('initialised') && typeof firstInit !== 'undefined') {
-                    sheet.persistingData('initialised', firstInit(sheet));
+                if (!sheet.persistingData('initialized') && typeof firstInit !== 'undefined') {
+                    sheet.persistingData('initialized', firstInit(sheet));
                 }
                 _arg.call(this, sheet);
             })
