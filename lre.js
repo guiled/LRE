@@ -606,6 +606,10 @@ function lre(_arg) {
             return this;
         }
 
+        this.getClasses = component.getClasses;
+        this.hasClass = component.hasClass;
+        this.toggleClass = component.toggleClass;
+
         this.find = function (completeId) {
             const tabId = completeId.split(repeaterIdSeparator);
             const id = tabId.pop();
