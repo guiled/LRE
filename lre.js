@@ -1,4 +1,4 @@
-//region LRE 6.5
+//region LRE 6.6
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -235,29 +235,6 @@ function lre(_arg) {
             rawCmp.value(typeof val !== 'undefined' ? val : null);
         }
         return result;
-    };
-
-    const initComponent = function (rawComponent, lreContainer) {
-        let realId = '';
-        if (lreContainer.lreType() === 'entry' || lreContainer.lreType() === 'repeater') {
-            realId = lreContainer.realId() + repeaterIdSeparator;
-        }
-        realId += rawComponent.id();
-        let cmp = new lreComponent(lreContainer.sheet(), rawComponent, realId);
-        cmp.parent(lreContainer);
-        if (lreContainer.lreType() === 'entry') {
-            cmp.entry(lreContainer);
-            cmp.repeater(lreContainer.repeater());
-        }
-        if (lreContainer.lreType() === 'repeater') {
-            cmp = Object.assign(cmp, new lreRepeaterEntry());
-            cmp.repeater(lreContainer);
-            //} else if (isRepeater(rawComponent)) {
-            // it is a repeater
-            //        cmp = Object.assign(cmp, new lreRepeater);
-        }
-        cmp.initiate();
-        return cmp;
     };
 
     const lreLog = function (_str) {
@@ -1159,9 +1136,8 @@ function lre(_arg) {
     /** * * * * * * * * * * * * * * * * * * * * * *
      *                 LreRepeater                *
      ** * * * * * * * * * * * * * * * * * * * * * */
-    const lreRepeater = function (args) {
+    const lreRepeater = function () {
         let entries = {};
-        const readViewId = args[0];
 
         // protect repeater : overwrite repeater "text" will break it (unable to setData on it)
         this.text = function () {
@@ -1203,7 +1179,7 @@ function lre(_arg) {
                         component.trigger('initedit', entry, entryId, entryData);
                         applyValuesToEntry(component, entryId, valueSave);
                     }
-                } else if (!entry.find(readViewId, true).id()
+                } else if (entry.hasClass('editing')
                     && (!entry.hasData('saved') || entry.data('saved'))) {
                     entry.data('saved', false);
                     entry.data('children', component.sheet().knownChildren(entry));
@@ -2113,6 +2089,38 @@ function lre(_arg) {
         this.getSheetType = sheet.getSheetType
         this.name = sheet.name;
 
+        const initComponent = function (rawComponent, lreContainer) {
+            let realId = '';
+            if (lreContainer.lreType() === 'entry' || lreContainer.lreType() === 'repeater') {
+                realId = lreContainer.realId() + repeaterIdSeparator;
+            }
+            realId += rawComponent.id();
+            const classes = rawComponent.getClasses();
+            let cmp = new lreComponent(lreContainer.sheet(), rawComponent, realId);
+            if (classes.includes('repeater')) {
+                Object.assign(cmp, new lreRepeater());
+            } else if (classes.includes('choice')) {
+                if (classes.includes('multiple')) {
+                    Object.assign(cmp, new lreMultiChoice);
+                } else {
+                    Object.assign(cmp, new lreChoice);
+                }
+            } else if (classes.includes('icon')) {
+                Object.assign(cmp, new lreIcon);
+            }
+            cmp.parent(lreContainer);
+            if (lreContainer.lreType() === 'entry') {
+                cmp.entry(lreContainer);
+                cmp.repeater(lreContainer.repeater());
+            }
+            if (lreContainer.lreType() === 'repeater') {
+                cmp = Object.assign(cmp, new lreRepeaterEntry());
+                cmp.repeater(lreContainer);
+            }
+            cmp.initiate();
+            return cmp;
+        };
+
         this.get = function (id, silent) {
             if (arguments.length < 2) {
                 silent = false;
@@ -2161,6 +2169,10 @@ function lre(_arg) {
             }
             return cmp;
         };
+        this.initRepeater = this.get;
+        this.initChoice = this.get;
+        this.initMultiChoice = this.get;
+        this.initIcon = this.get;
 
         this.componentExists = function (realId) {
             const parts = realId.split(repeaterIdSeparator);
@@ -2195,50 +2207,6 @@ function lre(_arg) {
         };
 
         this.find = this.get;
-
-        const getComponent = function (sheet, id) {
-            if (id instanceof String || typeof id === 'string') {
-                return sheet.get(id);
-            } else {
-                return id;
-            }
-        };
-
-        this.initChoice = function (id) {
-            let cmp = getComponent(this, id);
-            Object.assign(cmp, new lreChoice);
-            cmp.initiate();
-            return cmp;
-        };
-
-        this.initMultiChoice = function (id) {
-            let cmp = getComponent(this, id);
-            if (!Array.isArray(cmp.value())) {
-                lreLog('Unable to initialize multichoice : ' + id + ' is not a Choice component');
-                return;
-            }
-            Object.assign(cmp, new lreMultiChoice);
-            cmp.initiate();
-            return cmp;
-        };
-
-        this.initIcon = function (id) {
-            let cmp = getComponent(this, id);
-            Object.assign(cmp, new lreIcon);
-            cmp.initiate();
-            return cmp;
-        };
-
-        this.initRepeater = function (id, readViewId) {
-            let cmp = getComponent(this, id);
-            if (cmp && cmp.lreType && cmp.lreType() === 'repeater') return cmp;
-            if (arguments.length < 2) {
-                lreLog('Error : initRepeater for ' + id + ' needs a second argument to specify the read view id.')
-            }
-            Object.assign(cmp, new lreRepeater(readViewId));
-            cmp.initiate();
-            return cmp;
-        };
 
         this.raw = function () {
             return sheet;
