@@ -719,7 +719,7 @@ function lre(_arg) {
             let somethingHasChanged = false;
             if (data) {
                 each(data, function (d) {
-                    if (d && (!newChoices.hasOwnProperty(d.id) || newChoices[d.id] !== d.val)) {
+                    if (d && typeof d.id !== 'undefined' && (!newChoices.hasOwnProperty(d.id) || newChoices[d.id] !== d.val)) {
                         newChoices[d.id] = d.val;
                         newChoiceData[d.id] = d.data;
                         somethingHasChanged = true;
@@ -768,6 +768,9 @@ function lre(_arg) {
         }
 
         this.setChoices = function (newChoices) {
+            if (newChoices.hasOwnProperty(undefined)) {
+                lreLog('Try to set an undefined value')
+            }
             const currentValue = this.value();
             if (newChoices && !newChoices.hasOwnProperty(currentValue)) {
                 const availableValues = Object.keys(choices);
@@ -874,6 +877,7 @@ function lre(_arg) {
         };
 
         this.initiate = function () {
+            lreLog('Initiate Choice ' + this.realId());
             choiceCommon.overloadEvents.call(this, eventOverload);
             currentValue = this.value();
             this.lreType('choice');
@@ -997,6 +1001,7 @@ function lre(_arg) {
         };
 
         this.initiate = function () {
+            lreLog('Initiate Choice ' + this.realId());
             choiceCommon.overloadEvents.call(this, eventOverload);
             valuesForMax = this.raw().value();
             this.lreType('multichoice');
