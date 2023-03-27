@@ -102,6 +102,8 @@ function stringify(obj, indent) {
                 return '' + obj;
             case 'function':
                 return 'null';
+            case 'undefined':
+                return 'undefined';
             case 'object':
                 if (obj instanceof Date) return '"' + obj.toISOString() + '"';
                 if (obj instanceof Array) return "[\n" + obj.map(recursive).join(",\n") + "\n" + indent + "]";
