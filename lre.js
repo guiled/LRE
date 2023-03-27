@@ -1573,6 +1573,9 @@ function lre(_arg) {
         };
 
         this.populateFrom = function (collection, mapping, dependencies) {
+            if (arguments.length < 3) {
+                dependencies = [];
+            }
             if (dataOrigin) {
                 dataOrigin.off('dataChange', populate);
             }
