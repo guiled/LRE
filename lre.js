@@ -372,7 +372,7 @@ function lre(_arg) {
             }
         };
 
-        // Cancel the next callbacks of an evet
+        // Cancel the next callbacks of an event
         // Cancel happens only "once" per trigger
         this.cancelEvent = function (event) {
             if (!canceledEvents.includes(event)) {
