@@ -151,6 +151,8 @@ let LRE_AUTONUM = false;
 // Main container
 let lreInitiated = false;
 function lre(_arg) {
+    let errExclFirstLine, errExclLastLine;
+    try {let a=null;a()} catch (e) {errExclFirstLine = e.trace[0].loc.start.line};
 
     const initLre = function () {
         overloadLog(log);
@@ -198,6 +200,29 @@ function lre(_arg) {
 
     const lreLog = function (_str) {
         log('[LRE] ' + _str);
+    }
+
+    function handleError(e, additionals) {
+        const trace = e && e.trace ? e.trace : [];
+        const last = trace.find(function (t) {
+            return t && t.loc && t.loc.start && (t.loc.start.line < errExclFirstLine || t.loc.start.line > errExclLastLine);
+        });
+        let start = 0, end = 0;
+        if (last && last.loc && last.loc.start && last.loc.end) {
+            start = last.loc.start.line;
+            end = last.loc.end.line;
+        }
+        let sMessage = 'Error found ';
+        if (start !== end) {
+            sMessage += 'between lines ' + start + ' and ' + end;
+        } else {
+            sMessage += 'at line ' + start;
+        }
+        sMessage += ' => ' + e.name + ': ' + e.message;
+        lreLog(sMessage);
+        if (arguments.length > 1) {
+            lreLog('Additional informations : ' + additionals);
+        }
     }
 
     /** * * * * * * * * * * * * * * * * * * * * * *
@@ -311,7 +336,13 @@ function lre(_arg) {
                     if (!eventIsEnabled(eventName)) {
                         return true;
                     }
-                    results.push(fcn.apply(component, argsWithComponent));
+
+                    try {
+                        results.push(fcn.apply(component, argsWithComponent));
+                    } catch (e) {
+                        handleError(e, 'event ' + eventName + ' on ' + rawTarget.id());
+                    }
+
                     return false;
                 });
                 uncancelEvent(eventName);
@@ -2347,6 +2378,7 @@ function lre(_arg) {
         lreInitiated = true;
     }
 
+    try {let a=null;a()} catch (e) {errExclLastLine = e.trace[0].loc.start.line};
     if (typeof _arg === 'function') {
         return function (_sheet) {
             const id = _sheet.id();
@@ -2359,7 +2391,11 @@ function lre(_arg) {
                 if (!sheet.persistingData('initialized') && typeof firstInit !== 'undefined') {
                     sheet.persistingData('initialized', firstInit(sheet));
                 }
-                _arg.call(this, sheet);
+                try {
+                    _arg.call(this, sheet);
+                } catch (e) {
+                    handleError(e);
+                }
             })
         }
     }
