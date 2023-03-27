@@ -1569,7 +1569,7 @@ function lre(_arg) {
      ** * * * * * * * * * * * * * * * * * * * * * */
     const DataCollection = {
         STOP: '__lreMustStop__',
-        STOP_RESULT: {},  // as of it is impossible to initialise with { [STOP]: true }, this object will be initialised just after
+        STOP_RESULT: {},  // as of it is impossible to initialize with { [STOP]: true }, this object will be initialized just after
         onlyResult: function (resultVal) {
             return resultVal.result;
         },
