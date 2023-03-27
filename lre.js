@@ -196,49 +196,6 @@ function lre(_arg) {
         return sheets[id];
     }
 
-    const isRepeater = function (rawCmp) {
-        if (!rawCmp || !rawCmp.id()) return false;
-        let val;
-        try {
-            try {
-                val = rawCmp.value();
-            } catch (e) {
-                return false;
-            }
-        } catch (e) {
-        }
-        let result = false;
-        let valueSet = false;
-        if (typeof val === 'object' && val !== null) return true;
-        if ((typeof val === 'undefined' || val === null) && rawCmp.text().replace(/\s+/g, '').trim() === 'Add...') {
-            try {
-                try {
-                    // Try catch for following line only works inside a try catch
-                    const newId = '42LRE';
-                    const newValue = {}
-                    newValue[newId] = { a: 1 };
-                    valueSet = true;
-                    rawCmp.value(newValue);
-                    const entry = rawCmp.find(newId);
-                    // Only repeaters can have a component from an array value
-                    result = entry && entry.id && entry.id() === newId;
-                    rawCmp.value(null);
-                } catch (e) {
-                    // Only repeaters may throw an Exception here
-                    result = true;
-                }
-            } catch (e) {
-                result = true;
-            }
-        }
-        if (result) {
-            rawCmp.value({});      // Init data for repeaters
-        } else if (valueSet) {
-            rawCmp.value(typeof val !== 'undefined' ? val : null);
-        }
-        return result;
-    };
-
     const lreLog = function (_str) {
         log('[LRE] ' + _str);
     }
