@@ -1,4 +1,4 @@
-//region LRE 6.7
+//region LRE 6.8
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -1379,9 +1379,9 @@ function lre(_arg) {
     };
 
     /** * * * * * * * * * * * * * * * * * * * * * *
-     *                  LreIcon                   *
+     *                  LreToggling               *
      ** * * * * * * * * * * * * * * * * * * * * * */
-    const lreIcon = function () {
+    const lreToggling = function () {
         let currentTogglingValue = null;
         let togglingValues = [];
         let togglingData = {};
@@ -1479,6 +1479,10 @@ function lre(_arg) {
         this.toggling = function (data, defaultValue, save) {
             togglingData = data;
             if (togglingValues.length === 0) {
+                cmpValue = this.value.bind(this);
+                this.value = iconValue.bind(this);
+                cmpResfreshRaw = this.refreshRaw.bind(this);
+                this.refreshRaw = refreshRaw.bind(this);
                 // Add click handler only if component is not yet toggling
                 this.on('click', handleToggleClick.bind(this));
             }
@@ -1510,6 +1514,10 @@ function lre(_arg) {
         };
 
         this.untoggling = function () {
+            if (togglingValues.length > 0) {
+                this.value = cmpValue.bind(this);
+                this.refreshRaw = cmpResfreshRaw.bind(this);
+            }
             togglingData = {};
             togglingValues = [];
             this.off('click', handleClick);
@@ -1522,16 +1530,30 @@ function lre(_arg) {
             }
             return this;
         };
+    };
 
+    /** * * * * * * * * * * * * * * * * * * * * * *
+     *                  LreIcon                   *
+     ** * * * * * * * * * * * * * * * * * * * * * */
+    const lreIcon = function () {
         this.initiate = function () {
             this.lreType('icon');
-            cmpValue = this.value.bind(this);
-            this.value = iconValue.bind(this);
-            cmpResfreshRaw = this.refreshRaw.bind(this);
-            this.refreshRaw = refreshRaw.bind(this);
+            Object.assign(this, new lreToggling());
             this.setInitiated(true);
         };
     };
+
+    /** * * * * * * * * * * * * * * * * * * * * * *
+     *                  LreLabel                  *
+     ** * * * * * * * * * * * * * * * * * * * * * */
+    const lreLabel = function () {
+        this.initiate = function () {
+            this.lreType('label');
+            Object.assign(this, new lreToggling());
+            this.setInitiated(true);
+        };
+    };
+
 
     /** * * * * * * * * * * * * * * * * * * * * * *
      *                DataReceiver                *
@@ -2105,6 +2127,8 @@ function lre(_arg) {
                 }
             } else if (classes.includes('icon')) {
                 Object.assign(cmp, new lreIcon);
+            } else if (classes.includes('label')) {
+                Object.assign(cmp, new lreLabel);
             }
             cmp.parent(lreContainer);
             if (lreContainer.lreType() === 'entry') {
