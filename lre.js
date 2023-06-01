@@ -1,4 +1,4 @@
-//region LRE 6.8
+//region LRE 6.9
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -1381,13 +1381,16 @@ function lre(_arg) {
     /** * * * * * * * * * * * * * * * * * * * * * *
      *                  LreToggling               *
      ** * * * * * * * * * * * * * * * * * * * * * */
-    const lreToggling = function () {
+    const lreToggling = function (_args) {
+        const VALUE_DATA_ID = 'togglingValue';
+        const cmp = _args[0];
         let currentTogglingValue = null;
         let togglingValues = [];
         let togglingData = {};
-        let cmpResfreshRaw = null;
-        let cmpValue = null;
+        let cmpResfreshRaw = cmp.refreshRaw.bind(cmp);
+        let cmpValue = cmp.value.bind(cmp);
         let saveTogglingData;
+        let handleClick;
 
         const manageAddedRemoved = function (oldData, newData, prop, addCB, delCB) {
             const oldArray = oldData.hasOwnProperty(prop) ? oldData[prop] : [];
@@ -1439,7 +1442,7 @@ function lre(_arg) {
 
             changeTogglingData.call(this, oldData, togglingData[val]);
             currentTogglingValue = val;
-            saveTogglingData && this.data('togglingValue', val, true);
+            saveTogglingData && this.data(VALUE_DATA_ID, val, true);
             if (togglingData[val].hasOwnProperty('icon')) {
                 cmpValue(togglingData[val].icon);
             } else if (typeof togglingData[val] === 'string') {
@@ -1453,6 +1456,10 @@ function lre(_arg) {
 
         const iconValue = function () {
             if (!togglingValues || togglingValues.length === 0) {
+                if (arguments.length === 0 && this.hasData(VALUE_DATA_ID)) {
+                    // for getting the togglingValue before the component toggling initialization
+                    return this.data(VALUE_DATA_ID);
+                }
                 return cmpValue.apply(this, arguments);
             }
             if (arguments.length === 0) {
@@ -1479,12 +1486,9 @@ function lre(_arg) {
         this.toggling = function (data, defaultValue, save) {
             togglingData = data;
             if (togglingValues.length === 0) {
-                cmpValue = this.value.bind(this);
-                this.value = iconValue.bind(this);
-                cmpResfreshRaw = this.refreshRaw.bind(this);
-                this.refreshRaw = refreshRaw.bind(this);
                 // Add click handler only if component is not yet toggling
-                this.on('click', handleToggleClick.bind(this));
+                handleClick = handleToggleClick.bind(this);
+                this.on('click', handleClick);
             }
             togglingValues = Object.keys(data);
             if (togglingValues.length === 0) {
@@ -1497,7 +1501,7 @@ function lre(_arg) {
                 defaultValue = togglingValues[0];
             }
             saveTogglingData = save;
-            const savedValue = saveTogglingData ? this.data('togglingValue') : null;
+            const savedValue = saveTogglingData ? this.data(VALUE_DATA_ID) : null;
             if (savedValue && togglingValues.includes(savedValue)) {
                 setTogglingValue.call(this, savedValue);
             } else if (togglingValues.includes(defaultValue)) {
@@ -1521,6 +1525,7 @@ function lre(_arg) {
             togglingData = {};
             togglingValues = [];
             this.off('click', handleClick);
+            this.deleteData(VALUE_DATA_ID, true);
         };
 
         const refreshRaw = function () {
@@ -1530,6 +1535,9 @@ function lre(_arg) {
             }
             return this;
         };
+
+        this.value = iconValue.bind(cmp);
+        this.refreshRaw = refreshRaw.bind(cmp);
     };
 
     /** * * * * * * * * * * * * * * * * * * * * * *
@@ -1538,7 +1546,7 @@ function lre(_arg) {
     const lreIcon = function () {
         this.initiate = function () {
             this.lreType('icon');
-            Object.assign(this, new lreToggling());
+            Object.assign(this, new lreToggling(this));
             this.setInitiated(true);
         };
     };
@@ -1549,7 +1557,7 @@ function lre(_arg) {
     const lreLabel = function () {
         this.initiate = function () {
             this.lreType('label');
-            Object.assign(this, new lreToggling());
+            Object.assign(this, new lreToggling(this));
             this.setInitiated(true);
         };
     };
