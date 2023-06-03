@@ -1,4 +1,4 @@
-//region LRE 6.9
+//region LRE 6.10
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -922,17 +922,24 @@ function lre(_arg) {
      *               LreMultiChoice               *
      ** * * * * * * * * * * * * * * * * * * * * * */
     const lreMultiChoice = function () {
-        let checkMaxEnabled = false;
-        let nbMax;
+        const OVER = 1, UNDER = -1;
+        let nbMax, nbMin;
         const defaultCalculator = function () {
             return 1;
         };
-        let sumCalculator = defaultCalculator
-        let valuesForMax;
+        let sumCalculatorMax = defaultCalculator, sumCalculatorMin = defaultCalculator
+        let valuesForMinMax;
         const eventOverload = {};
         let currentValue = [];
 
         Object.assign(this, new lreChoice);
+
+        const sanitizeValue = function (val) {
+            if (val !== null && typeof val !== "undefined" && !Array.isArray(val)) {
+                return [val];
+            }
+            return val;
+        }
 
         const addObjectProperties = function (a, b) {
             const result = a;
@@ -945,10 +952,10 @@ function lre(_arg) {
             return result;
         };
 
-        const objectExceedComparison = function (a, b) {
+        const objectExceedComparison = function (a, b, overunder) {
             let exceeded = false;
             Object.keys(a).some(function (k) {
-                if (b.hasOwnProperty(k) && b[k] > a[k]) {
+                if (b.hasOwnProperty(k) && overunder * b[k] > overunder * a[k]) {
                     exceeded = true;
                     return true;
                 }
@@ -956,39 +963,51 @@ function lre(_arg) {
             return exceeded;
         };
 
-        const checkMax = function () {
-            let result = 0;
+        const calculate = function (choices, data, id, calculator, result) {
+            let val = calculator(choices[id], id, (data.hasOwnProperty(id) ? data[id] : undefined), result);
+            if (isObject(val)) {
+                if (!isObject(result)) result = {};
+                result = addObjectProperties(result, val);
+            } else {
+                result += 1.0 * val;
+            }
+
+            return result;
+        }
+
+        const testExceeded = function (limit, result, newValues, prevValues, overunder) {
+            if (overunder * newValues < overunder * prevValues.length) {
+                return false;
+            } else if (isObject(limit)) {
+                return objectExceedComparison(limit, result, overunder);
+            } else {
+                return limit > 0 && overunder * result > overunder * limit;
+            }
+        }
+
+        const checkMinMax = function () {
+            let resultMin = 0, resultMax = 0;
             let data = this.getChoiceData();
             const choices = this.getChoices();
             const newValue = this.value();
+
             each(newValue, function (id) {
-                let val = sumCalculator(choices[id], id, (data.hasOwnProperty(id) ? data[id] : undefined), result);
-                if (isObject(val)) {
-                    if (!isObject(result)) result = {};
-                    result = addObjectProperties(result, val);
-                } else {
-                    result += 1.0 * val;
-                }
+                resultMin = calculate(choices, data, id, sumCalculatorMin, resultMin);
+                resultMax = calculate(choices, data, id, sumCalculatorMax, resultMax);
             });
-            let maxValue = nbMax;
-            if (typeof nbMax === 'function') {
-                maxValue = nbMax();
-            }
-            let exceeded = false;
-            if (isObject(maxValue)) {
-                exceeded = objectExceedComparison(maxValue, result);
-            } else {
-                exceeded = (result > maxValue && maxValue > 0);
-            }
-            if (exceeded && newValue.length > valuesForMax.length) {
+            let maxValue = typeof nbMax === 'function' ? nbMax() : nbMax;
+            let minValue = typeof nbMin === 'function' ? nbMin() : nbMin;
+            
+            if (testExceeded(maxValue, resultMax, newValue, valuesForMinMax, OVER)
+            || testExceeded(minValue, resultMin, newValue, valuesForMinMax, UNDER)) {
                 this.trigger('limit');
                 this.disableEvent('update');
-                this.value(valuesForMax.slice());
+                this.value(valuesForMinMax.slice());
                 this.enableEvent('update');
                 this.cancelEvent('update');
                 return;
             }
-            valuesForMax = newValue;
+            valuesForMinMax = newValue.slice();
         };
 
         // trigger eventName and eventName[val]
@@ -1031,14 +1050,32 @@ function lre(_arg) {
             currentValue = newValue.slice();
         };
 
+
+        this.setChoices = function (newChoices) {
+            if (newChoices.hasOwnProperty(undefined)) {
+                lreLog('Try to set an undefined value')
+            }
+            const values = this.value();
+            const currentValues = this.value();
+            const newValues = currentValues.filter(function (val) {
+                return newChoices.hasOwnProperty(val);
+            });
+            choices = newChoices;
+            this.raw().setChoices(choices);
+            if (arrayDiff(values, newValues).length !== 0 || arrayDiff(newValues, values).length !== 0) {
+                this.value(newValues);
+                this.trigger('update', this);
+            }
+        };
+
         this.initiate = function () {
             lreLog('Initiate Choice ' + this.realId());
             choiceCommon.overloadEvents.call(this, eventOverload);
-            valuesForMax = this.raw().value();
+            valuesForMinMax = this.raw().value();
             this.lreType('multichoice');
             Object.assign(this, new lreDataReceiver(choiceCommon.setChoicesFromDataProvider.bind(this)));
             Object.assign(this, new lreDataCollection(this, DataCollection.getDataMapper(getDataValue.bind(this)).bind(this)));
-            this.on('update', checkMax);
+            this.on('update', checkMinMax);
             this.on('update', this.triggerDataChange);
             this.on('update', checkChanges.bind(this));
             this.setInitiated(true);
@@ -1061,17 +1098,24 @@ function lre(_arg) {
             if (arguments.length === 0) {
                 return nbMax
             }
-            sumCalculator = arguments.length > 1 ? calculator : defaultCalculator;
+            sumCalculatorMax = arguments.length > 1 ? calculator : defaultCalculator;
             nbMax = nb;
-            checkMaxEnabled = (nb > 0 || typeof nb === 'object' || typeof nb === 'function');
+        };
+
+        this.minChoiceNb = function (nb, calculator) {
+            if (arguments.length === 0) {
+                return nbMin
+            }
+            minSumCalculatorMin = arguments.length > 1 ? calculator : defaultCalculator;
+            nbMin = nb;
         };
 
         // value is overloaded because value changing need to set choices again to be viewed
         this.value = function (values) {
             if (arguments.length === 0) {
-                return this.raw().value();
+                return sanitizeValue(this.raw().value());
             } else {
-                this.raw().value(values);
+                this.raw().value(sanitizeValue(values));
                 this.repopulate();
             }
         };
