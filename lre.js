@@ -767,35 +767,46 @@ function lre(_arg) {
         },
     };
 
-    const lreChoice = function () {
+    const lreChoice = function (_args) {
         let tableSource;
-        let choices = {};
         let choiceData = {}
         let currentValue = null;
         const eventOverload = {};
+        let getChoices, setChoices;
+        (function () {
+            let choices = {};
+            getChoices = _args[0] || function () {
+                return choices;
+            }
+            setChoices = _args[1] || function (newChoices) {
+                choices = newChoices;
+            }
+        })();
 
         const refreshFromChoices = function () {
-            this.setChoices(choices);
+            this.setChoices(getChoices());
         };
 
         const loadFromTableIds = function (tableName) {
             tableSource = { table: tableName, col: 'id', rows: {} }
-            choices = {};
+            const tmpChoices = {};
             Tables.get(tableName).each(function (row) {
-                choices[row.id] = row.id;
+                tmpChoices[row.id] = row.id;
                 tableSource.rows[row.id] = row;
             })
-            return choices;
+            setChoices(tmpChoices);
+            return tmpChoices;
         };
 
         const loadFromTable = function (tableName, lbl) {
             tableSource = { table: tableName, col: lbl, rows: {} }
-            choices = {};
+            const tmpChoices = {};
             Tables.get(tableName).each(function (row) {
-                choices[row.id] = row[lbl];
+                tmpChoices[row.id] = row[lbl];
                 tableSource.rows[row.id] = row;
             });
-            return choices;
+            setChoices(tmpChoices);
+            return tmpChoices;
         }
 
         this.setChoices = function (newChoices) {
@@ -804,26 +815,28 @@ function lre(_arg) {
             }
             const currentValue = this.value();
             if (newChoices && !newChoices.hasOwnProperty(currentValue)) {
-                const availableValues = Object.keys(choices);
+                const currentChoices = getChoices();
+                const availableValues = Object.keys(currentChoices);
                 const newValues = Object.keys(newChoices);
                 if (availableValues.length && newValues.length && !newValues.includes(currentValue)) {
                     const tmpChoices = {};
-                    tmpChoices[currentValue] = choices[currentValue];
+                    tmpChoices[currentValue] = currentChoices[currentValue];
                     tmpChoices[newValues[0]] = newChoices[newValues[0]];
                     this.raw().setChoices(tmpChoices);
                     this.value(newValues[0]);
                 }
             }
-            choices = newChoices;
-            this.raw().setChoices(choices);
+            setChoices(newChoices);
+            this.raw().setChoices(newChoices);
             this.trigger('update', this);
         };
 
         this.getChoices = function () {
-            if (!choices || Object.keys(choices).length === 0) {
+            const currentChoices = getChoices();
+            if (!currentChoices || Object.keys(currentChoices).length === 0) {
                 lreLog(this.id() + ' : ' + limitations.noChoice);
             }
-            return choices;
+            return currentChoices;
         };
 
         this.getChoiceData = function () {
@@ -848,17 +861,18 @@ function lre(_arg) {
                     newChoices[0] = '';
                 }
                 if (arguments.length === 1) {
-                    choices = Object.assign(newChoices, loadFromTableIds(tableOrCb));
+                    setChoices(Object.assign(newChoices, loadFromTableIds(tableOrCb)));
                     this.refresh = refreshFromChoices.bind(this);
                 } else if (arguments.length >= 2) {
-                    choices = Object.assign(newChoices, loadFromTable(tableOrCb, lbl));
+                    setChoices(Object.assign(newChoices, loadFromTable(tableOrCb, lbl)));
                     this.refresh = refreshFromChoices.bind(this);
                 }
             } else {
                 this.refresh = (function () {
-                    choices = tableOrCb();
-                    this.setChoices(choices);
-                    return choices;
+                    const tmpChoices = tableOrCb();
+                    setChoices(tmpChoices);
+                    this.setChoices(tmpChoices);
+                    return tmpChoices;
                 }).bind(this);
             }
             this.repopulate();
@@ -869,12 +883,7 @@ function lre(_arg) {
         }
 
         this.label = function () {
-            if (arguments.length === 0) {
-                return choices[this.value()];
-            } else if (choices.hasOwnProperty(arguments[0])) {
-                return choices[arguments[0]];
-            }
-            return null;
+            return this.text();
         };
 
         this.valueData = function () {
@@ -892,7 +901,7 @@ function lre(_arg) {
         };
 
         this.refresh = function () {
-            this.raw().setChoices(choices);
+            this.raw().setChoices(getChoices());
         };
 
         const checkChanges = function (cmp) {
@@ -921,7 +930,7 @@ function lre(_arg) {
     /** * * * * * * * * * * * * * * * * * * * * * *
      *               LreMultiChoice               *
      ** * * * * * * * * * * * * * * * * * * * * * */
-    const lreMultiChoice = function () {
+    const lreMultiChoice = function (_args) {
         const OVER = 1, UNDER = -1;
         let nbMax, nbMin;
         const defaultCalculator = function () {
@@ -931,8 +940,18 @@ function lre(_arg) {
         let valuesForMinMax;
         const eventOverload = {};
         let currentValue = [];
+        let getChoices, setChoices;
+        (function () {
+            let choices = {};
+            getChoices = function () {
+                return choices;
+            }
+            setChoices = function (newChoices) {
+                choices = newChoices;
+            }
+        })();
 
-        Object.assign(this, new lreChoice);
+        Object.assign(this, new lreChoice(getChoices, setChoices));
 
         const sanitizeValue = function (val) {
             if (val !== null && typeof val !== "undefined" && !Array.isArray(val)) {
@@ -988,7 +1007,7 @@ function lre(_arg) {
         const checkMinMax = function () {
             let resultMin = 0, resultMax = 0;
             let data = this.getChoiceData();
-            const choices = this.getChoices();
+            const choices = getChoices();
             const newValue = this.value();
 
             each(newValue, function (id) {
@@ -1060,8 +1079,8 @@ function lre(_arg) {
             const newValues = currentValues.filter(function (val) {
                 return newChoices.hasOwnProperty(val);
             });
-            choices = newChoices;
-            this.raw().setChoices(choices);
+            setChoices(newChoices);
+            this.raw().setChoices(newChoices);
             if (arrayDiff(values, newValues).length !== 0 || arrayDiff(newValues, values).length !== 0) {
                 this.value(newValues);
                 this.trigger('update', this);
@@ -1075,7 +1094,6 @@ function lre(_arg) {
             this.lreType('multichoice');
             Object.assign(this, new lreDataReceiver(choiceCommon.setChoicesFromDataProvider.bind(this)));
             Object.assign(this, new lreDataCollection(this, DataCollection.getDataMapper(getDataValue.bind(this)).bind(this)));
-            this.on('update', checkMinMax);
             this.on('update', this.triggerDataChange);
             this.on('update', checkChanges.bind(this));
             this.setInitiated(true);
@@ -1098,6 +1116,7 @@ function lre(_arg) {
             if (arguments.length === 0) {
                 return nbMax
             }
+            this.on('update', checkMinMax);
             sumCalculatorMax = arguments.length > 1 ? calculator : defaultCalculator;
             nbMax = nb;
         };
@@ -1106,6 +1125,7 @@ function lre(_arg) {
             if (arguments.length === 0) {
                 return nbMin
             }
+            this.on('update', checkMinMax);
             minSumCalculatorMin = arguments.length > 1 ? calculator : defaultCalculator;
             nbMin = nb;
         };
