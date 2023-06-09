@@ -1,4 +1,4 @@
-//region LRE 6.10
+//region LRE 6.11
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -1399,7 +1399,10 @@ function lre(_arg) {
             if (event === 'initread') {
                 const val = this.value();
                 for (entryId in val) {
-                    callback.call(this, this, this.find(entryId), entryId, val[entryId]);
+                    const entry = this.find(entryId);
+                    if (!entry.hasClass('editing')) {
+                        callback.call(this, this, this.find(entryId), entryId, val[entryId]);
+                    }
                 }
             }
         };
