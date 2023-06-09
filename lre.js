@@ -147,6 +147,12 @@ function alphaToNum(s) {
     return n;
 };
 
+function initChoicesWithEmpty(defaultLabel) {
+    const choices = {};
+    choices[''] = arguments.length > 0 ? defaultLabel : '';
+    return choices;
+};
+
 let LRE_AUTONUM = false;
 // Main container
 let lreInitiated = false;
@@ -856,10 +862,7 @@ function lre(_arg) {
                 opt = optional;
             }
             if (typeof tableOrCb === 'string') {
-                const newChoices = {};
-                if (opt) {
-                    newChoices[0] = '';
-                }
+                const newChoices = opt ? initChoicesWithEmpty('') : {};
                 if (arguments.length === 1) {
                     setChoices(Object.assign(newChoices, loadFromTableIds(tableOrCb)));
                     this.refresh = refreshFromChoices.bind(this);
