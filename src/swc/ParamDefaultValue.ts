@@ -12,6 +12,7 @@ import {
   Pattern,
   Program,
   Statement,
+  TsType,
 } from "@swc/core";
 import Visitor from "@swc/core/Visitor";
 import member from "./node/expression/member";
@@ -152,6 +153,10 @@ class DefaultParameter extends Visitor {
       n.body.stmts = [...statementsToAdd, ...n.body?.stmts];
     }
     return super.visitFunction(n);
+  }
+
+  visitTsType(n: TsType): TsType {
+      return n;
   }
 }
 
