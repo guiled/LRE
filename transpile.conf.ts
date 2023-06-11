@@ -1,10 +1,13 @@
 import { Options, plugins } from "@swc/core";
 import classExtend from "./src/swc/ClassExtend";
 import classToFunction from "./src/swc/ClassToFunction";
+import computedObjectProps from "./src/swc/ComputedObjectProp";
 import defaultVisitor from "./src/swc/DefaultVisitor";
 import keepInstanceOf from "./src/swc/KeepInstanceOf";
 import noArraySpreading from "./src/swc/NoArraySpreading";
 import noVoid0 from "./src/swc/NoVoid0";
+import defaultParameter from "./src/swc/ParamDefaultValue";
+import replaceInOperator from "./src/swc/ReplaceInOperator";
 
 const transformForLR: Options = {
   jsc: {
@@ -27,7 +30,7 @@ const transformForLR: Options = {
   },
   //plugin: plugins([defaultVisitor()]),
   //plugin: plugins([defaultVisitor(), classToFunction()]),
-  plugin: plugins([noArraySpreading(), classExtend(), classToFunction()]),
+  plugin: plugins([noArraySpreading(), replaceInOperator(), defaultParameter(), computedObjectProps(), classExtend(), classToFunction()]),
   sourceMaps: false,
 };
 

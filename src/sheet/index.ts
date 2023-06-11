@@ -1,27 +1,59 @@
-import Component from "../component";
+import Component, { REP_ID_SEP } from "../component";
 import EventHolder from "../eventholder";
 import HasRaw from "../hasraw";
+import ComponentCache from "../component/cache";
+import {
+  ComponentContainer,
+  ComponentFinder,
+  ComponentSearchResult,
+} from "../component/container";
 import DataBatcher from "./databatcher";
+import ComponentFactory from "../component/factory";
+import ComponentCommon from "../component/common";
+import repeater from "../component/repeater";
+import Entry from "../component/entry";
+import Repeater from "../component/repeater";
 
 type SheetStoredState = Record<string, any> & {
-  initialised: boolean;
+  initialized: boolean;
   cmpData: Record<LetsRole.ComponentID, any>;
   cmpClasses: Record<LetsRole.ComponentID, Array<LetsRole.ClassName>>;
 };
 
 type StoredState = keyof SheetStoredState;
 
-export default interface Sheet extends HasRaw<LetsRole.Sheet>, EventHolder {}
+export default interface Sheet
+  extends ComponentContainer<LetsRole.Sheet>,
+    ComponentCommon,
+    EventHolder {}
 
-export default class Sheet implements LetsRole.Sheet {
+export default class Sheet
+  implements
+    Omit<LetsRole.Sheet, "get" | "find">,
+    ComponentContainer<LetsRole.Sheet>,
+    ComponentCommon
+{
+  #silentFind: ComponentFinder;
   #batcher: DataBatcher;
   #storedState: SheetStoredState;
-  constructor(rawsheet: LetsRole.Sheet) {
-    lre.log(`new sheet ${rawsheet.getSheetId()}`);
-    Object.assign(this, new HasRaw(rawsheet), new EventHolder(this));
-    this.#batcher = new DataBatcher(rawsheet);
+  #componentCache: ComponentCache;
+  constructor(rawSheet: LetsRole.Sheet) {
+    lre.log(`new sheet ${rawSheet.getSheetId()}`);
+    Object.assign(this, new HasRaw(rawSheet), new EventHolder(this));
+    this.#batcher = new DataBatcher(rawSheet);
+    this.#componentCache = new ComponentCache(this);
     this.#storedState = this.#loadState();
+    this.#silentFind = rawSheet.get(rawSheet.id()).find as unknown as ComponentFinder;
   }
+
+  lreType(): ComponentType {
+    return "sheet";
+  }
+
+  sheet(): Sheet {
+    return this;
+  }
+
   getVariable(id: string): number | null {
     return this.raw().getVariable(id);
   }
@@ -29,7 +61,7 @@ export default class Sheet implements LetsRole.Sheet {
     title: string,
     view: string,
     callback: (result: LetsRole.ViewData) => void,
-    callbackInit: (promptView: LetsRole.View) => void
+    callbackInit: (promptView: LetsRole.Sheet) => void
   ): void {
     return this.raw().prompt(title, view, callback, callbackInit);
   }
@@ -42,29 +74,64 @@ export default class Sheet implements LetsRole.Sheet {
   name(): string {
     return this.raw().name();
   }
-  get(id: string): LetsRole.Component {
-    let cmp = this.raw().get(id);
-    return new Component(cmp) as unknown as LetsRole.Component;
+  get(id: string, silent = false): ComponentSearchResult {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore id instance of is for live checks
+    if (typeof id !== "string" && !(id instanceof String) && !isNaN(id)) {
+      return null;
+    }
+    id = "" + id;
+
+    const cmpInCache = this.#componentCache.inCache(id);
+
+    if (cmpInCache) {
+      return cmpInCache;
+    }
+
+    let container: ComponentContainer<LetsRole.Sheet | LetsRole.Component> =
+        this,
+      finder: LetsRole.ComponentFinder | undefined = this.raw().get,
+      tabId = id.split(REP_ID_SEP),
+      finalId = id;
+
+    if (tabId.length > 1) {
+      finalId = tabId.pop()!;
+      let containerId = tabId.join(REP_ID_SEP);
+      container = this.get(containerId);
+      finder = this.get(tabId.join(REP_ID_SEP))?.raw()?.find;
+      if (!finder) return null;
+    }
+
+    const rawCmp = finder("" + finalId);
+    const cmp = ComponentFactory.create(rawCmp, container);
+    this.#componentCache.set(cmp.realId(), cmp);
+    return cmp;
   }
-  setData(data: LetsRole.ViewData): void {}
+
+  find(id: string): ComponentSearchResult {
+    return this.get(id);
+  }
+  setData(data: LetsRole.ViewData): void {
+    this.#batcher.setData(data);
+  }
   getData(): LetsRole.ViewData {
     return this.raw().getData();
   }
 
   #loadState(): SheetStoredState {
     const data = this.raw().getData();
-    const pers: SheetStoredState | undefined = data?.[
+    const persist: SheetStoredState | undefined = data?.[
       this.raw().id()
     ] as unknown as SheetStoredState | undefined;
     return {
-      initialised: false,
+      initialized: false,
       cmpData: {},
       cmpClasses: {},
-      ...pers,
+      ...persist,
     };
   }
 
-  persinstingData(dataName: StoredState, value?: any): void {
+  persistingData(dataName: StoredState, value?: any): void {
     if (value !== void 0) {
       this.#storedState[dataName] = value;
       const newData: LetsRole.ViewData = {};
@@ -74,7 +141,19 @@ export default class Sheet implements LetsRole.Sheet {
     return this.#storedState?.[dataName];
   }
 
-  isInitialised(): boolean {
-    return !!this.#storedState["initialised"];
+  isInitialized(): boolean {
+    return !!this.#storedState["initialized"];
+  }
+
+  getPendingData(id: LetsRole.ComponentID): LetsRole.ComponentValue {
+    return this.#batcher.getPendingData(id);
+  }
+
+  repeater(repeater?: Repeater): Repeater | undefined {
+    return undefined;
+  }
+
+  entry(entry?: Entry): Repeater | undefined {
+    return undefined;
   }
 }

@@ -5,10 +5,14 @@ type PendingData = {
   v: LetsRole.ComponentValue;
 };
 
-const ASYN_DATA_SET_DELAY = 50;
+type DataBatcherEventType = "processed";
+
+const ASYNC_DATA_SET_DELAY = 50;
 const MAX_DATA_BATCH_SIZE = 20;
 
-export default class DataBatcher extends EventHolder {
+export default interface DataBatcher
+  extends EventHolder<DataBatcherEventType> {}
+export default class DataBatcher {
   #sheet: LetsRole.Sheet;
 
   #pending: Array<PendingData> = [];
@@ -17,15 +21,13 @@ export default class DataBatcher extends EventHolder {
   #isSendPending: boolean = false;
 
   constructor(sheet: LetsRole.Sheet) {
-    super({});
     this.#sheet = sheet;
-    Object.assign(this, new EventHolder(this));
+    Object.assign(this, new EventHolder<DataBatcherEventType>(this));
   }
 
-  #sendBatch() {
-    const dataToSend: LetsRole.ViewData = {};
+  #sendBatch(dataToSend: LetsRole.ViewData = {}) {
     let added = 0;
-    let analysed = 0;
+    let analyzed = 0;
     while (added < MAX_DATA_BATCH_SIZE && this.#pending.length > 0) {
       let data = this.#pending.shift();
       delete this.#indexes[data!.k];
@@ -33,20 +35,22 @@ export default class DataBatcher extends EventHolder {
         dataToSend[data!.k] = data!.v;
         added++;
       }
-      analysed++;
+      analyzed++;
     }
     this.#isSendPending = this.#pending.length > 0;
     if (this.#isSendPending) {
       for (let k in this.#indexes) {
-        if (this.#indexes[k] >= analysed) {
-          this.#indexes[k] -= analysed;
+        if (this.#indexes[k] >= analyzed) {
+          this.#indexes[k] -= analyzed;
         }
       }
-      wait(ASYN_DATA_SET_DELAY, this.#sendBatch);
+      if (arguments.length === 0) {
+        wait(ASYNC_DATA_SET_DELAY, this.#sendBatch);
+      }
     }
     this.#sheet.setData(dataToSend);
     if (!this.#isSendPending) {
-      this.trigger("click");
+      this.trigger("processed");
     }
   }
 
@@ -64,8 +68,42 @@ export default class DataBatcher extends EventHolder {
       }
       if (!this.#isSendPending && this.#pending.length > 0) {
         this.#isSendPending = true;
-        wait(ASYN_DATA_SET_DELAY, this.#sendBatch);
+        wait(ASYNC_DATA_SET_DELAY, this.#sendBatch);
       }
+    }
+  }
+
+  #removePendingData(id: LetsRole.ComponentID): void {
+    if (this.#indexes.hasOwnProperty(id)) {
+      const pos = this.#indexes[id];
+      delete this.#indexes[id];
+      this.#pending = this.#pending.splice(pos, 1);
+      for (let k in this.#indexes) {
+        if (this.#indexes[k] >= pos) {
+          this.#indexes[k]--;
+        }
+      }
+    }
+    return;
+  }
+
+  getPendingData(
+    id: LetsRole.ComponentID
+  ): LetsRole.ComponentValue | undefined {
+    if (this.#indexes.hasOwnProperty(id)) {
+      return this.#pending[this.#indexes[id]].v;
+    }
+    return;
+  }
+
+  sendPendingDataFor(id: LetsRole.ComponentID) {
+    if (this.#indexes.hasOwnProperty(id)) {
+      const val = this.#pending[this.#indexes[id]].v;
+      this.#removePendingData(id);
+      const data: LetsRole.ViewData = {
+        [id]: val,
+      };
+      this.#sendBatch(data);
     }
   }
 }
