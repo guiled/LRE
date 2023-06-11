@@ -5,7 +5,7 @@ declare interface ILRE {
 }
 
 declare var lre: ILRE & Logger;
-declare var firstInit: (sheet: Sheet) => boolean;
+declare var firstInit: undefined | ((sheet: Sheet) => boolean);
 
 declare type ComponentType =
   | "component"

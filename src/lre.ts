@@ -10,6 +10,8 @@ enum LogLevel {
   all,
 }
 
+firstInit = undefined;
+
 export default interface LRE extends ILRE, Logger {}
 
 export default class LRE implements ILRE {
