@@ -33,7 +33,7 @@ esbuild
     },
   })
   .then(() => transformFile("build/lre.tmp.js", noVoid0Plugin))
-  .then((result) => fs.writeFileSync("build/lre.js", `//region LRE ${process.env.npm_package_version}
+  .then((result) => fs.writeFileSync("build/lre.js", `//region LRE ${process.env.npm_package_version} ${Date.now()}
 ${result.code.trim()}
 //endregion LRE ${process.env.npm_package_version}
 `));
