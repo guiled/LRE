@@ -5,7 +5,8 @@ export default class SheetCollection {
 
   add(s: Sheet) {
     if (s.getSheetId()) {
-        this.#sheets[s.getSheetId()] = s;
+      lre.log(`sheet stored ${s.getSheetId()}`);
+      this.#sheets[s.getSheetId()] = s;
     }
   }
 

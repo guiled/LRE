@@ -5,12 +5,8 @@ declare namespace LetsRole {
   };
   export type Index = string;
 
-  export type EventType =
-    | "click"
-    | "update"
-    | "mouseenter"
-    | "mouseleave"
-    | "keyup";
+  const RAW_EVENTS = ['click', 'update', 'mouseenter', 'mouseleave', 'keyup'] as const;
+  export type EventType = typeof RAW_EVENTS[number];
   export type ClassName = string;
   export type ClassSelector = `.${ClassName}`;
 
@@ -28,34 +24,31 @@ declare namespace LetsRole {
   export type Selector = LetsRole.ComponentID | LetsRole.ClassSelector;
 
   export type ViewID = string;
-  export type SheetID = ViewID;
+  export type SheetID = string;
   export type ComponentID = string;
   export type VariableID = string;
 
-  export interface View {
+  export interface Sheet {
     /** get the id of the sheet */
-    id(): LetsRole.ViewID;
+    id(): LetsRole.SheetID;
 
     getSheetId(): string;
 
     name(): Name;
 
-    get(id: LetsRole.ComponentID): LetsRole.Component;
-
-    setData(data: ViewData): void;
-
-    getData(): ViewData;
-  }
-
-  export interface Sheet extends View {
+    get: ComponentFinder;
     getVariable(id: LetsRole.VariableID): number | null;
 
     prompt(
       title: string,
       view: LetsRole.ViewID,
       callback: (result: ViewData) => void,
-      callbackInit: (promptView: View) => void
+      callbackInit: (promptView: Sheet) => void
     ): void;
+
+    setData(data: ViewData): void;
+
+    getData(): ViewData;
   }
 
   export interface Component<ValueType = ComponentValue> {
@@ -69,7 +62,7 @@ declare namespace LetsRole {
 
     parent(): Component;
 
-    find(id: LetsRole.ComponentID): Component;
+    find: ComponentFinder;
 
     on(event: EventType, callback: (cmp: Component) => void): void;
     on(
@@ -104,9 +97,30 @@ declare namespace LetsRole {
 
   export type Variable = {};
 
-  export type InitCallback<T =  LetsRole.Sheet> = (sheet: T) => void;
+  export type TableID = string;
+  export type TableColumn = string;
+  export type TableValue = string;
+  export type TableRow = Record<TableColumn, TableValue>;
+
+  export type Tables = {
+    get: (id: TableID) => Table;
+  };
+
+  export type Table = {
+    get: (id: ColumnId) => TableRow;
+    each: (callback: (row: TableRow) => void) => void;
+    random: (callback: (row: TableRow) => void) => void;
+    random: (count: number, callback: (row: TableRow) => void) => void;
+  };
+
+  export type InitCallback<T = LetsRole.Sheet> = (sheet: T) => void;
+  export type ComponentFinder<T = Component> = (id: ComponentID) => Component;
 }
 declare function log(input: any): void;
 declare function wait(delay: number, callback: (...args: any[]) => void);
-declare function each(data: Array|Object, callback: (d: any, k?: any) => void);
+declare function each(
+  data: Array | Object,
+  callback: (d: any, k?: any) => void
+);
 declare var init: LetsRole.InitCallback;
+declare var Tables: LetsRole.Tables;
