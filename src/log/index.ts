@@ -19,8 +19,8 @@ export default class Logger {
   #_log(level: keyof typeof LogLevel, ...args: any[]): void {
     if (LogLevel[this.#logLevel] >= LogLevel[level]) {
       args.forEach((a) => {
-        log(`[LRE]${LOG_PREFIXES?.[level] ?? ""} ${a}`);
-        typeof a !== "string" && log(a);
+        log(`[LRE]${LOG_PREFIXES?.[level] ?? ""} ${a?.toString?.() || a}`);
+        typeof a !== "string" && typeof a !== "undefined" && log(a);
       });
     }
   }

@@ -21,3 +21,9 @@ structuredClone = function (val): any {
 
 overloadTables(Tables);
 lre = new LRE;
+console = {
+    log: lre.log,
+    error: lre.error,
+    trace: lre.log,
+    warn: lre.warn,
+};

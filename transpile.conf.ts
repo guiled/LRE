@@ -8,6 +8,7 @@ import noArraySpreading from "./src/swc/NoArraySpreading";
 import noVoid0 from "./src/swc/NoVoid0";
 import defaultParameter from "./src/swc/ParamDefaultValue";
 import replaceInOperator from "./src/swc/ReplaceInOperator";
+import noThrowStatement from "./src/swc/NoThrowStatement";
 
 const transformForLR: Options = {
   jsc: {
@@ -36,8 +37,7 @@ const transformForLR: Options = {
 
 const noVoid0Plugin: Options = {
   ...transformForLR,
-  plugin: plugins([noVoid0(), keepInstanceOf()]),
+  plugin: plugins([noThrowStatement(), noVoid0(), keepInstanceOf()]),
 };
 
 export { transformForLR, noVoid0Plugin };
-//, noVoid0Plugin};
