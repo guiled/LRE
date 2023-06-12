@@ -35,6 +35,7 @@ declare namespace LetsRole {
     getSheetId(): string;
 
     name(): Name;
+    properName(): Name;
 
     get: ComponentFinder;
     getVariable(id: LetsRole.VariableID): number | null;
@@ -79,6 +80,8 @@ declare namespace LetsRole {
 
     addClass(className: ClassName): void;
     removeClass(className: ClassName): void;
+    getClasses(): ClassName[];
+    hasClass(className: ClassName): boolean;
 
     value(): ValueType;
     value(newValue: ValueType): void;
@@ -115,6 +118,24 @@ declare namespace LetsRole {
 
   export type InitCallback<T = LetsRole.Sheet> = (sheet: T) => void;
   export type ComponentFinder<T = Component> = (id: ComponentID) => Component;
+
+  type ErrorTraceLocation = {
+    column: number,
+    line: number,
+  };
+  type ErrorTraceLoc = {
+    start: ErrorTraceLocation,
+    end: ErrorTraceLocation,
+  }
+  type ErrorTrace = {
+    type: string,
+    loc: ErrorTraceLoc
+  }
+  export type Error = {
+    name: string,
+    message: string,
+    trace: ErrorTrace[],
+  }
 }
 declare function log(input: any): void;
 declare function wait(delay: number, callback: (...args: any[]) => void);

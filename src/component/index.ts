@@ -41,7 +41,7 @@ export default class Component<T = LetsRole.ComponentValue>
   }
 
   id(): string {
-    throw new Error("Method not implemented.");
+    return this.raw().id();
   }
   realId(): string {
     return this.#realId;
@@ -55,7 +55,7 @@ export default class Component<T = LetsRole.ComponentValue>
   sheet(): Sheet {
     return this.#sheet;
   }
-  parent(newParent?: ComponentContainer): ComponentContainer {
+  parent(newParent?: ComponentContainer): ComponentContainer | undefined {
     if (newParent) {
       this.#parent = newParent;
     }
@@ -70,10 +70,16 @@ export default class Component<T = LetsRole.ComponentValue>
   show(): void {
     throw new Error("Method not implemented.");
   }
-  addClass(className: string): void {
+  addClass(className: LetsRole.ClassName): void {
     throw new Error("Method not implemented.");
   }
-  removeClass(className: string): void {
+  removeClass(className: LetsRole.ClassName): void {
+    throw new Error("Method not implemented.");
+  }
+  hasClass(className: LetsRole.ClassName): boolean {
+    throw new Error("Method not implemented.");
+  }
+  getClasses(): LetsRole.ClassName[] {
     throw new Error("Method not implemented.");
   }
   value(newValue?: unknown): void | LetsRole.ComponentValue {
