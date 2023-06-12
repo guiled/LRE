@@ -1,4 +1,5 @@
 import Component, { REP_ID_SEP } from "../component";
+import { handleError } from "../log/errorhandler";
 
 type EventHandler = (cmp: LetsRole.Component, ...rest: Array<any>) => void;
 
@@ -77,7 +78,7 @@ export default class EventHolder<
       if (
         eventName === "update" &&
         !manuallyTriggered &&
-        rawTarget.value() === this.#lastUpdateEventValue
+        rawTarget.value?.() === this.#lastUpdateEventValue
       ) {
         return;
       }
@@ -89,7 +90,11 @@ export default class EventHolder<
         if (!this.#eventIsEnabled(eventName)) {
           return true;
         }
-        results!.push(fcn.apply(component, argsWithComponent));
+        try {
+          results!.push(fcn.apply(component, argsWithComponent));
+        } catch (e) {
+          handleError(e, `event ${eventName} on ${rawTarget.id()}`);
+        }
         return false;
       });
       this.#uncancelEvent(eventName);
