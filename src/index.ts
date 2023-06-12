@@ -21,6 +21,7 @@ structuredClone = function (val): any {
 
 overloadTables(Tables);
 lre = new LRE;
+// @ts-ignore Overload console for some edge cases like throw new Error changed into console.error
 console = {
     log: lre.log,
     error: lre.error,

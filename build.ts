@@ -33,8 +33,25 @@ esbuild
     },
   })
   .then(() => transformFile("build/lre.tmp.js", noVoid0Plugin))
-  .then((result) => fs.writeFileSync("build/lre.js", `//region LRE ${process.env.npm_package_version} ${Date.now()}
-${result.code.trim()}
+  .then((result) => {
+    let code = result.code.trim();
+    const libStart = '(function() {';
+    const libEnd = '})();';
+    const insertAtStartCode = code.indexOf(libStart) + libStart.length;
+    const insertAtEndCode = code.lastIndexOf(libEnd);
+    const startCode = `\nlet errExclFirstLine, errExclLastLine;
+    try { let a = null; a() } catch (e) { errExclFirstLine = e.trace[0].loc.start.line };`;
+    const endCode = `try { let a = null; a() } catch (e) { errExclLastLine = e.trace[0].loc.start.line };\n`;
+    code = [
+      code.substring(0, insertAtStartCode),
+      startCode,
+      code.substring(insertAtStartCode, insertAtEndCode),
+      endCode,
+      code.substring(insertAtEndCode)
+    ].join('');
+    return fs.writeFileSync("build/lre.js", `//region LRE ${process.env.npm_package_version} ${Date.now()}
+${code}
 //endregion LRE ${process.env.npm_package_version}
-`));
+`)
+  });
 

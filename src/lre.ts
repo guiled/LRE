@@ -1,4 +1,5 @@
 import Logger from "./log";
+import { handleError } from "./log/errorhandler";
 import Sheet from "./sheet";
 import SheetCollection from "./sheet/collection";
 import applyMixins from "./swc/utils/applyMixins";
@@ -21,21 +22,25 @@ export default class LRE implements ILRE {
     this.log("prepare init");
     const [callback] = argArray;
     return (rawSheet: LetsRole.Sheet) => {
-      this.log(`init sheet ${rawSheet.getSheetId()}`);
-      const _sheet = new Sheet(rawSheet);
-      this.sheets.add(_sheet);
-      if (!_sheet.isInitialized() && firstInit !== void 0) {
-        this.log(`sheet first initialization`);
-        _sheet.persistingData("initialized", firstInit(_sheet));
-      }
+      // The wait may allow a faster display
       wait(0, () => {
-        const sheetId = _sheet.getSheetId();
-        this.log(
-          `sheet init ${_sheet.id()} (${_sheet.name()} ${
-            sheetId ?? "#" + sheetId
-          })`
-        );
-        callback.call(this, _sheet);
+        const sheetId = rawSheet.getSheetId();
+        const _sheet = new Sheet(rawSheet);
+        this.sheets.add(_sheet);
+        if (!_sheet.isInitialized() && firstInit !== void 0) {
+          this.log(`sheet first initialization`);
+          try {
+            _sheet.persistingData("initialized", firstInit(_sheet));
+          } catch (e) {
+            handleError(e as LetsRole.Error);
+          }
+        }
+        this.log(`init sheet ${rawSheet.id()} (${rawSheet.name()} ${rawSheet.properName() || ''} ${sheetId ? '#' + sheetId : ''})`);
+        try {
+          callback.call(this, _sheet);
+        } catch (e) {
+          handleError(e as LetsRole.Error);
+        }
       });
     };
   }
