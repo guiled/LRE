@@ -2178,7 +2178,6 @@ function lre(_arg) {
         let pendingDataToSetIndex = {};
         let pendingDataProcessed;
 
-
         const groupedDataSet = function (dataToSend) {
             if (arguments.length === 0) {
                 dataToSend = {};
