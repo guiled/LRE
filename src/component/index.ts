@@ -61,8 +61,11 @@ export default class Component<T = LetsRole.ComponentValue>
     }
     return this.#parent;
   }
-  find(id: string): ComponentSearchResult {
-    throw new Error("Method not implemented.");
+  find(completeId: string): ComponentSearchResult {
+    const tabId = completeId.split(REP_ID_SEP);
+    const id = tabId.pop();
+    const sRealId = tabId.join(REP_ID_SEP) + (tabId.length > 0 ? REP_ID_SEP : '') + id;
+    return this.sheet().get(sRealId)
   }
   hide(): void {
     throw new Error("Method not implemented.");
