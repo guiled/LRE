@@ -82,7 +82,9 @@ export default class EventHolder<
       ) {
         return;
       }
-      this.#lastUpdateEventValue = structuredClone(rawTarget.value()) as LetsRole.ComponentValue;
+      this.#lastUpdateEventValue = structuredClone(
+        rawTarget.value()
+      ) as LetsRole.ComponentValue;
       argsWithComponent.push(cmp);
       argsWithComponent = argsWithComponent.concat(args);
       let results: EventReturn = [];
@@ -123,8 +125,8 @@ export default class EventHolder<
     ) {
       this.#events[eventName] = {
         name: eventName,
-        event: event,
-        delegated: delegated,
+        event,
+        delegated,
         subComponent: delegated ? (subComponent as LetsRole.ComponentID) : null,
         state: true,
         handlers: [],
@@ -138,13 +140,38 @@ export default class EventHolder<
             .raw()
             .get(this.#holder.realId())
             .on(event, subComponent, this.#events[eventName]!.rawHandler);
+          lre.trace(`Native event ${event} added to ${this.#holder.realId() + '>' + subComponent}`)
         } else {
           this.#holder.raw().on(event, this.#events[eventName]!.rawHandler);
+          lre.trace(`Native event ${event} added to ${this.#holder.realId()}`)
         }
       }
-      if (!this.#events[eventName]!.handlers.includes(handler!)) {
-        this.#events[eventName]!.handlers.push(handler!);
+    }
+    if (!this.#events[eventName]!.handlers.includes(handler!)) {
+      const cnt = this.#events[eventName]!.handlers.push(handler!);
+      lre.trace(`Handler added for event ${event} on ${this.#holder.realId() + (subComponent ? '>' + subComponent : '')}. Count : ${cnt}`);
+    }
+  }
+
+  once(
+    event: EventType,
+    handlerOrId: LetsRole.ComponentID | EventHandler,
+    handler?: EventHandler
+  ): void {
+    if (arguments.length === 2) {
+      const onceHandler: EventHandler = () => {
+        this.off(event, handlerOrId as EventHandler);
+        this.off(event, onceHandler);
       }
+      this.on(event, handlerOrId as EventHandler);
+      this.on(event, onceHandler);
+    } else {
+      const onceHandler: EventHandler = () => {
+        this.off(event, handlerOrId, handler);
+        this.off(event, handlerOrId, onceHandler);
+      }
+      this.on(event, handlerOrId, handler);
+      this.on(event, handlerOrId, onceHandler);
     }
   }
 
@@ -175,22 +202,57 @@ export default class EventHolder<
     }
   }
 
-  off(event: EventType, handler: EventHandler) {
-    if (!(event in this.#events)) {
+  off(
+    event: EventType,
+    handlerOrId?: LetsRole.ComponentID | EventHandler,
+    handler?: EventHandler
+  ) {
+    let eventName: EventType = event;
+    let cmpId: LetsRole.ComponentID | null = null;
+
+    if (
+      arguments.length === 3 ||
+      (arguments.length === 2 && typeof handlerOrId === "string")
+    ) {
+      cmpId = handlerOrId as LetsRole.ComponentID;
+      eventName = (event + REP_ID_SEP + cmpId) as EventType;
+    } else {
+      eventName = event;
+      if (arguments.length === 2 && typeof handlerOrId !== "string") {
+        handler = handlerOrId as EventHandler;
+        cmpId = null;
+      }
+    }
+
+    const eventDef = this.#events[eventName];
+
+    if (!eventDef) {
       return;
     }
-    const eventDef = this.#events[event]!;
-    if (handler !== undefined) {
+
+    if (!!handler) {
       const idx = eventDef.handlers.indexOf(handler);
       if (idx !== -1) {
         eventDef.handlers.splice(idx, 1);
+        lre.trace(`Handler removed for event ${event} on ${this.#holder.realId() + (cmpId ? '>' + cmpId : '')}. Count : ${eventDef.handlers.length}`);
+      } else {
+        lre.trace(`Handler not removed for event ${event} on ${this.#holder.realId() + (cmpId ? '>' + cmpId : '')} because it has not been added`);
       }
-    } else {
+    } else if (handlerOrId !== undefined) {
+      lre.trace(`All handlers removed for event ${event} on ${this.#holder.realId() + (cmpId ? '>' + cmpId : '')}`);
       eventDef.handlers = [];
     }
+
     if (eventDef.handlers.length === 0) {
-      this.#holder.raw().off(event);
+      if (eventDef.delegated && !!cmpId) {
+        lre.trace(`Native event ${event} removed for ${this.#holder.realId() + '>' + cmpId}`)
+        this.#holder.raw().off(event, cmpId);
+      } else {
+        lre.trace(`Native event ${event} removed for ${this.#holder.realId()}`)
+        this.#holder.raw().off(event);
+      }
     }
+
   }
 
   trigger(event: EventType): EventReturn {
