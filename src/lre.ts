@@ -1,8 +1,7 @@
-import Logger from "./log";
+import { Logger } from "./log";
 import { handleError } from "./log/errorhandler";
-import Sheet from "./sheet";
-import SheetCollection from "./sheet/collection";
-import applyMixins from "./swc/utils/applyMixins";
+import { Sheet } from "./sheet";
+import { SheetCollection } from "./sheet/collection";
 
 enum LogLevel {
   none = 0,
@@ -13,9 +12,9 @@ enum LogLevel {
 
 firstInit = undefined;
 
-export default interface LRE extends ILRE, Logger {}
+export interface LRE extends ILRE, Logger {}
 
-export default class LRE implements ILRE {
+export class LRE implements ILRE {
   sheets: SheetCollection;
 
   apply(thisArg: any, argArray?: any) {
@@ -35,7 +34,11 @@ export default class LRE implements ILRE {
             handleError(e as LetsRole.Error);
           }
         }
-        this.log(`init sheet ${rawSheet.id()} (${rawSheet.name()} ${rawSheet.properName() || ''} ${sheetId ? '#' + sheetId : ''})`);
+        this.log(
+          `init sheet ${rawSheet.id()} (${rawSheet.name()} ${
+            rawSheet.properName() || ""
+          } ${sheetId ? "#" + sheetId : ""})`
+        );
         try {
           callback.call(this, _sheet);
         } catch (e) {

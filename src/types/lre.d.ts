@@ -11,6 +11,8 @@ declare var errExclFirstLine: number, errExclLastLine: number;
 declare type ComponentType =
   | "component"
   | "sheet"
+  | "label"
+  | "container"
   | "repeater"
   | "choice"
   | "multichoice"

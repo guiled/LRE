@@ -1,7 +1,7 @@
-import Sheet from "../sheet";
-import Component, { REP_ID_SEP } from ".";
+import { Sheet } from "../sheet";
+import { Component, REP_ID_SEP } from "./component";
 
-export default class ComponentCache {
+export class ComponentCache {
   #sheet: Sheet;
   #components: Record<LetsRole.ComponentID, Component> = {};
   constructor(sheet: Sheet) {

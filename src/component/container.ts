@@ -1,8 +1,10 @@
-import Component from ".";
-import HasRaw from "../hasraw";
-import ComponentCommon from "./common";
+import { Component } from "./component";
+import { HasRaw } from "../hasraw";
+import { ComponentCommon } from "./common";
 
-export interface ComponentContainer<T = LetsRole.Sheet | LetsRole.Component> extends HasRaw<T>, ComponentCommon {
+export interface ComponentContainer<T = LetsRole.Sheet | LetsRole.Component>
+  extends HasRaw<T>,
+    ComponentCommon {
   get: ComponentFinder;
   find: ComponentFinder;
 }

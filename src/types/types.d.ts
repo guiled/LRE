@@ -104,6 +104,7 @@ declare namespace LetsRole {
   export type TableColumn = string;
   export type TableValue = string;
   export type TableRow = Record<TableColumn, TableValue>;
+  export type ColumnId = string;
 
   export type Tables = {
     get: (id: TableID) => Table;

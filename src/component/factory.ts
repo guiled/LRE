@@ -1,9 +1,9 @@
-import Component, { REP_ID_SEP } from ".";
+import { Component, REP_ID_SEP } from "./component";
 import { ComponentContainer } from "./container";
-import Entry from "./entry";
-import Repeater from "./repeater";
+import { Entry } from "./entry";
+import { Repeater } from "./repeater";
 
-export default class ComponentFactory {
+export class ComponentFactory {
   static create(
     rawComponent: LetsRole.Component,
     container: ComponentContainer
