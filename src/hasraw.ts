@@ -1,4 +1,4 @@
-export default class HasRaw<T = LetsRole.Sheet | LetsRole.Component> {
+export class HasRaw<T = LetsRole.Sheet | LetsRole.Component> {
   #raw: T;
 
   constructor(raw: T) {

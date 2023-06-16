@@ -1,4 +1,4 @@
-import EventHolder from "../eventholder";
+import { EventHolder } from "../eventholder";
 
 type PendingData = {
   k: LetsRole.ComponentID;
@@ -10,9 +10,8 @@ type DataBatcherEventType = "processed";
 const ASYNC_DATA_SET_DELAY = 50;
 const MAX_DATA_BATCH_SIZE = 20;
 
-export default interface DataBatcher
-  extends EventHolder<DataBatcherEventType> {}
-export default class DataBatcher {
+export interface DataBatcher extends EventHolder<DataBatcherEventType> {}
+export class DataBatcher {
   #sheet: LetsRole.Sheet;
 
   #pending: Array<PendingData> = [];

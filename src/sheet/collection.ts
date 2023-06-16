@@ -1,6 +1,6 @@
-import Sheet from ".";
+import { Sheet } from "./sheet";
 
-export default class SheetCollection {
+export class SheetCollection {
   #sheets: Record<LetsRole.SheetID, Sheet> = {};
 
   add(s: Sheet) {
