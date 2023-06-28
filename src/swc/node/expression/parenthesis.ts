@@ -1,14 +1,9 @@
 import { Expression, ParenthesisExpression, Span } from "@swc/core";
 
-type PARENTH_PARAM = {
-  span: Span;
-  expression: Expression;
-};
-
-export default ({ span, expression }: PARENTH_PARAM): ParenthesisExpression => {
+export default ({ span, expression }: Omit<ParenthesisExpression, "type">): ParenthesisExpression => {
   return {
     type: "ParenthesisExpression",
-    span: span,
+    span,
     expression,
   };
 };

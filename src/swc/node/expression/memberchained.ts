@@ -15,12 +15,13 @@ export default function memberchained({span, properties} : Member_Type): MemberE
     });
     let index = 2;
     while (index < properties.length) {
-        let p = properties[2];
+        let p = properties[index];
         obj = member({
             span,
             object: obj,
             property: identifier({span, value: p}),
         });
+        index++;
     }
     return obj;
 };

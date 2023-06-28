@@ -6,16 +6,21 @@ import {
   ThrowStatement,
   TsType,
 } from "@swc/core";
-import Visitor from "@swc/core/Visitor";
+import { Visitor } from "@swc/core/Visitor";
 import call from "./node/expression/call";
 import member from "./node/expression/member";
 import identifier from "./node/identifier";
 
 class NoThrowStatement extends Visitor {
   visitThrowStatement(stmt: ThrowStatement): Statement {
-    const args: Argument[] = (stmt.argument.type === 'NewExpression') ? stmt.argument.arguments! : [{
-      expression: stmt.argument
-    }];
+    const args: Argument[] =
+      stmt.argument.type === "NewExpression"
+        ? stmt.argument.arguments!
+        : [
+            {
+              expression: stmt.argument,
+            },
+          ];
     return {
       type: "ExpressionStatement",
       span: stmt.span,

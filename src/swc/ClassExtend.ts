@@ -6,16 +6,22 @@ import {
   ClassMember,
   Constructor,
   Expression,
+  ExpressionStatement,
   NewExpression,
   PrivateProperty,
   Program,
   Span,
   SuperPropExpression,
   ThisExpression,
+  TsType,
 } from "@swc/core";
-import Visitor from "@swc/core/Visitor";
+import { Visitor } from "@swc/core/Visitor";
 import member from "./node/expression/member";
 import identifier from "./node/identifier";
+import { ExpressionWithSpan } from "./types";
+import { objectassign } from "./node/expression/objectassign";
+import thisexpression from "./node/expression/thisexpression";
+import { newexpression } from "./node/expression/newexpression";
 
 const getEmptyCallExpression = (span: Span): CallExpression => {
   return {
@@ -32,54 +38,15 @@ const getEmptyCallExpression = (span: Span): CallExpression => {
   };
 };
 
-const getObjectAssignCall = (span: Span): Expression => {
-  return {
-    type: "MemberExpression",
-    span: span,
-    object: {
-      type: "Identifier",
-      span: span,
-      value: "Object",
-      optional: false,
-    },
-    property: {
-      type: "Identifier",
-      span: span,
-      value: "assign",
-      optional: false,
-    },
-  };
-};
-
-const getThisExpression = (span: Span): ThisExpression => {
-  return {
-    type: "ThisExpression",
-    span: span,
-  };
-};
-
-const getNewExpression = (
-  superClass: Expression,
-  args: Argument[],
-  span: Span
-): NewExpression => {
-  return {
-    type: "NewExpression",
-    span: span,
-    callee: superClass,
-    arguments: args,
-  };
-};
-
 const transformSuperCallToObjectAssign = (
   n: CallExpression,
   currentSuperClass: Expression
 ): CallExpression => {
-  const span: Span = n.callee.span;
-  n.callee = getObjectAssignCall(span);
+  const span: Span = (n.callee as ExpressionWithSpan).span;
+  n.callee = objectassign(span);
   n.arguments = [
     {
-      expression: getThisExpression(span),
+      expression: thisexpression({span}),
     },
     {
       expression: {
@@ -88,7 +55,7 @@ const transformSuperCallToObjectAssign = (
         operator: "=",
         left: member({
           span,
-          object: getThisExpression(span),
+          object: thisexpression({span}),
           property: {
             type: "PrivateName",
             span,
@@ -100,7 +67,7 @@ const transformSuperCallToObjectAssign = (
             },
           },
         }),
-        right: getNewExpression(currentSuperClass, n.arguments, span),
+        right: newexpression(currentSuperClass, n.arguments, span),
       },
     },
   ];
@@ -113,27 +80,29 @@ type ClassExtendExpression = Omit<ClassExpression, "superClass"> &
   Required<Pick<ClassExpression, "superClass">>;
 
 class ClassExtend extends Visitor {
-  currentSuperClass?: Expression;
+  currentSuperClass?: ExpressionWithSpan;
   inConstructor: Boolean = false;
+  constructorFound: Boolean = false;
   isSuperConstructorFound = false;
   isInClass = false;
 
-  #addParentProoperty(n: ClassExtendExpression) {
+  #addParentProperty(n: ClassExtendExpression) {
     if (
       !n.body.find(
         (m: ClassMember): boolean =>
           m.type === "PrivateProperty" && m.key.id.value === PARENT
       )
     ) {
+      const superClass: ExpressionWithSpan = n.superClass as ExpressionWithSpan;
       n.body.push({
         type: "PrivateProperty",
-        span: n.superClass.span,
+        span: superClass.span,
         key: {
           type: "PrivateName",
-          span: n.superClass.span,
+          span: superClass.span,
           id: {
             type: "Identifier",
-            span: n.superClass.span,
+            span: superClass.span,
             value: PARENT,
             optional: false,
           },
@@ -143,6 +112,17 @@ class ClassExtend extends Visitor {
     }
   }
 
+  #createSuperCallStmt(superClass: ExpressionWithSpan): ExpressionStatement {
+    return {
+      type: "ExpressionStatement",
+      span: superClass.span,
+      expression: transformSuperCallToObjectAssign(
+        getEmptyCallExpression(superClass.span),
+        superClass
+      ),
+    };
+  }
+
   visitProgram(n: Program): Program {
     return super.visitProgram(n);
   }
@@ -150,8 +130,8 @@ class ClassExtend extends Visitor {
   visitClass<T extends Class>(n: T): T {
     var prevSuperClass = this.currentSuperClass;
     if (n.superClass) {
-      this.currentSuperClass = n.superClass;
-      this.#addParentProoperty(n as ClassExtendExpression);
+      this.currentSuperClass = n.superClass as ExpressionWithSpan;
+      this.#addParentProperty(n as ClassExtendExpression);
       n.superClass = undefined;
     }
     const res = super.visitClass(n);
@@ -169,8 +149,6 @@ class ClassExtend extends Visitor {
       property: n.property,
     });
     return super.visitMemberExpression(result);
-    //console.log('super prop', JSON.stringify(n, false, 2))
-    //return super.visitSuperPropExpression(n);
   }
 
   visitCallExpression(n: CallExpression): Expression {
@@ -186,27 +164,43 @@ class ClassExtend extends Visitor {
   }
   visitClassBody(members: ClassMember[]): ClassMember[] {
     let prevInConstructor = this.inConstructor;
+    let prevConstructorFound = this.constructorFound;
     this.inConstructor = false;
     this.isInClass = true;
     const res = super.visitClassBody(members);
+    if (this.currentSuperClass && !this.constructorFound) {
+      const span: Span = this.currentSuperClass.span || {};
+      res.push({
+        type: "Constructor",
+        params: [],
+        span,
+        key: identifier({
+          span,
+          value: "constructor",
+        }),
+        body: {
+          type: "BlockStatement",
+          span,
+          stmts: [
+            this.#createSuperCallStmt(this.currentSuperClass),
+          ],
+        },
+        isOptional: false,
+      })
+    }
     this.isInClass = false;
+    this.constructorFound = prevConstructorFound;
     this.inConstructor = prevInConstructor;
     return res;
   }
   visitConstructor(n: Constructor): ClassMember {
     this.inConstructor = true;
     let prevIsSuperConstructorFound = this.isSuperConstructorFound;
+    this.constructorFound = true;
     const res = super.visitConstructor(n);
     if (this.currentSuperClass && !this.isSuperConstructorFound) {
       const span: Span = this.currentSuperClass.span;
-      n.body?.stmts.unshift({
-        type: "ExpressionStatement",
-        span: span,
-        expression: transformSuperCallToObjectAssign(
-          getEmptyCallExpression(span),
-          this.currentSuperClass
-        ),
-      });
+      n.body?.stmts.unshift(this.#createSuperCallStmt(this.currentSuperClass));
     }
     this.inConstructor = false;
     this.isSuperConstructorFound = prevIsSuperConstructorFound;

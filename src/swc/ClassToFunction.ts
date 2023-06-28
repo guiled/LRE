@@ -1,4 +1,5 @@
 import {
+  Argument,
   AssignmentExpression,
   CallExpression,
   Class,
@@ -24,10 +25,11 @@ import {
   Program,
   Span,
   Statement,
+  TsType,
   VariableDeclaration,
   VariableDeclarator,
 } from "@swc/core";
-import Visitor from "@swc/core/Visitor";
+import {Visitor} from "@swc/core/Visitor";
 import onevariable from "./node/declaration/onevariable";
 import assignment from "./node/expression/assignment";
 import call from "./node/expression/call";
@@ -102,10 +104,7 @@ class ClassToFunction extends Visitor {
         left: {
           type: "MemberExpression",
           span: n.span,
-          object: {
-            type: "ThisExpression",
-            span: n.span,
-          },
+          object: thisexpression({span: n.span}),
           property: n.key,
         },
         right: {
@@ -122,6 +121,15 @@ class ClassToFunction extends Visitor {
   }
 
   #ConstructorToFunction(n: Constructor): ExpressionStatement {
+    let args: Argument[] = n.params.length > 0 ? [{
+      expression: {
+        type: "Identifier",
+        span: n.span,
+        value: CONSTRUCTOR_ARG_NAME,
+        optional: false,
+      },
+    }] : [];
+
     return {
       type: "ExpressionStatement",
       span: n.span,
@@ -153,19 +161,9 @@ class ClassToFunction extends Visitor {
         },
         arguments: [
           {
-            expression: {
-              type: "ThisExpression",
-              span: n.span,
-            },
+            expression: thisexpression({span: n.span}),
           },
-          {
-            expression: {
-              type: "Identifier",
-              span: n.span,
-              value: CONSTRUCTOR_ARG_NAME,
-              optional: false,
-            },
-          },
+          ...args,
         ],
       },
     };
@@ -225,7 +223,7 @@ class ClassToFunction extends Visitor {
     body.forEach((n: ClassMember) => {
       if (n.type === "Constructor" && n.body) {
         constructorFunctionStatement = this.#ConstructorToFunction(n);
-      } else if (n.type === "ClassMethod" || n.type === "PrivateMethod") {
+      } else if ((n.type === "ClassMethod" || n.type === "PrivateMethod") && !n.isAbstract) {
         if (n.isStatic) {
           staticMethods.push(this.#methodToFunction(n));
         } else {
