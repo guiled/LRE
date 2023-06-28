@@ -6,7 +6,7 @@ import {
   Program,
   TsType,
 } from "@swc/core";
-import Visitor from "@swc/core/Visitor";
+import { Visitor } from "@swc/core/Visitor";
 import call from "./node/expression/call";
 import member from "./node/expression/member";
 import identifier from "./node/identifier";
@@ -77,7 +77,7 @@ class NoArraySpreading extends Visitor {
   }
 
   visitTsType(n: TsType): TsType {
-      return n;
+    return n;
   }
 }
 

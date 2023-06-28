@@ -11,7 +11,7 @@ import {
   Program,
   VariableDeclarator,
 } from "@swc/core";
-import Visitor from "@swc/core/Visitor";
+import { Visitor } from "@swc/core/Visitor";
 import undefinedidentifier from "./node/undefinedidentifier";
 import typeofexpression from "./node/expression/unary/typeofexpression";
 

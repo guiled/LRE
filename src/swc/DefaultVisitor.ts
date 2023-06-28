@@ -172,7 +172,7 @@ import {
   WithStatement,
   YieldExpression,
 } from "@swc/core";
-import Visitor from "@swc/core/Visitor";
+import { Visitor } from "@swc/core/Visitor";
 
 class DefaultVisitor extends Visitor {
   visitProgram(n: Program): Program {

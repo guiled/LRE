@@ -7,7 +7,7 @@ import {
   Statement,
   UnaryExpression,
 } from "@swc/core";
-import Visitor from "@swc/core/Visitor";
+import { Visitor } from "@swc/core/Visitor";
 import undefinedidentifier from "./node/undefinedidentifier";
 
 /**
