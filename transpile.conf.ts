@@ -9,6 +9,8 @@ import noVoid0 from "./src/swc/NoVoid0";
 import defaultParameter from "./src/swc/ParamDefaultValue";
 import replaceInOperator from "./src/swc/ReplaceInOperator";
 import noThrowStatement from "./src/swc/NoThrowStatement";
+import { noDoWhile } from "./src/swc/NoDoWhile";
+import { mixinToAssign } from "./src/swc/MixinToAssign";
 
 const transformForLR: Options = {
   jsc: {
@@ -23,15 +25,8 @@ const transformForLR: Options = {
   isModule: true,
   module: {
     type: "es6",
-    // strict: false,
-    // strictMode: false,
-    // lazy: false,
-    // noInterop: false,
-    // ignoreDynamic: false,
   },
-  //plugin: plugins([defaultVisitor()]),
-  //plugin: plugins([defaultVisitor(), classToFunction()]),
-  plugin: plugins([noArraySpreading(), replaceInOperator(), defaultParameter(), computedObjectProps(), classExtend(), classToFunction()]),
+  plugin: plugins([noDoWhile(), noArraySpreading(), replaceInOperator(), defaultParameter(), computedObjectProps(), mixinToAssign(), classExtend(), classToFunction()]),
   sourceMaps: false,
 };
 
