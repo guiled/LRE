@@ -1,12 +1,19 @@
 declare namespace LetsRole {
   export type Name = string;
-  export type ViewData = {
+  export type ViewData = Partial<{
     [key: LetsRole.ComponentID]: LetsRole.ComponentValue;
-  };
+  }>;
   export type Index = string;
 
-  const RAW_EVENTS = ['click', 'update', 'mouseenter', 'mouseleave', 'keyup'] as const;
-  export type EventType = typeof RAW_EVENTS[number];
+  const RAW_EVENTS = [
+    "click",
+    "update",
+    "mouseenter",
+    "mouseleave",
+    "keyup",
+  ] as const;
+  export type EventType = (typeof RAW_EVENTS)[number];
+  export type EventCallback<T=Component> = (cmp: T, ...args: unknown[]) => void;
   export type ClassName = string;
   export type ClassSelector = `.${ClassName}`;
 
@@ -65,12 +72,8 @@ declare namespace LetsRole {
 
     find: ComponentFinder;
 
-    on(event: EventType, callback: (cmp: Component) => void): void;
-    on(
-      event: EventType,
-      delegate: Selector,
-      callback: (cmp: Component) => void
-    ): void;
+    on(event: EventType, callback: EventCallback): void;
+    on(event: EventType, delegate: Selector, callback: EventCallback): void;
 
     off(event: EventType): void;
     off(event: EventType, delegate: Selector): void;
@@ -121,22 +124,22 @@ declare namespace LetsRole {
   export type ComponentFinder<T = Component> = (id: ComponentID) => Component;
 
   type ErrorTraceLocation = {
-    column: number,
-    line: number,
+    column: number;
+    line: number;
   };
   type ErrorTraceLoc = {
-    start: ErrorTraceLocation,
-    end: ErrorTraceLocation,
-  }
+    start: ErrorTraceLocation;
+    end: ErrorTraceLocation;
+  };
   type ErrorTrace = {
-    type: string,
-    loc: ErrorTraceLoc
-  }
+    type: string;
+    loc: ErrorTraceLoc;
+  };
   export type Error = {
-    name: string,
-    message: string,
-    trace: ErrorTrace[],
-  }
+    name: string;
+    message: string;
+    trace: ErrorTrace[];
+  };
 }
 declare function log(input: any): void;
 declare function wait(delay: number, callback: (...args: any[]) => void);
