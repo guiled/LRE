@@ -1,12 +1,12 @@
+import { Sheet } from "../sheet";
 import { Component } from "./component";
-import { HasRaw } from "../hasraw";
-import { ComponentCommon } from "./common";
 
-export interface ComponentContainer<T = LetsRole.Sheet | LetsRole.Component>
-  extends HasRaw<T>,
-    ComponentCommon {
+export interface ComponentContainer {
   get: ComponentFinder;
   find: ComponentFinder;
+  lreType(): ComponentType;
+  realId(): string;
+  sheet(): Sheet;
 }
 export type ComponentFinder = (id: string) => ComponentSearchResult;
 export type ComponentSearchResult = Component | null;
