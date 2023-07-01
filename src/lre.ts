@@ -16,6 +16,7 @@ export interface LRE extends ILRE, Logger {}
 
 export class LRE implements ILRE {
   sheets: SheetCollection;
+  public __debug: boolean = false;
 
   apply(thisArg: any, argArray?: any) {
     this.log("prepare init");
@@ -54,4 +55,3 @@ export class LRE implements ILRE {
     this.sheets = new SheetCollection();
   }
 }
-/*#__PURE__*/ //applyMixins(LRE, [Logger]);
