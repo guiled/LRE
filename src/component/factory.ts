@@ -16,7 +16,7 @@ export class ComponentFactory {
     realId += rawComponent.id();
     const containerLreType = container.lreType();
     if (containerLreType === "repeater") {
-      cmp = new Entry(rawComponent, container.sheet(), realId);
+      cmp = new Entry(rawComponent, (container as Repeater).sheet(), realId) as Component;
       cmp.parent(container);
       cmp.repeater(container as Repeater);
     } else {
@@ -24,7 +24,7 @@ export class ComponentFactory {
       cmp.parent(container);
       if (containerLreType === "entry") {
         cmp.entry(container as Entry);
-        cmp.repeater(container.repeater());
+        cmp.repeater((container as Entry).repeater());
         //} else if (isRepeater(rawComponent)) {
         // it is impossible to be 100% sure that a component is a repeater
         // it is a repeater

@@ -1,5 +1,5 @@
 import { Component, REP_ID_SEP } from "../component";
-import { EventHolder } from "../eventholder";
+import { EventDef, EventHolder } from "../eventholder";
 import { HasRaw } from "../hasraw";
 import { ComponentCache } from "../component/cache";
 import {
@@ -12,6 +12,7 @@ import { ComponentFactory } from "../component/factory";
 import { ComponentCommon } from "../component/common";
 import { Entry } from "../component/entry";
 import { Repeater } from "../component/repeater";
+import { Mixin } from "../mixin";
 
 type SheetStoredState = Record<string, any> & {
   initialized: boolean;
@@ -21,27 +22,33 @@ type SheetStoredState = Record<string, any> & {
 
 type StoredState = keyof SheetStoredState;
 
-export interface Sheet
-  extends ComponentContainer<LetsRole.Sheet>,
-    ComponentCommon,
-    EventHolder {}
-
 export class Sheet
+  extends Mixin(EventHolder<LetsRole.Sheet>, HasRaw<LetsRole.Sheet>)
   implements
     Omit<LetsRole.Sheet, "get" | "find">,
-    ComponentContainer<LetsRole.Sheet>,
+    ComponentContainer,
     ComponentCommon
 {
   #silentFind: ComponentFinder;
   #batcher: DataBatcher;
-  #storedState: SheetStoredState;
+  #storedState: SheetStoredState | undefined;
   #componentCache: ComponentCache;
   constructor(rawSheet: LetsRole.Sheet) {
     lre.log(`new sheet ${rawSheet.getSheetId()}`);
-    Object.assign(this, new HasRaw(rawSheet), new EventHolder(this));
+    super([
+      [
+        rawSheet.name(),
+        (
+          rawCmp: LetsRole.Component,
+          event: EventDef
+        ): EventHolder<LetsRole.Sheet> => {
+          return this;
+        },
+      ],
+      [rawSheet],
+    ]);
     this.#batcher = new DataBatcher(rawSheet);
     this.#componentCache = new ComponentCache(this);
-    this.#storedState = this.#loadState();
     this.#silentFind = rawSheet.get(rawSheet.id())
       .find as unknown as ComponentFinder;
   }
@@ -68,6 +75,9 @@ export class Sheet
   id(): string {
     return this.raw().id();
   }
+  realId(): string {
+    return this.raw().id();
+  }
   getSheetId(): string {
     return this.raw().getSheetId();
   }
@@ -91,8 +101,7 @@ export class Sheet
       return cmpInCache;
     }
 
-    let container: ComponentContainer<LetsRole.Sheet | LetsRole.Component> =
-        this,
+    let container: ComponentContainer = this,
       finder: LetsRole.ComponentFinder | undefined = this.raw().get,
       tabId = id.split(REP_ID_SEP),
       finalId = id;
@@ -100,7 +109,7 @@ export class Sheet
     if (tabId.length > 1) {
       finalId = tabId.pop()!;
       let containerId = tabId.join(REP_ID_SEP);
-      container = this.get(containerId);
+      container = this.get(containerId)!;
       finder = this.get(tabId.join(REP_ID_SEP))?.raw()?.find;
       if (!finder) return null;
     }
@@ -114,6 +123,7 @@ export class Sheet
   find(id: string): ComponentSearchResult {
     return this.get(id);
   }
+
   setData(data: LetsRole.ViewData): void {
     this.#batcher.setData(data);
   }
@@ -122,21 +132,25 @@ export class Sheet
   }
 
   #loadState(): SheetStoredState {
-    const data = this.raw().getData();
-    const persist: SheetStoredState | undefined = data?.[
-      this.raw().id()
-    ] as unknown as SheetStoredState | undefined;
-    return {
-      initialized: false,
-      cmpData: {},
-      cmpClasses: {},
-      ...persist,
-    };
+    if (!this.#storedState) {
+      const data = this.raw().getData();
+      const persist: SheetStoredState | undefined = data?.[
+        this.raw().id()
+      ] as unknown as SheetStoredState | undefined;
+      this.#storedState = {
+        initialized: false,
+        cmpData: {},
+        cmpClasses: {},
+        ...persist,
+      };
+    }
+    return this.#storedState;
   }
 
   persistingData(dataName: StoredState, value?: any): void {
+    this.#loadState();
     if (value !== void 0) {
-      this.#storedState[dataName] = value;
+      this.#storedState![dataName] = value;
       const newData: LetsRole.ViewData = {};
       newData[this.id()] = this.#storedState;
       this.setData(newData);
@@ -145,7 +159,8 @@ export class Sheet
   }
 
   isInitialized(): boolean {
-    return !!this.#storedState["initialized"];
+    this.#loadState();
+    return !!this.#storedState!["initialized"];
   }
 
   getPendingData(id: LetsRole.ComponentID): LetsRole.ComponentValue {
@@ -156,7 +171,9 @@ export class Sheet
     return undefined;
   }
 
-  entry(entry?: Entry): Repeater | undefined {
+  entry(entry?: Entry): Entry | undefined {
     return undefined;
   }
+
+  actionOnRawEvent(): void {}
 }

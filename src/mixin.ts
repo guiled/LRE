@@ -1,28 +1,48 @@
-// Types found on https://stackoverflow.com/a/55468194
-type AbstractConstructor<T = {}> = abstract new (...args: any[]) => T;
-type Constructor<T = {}> = new (...args: any[]) => T;
-/* turns A | B | C into A & B & C */
-type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
-  k: infer I
-) => void
-  ? I
-  : never;
+// Thanks to https://github.com/jcalz  https://stackoverflow.com/a/76585028/762461
+type C<A extends any[], R> = abstract new (...args: A) => R
+
+type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
 /* merges constructor types - self explanitory */
-type MergeConstructorTypes<
-  T extends Array<Constructor<any> | AbstractConstructor<any>>
+type MergeConstructorTypes<T extends Array<C<any, any>>
 > = UnionToIntersection<InstanceType<T[number]>>;
-function applyToConstructor(constructor: Constructor, argArray: any[]) {
-  const factoryFunction = constructor.bind.apply(constructor, [
+
+function applyToConstructor(constructor: C<any[], any>, argArray: any[]) {
+  const factoryFunction = constructor.bind.apply(constructor as new (...args: any[]) => any, [
     null,
     ...argArray,
   ]);
   return new factoryFunction();
 }
 
-var Mixin = function <T extends (Constructor | AbstractConstructor)[]>(
-  ...mixins: T
-): Constructor<MergeConstructorTypes<T>> {
-  const getProps = (obj: any) => {
+type MixinFunction = {
+  <A1 extends any[], R1>(
+    ctor1: C<A1, R1>
+  ): new (...args: any) => R1
+  <A1 extends any[], R1, A2 extends any[], R2>(
+    ctor1: C<A1, R1>, ctor2: C<A2, R2>
+  ): new (...args: any) => R1 & R2
+  <A1 extends any[], R1, A2 extends any[], R2, A3 extends any[], R3>(
+    ctor1: C<A1, R1>, ctor2: C<A2, R2>, ctor3: C<A3, R3>
+  ): new (...args: any) => R1 & R2 & R3
+  <A1 extends any[], R1, A2 extends any[], R2,
+    A3 extends any[], R3, A4 extends any[], R4>(
+      ctor1: C<A1, R1>, ctor2: C<A2, R2>, ctor3: C<A3, R3>, ctor4: C<A4, R4>
+    ): new (...args: any) => R1 & R2 & R3 & R4
+
+  // fall back to variadic 
+  <R extends any[]>(
+    ...ctors: { [I in keyof R]: new (...args: any) => R[I] }
+  ): new (...args: any) =>
+      { [I in keyof R]: (x: R[I]) => void }[number] extends (
+        x: infer I) => void ? I : never;
+}
+
+var Mixin:MixinFunction = function <R extends any[]>(
+  ...ctors: { [I in keyof R]: new (...args: any) => R[I] }
+): new (...args: any) =>
+      { [I in keyof R]: (x: R[I]) => void }[number] extends (
+        x: infer I) => void ? I : never {
+    const getProps = (obj: any) => {
     let currentObj = obj;
     const prototypes = [];
     const properties: Record<string, any> = {};
@@ -43,20 +63,19 @@ var Mixin = function <T extends (Constructor | AbstractConstructor)[]>(
     });
     return properties;
   };
-
-  //const supers: Record<string, Record<string, (...args: any[]) => any>> = {};
-
-  const MixinSuperClass: Constructor<MergeConstructorTypes<T>> = class {
+  const MixinSuperClass: new (...args: any) =>
+      { [I in keyof R]: (x: R[I]) => void }[number] extends (
+        x: infer I) => void ? I : never = class {
     private supers: Record<string, Record<string, (...args: Array<Array<any>>) => any>> =
       {};
-    //#supers: Array<() => void>;
+    
     constructor(args: Record<string, Array<unknown>>) {
       const prototype = Object.getPrototypeOf(this);
       const thisProps = Object.getOwnPropertyDescriptors(prototype);
-      mixins.forEach((mixinMember, index) => {
+      ctors.forEach((mixinMember, index) => {
         this.supers[mixinMember.name] = {};
         const mixinMemberInstance = applyToConstructor(
-          mixinMember as Constructor,
+          mixinMember as C<any[], any>,
           args?.[index] || []
         );
         const mixinMemberProps = getProps(mixinMemberInstance);
@@ -80,9 +99,11 @@ var Mixin = function <T extends (Constructor | AbstractConstructor)[]>(
           });
       });
     }
-  } as Constructor<MergeConstructorTypes<T>>;
+  } as new (...args: any) =>
+      { [I in keyof R]: (x: R[I]) => void }[number] extends (
+        x: infer I) => void ? I : never;
 
-  mixins.forEach((Mixin) => {
+  ctors.forEach((Mixin) => {
     const props = getProps(Mixin.prototype);
     Object.keys(props).forEach(
       (prop) =>
@@ -96,6 +117,6 @@ var Mixin = function <T extends (Constructor | AbstractConstructor)[]>(
   });
 
   return MixinSuperClass;
-};
+} as MixinFunction;
 
 export { Mixin };

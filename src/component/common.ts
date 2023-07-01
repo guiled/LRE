@@ -3,9 +3,9 @@ import { Entry } from "./entry";
 import { Repeater } from "./repeater";
 
 export interface ComponentCommon {
-  lreType: () => ComponentType;
+  lreType: (newType?: ComponentType) => ComponentType;
   sheet: () => Sheet;
   realId: () => string;
-  entry: (entry?: Entry) => Entry | undefined;
-  repeater: (repeater?: Repeater) => Repeater | undefined;
+  //entry: (entry?: Entry) => Entry | undefined;
+  //repeater: (repeater?: Repeater) => Repeater | undefined;
 }
