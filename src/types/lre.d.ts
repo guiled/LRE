@@ -2,6 +2,7 @@ declare interface ILRE {
   error(...args: any[]): void;
   warn(...args: any[]): void;
   trace(...args: any[]): void;
+  __debug: boolean = false;
 }
 
 declare var lre: ILRE & Logger;

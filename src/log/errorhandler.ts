@@ -2,6 +2,7 @@ export function handleError(e: LetsRole.Error, additionals?: unknown) {
   const trace = e?.trace || [];
   const last = trace.find(function (t) {
     return (
+      lre.__debug ||
       t?.loc?.start?.line < errExclFirstLine ||
       t?.loc?.start?.line > errExclLastLine
     );
