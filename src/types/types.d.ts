@@ -25,7 +25,8 @@ declare namespace LetsRole {
   export type ComponentValue =
     | LetsRole.BaseComponentValue
     | LetsRole.RepeaterValue
-    | LetsRole.MultiChoiceValue;
+    | LetsRole.MultiChoiceValue
+    | LetsRole.ViewData;
   export type Choices = Record<string, string>;
 
   export type Selector = LetsRole.ComponentID | LetsRole.ClassSelector;
