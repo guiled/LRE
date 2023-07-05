@@ -7,12 +7,10 @@ import {
   Constructor,
   Expression,
   ExpressionStatement,
-  NewExpression,
   PrivateProperty,
   Program,
   Span,
   SuperPropExpression,
-  ThisExpression,
   TsType,
 } from "@swc/core";
 import { Visitor } from "@swc/core/Visitor";
@@ -22,8 +20,15 @@ import { ExpressionWithSpan } from "./types";
 import { objectassign } from "./node/expression/objectassign";
 import thisexpression from "./node/expression/thisexpression";
 import { newexpression } from "./node/expression/newexpression";
+import { CONSTRUCTOR_ARG_NAME } from "./utils/paramToVariableDeclarator";
+import call from "./node/expression/call";
+import { arrayexpression } from "./node/expression/arrayexpression";
+import nullliteral from "./node/literal/nullliteral";
 
-const getEmptyCallExpression = (span: Span): CallExpression => {
+const getEmptyCallExpression = (
+  span: Span,
+  args: Argument[]
+): CallExpression => {
   return {
     type: "CallExpression",
     span: span,
@@ -33,20 +38,21 @@ const getEmptyCallExpression = (span: Span): CallExpression => {
       value: "",
       span,
     },
-    arguments: [],
+    arguments: args,
     typeArguments: undefined,
   };
 };
 
 const transformSuperCallToObjectAssign = (
   n: CallExpression,
-  currentSuperClass: Expression
+  currentSuperClass: Expression,
+  newAsApply: boolean = false
 ): CallExpression => {
   const span: Span = (n.callee as ExpressionWithSpan).span;
   n.callee = objectassign(span);
   n.arguments = [
     {
-      expression: thisexpression({span}),
+      expression: thisexpression({ span }),
     },
     {
       expression: {
@@ -55,7 +61,7 @@ const transformSuperCallToObjectAssign = (
         operator: "=",
         left: member({
           span,
-          object: thisexpression({span}),
+          object: thisexpression({ span }),
           property: {
             type: "PrivateName",
             span,
@@ -67,7 +73,36 @@ const transformSuperCallToObjectAssign = (
             },
           },
         }),
-        right: newexpression(currentSuperClass, n.arguments, span),
+        right: newAsApply
+          ? newexpression(
+              call({
+                span,
+                args: [
+                  { expression: currentSuperClass },
+                  {
+                    expression: arrayexpression({
+                      span,
+                      elements: [
+                        { expression: nullliteral({ span }) },
+                        ...n.arguments,
+                      ],
+                    }),
+                  },
+                ],
+                callee: member({
+                  span,
+                  object: member({
+                    span,
+                    object: currentSuperClass,
+                    property: identifier({ span, value: "bind" }),
+                  }),
+                  property: identifier({ span, value: "apply" }),
+                }),
+              }),
+              [],
+              span
+            )
+          : newexpression(currentSuperClass, n.arguments, span),
       },
     },
   ];
@@ -117,8 +152,18 @@ class ClassExtend extends Visitor {
       type: "ExpressionStatement",
       span: superClass.span,
       expression: transformSuperCallToObjectAssign(
-        getEmptyCallExpression(superClass.span),
-        superClass
+        getEmptyCallExpression(superClass.span, [
+          {
+            expression: {
+              type: "Identifier",
+              span: superClass.span,
+              value: CONSTRUCTOR_ARG_NAME,
+              optional: false,
+            },
+          },
+        ]),
+        superClass,
+        true
       ),
     };
   }
@@ -181,12 +226,10 @@ class ClassExtend extends Visitor {
         body: {
           type: "BlockStatement",
           span,
-          stmts: [
-            this.#createSuperCallStmt(this.currentSuperClass),
-          ],
+          stmts: [this.#createSuperCallStmt(this.currentSuperClass)],
         },
         isOptional: false,
-      })
+      });
     }
     this.isInClass = false;
     this.constructorFound = prevConstructorFound;
