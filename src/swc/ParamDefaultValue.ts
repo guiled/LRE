@@ -1,17 +1,13 @@
 import {
   ArrayPattern,
-  AssignmentPatternProperty,
-  BindingIdentifier,
   BlockStatement,
   Expression,
   Fn,
-  Identifier,
   ObjectPattern,
   ObjectPatternProperty,
   Param,
   Pattern,
   Program,
-  Statement,
   TsType,
 } from "@swc/core";
 import { Visitor } from "@swc/core/Visitor";
@@ -72,7 +68,6 @@ class DefaultParameter extends Visitor {
           (p.pat.type === "ObjectPattern" && hasPropWithValue(p.pat)) ||
           (p.pat.type === "ArrayPattern" && hasArrayItemWithValue(p.pat))
         ) {
-          console.log("here");
           const newArg = identifier({
             span: p.span,
             value: ARGS + index,
