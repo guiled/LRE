@@ -6,7 +6,7 @@ export default function assignment({
   span,
   left,
   right,
-  operator,
+  operator = "=",
 }: Omit<AssignmentExpression, "type">): AssignmentExpression {
   return {
       type: "AssignmentExpression",

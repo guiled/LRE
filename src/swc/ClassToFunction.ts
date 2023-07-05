@@ -20,7 +20,9 @@ import {
   Identifier,
   MemberExpression,
   ModuleDeclaration,
+  Param,
   PrivateMethod,
+  PrivateName,
   PrivateProperty,
   Program,
   Span,
@@ -72,6 +74,7 @@ type PropertyToVariable = PublicPropertyToVariable | PrivatePropertyToVariable;
 
 class ClassToFunction extends Visitor {
   #privateMethods: Array<Identifier["value"]> = [];
+  #privateProps: Array<PrivateProperty> = [];
   #inPrivateCallExpression = false;
 
   #methodToFunction(
@@ -130,6 +133,67 @@ class ClassToFunction extends Visitor {
       },
     }] : [];
 
+      const propertyDeclarations: Statement[] = [];
+      const params: Param[] = n.params.map<Param>(p => {
+        if (p.type === "Parameter") return p;
+        let propName: PrivateName | Identifier;
+        if (p.accessibility === "public") {
+          propName = {
+              type: "Identifier",
+              span: p.span,
+              optional: false,
+              value: p.param.type ==="Identifier" ? p.param.value : (p.param.left.type === "Identifier" ? p.param.left.value : "_todo"),
+            } as Identifier;
+        } else {
+          propName = {
+            type: "PrivateName",
+            span: p.span,
+            id: {
+              type: "Identifier",
+              span: p.span,
+              optional: false,
+              value: p.param.type ==="Identifier" ? p.param.value : (p.param.left.type === "Identifier" ? p.param.left.value : "_todo"),
+            }
+          } as PrivateName;
+          this.#privateProps.push({
+            type: "PrivateProperty",
+            accessibility: p.accessibility,
+            typeAnnotation: p.param.typeAnnotation,
+            span: p.span,
+            key: propName,
+            isStatic: false,
+            isOverride: false,
+            readonly: false,
+            isOptional: false,
+            definite: false,
+          });
+        }
+        propertyDeclarations.push({
+          type: "ExpressionStatement",
+          span: p.span,
+          expression: assignment({
+            span: p.span,
+            operator: "=",
+            left: member({
+              span: p.span,
+              object: thisexpression({span: p.span}),
+              property: propName,
+            }),
+            right: p.param.type ==="Identifier" ? p.param : (p.param.left.type === "Identifier" ? p.param.left : { /* todo */} as Identifier),
+          })
+        })
+        return {
+          type: "Parameter",
+          span: p.span,
+          pat: p.param,
+        };
+      });
+    
+    const stmts = [
+      ...propertyDeclarations,
+      ...n.body?.stmts || [],
+    ];
+
     return {
       type: "ExpressionStatement",
       span: n.span,
@@ -144,10 +208,14 @@ class ClassToFunction extends Visitor {
             span: n.span,
             expression: {
               type: "FunctionExpression",
-              params: n.params,
+              params: params,
               decorators: [],
               span: n.body?.span || n.span,
-              body: n.body,
+              body: {
+                type: "BlockStatement",
+                span: n.body?.span || n.span,
+                stmts: stmts,
+              },
               generator: false,
               async: false,
             },
@@ -220,9 +288,18 @@ class ClassToFunction extends Visitor {
     let staticStmts: Statement[] = [];
     const publicStatic: Array<PublicMethodToFunctionStatement | PublicPropertyToVariable> = [];
     const privateStatic: Array<PrivateMethodToFunctionStatement | PrivatePropertyToVariable> = [];
+    const ctor: Constructor | undefined = body.find((n: ClassMember) => n.type === "Constructor" && n.body) as Constructor;
+
+    if (ctor) {
+      const savePrivateProps = this.#privateProps;
+      this.#privateProps = [];
+      constructorFunctionStatement = this.#ConstructorToFunction(ctor);
+      body.unshift(...this.#privateProps);
+      this.#privateProps = savePrivateProps;
+    }
+
     body.forEach((n: ClassMember) => {
       if (n.type === "Constructor" && n.body) {
-        constructorFunctionStatement = this.#ConstructorToFunction(n);
       } else if ((n.type === "ClassMethod" || n.type === "PrivateMethod") && !n.isAbstract) {
         if (n.isStatic) {
           staticMethods.push(this.#methodToFunction(n));
@@ -442,7 +519,7 @@ class ClassToFunction extends Visitor {
       }
     });
     members = super.visitClassBody(members);
-    return super.visitClassBody(members);
+    return members;
   }
 
   visitCallExpression(n: CallExpression): Expression {
