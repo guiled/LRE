@@ -26,7 +26,7 @@ const transformForLR: Options = {
   module: {
     type: "es6",
   },
-  plugin: plugins([noDoWhile(), noArraySpreading(), replaceInOperator(), defaultParameter(), computedObjectProps(), mixinToAssign(), classExtend(), classToFunction()]),
+  plugin: plugins([noDoWhile(), noArraySpreading(), replaceInOperator(), defaultParameter(), computedObjectProps(), mixinToAssign(), classExtend(), classToFunction(), defaultParameter()]),
   sourceMaps: false,
 };
 
