@@ -4,6 +4,7 @@ import {
   VariableDeclaration,
   VariableDeclarator,
   Span,
+  Param,
 } from "@swc/core";
 import { Visitor } from "@swc/core/Visitor.js";
 import {
@@ -51,7 +52,7 @@ class ConstructorParams extends Visitor {
           ) {
             declarationsSpan.end = p.span.end;
           }
-          declarations.push(paramToVariableDeclarator(p, index));
+          declarations.push(paramToVariableDeclarator(p as Param, index));
         });
         m.params = [
           {
@@ -63,7 +64,7 @@ class ConstructorParams extends Visitor {
               span: declarationsSpan,
               value: CONSTRUCTOR_ARG_NAME,
               optional: false,
-              typeAnnotation: null,
+              typeAnnotation: undefined,
             },
           },
         ];

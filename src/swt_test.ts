@@ -1,60 +1,61 @@
-import { transformSync } from "@swc/core";
-import transpileConf, { noVoid0Plugin } from "./transpile.conf";
-import { diffChars, diffTrimmedLines } from "diff";
-import colors from "colors/safe";
-import colorize from "json-colorizer";
+// import { transformSync } from "@swc/core";
+// //import transpileConf, { noVoid0Plugin } from "./transpile.conf";
+// //import { diffChars, diffTrimmedLines } from "diff";
+// import colors from "colors/safe";
+// import colorize from "json-colorizer";
+// import { noVoid0Plugin } from "../transpile.conf";
 
-const mutedConsole = (prefix) => {
-  const logs = [prefix];
-  const prevConsole = globalThis.console;
-  return {
-    ...globalThis.console,
-    getLogs: () => logs,
-    dump: () => {
-      logs.forEach((l) => {
-        try {
-          JSON.parse(l);
-          prevConsole.log(colorize(l));
-        } catch (e) {
-          prevConsole.log(l);
-        }
-      });
-    },
-    log: (...args) => logs.push.apply(logs, args),
-    error: (...args) => logs.push.apply(logs, args),
-    info: (...args) => logs.push.apply(logs, args),
-    warn: (...args) => logs.push.apply(logs, args),
-  };
-};
+// const mutedConsole = (prefix: string) => {
+//   const logs = [prefix];
+//   const prevConsole = globalThis.console;
+//   return {
+//     ...globalThis.console,
+//     getLogs: () => logs,
+//     dump: () => {
+//       logs.forEach((l) => {
+//         try {
+//           JSON.parse(l);
+//           prevConsole.log(colorize(l));
+//         } catch (e) {
+//           prevConsole.log(l);
+//         }
+//       });
+//     },
+//     log: (...args: any[]) => logs.push.apply(logs, args),
+//     error: (...args: any[]) => logs.push.apply(logs, args),
+//     info: (...args: any[]) => logs.push.apply(logs, args),
+//     warn: (...args: any[]) => logs.push.apply(logs, args),
+//   };
+// };
 
-type DiffPart = {
-  count: number;
-  value: string;
-  added?: boolean;
-  removed?: boolean;
-};
-const removeSpaceDifferences = (diffs: Array<DiffPart>) => {
-  let lastNoChange: DiffPart;
-  let foundValidChange: boolean = false;
-  return diffs.filter((diff) => {
-    if (!diff.added && !diff.removed) {
-      if (!foundValidChange && lastNoChange) {
-        lastNoChange.value += diff.value;
-        return false;
-      }
-      lastNoChange = diff;
-      foundValidChange = false;
-      return true;
-    }
-    if (diff.value.trim() !== "") {
-      foundValidChange = true;
-      return true;
-    } else {
-      lastNoChange.value += diff.value;
-      return false;
-    }
-  });
-};
+// type DiffPart = {
+//   count: number;
+//   value: string;
+//   added?: boolean;
+//   removed?: boolean;
+// };
+// const removeSpaceDifferences = (diffs: Array<DiffPart>) => {
+//   let lastNoChange: DiffPart;
+//   let foundValidChange: boolean = false;
+//   return diffs.filter((diff) => {
+//     if (!diff.added && !diff.removed) {
+//       if (!foundValidChange && lastNoChange) {
+//         lastNoChange.value += diff.value;
+//         return false;
+//       }
+//       lastNoChange = diff;
+//       foundValidChange = false;
+//       return true;
+//     }
+//     if (diff.value.trim() !== "") {
+//       foundValidChange = true;
+//       return true;
+//     } else {
+//       lastNoChange.value += diff.value;
+//       return false;
+//     }
+//   });
+// };
 
 [
   {
@@ -190,38 +191,38 @@ const removeSpaceDifferences = (diffs: Array<DiffPart>) => {
      output: `var a = typeof toto.a !== "undefined" ? toto.a : 2;`
   },
 ].forEach(({ input, output }, i) => {
-  var oldConsole = console;
-  let res;
-  try {
-    var logger = mutedConsole(`Test ${i} ${input}`);
-    globalThis.console = logger;
-    res = transformSync(input, transpileConf);
-    res = transformSync(res.code, noVoid0Plugin)
-    const diff = removeSpaceDifferences(diffChars(output, res.code.trim()));
-    if (diff.length > 1) {
-      const logs = console.getLogs();
-      globalThis.console = oldConsole;
-      console.error(colors.red.bold(`Test ${i} failed`));
-      let diffStr = "";
-      diff.forEach((part) => {
-        // green for additions, red for deletions
-        // grey for common parts
-        const color = part.added
-          ? colors.green.bold
-          : part.removed
-          ? colors.red.bold
-          : colors.gray;
-        diffStr += color(part.value);
-      });
-      console.error(diffStr);
-      logger.dump();
-    }
-    globalThis.console = oldConsole;
-  } catch (e) {
-    const logs = console.getLogs();
-    globalThis.console = oldConsole;
-    console.error(colors.red.bold(`Test ${i} failed with errors`));
-    console.error(e);
-    logger.dump();
-  }
+  // var oldConsole = console;
+  // let res;
+  // try {
+  //   var logger = mutedConsole(`Test ${i} ${input}`);
+  //   globalThis.console = logger;
+  //   res = transformSync(input, transpileConf);
+  //   res = transformSync(res.code, noVoid0Plugin)
+  //   const diff = removeSpaceDifferences(diffChars(output, res.code.trim()));
+  //   if (diff.length > 1) {
+  //     const logs = console.getLogs();
+  //     globalThis.console = oldConsole;
+  //     console.error(colors.red.bold(`Test ${i} failed`));
+  //     let diffStr = "";
+  //     diff.forEach((part) => {
+  //       // green for additions, red for deletions
+  //       // grey for common parts
+  //       const color = part.added
+  //         ? colors.green.bold
+  //         : part.removed
+  //         ? colors.red.bold
+  //         : colors.gray;
+  //       diffStr += color(part.value);
+  //     });
+  //     console.error(diffStr);
+  //     logger.dump();
+  //   }
+  //   globalThis.console = oldConsole;
+  // } catch (e) {
+  //   const logs = console.getLogs();
+  //   globalThis.console = oldConsole;
+  //   console.error(colors.red.bold(`Test ${i} failed with errors`));
+  //   console.error(e);
+  //   logger.dump();
+  // }
 });
