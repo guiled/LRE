@@ -108,7 +108,7 @@ class ClassToFunction extends Visitor {
           type: "MemberExpression",
           span: n.span,
           object: thisexpression({span: n.span}),
-          property: n.key,
+          property: n.key as Identifier,
         },
         right: {
           type: "FunctionExpression",
@@ -251,7 +251,7 @@ class ClassToFunction extends Visitor {
             type: "MemberExpression",
             span: n.span,
             object: thisexpression({ span: n.span }),
-            property: n.key,
+            property: n.key as MemberExpression["property"],
           },
           right: n.value ?? undefinedidentifier({ span: n.span }),
         },
@@ -385,7 +385,7 @@ class ClassToFunction extends Visitor {
             id: tmpClassFunctionId,
             init: classFunction,
           }),
-          ...publicStatic.map((e: PublicMethodToFunctionStatement) => {
+          ...publicStatic.map((e: PublicMethodToFunctionStatement | PublicPropertyToVariable) => {
             return {
               ...e,
               expression: {
@@ -411,59 +411,13 @@ class ClassToFunction extends Visitor {
 
   #transformClassToFunction<T extends ClassExpression | ClassDeclaration>(
     n: T
-  ): VariableDeclaration | VariableDeclarator["init"] {
-    const classDefinition =
-      n.type === "ClassExpression"
-        ? this.visitClassExpression(n)
-        : (this.visitClassDeclaration(n) as ClassDeclaration);
+  ): VariableDeclarator["init"] {
+    // const classDefinition =
+    //   n.type === "ClassExpression"
+    //     ? this.visitClassExpression(n)
+    //     : (this.visitClassDeclaration(n) as ClassDeclaration);
 
-    return this.#transformClassBodyToFunction(n, n.span, n.identifier);
-
-    let finalResult: VariableDeclaration | VariableDeclarator["init"] =
-      classFunction;
-    if (classFunction.identifier) {
-      finalResult = onevariable({
-        span: n.span,
-        id: n.identifier,
-        init: classFunction,
-      });
-    }
-
-    if (
-      staticMethods.length + staticProperties.length + staticStmts.length >
-      0
-    ) {
-      const stmts: Statement[] = [...staticStmts];
-      let classId;
-
-      if (
-        finalResult.type === "FunctionExpression" &&
-        !finalResult.identifier
-      ) {
-        classId = identifier({
-          span: finalResult.span,
-          value: "__unnamedClass",
-        });
-        // assign unnamed class to a tmp variable
-        finalResult = onevariable({
-          span: finalResult.span,
-          id: classId,
-          init: finalResult,
-          kind: "const",
-        });
-      } else {
-        classId = finalResult.identifier;
-      }
-
-      stmts.push(finalResult);
-      finalResult = iife({
-        span: n.span,
-        stmts: [],
-        identifier: n.identifier,
-      });
-    }
-
-    return finalResult;
+    return this.#transformClassBodyToFunction(n.body, n.span, n.identifier);
   }
 
   #transformPrivateIdentifier(i: Identifier): Identifier {
@@ -624,7 +578,7 @@ class ClassToFunction extends Visitor {
 
   visitModuleDeclaration(n: ModuleDeclaration): ModuleDeclaration {
       if (n.type === "ExportDefaultDeclaration" && n.decl.type === "ClassExpression") {
-        n.decl = this.visitClassDeclaration(n.decl);
+        n.decl = this.visitClassExpression(n.decl);
         const res = this.#transformClassExpression(n.decl);
         if (res.type === "CallExpression") {
           const decl: ExportDefaultExpression = {

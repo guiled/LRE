@@ -1,6 +1,7 @@
 import {
   BinaryExpression,
   Declaration,
+  EmptyStatement,
   Expression,
   FunctionDeclaration,
   Program,
@@ -54,19 +55,11 @@ class KeepInstanceOf extends Visitor {
       stmt.type === "FunctionDeclaration" &&
       stmt.identifier.value === "_instanceof"
     ) {
-      Object.assign(stmt, {
+      const newStmt: EmptyStatement = {
         type: "EmptyStatement",
         span: stmt.span,
-      });
-      delete stmt.identifier;
-      delete stmt.declare;
-      delete stmt.params;
-      delete stmt.body;
-      delete stmt.generator;
-      delete stmt.async;
-      delete stmt.typeParameters;
-      delete stmt.returnType;
-      delete stmt.decorators;
+      }
+      return super.visitStatement(newStmt);
     }
     return super.visitStatement(stmt);
   }
@@ -87,16 +80,14 @@ class KeepInstanceOf extends Visitor {
       n.callee.value === "_instanceof"
     ) {
       const span = n.span;
-      Object.assign(n, {
+      const binaryExpression: BinaryExpression = {
         type: "BinaryExpression",
-        span,
+        span: n.span,
         operator: "instanceof",
         left: n.arguments[0].expression,
         right: n.arguments[1].expression,
-      });
-      delete n.arguments;
-      delete n.callee;
-      delete n.typeArguments;
+      };
+      return super.visitExpression(binaryExpression);
     }
     return super.visitExpression(n);
   }

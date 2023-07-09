@@ -2,9 +2,7 @@ import {
   ComputedPropName,
   Expression,
   KeyValueProperty,
-  ObjectExpression,
   Program,
-  Property,
   TsType,
 } from "@swc/core";
 import { Visitor } from "@swc/core/Visitor";
@@ -16,7 +14,6 @@ import assignment from "./node/statement/assignment";
 import returnstmt from "./node/statement/returnstmt";
 
 class ComputedObjectProps extends Visitor {
-  #hasComputedProperty(o: ObjectExpression): boolean {}
 
   visitExpression(n: Expression): Expression {
     if (n.type === "ObjectExpression") {

@@ -14,6 +14,7 @@ import {
 import { Visitor } from "@swc/core/Visitor";
 import undefinedidentifier from "./node/undefinedidentifier";
 import typeofexpression from "./node/expression/unary/typeofexpression";
+import { ExpressionWithSpan } from "./types";
 
 class NoVoid0 extends Visitor {
   #changeVoid0ToUndefined<T extends Expression | undefined>(
@@ -29,15 +30,15 @@ class NoVoid0 extends Visitor {
   }
 
   visitBinaryExpression(n: BinaryExpression): Expression {
-    var obj, val;
+    var obj: ExpressionWithSpan | undefined, val;
     if (n.right.type === "UnaryExpression" && n.right.operator === "void") {
-      obj = n.left;
+      obj = n.left as ExpressionWithSpan;
       val = n.right;
     } else if (
       n.left.type === "UnaryExpression" &&
       n.left.operator === "void"
     ) {
-      obj = n.right;
+      obj = n.right as ExpressionWithSpan;
       val = n.left;
     }
     if (obj && val) {
