@@ -1,4 +1,4 @@
-import { Component, REP_ID_SEP } from "../component";
+import { REP_ID_SEP } from "../component";
 import { EventDef, EventHolder } from "../eventholder";
 import { HasRaw } from "../hasraw";
 import { ComponentCache } from "../component/cache";
@@ -23,7 +23,7 @@ type SheetStoredState = Record<string, any> & {
 type StoredState = keyof SheetStoredState;
 
 export class Sheet
-  extends Mixin(EventHolder<LetsRole.Sheet>, HasRaw<LetsRole.Sheet>)
+  extends Mixin(EventHolder, HasRaw<LetsRole.Sheet>)<LetsRole.Sheet>
   implements
     Omit<LetsRole.Sheet, "get" | "find">,
     ComponentContainer,
@@ -175,5 +175,4 @@ export class Sheet
     return undefined;
   }
 
-  actionOnRawEvent(): void {}
 }
