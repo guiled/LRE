@@ -1,4 +1,4 @@
-import { VariableDeclaration } from "@swc/core";
+import { Span, VariableDeclaration } from "@swc/core";
 
 type VARIABLE_PARAM = {
   span: Span;

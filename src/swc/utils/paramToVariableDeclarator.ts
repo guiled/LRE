@@ -1,4 +1,4 @@
-import { Expression, Param, Span, Statement, VariableDeclarator } from "@swc/core";
+import { Expression, Param, Span, Statement, TsParameterProperty, VariableDeclarator } from "@swc/core";
 
 export const CONSTRUCTOR_ARG_NAME = '__lrargs__';
 
@@ -12,11 +12,11 @@ const UndefinedIdentifier = (span: Span): Expression => {
 };
 
 export function paramToVariableDeclarator(
-  param: Param,
+  param: Param | TsParameterProperty,
   order: number
 ): VariableDeclarator {
   let defaultValue = UndefinedIdentifier(param.span);
-  let pat = param.pat;
+  let pat = (param as Param).pat;
   if ("right" in pat && pat.type === "AssignmentPattern") {
     defaultValue = { ...pat.right };
     pat = pat.left;
@@ -36,7 +36,7 @@ export function paramToVariableDeclarator(
       },
       arguments: [
         {
-          spread: null,
+          spread: undefined,
           expression: {
             type: "Identifier",
             span: param.span,
@@ -45,7 +45,7 @@ export function paramToVariableDeclarator(
           },
         },
         {
-          spread: null,
+          spread: undefined,
           expression: {
             type: "NumericLiteral",
             span: param.span,
@@ -54,11 +54,11 @@ export function paramToVariableDeclarator(
           },
         },
         {
-          spread: null,
+          spread: undefined,
           expression: defaultValue,
         },
       ],
-      typeArguments: null,
+      typeArguments: undefined,
     },
     definite: false,
   };
@@ -96,7 +96,7 @@ export function getParamToVariableAST(): Statement {
             },
             value: "params",
             optional: false,
-            typeAnnotation: null,
+            typeAnnotation: undefined,
           },
         },
         {
@@ -116,7 +116,7 @@ export function getParamToVariableAST(): Statement {
             },
             value: "index",
             optional: false,
-            typeAnnotation: null,
+            typeAnnotation: undefined,
           },
         },
         {
@@ -136,7 +136,7 @@ export function getParamToVariableAST(): Statement {
             },
             value: "defaultValue",
             optional: false,
-            typeAnnotation: null,
+            typeAnnotation: undefined,
           },
         },
       ],
@@ -275,7 +275,7 @@ export function getParamToVariableAST(): Statement {
       },
       generator: false,
       async: false,
-      typeParameters: null,
-      returnType: null,
+      typeParameters: undefined,
+      returnType: undefined,
     };
   }
