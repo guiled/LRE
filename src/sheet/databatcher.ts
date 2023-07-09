@@ -10,8 +10,9 @@ type DataBatcherEventType = "processed";
 const ASYNC_DATA_SET_DELAY = 50;
 const MAX_DATA_BATCH_SIZE = 20;
 
-export interface DataBatcher extends EventHolder<DataBatcherEventType> {}
-export class DataBatcher {
+type AdditionalEvents = "processed";
+
+export class DataBatcher extends EventHolder<any, DataBatcherEventType> {
   #sheet: LetsRole.Sheet;
 
   #pending: Array<PendingData> = [];
@@ -20,8 +21,12 @@ export class DataBatcher {
   #isSendPending: boolean = false;
 
   constructor(sheet: LetsRole.Sheet) {
+    super(sheet.getSheetId());
     this.#sheet = sheet;
-    Object.assign(this, new EventHolder<DataBatcherEventType>(this));
+  }
+
+  raw() {
+    return this;
   }
 
   #sendBatch(dataToSend: LetsRole.ViewData = {}) {

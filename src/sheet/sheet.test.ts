@@ -4,6 +4,8 @@ import { Sheet } from "./sheet";
 
 global.lre = new Logger();
 
+jest.mock('../eventholder');
+
 describe("Sheet basics", () => {
   const sheetId = "testedSheet";
   let raw: LetsRole.Sheet, sheet: Sheet;
