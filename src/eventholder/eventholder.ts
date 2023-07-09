@@ -200,12 +200,12 @@ export abstract class EventHolder<
     this.#events[eventName]!.handlers[handlerId] = handler!;
     const cnt = Object.keys(this.#events[eventName]!.handlers).length;
 
-    let logText = "Handler updated";
+    let logText = "Handler added ";
     if (!handlerAlreadyExists) {
       this.trigger("eventhandler:added", event, subComponent, handler);
     } else {
       this.trigger("eventhandler:updated", event, subComponent, handler);
-      logText = "Handler updated";
+      logText = "Handler updated ";
     }
     lre.trace(
       logText +
