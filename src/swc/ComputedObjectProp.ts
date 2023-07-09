@@ -16,13 +16,14 @@ import returnstmt from "./node/statement/returnstmt";
 class ComputedObjectProps extends Visitor {
 
   visitExpression(n: Expression): Expression {
+
     if (n.type === "ObjectExpression") {
       const computedProps: KeyValueProperty[] = n.properties.filter(
         (p) => p.type === "KeyValueProperty" && p.key.type === "Computed"
       ) as KeyValueProperty[];
       if (computedProps.length > 0) {
         const tmpObj = identifier({ span: n.span, value: "o" });
-        return iife({
+        return super.visitExpression(iife({
           span: n.span,
           stmts: [
             onevariable({
@@ -55,10 +56,10 @@ class ComputedObjectProps extends Visitor {
               argument: tmpObj,
             }),
           ],
-        });
+        }));
       }
     }
-    return n;
+    return super.visitExpression(n);
   }
 
   visitTsType(n: TsType): TsType {
