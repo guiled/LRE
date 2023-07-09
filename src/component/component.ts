@@ -62,9 +62,7 @@ export class Component<
           }
 
           if (idToFind !== "") {
-            return this.sheet().find(
-              idToFind
-            ) as EventHolder<LetsRole.Component>;
+            return this.find(idToFind) as EventHolder<LetsRole.Component>;
           }
           return this as EventHolder<LetsRole.Component>;
         },
@@ -167,45 +165,45 @@ export class Component<
     throw new Error("Method not implemented.");
   }
 
-  actionOnRawEvent({
-    action,
-    delegated,
-    event,
-    handler,
-    subComponent,
-  }: {
-    action: "on" | "off";
-    delegated: boolean;
-    event: LetsRole.EventType;
-    handler?: LetsRole.EventCallback;
-    subComponent?: LetsRole.ComponentID | null;
-  }): void {
-    if (action !== "on" && action !== "off") return;
-    const logAction = action === "on" ? "added to" : "removed from";
-    let rawCmp: LetsRole.Component | undefined = void 0;
-    let args: [
-      LetsRole.EventType,
-      (LetsRole.ComponentID | LetsRole.EventCallback)?,
-      LetsRole.EventCallback?
-    ] = [event];
-    let logComplement: string = "";
+  // actionOnRawEvent({
+  //   action,
+  //   delegated,
+  //   event,
+  //   handler,
+  //   subComponent,
+  // }: {
+  //   action: "on" | "off";
+  //   delegated: boolean;
+  //   event: LetsRole.EventType;
+  //   handler?: LetsRole.EventCallback;
+  //   subComponent?: LetsRole.ComponentID | null;
+  // }): void {
+  //   if (action !== "on" && action !== "off") return;
+  //   const logAction = action === "on" ? "added to" : "removed from";
+  //   let rawCmp: LetsRole.Component | undefined = void 0;
+  //   let args: [
+  //     LetsRole.EventType,
+  //     (LetsRole.ComponentID | LetsRole.EventCallback)?,
+  //     LetsRole.EventCallback?
+  //   ] = [event];
+  //   let logComplement: string = "";
 
-    if (delegated && !!subComponent) {
-      rawCmp = this.sheet().raw().get(this.realId());
-      args.push(subComponent);
-      logComplement = ">" + subComponent;
-    } else if (!delegated) {
-      rawCmp = this.raw() as LetsRole.Component;
-    }
+  //   if (delegated && !!subComponent) {
+  //     rawCmp = this.sheet().raw().get(this.realId());
+  //     args.push(subComponent);
+  //     logComplement = ">" + subComponent;
+  //   } else if (!delegated) {
+  //     rawCmp = this.raw() as LetsRole.Component;
+  //   }
 
-    if (!!rawCmp) {
-      if (action === "on") args.push(handler);
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore impossible to match args with argument of 'on' and 'off'
-      rawCmp[action].apply(rawCmp, args);
-      lre.trace(
-        `Native event ${event} ${logAction} ${this.realId()}${logComplement}`
-      );
-    }
-  }
+  //   if (!!rawCmp) {
+  //     if (action === "on") args.push(handler);
+  //     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  //     // @ts-ignore impossible to match args with argument of 'on' and 'off'
+  //     rawCmp[action].apply(rawCmp, args);
+  //     lre.trace(
+  //       `Native event ${event} ${logAction} ${this.realId()}${logComplement}`
+  //     );
+  //   }
+  // }
 }

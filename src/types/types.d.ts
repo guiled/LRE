@@ -36,7 +36,7 @@ declare namespace LetsRole {
   export type ComponentID = string;
   export type VariableID = string;
 
-  export interface Sheet {
+  export interface Sheet extends Object {
     /** get the id of the sheet */
     id(): LetsRole.SheetID;
 
@@ -60,7 +60,7 @@ declare namespace LetsRole {
     getData(): ViewData;
   }
 
-  export interface Component<ValueType = ComponentValue> {
+  export interface Component<ValueType = ComponentValue> extends Object {
     id(): LetsRole.ComponentID;
 
     index(): Index;
