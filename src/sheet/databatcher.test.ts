@@ -35,7 +35,7 @@ describe("DataBatcher async send data", () => {
     dataBatcher = new DataBatcher(sheet);
   });
 
-  it("delayed data send", () => {
+  it("delayed data send and getPendingData", () => {
     const data = {
       fortyTwo: 42,
       fortyThree: 43,
@@ -44,6 +44,7 @@ describe("DataBatcher async send data", () => {
     expect(sheet.setData).not.toBeCalled();
     expect(dataBatcher.getPendingData("fortyTwo")).toStrictEqual(42);
     expect(dataBatcher.getPendingData("fortyTour")).toBeUndefined();
+    expect(dataBatcher.getPendingData()).toMatchObject(data);
     itHasWaitedEnough();
     expect(sheet.setData).toBeCalled();
     expect((sheet.setData as jest.Mock).mock.calls[0][0]).toMatchObject(data);
