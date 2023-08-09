@@ -1,16 +1,14 @@
 import { EventHolder } from "../eventholder";
 
 type PendingData = {
-  k: LetsRole.ComponentID;
   v: LetsRole.ComponentValue;
+  k: string;
 };
 
 type DataBatcherEventType = "processed";
 
 const ASYNC_DATA_SET_DELAY = 50;
 const MAX_DATA_BATCH_SIZE = 20;
-
-type AdditionalEvents = "processed";
 
 export class DataBatcher extends EventHolder<any, DataBatcherEventType> {
   #sheet: LetsRole.Sheet;
@@ -30,18 +28,19 @@ export class DataBatcher extends EventHolder<any, DataBatcherEventType> {
   }
 
   #sendBatch(dataToSend: LetsRole.ViewData = {}) {
-    let added = 0;
+    let added = Object.keys(dataToSend).length;
     let analyzed = 0;
     while (added < MAX_DATA_BATCH_SIZE && this.#pending.length > 0) {
-      let data = this.#pending.shift();
-      delete this.#indexes[data!.k];
-      if (typeof data!.v !== "undefined" && !Number.isNaN(data!.v)) {
-        dataToSend[data!.k] = data!.v;
+      let data = this.#pending.shift()!;
+      delete this.#indexes[data.k];
+      if (typeof data.v !== "undefined" && !Number.isNaN(data.v)) {
+        dataToSend[data.k] = data.v;
         added++;
       }
       analyzed++;
     }
     this.#isSendPending = this.#pending.length > 0;
+    
     if (this.#isSendPending) {
       for (let k in this.#indexes) {
         if (this.#indexes[k] >= analyzed) {
@@ -49,10 +48,12 @@ export class DataBatcher extends EventHolder<any, DataBatcherEventType> {
         }
       }
       if (arguments.length === 0) {
-        wait(ASYNC_DATA_SET_DELAY, this.#sendBatch);
+        wait(ASYNC_DATA_SET_DELAY, this.#sendBatch.bind(this));
       }
     }
-    this.#sheet.setData(dataToSend);
+    if (added > 0) {
+      this.#sheet.setData(dataToSend);
+    }
     if (!this.#isSendPending) {
       this.trigger("processed");
     }
@@ -72,7 +73,7 @@ export class DataBatcher extends EventHolder<any, DataBatcherEventType> {
       }
       if (!this.#isSendPending && this.#pending.length > 0) {
         this.#isSendPending = true;
-        wait(ASYNC_DATA_SET_DELAY, this.#sendBatch);
+        wait(ASYNC_DATA_SET_DELAY, this.#sendBatch.bind(this));
       }
     }
   }
@@ -81,7 +82,7 @@ export class DataBatcher extends EventHolder<any, DataBatcherEventType> {
     if (this.#indexes.hasOwnProperty(id)) {
       const pos = this.#indexes[id];
       delete this.#indexes[id];
-      this.#pending = this.#pending.splice(pos, 1);
+      this.#pending.splice(pos, 1);
       for (let k in this.#indexes) {
         if (this.#indexes[k] >= pos) {
           this.#indexes[k]--;
