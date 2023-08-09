@@ -93,9 +93,13 @@ export class DataBatcher extends EventHolder<any, DataBatcherEventType> {
   }
 
   getPendingData(
-    id: LetsRole.ComponentID
+    id?: LetsRole.ComponentID
   ): LetsRole.ComponentValue | undefined {
-    if (this.#indexes.hasOwnProperty(id)) {
+    if (!id) {
+      const result: LetsRole.ViewData = {};
+      this.#pending.forEach(p => result[p.k] = p.v);
+      return result;
+    } else if (this.#indexes.hasOwnProperty(id)) {
       return this.#pending[this.#indexes[id]].v;
     }
     return;
