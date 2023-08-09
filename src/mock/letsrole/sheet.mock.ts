@@ -4,8 +4,10 @@ type Params = {
   id: string;
 };
 
-export const MockSheet = ({ id }: Params): LetsRole.Sheet => {
-  const sheet: LetsRole.Sheet = {
+export type MockedSheet = LetsRole.Sheet;
+
+export const MockSheet = ({ id }: Params): MockedSheet => {
+  const sheet: MockedSheet = {
     id: jest.fn(() => id),
     getSheetId: jest.fn(() => "12345"),
     name: jest.fn(() => "name"),
