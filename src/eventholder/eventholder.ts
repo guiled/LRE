@@ -26,7 +26,7 @@ const EVENT_SEP = ":";
 const DELEGATED_SEP = "~";
 const DEFAULT_HANDLER_ID = "default";
 
-type EventHolderEvents = "eventhandler:added" | "eventhandler:updated";
+type EventHolderEvents = "eventhandler:added" | "eventhandler:updated" | "eventhandler:removed";
 
 type EventHolderDefaultEvents = EventHolderEvents;
 type EventType<T extends string> =
@@ -146,7 +146,7 @@ export abstract class EventHolder<
 
   on(
     event: EventType<AdditionalEvents>,
-    subComponent: LetsRole.ComponentID | EventHandler | null,
+    subComponent: LetsRole.ComponentID | EventHandler | undefined,
     handler?: EventHandler
   ): void {
     let [eventId, ...rest]: EventType<AdditionalEvents>[] = event.split(
@@ -164,7 +164,7 @@ export abstract class EventHolder<
         subComponent) as EventType<AdditionalEvents>;
     } else if (arguments.length === 2) {
       handler = subComponent as EventHandler;
-      subComponent = null;
+      subComponent = undefined;
     }
 
     if (
@@ -310,6 +310,7 @@ export abstract class EventHolder<
       }
 
       delete this.#events[eventName];
+      this.trigger("eventhandler:removed", event, delegateId);
     }
   }
 
