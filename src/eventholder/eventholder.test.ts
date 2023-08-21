@@ -622,7 +622,7 @@ describe("Event holder triggers events", () => {
     expect(updated.mock.calls[0][1]).toEqual("click");
     expect(updated.mock.calls[0][2]).toBeUndefined();
     expect(updated.mock.calls[0][3]).toEqual(fcn2);
-    
+
     expect(removed).toBeCalledTimes(0);
     subject.off("click");
     expect(removed).toBeCalledTimes(1);
@@ -630,24 +630,90 @@ describe("Event holder triggers events", () => {
     expect(removed.mock.calls[0][1]).toEqual("click");
     expect(removed.mock.calls[0][2]).toBeUndefined();
 
-    subject.on("click", 'bla', fcn1);
+    subject.on("click", "bla", fcn1);
     expect(added).toBeCalledTimes(5);
     expect(added.mock.calls[4][0]).toStrictEqual(subject);
     expect(added.mock.calls[4][1]).toEqual("click");
     expect(added.mock.calls[4][2]).toEqual("bla");
     expect(added.mock.calls[4][3]).toStrictEqual(fcn1);
-    subject.on("click", 'bla', fcn2);
+    subject.on("click", "bla", fcn2);
     expect(updated).toBeCalledTimes(2);
     expect(updated.mock.calls[1][0]).toStrictEqual(subject);
     expect(updated.mock.calls[1][1]).toEqual("click");
     expect(updated.mock.calls[1][2]).toEqual("bla");
     expect(updated.mock.calls[1][3]).toEqual(fcn2);
-    
-    subject.off("click", 'bla');
+
+    subject.off("click", "bla");
     expect(removed).toBeCalledTimes(2);
     expect(removed.mock.calls[1][0]).toStrictEqual(subject);
     expect(removed.mock.calls[1][1]).toEqual("click");
     expect(removed.mock.calls[1][2]).toEqual("bla");
+  });
 
+  describe("Link events between holders", () => {
+    let subject1: Dummy, subject2: Dummy;
+    let rawCmp1: MockedComponent, rawCmp2: MockedComponent;
+
+    beforeEach(() => {
+      let sheet = MockSheet({ id: "main" });
+      rawCmp1 = MockComponent({
+        id: "123",
+        sheet,
+      });
+      rawCmp2 = MockComponent({
+        id: "456",
+        sheet,
+      });
+      subject1 = new Dummy(rawCmp1);
+      subject2 = new Dummy(rawCmp2);
+    });
+
+    test("Link event", () => {
+      const subject1Cb = jest.fn(() => {});
+      const subject2Cb = jest.fn(() => {});
+      subject1.on("click", subject1Cb);
+      subject2.on("test", subject2Cb);
+      subject1.linkEventTo("click", subject2, "test");
+      expect(subject1Cb).toBeCalledTimes(0);
+      expect(subject2Cb).toBeCalledTimes(0);
+      subject1.trigger("click");
+      expect(subject1Cb).toBeCalledTimes(1);
+      expect(subject2Cb).toBeCalledTimes(1);
+    });
+
+    test("Link event by default", () => {
+      const subject1Cb = jest.fn(() => {});
+      const subject2Cb = jest.fn(() => {});
+      const subject2Cb2 = jest.fn(() => {});
+      subject1.on("click", subject1Cb);
+      subject2.on("test", subject2Cb);
+      subject2.on("click", subject2Cb2);
+      subject1.linkEventTo("click", subject2);
+      expect(subject1Cb).toBeCalledTimes(0);
+      expect(subject2Cb).toBeCalledTimes(0);
+      expect(subject2Cb2).toBeCalledTimes(0);
+      subject1.trigger("click");
+      expect(subject1Cb).toBeCalledTimes(1);
+      expect(subject2Cb).toBeCalledTimes(0);
+      expect(subject2Cb2).toBeCalledTimes(1);
+    });
+    
+    test("Test linked event params", () => {
+      const subject2Cb = jest.fn((...args: any[]) => {});
+      subject2.on("click", subject2Cb);
+      subject1.linkEventTo("click", subject2);
+      subject1.trigger("click");
+      expect(subject2Cb).toBeCalledTimes(1);
+      expect(subject2Cb.mock.calls[0][0]).toStrictEqual(subject2);
+      expect(subject2Cb.mock.calls[0][1]).toStrictEqual(subject1);
+      subject2Cb.mockClear();
+      const obj = {};
+      subject1.trigger("click", 42, obj);
+      expect(subject2Cb).toBeCalledTimes(1);
+      expect(subject2Cb.mock.calls[0][0]).toStrictEqual(subject2);
+      expect(subject2Cb.mock.calls[0][1]).toStrictEqual(subject1);
+      expect(subject2Cb.mock.calls[0][2]).toStrictEqual(42);
+      expect(subject2Cb.mock.calls[0][3]).toStrictEqual(obj);
+    });
   });
 });
