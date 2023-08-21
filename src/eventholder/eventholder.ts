@@ -331,4 +331,10 @@ export abstract class EventHolder<
       }
     }
   }
+
+  linkEventTo(event: EventType<AdditionalEvents>, destination: EventHolder<any, any>, triggeredEvent: string = event) {
+    this.on(`${event}${EVENT_SEP}linkedTo`, function (...args) {
+      destination.trigger.apply(destination, [triggeredEvent, ...args]);
+    });
+  }
 }
