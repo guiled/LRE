@@ -26,7 +26,10 @@ const EVENT_SEP = ":";
 const DELEGATED_SEP = "~";
 const DEFAULT_HANDLER_ID = "default";
 
-type EventHolderEvents = "eventhandler:added" | "eventhandler:updated" | "eventhandler:removed";
+type EventHolderEvents =
+  | "eventhandler:added"
+  | "eventhandler:updated"
+  | "eventhandler:removed";
 
 type EventHolderDefaultEvents = EventHolderEvents;
 type EventType<T extends string> =
@@ -332,7 +335,11 @@ export abstract class EventHolder<
     }
   }
 
-  linkEventTo(event: EventType<AdditionalEvents>, destination: EventHolder<any, any>, triggeredEvent: string = event) {
+  linkEventTo(
+    event: EventType<AdditionalEvents>,
+    destination: EventHolder<any, any>,
+    triggeredEvent: string = event
+  ) {
     this.on(`${event}${EVENT_SEP}linkedTo`, function (...args) {
       destination.trigger.apply(destination, [triggeredEvent, ...args]);
     });
