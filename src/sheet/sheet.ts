@@ -10,9 +10,17 @@ import {
 import { DataBatcher } from "./databatcher";
 import { ComponentFactory } from "../component/factory";
 import { ComponentCommon } from "../component/common";
-import { Entry } from "../component/entry";
-import { Repeater } from "../component/repeater";
 import { Mixin } from "../mixin";
+
+type PendingData = {
+  k: LetsRole.ComponentID;
+  v: LetsRole.ComponentValue;
+};
+
+type PersistingData = {
+  cmpData: LetsRole.ViewData;
+  cmpClasses: Record<LetsRole.ComponentID, string>;
+};
 
 type SheetStoredState = Record<string, any> & {
   initialized: boolean;
@@ -22,8 +30,10 @@ type SheetStoredState = Record<string, any> & {
 
 type StoredState = keyof SheetStoredState;
 
+type SheetEvents = "data:processed"
+
 export class Sheet
-  extends Mixin(EventHolder, HasRaw<LetsRole.Sheet>)<LetsRole.Sheet>
+  extends Mixin(EventHolder, HasRaw<LetsRole.Sheet>)<LetsRole.Sheet, SheetEvents>
   implements
     Omit<LetsRole.Sheet, "get" | "find">,
     ComponentContainer,
@@ -33,21 +43,21 @@ export class Sheet
   #batcher: DataBatcher;
   #storedState: SheetStoredState | undefined;
   #componentCache: ComponentCache;
+  #persistingData: PersistingData = {
+    cmpData: {},
+    cmpClasses: {},
+  };
+
   constructor(rawSheet: LetsRole.Sheet) {
     lre.log(`new sheet ${rawSheet.getSheetId()}`);
     super([
       [
-        rawSheet.name(),
-        (
-          rawCmp: LetsRole.Component,
-          event: EventDef
-        ): EventHolder<LetsRole.Sheet> => {
-          return this;
-        },
+        rawSheet.name()
       ],
       [rawSheet],
     ]);
     this.#batcher = new DataBatcher(rawSheet);
+    this.#batcher.linkEventTo("processed:sheet", this, "data:processed");
     this.#componentCache = new ComponentCache(this);
     this.#silentFind = rawSheet.get(rawSheet.id())
       .find as unknown as ComponentFinder;
@@ -127,8 +137,9 @@ export class Sheet
   setData(data: LetsRole.ViewData): void {
     this.#batcher.setData(data);
   }
+
   getData(): LetsRole.ViewData {
-    return this.raw().getData();
+    return {...this.raw().getData(), ...(this.#batcher.getPendingData() as LetsRole.ViewData)};
   }
 
   #loadState(): SheetStoredState {
@@ -167,12 +178,37 @@ export class Sheet
     return this.#batcher.getPendingData(id);
   }
 
-  repeater(repeater?: Repeater): Repeater | undefined {
-    return undefined;
+  #persistingDataOperation<T extends keyof PersistingData>(
+    type: T,
+    componentId: LetsRole.ComponentID,
+    newData?: (T extends "cmpData" ? LetsRole.ViewData : string)
+  ): undefined | (T extends "cmpData" ? LetsRole.ComponentValue : string) {
+    if (newData !== void 0) {
+      this.#persistingData[type][componentId] = newData;
+    }
+    return this.#persistingData[type][componentId] as undefined | (T extends "cmpData" ? LetsRole.ComponentValue : string);
   }
 
-  entry(entry?: Entry): Entry | undefined {
-    return undefined;
+  persistingCmpData(
+    componentId: LetsRole.ComponentID,
+    newData?: LetsRole.ViewData
+  ): LetsRole.ComponentValue {
+    if (arguments.length > 1) {
+      return this.#persistingDataOperation("cmpData", componentId) || {};
+    } else {
+      return this.#persistingDataOperation("cmpData", componentId) || {};
+    }
+  }
+
+  persistingCmpClasses(
+    componentId: LetsRole.ComponentID,
+    newClasses?: string
+  ): string {
+    if (arguments.length > 1) {
+      return this.#persistingDataOperation("cmpClasses", componentId) || "";
+    } else {
+      return this.#persistingDataOperation("cmpClasses", componentId) || "";
+    }
   }
 
 }
