@@ -2193,7 +2193,12 @@ function lre(_arg) {
                 realId = lreContainer.realId() + repeaterIdSeparator;
             }
             realId += rawComponent.id();
-            const classes = rawComponent.getClasses();
+            let classes = [];
+
+            try {
+                classes = rawComponent.getClasses();
+            } catch (e) {}
+
             let cmp = new lreComponent(lreContainer.sheet(), rawComponent, realId);
             if (classes.includes('repeater')) {
                 Object.assign(cmp, new lreRepeater());
