@@ -1,4 +1,4 @@
-import { REP_ID_SEP } from "../component";
+import { Component, REP_ID_SEP } from "../component";
 import { EventDef, EventHolder } from "../eventholder";
 import { HasRaw } from "../hasraw";
 import { ComponentCache } from "../component/cache";
@@ -17,23 +17,21 @@ type PendingData = {
   v: LetsRole.ComponentValue;
 };
 
-type PersistingData = {
-  cmpData: LetsRole.ViewData;
-  cmpClasses: Record<LetsRole.ComponentID, string>;
-};
-
-type SheetStoredState = Record<string, any> & {
+type SheetStoredState = {
   initialized: boolean;
   cmpData: Record<LetsRole.ComponentID, any>;
   cmpClasses: Record<LetsRole.ComponentID, Array<LetsRole.ClassName>>;
-};
+} & Record<string, any>;
 
-type StoredState = keyof SheetStoredState;
+type StoredState = keyof SheetStoredState | string;
 
-type SheetEvents = "data:processed"
+type SheetEvents = "data:processed";
 
 export class Sheet
-  extends Mixin(EventHolder, HasRaw<LetsRole.Sheet>)<LetsRole.Sheet, SheetEvents>
+  extends Mixin(EventHolder, HasRaw<LetsRole.Sheet>)<
+    LetsRole.Sheet,
+    SheetEvents
+  >
   implements
     Omit<LetsRole.Sheet, "get" | "find">,
     ComponentContainer,
@@ -43,22 +41,18 @@ export class Sheet
   #batcher: DataBatcher;
   #storedState: SheetStoredState | undefined;
   #componentCache: ComponentCache;
-  #persistingData: PersistingData = {
-    cmpData: {},
-    cmpClasses: {},
-  };
+  #cmp: LetsRole.Component;
+  rand: number;
 
   constructor(rawSheet: LetsRole.Sheet) {
     lre.log(`new sheet ${rawSheet.getSheetId()}`);
-    super([
-      [
-        rawSheet.name()
-      ],
-      [rawSheet],
-    ]);
+    super([[rawSheet.name()], [rawSheet]]);
+    this.rand = Math.floor(Math.random() * 100);
     this.#batcher = new DataBatcher(rawSheet);
     this.#batcher.linkEventTo("processed:sheet", this, "data:processed");
     this.#componentCache = new ComponentCache(this);
+    this.#cmp = rawSheet.get(rawSheet.id())!;
+    this.#cmp.on("update", this.#handleDataUpdate.bind(this));
     this.#silentFind = rawSheet.get(rawSheet.id())
       .find as unknown as ComponentFinder;
   }
@@ -139,7 +133,35 @@ export class Sheet
   }
 
   getData(): LetsRole.ViewData {
-    return {...this.raw().getData(), ...(this.#batcher.getPendingData() as LetsRole.ViewData)};
+    return {
+      ...this.raw().getData(),
+      ...(this.#batcher.getPendingData() as LetsRole.ViewData),
+    };
+  }
+
+  #handleDataUpdate(): void {
+    this.#loadState();
+    const data = this.raw().getData();
+    const newSheetStoredState: SheetStoredState = data[
+      this.id()
+    ] as SheetStoredState || {};
+    const hasPendingData = !!this.getPendingData(this.id());
+
+    this.#storedState = {
+      ...this.#storedState,
+      ...newSheetStoredState,
+      cmpData: {
+        ...this.#storedState?.cmpData,
+        ...newSheetStoredState.cmpData,
+      },
+      cmpClasses: {
+        ...this.#storedState?.cmpClasses,
+        ...newSheetStoredState.cmpClasses,
+      },
+    };
+    if (hasPendingData) {
+      this.#saveStoredState();
+    }
   }
 
   #loadState(): SheetStoredState {
@@ -158,15 +180,22 @@ export class Sheet
     return this.#storedState;
   }
 
-  persistingData(dataName: StoredState, value?: any): void {
+  #saveStoredState(): void {
+    const newData: LetsRole.ViewData = {};
+    newData[this.id()] = this.#storedState;
+    this.setData(newData);
+  }
+
+  persistingData<T extends StoredState>(
+    dataName: T,
+    value?: any
+  ): SheetStoredState[T] {
     this.#loadState();
     if (value !== void 0) {
       this.#storedState![dataName] = value;
-      const newData: LetsRole.ViewData = {};
-      newData[this.id()] = this.#storedState;
-      this.setData(newData);
+      this.#saveStoredState();
     }
-    return this.#storedState?.[dataName];
+    return this.#storedState![dataName];
   }
 
   isInitialized(): boolean {
@@ -178,15 +207,15 @@ export class Sheet
     return this.#batcher.getPendingData(id);
   }
 
-  #persistingDataOperation<T extends keyof PersistingData>(
-    type: T,
-    componentId: LetsRole.ComponentID,
-    newData?: (T extends "cmpData" ? LetsRole.ViewData : string)
-  ): undefined | (T extends "cmpData" ? LetsRole.ComponentValue : string) {
+  #persistingDataOperation<
+    T extends keyof Omit<SheetStoredState, "initialized">,
+    R extends SheetStoredState[T][keyof SheetStoredState[T]]
+  >(type: T, componentId: LetsRole.ComponentID, newData?: R): undefined | R {
+    this.#loadState();
     if (newData !== void 0) {
-      this.#persistingData[type][componentId] = newData;
+      this.#storedState![type][componentId] = newData;
     }
-    return this.#persistingData[type][componentId] as undefined | (T extends "cmpData" ? LetsRole.ComponentValue : string);
+    return this.#storedState![type][componentId];
   }
 
   persistingCmpData(
@@ -194,7 +223,9 @@ export class Sheet
     newData?: LetsRole.ViewData
   ): LetsRole.ComponentValue {
     if (arguments.length > 1) {
-      return this.#persistingDataOperation("cmpData", componentId) || {};
+      return (
+        this.#persistingDataOperation("cmpData", componentId, newData) || {}
+      );
     } else {
       return this.#persistingDataOperation("cmpData", componentId) || {};
     }
@@ -202,13 +233,15 @@ export class Sheet
 
   persistingCmpClasses(
     componentId: LetsRole.ComponentID,
-    newClasses?: string
-  ): string {
+    newClasses?: Array<LetsRole.ClassName>
+  ): Array<LetsRole.ClassName> {
     if (arguments.length > 1) {
-      return this.#persistingDataOperation("cmpClasses", componentId) || "";
+      return (
+        this.#persistingDataOperation("cmpClasses", componentId, newClasses!) ||
+        []
+      );
     } else {
-      return this.#persistingDataOperation("cmpClasses", componentId) || "";
+      return this.#persistingDataOperation("cmpClasses", componentId) || [];
     }
   }
-
 }

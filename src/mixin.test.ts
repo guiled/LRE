@@ -144,10 +144,6 @@ describe("Mixin tests", () => {
       abstract getId(): number;
       getThroughB(): string {
         //return this.#name;
-        console.log(
-          "🚀 ~ file: mixin.test.ts:131 ~ B ~ getThroughB ~ this",
-          this
-        );
         return "" + this.getId();
       }
     }
