@@ -1,11 +1,13 @@
-import { MockComponent } from "./component.mock";
+import { MockComponent, MockedComponent } from "./component.mock";
 
 type Params = {
   id: string;
   realId?: string;
 };
 
-export type MockedSheet = LetsRole.Sheet;
+export type MockedSheet = LetsRole.Sheet & {
+  _getCmp: (...args: any[]) => MockedComponent, 
+};
 
 export const MockSheet = ({ id, realId = "12345" }: Params): MockedSheet => {
   const sheet: MockedSheet = {
@@ -27,6 +29,10 @@ export const MockSheet = ({ id, realId = "12345" }: Params): MockedSheet => {
     ),
     setData: jest.fn((data: LetsRole.ViewData) => {}),
     getData: jest.fn(() => ({})),
+    _getCmp: () => MockComponent({
+      id,
+      sheet,
+    })
   };
 
   return sheet;
