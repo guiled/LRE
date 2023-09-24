@@ -2,11 +2,7 @@ import { Sheet } from "../sheet";
 import { Component, REP_ID_SEP } from "./component";
 
 export class ComponentCache {
-  #sheet: Sheet;
   #components: Record<LetsRole.ComponentID, Component> = {};
-  constructor(sheet: Sheet) {
-    this.#sheet = sheet;
-  }
 
   inCache(realId: LetsRole.ComponentID): Component | false {
     // Why * at 0 ? Because it is quite slow to test realId[strlen(realId)] as realId.length doesn't work
@@ -24,9 +20,9 @@ export class ComponentCache {
 
   set(realId: LetsRole.ComponentID, cmp: Component): this {
     if (this.#components.hasOwnProperty(realId)) {
-      lre.log(`Component overwritten in cache ${realId}`);
+      lre.trace(`Component overwritten in cache ${realId}`);
     } else {
-      lre.log(`Component added to cache ${realId}`);
+      lre.trace(`Component added to cache ${realId}`);
     }
     this.#components[realId] = cmp;
     return this;
@@ -44,8 +40,8 @@ export class ComponentCache {
     return this.#components[realId];
   }
 
-  children(realId: LetsRole.ComponentID) {
-    let realIds = [];
+  children(realId: LetsRole.ComponentID): Array<string> {
+    let realIds: Array<string> = [];
     for (let k in this.#components) {
       if (k.indexOf(realId + REP_ID_SEP) === 0) {
         realIds.push(k);
