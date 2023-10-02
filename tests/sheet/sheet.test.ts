@@ -1,11 +1,13 @@
-import { Logger } from "../log";
+import { Component } from "../../src/component";
+import { Logger } from "../../src/log";
 import { MockServer } from "../mock/letsrole/server.mock";
 import { MockSheet, MockedSheet } from "../mock/letsrole/sheet.mock";
-import { Sheet } from "./index";
+import { Sheet } from "../../src/sheet/index";
+jest.mock("../../src/log");
 
 global.lre = new Logger();
-let waitedCallbacks: Array<((...args: any[]) => any)> = [];
-global.wait = jest.fn((delay, cb) => (waitedCallbacks.push(cb)));
+let waitedCallbacks: Array<(...args: any[]) => any> = [];
+global.wait = jest.fn((delay, cb) => waitedCallbacks.push(cb));
 
 const itHasWaitedEnough = () => {
   while (waitedCallbacks.length) {
@@ -175,7 +177,7 @@ describe("Sheet persisting data", () => {
     });
     server.registerMockedSheet(raw);
     return new Sheet(raw);
-  }
+  };
 
   beforeEach(() => {
     server = new MockServer();
@@ -187,7 +189,7 @@ describe("Sheet persisting data", () => {
     expect(sheet1.persistingData("test")).toStrictEqual(42);
     itHasWaitedEnough();
     const testSheet = initSheet("ahah", "4242");
-    expect(testSheet.persistingData("test")).toStrictEqual(42)
+    expect(testSheet.persistingData("test")).toStrictEqual(42);
     sheet2.persistingData("test", 43);
     expect(sheet1.persistingData("test")).toStrictEqual(42);
     itHasWaitedEnough();
@@ -203,6 +205,54 @@ describe("Sheet persisting data", () => {
     expect(sheet2.persistingData("test2")).toStrictEqual(54);
     expect(sheet1.persistingData("test2")).toStrictEqual(54);
     expect(sheet2.persistingData("test")).toStrictEqual(44);
-
   });
+
+  test("isInitialized", () => {
+    expect(sheet1.isInitialized()).toBeFalsy();
+    expect(sheet2.isInitialized()).toBeFalsy();
+    sheet1.persistingData("initialized", true);
+    expect(sheet1.isInitialized()).toBeTruthy();
+    expect(sheet2.isInitialized()).toBeFalsy();
+    itHasWaitedEnough();
+    expect(sheet2.isInitialized()).toBeTruthy();
+  });
+});
+
+describe("Sheet get component", () => {
+  let sheet1: Sheet, sheet2: Sheet;
+  let server: MockServer;
+
+  const initSheet = function (sheetId: string, realId: string) {
+    const raw = MockSheet({
+      id: sheetId,
+      realId: realId,
+    });
+    server.registerMockedSheet(raw);
+    return new Sheet(raw);
+  };
+
+  beforeEach(() => {
+    server = new MockServer();
+    sheet1 = initSheet("ahah", "4242");
+    sheet2 = initSheet("ahah", "4242");
+  });
+
+  test("Prevent errors", () => {
+    /* @ts-ignore Voluntary for tests */
+    expect(sheet1.get({})).toBeNull();
+    /* @ts-ignore Voluntary for tests */
+    expect(sheet1.get(123)).toBeNull();
+    /* @ts-ignore Voluntary for tests */
+    expect(sheet1.get("123")).toBeNull();
+    /* @ts-ignore Voluntary for tests */
+    expect(sheet1.get(new String("123"))).toBeNull();
+  });
+
+  test("Get component is cached", () => {
+    const cmp1 = sheet1.get('abcd');
+    const cmp2 = sheet1.get('abcd');
+    expect(cmp1).toStrictEqual(cmp2);
+    console.log((global.lre.error as jest.Mock).mock.calls)
+    expect(cmp1).toBeInstanceOf(Component);
+  })
 });

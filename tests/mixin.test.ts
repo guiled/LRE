@@ -1,4 +1,4 @@
-import { Mixin } from "./mixin";
+import { Mixin } from "../src/mixin";
 
 export type Newable = { new (...args: any[]): any };
 
