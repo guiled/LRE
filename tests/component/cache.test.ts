@@ -1,11 +1,11 @@
-import { Logger } from "../log";
+import { Logger } from "../../src/log";
 import { MockComponent } from "../mock/letsrole/component.mock";
 import { MockSheet } from "../mock/letsrole/sheet.mock";
-import { Sheet } from "../sheet";
-import { ComponentCache } from "./cache";
-import { Component } from "./component";
-jest.mock("../sheet");
-jest.mock("./component");
+import { Sheet } from "../../src/sheet";
+import { ComponentCache } from "../../src/component/cache";
+import { Component } from "../../src/component/component";
+jest.mock("../../src/sheet");
+jest.mock("../../src/component/component");
 
 global.lre = new Logger();
 

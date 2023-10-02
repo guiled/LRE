@@ -1,15 +1,15 @@
-import { Logger } from "../log";
-import { handleError } from "../log/errorhandler";
+import { Logger } from "../../src/log";
+import { handleError } from "../../src/log/errorhandler";
 import {
   MockComponent,
   MockedComponent,
 } from "../mock/letsrole/component.mock";
 import { MockSheet } from "../mock/letsrole/sheet.mock";
-import { EventHolder } from "./index";
+import { EventHolder } from "../../src/eventholder/index";
 
 global.lre = new Logger();
 
-jest.mock("../log/errorhandler");
+jest.mock("../../src/log/errorhandler");
 
 type TestedEvents = "test" | "unused" | "click" | "update";
 
