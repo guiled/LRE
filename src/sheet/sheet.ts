@@ -50,11 +50,71 @@ export class Sheet
     this.rand = Math.floor(Math.random() * 100);
     this.#batcher = new DataBatcher(rawSheet);
     this.#batcher.linkEventTo("processed:sheet", this, "data:processed");
-    this.#componentCache = new ComponentCache(this);
+    this.#componentCache = new ComponentCache();
     this.#cmp = rawSheet.get(rawSheet.id())!;
     this.#cmp.on("update", this.#handleDataUpdate.bind(this));
     this.#silentFind = rawSheet.get(rawSheet.id())
       .find as unknown as ComponentFinder;
+  }
+
+
+  #persistingDataOperation<
+    T extends keyof Omit<SheetStoredState, "initialized">,
+    R extends SheetStoredState[T][keyof SheetStoredState[T]]
+  >(type: T, componentId: LetsRole.ComponentID, newData?: R): undefined | R {
+    this.#loadState();
+    if (newData !== void 0) {
+      this.#storedState![type][componentId] = newData;
+    }
+    return this.#storedState![type][componentId];
+  }
+
+  #handleDataUpdate(): void {
+    lre.trace("data updated from server…")
+    this.#loadState();
+    const data = this.raw().getData();
+    const newSheetStoredState: SheetStoredState =
+      (data[this.id()] as SheetStoredState) || {};
+    const hasPendingData = !!this.getPendingData(this.id());
+
+    this.#storedState = {
+      ...this.#storedState,
+      ...newSheetStoredState,
+      cmpData: {
+        ...this.#storedState?.cmpData,
+        ...newSheetStoredState.cmpData,
+      },
+      cmpClasses: {
+        ...this.#storedState?.cmpClasses,
+        ...newSheetStoredState.cmpClasses,
+      },
+    };
+    if (hasPendingData) {
+      lre.trace("pending data update")
+      this.#saveStoredState();
+    }
+  }
+
+  #loadState(): SheetStoredState {
+    if (!this.#storedState) {
+      const data = this.raw().getData();
+      const persist: SheetStoredState | undefined = data?.[
+        this.raw().id()
+      ] as unknown as SheetStoredState | undefined;
+      this.#storedState = {
+        initialized: false,
+        cmpData: {},
+        cmpClasses: {},
+        ...persist,
+      };
+    }
+    return this.#storedState;
+  }
+
+  #saveStoredState(): void {
+    const newData: LetsRole.ViewData = {};
+    newData[this.id()] = this.#storedState;
+    this.setData(newData);
   }
 
   lreType(): ComponentType {
@@ -94,7 +154,8 @@ export class Sheet
   get(id: string, silent = false): ComponentSearchResult {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore id instance of is for live checks
-    if (typeof id !== "string" && !(id instanceof String) && !isNaN(id)) {
+    if (!((typeof id === "string" || id instanceof String) && isNaN(id))) {
+      lre.error(`Invalid component id for sheet.get, ${id} given`)
       return null;
     }
     id = "" + id;
@@ -139,53 +200,6 @@ export class Sheet
     };
   }
 
-  #handleDataUpdate(): void {
-    this.#loadState();
-    const data = this.raw().getData();
-    const newSheetStoredState: SheetStoredState = data[
-      this.id()
-    ] as SheetStoredState || {};
-    const hasPendingData = !!this.getPendingData(this.id());
-
-    this.#storedState = {
-      ...this.#storedState,
-      ...newSheetStoredState,
-      cmpData: {
-        ...this.#storedState?.cmpData,
-        ...newSheetStoredState.cmpData,
-      },
-      cmpClasses: {
-        ...this.#storedState?.cmpClasses,
-        ...newSheetStoredState.cmpClasses,
-      },
-    };
-    if (hasPendingData) {
-      this.#saveStoredState();
-    }
-  }
-
-  #loadState(): SheetStoredState {
-    if (!this.#storedState) {
-      const data = this.raw().getData();
-      const persist: SheetStoredState | undefined = data?.[
-        this.raw().id()
-      ] as unknown as SheetStoredState | undefined;
-      this.#storedState = {
-        initialized: false,
-        cmpData: {},
-        cmpClasses: {},
-        ...persist,
-      };
-    }
-    return this.#storedState;
-  }
-
-  #saveStoredState(): void {
-    const newData: LetsRole.ViewData = {};
-    newData[this.id()] = this.#storedState;
-    this.setData(newData);
-  }
-
   persistingData<T extends StoredState>(
     dataName: T,
     value?: any
@@ -205,17 +219,6 @@ export class Sheet
 
   getPendingData(id: LetsRole.ComponentID): LetsRole.ComponentValue {
     return this.#batcher.getPendingData(id);
-  }
-
-  #persistingDataOperation<
-    T extends keyof Omit<SheetStoredState, "initialized">,
-    R extends SheetStoredState[T][keyof SheetStoredState[T]]
-  >(type: T, componentId: LetsRole.ComponentID, newData?: R): undefined | R {
-    this.#loadState();
-    if (newData !== void 0) {
-      this.#storedState![type][componentId] = newData;
-    }
-    return this.#storedState![type][componentId];
   }
 
   persistingCmpData(

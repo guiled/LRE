@@ -1,6 +1,6 @@
-import { Logger } from "../log";
+import { Logger } from "../../src/log";
 import { MockSheet, MockedSheet } from "../mock/letsrole/sheet.mock";
-import { DataBatcher } from "./databatcher";
+import { DataBatcher } from "../../src/sheet/databatcher";
 
 let waitedCallback: ((...args: any[]) => any) | null;
 global.lre = new Logger();

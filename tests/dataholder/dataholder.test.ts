@@ -1,5 +1,5 @@
 import { subscribe } from "diagnostics_channel";
-import { DataHolder } from "./index";
+import { DataHolder } from "../../src/dataholder/index";
 
 describe("Dataholder", () => {
   let subject: DataHolder;
