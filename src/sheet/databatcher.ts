@@ -1,4 +1,5 @@
 import { EventHolder } from "../eventholder";
+import { handleError } from "../log/errorhandler";
 
 type PendingData = {
   v: LetsRole.ComponentValue;
@@ -55,7 +56,12 @@ export class DataBatcher extends EventHolder<any, DataBatcherEventType> {
       this.#sheet.setData(dataToSend);
     }
     if (!this.#isSendPending) {
-      this.trigger("processed");
+      try {
+        this.trigger("processed");
+      } catch (e) {
+        lre.error('Error during data processed event');
+        handleError(e as LetsRole.Error);
+      }
     }
   }
 
