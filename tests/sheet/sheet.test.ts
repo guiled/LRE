@@ -252,7 +252,6 @@ describe("Sheet get component", () => {
     const cmp1 = sheet1.get('abcd');
     const cmp2 = sheet1.get('abcd');
     expect(cmp1).toStrictEqual(cmp2);
-    console.log((global.lre.error as jest.Mock).mock.calls)
     expect(cmp1).toBeInstanceOf(Component);
   })
 });

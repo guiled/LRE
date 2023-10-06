@@ -1,7 +1,9 @@
 import { Logger } from "../../src/log";
 import { MockSheet, MockedSheet } from "../mock/letsrole/sheet.mock";
 import { DataBatcher } from "../../src/sheet/databatcher";
+import { handleError } from "../../src/log/errorhandler";
 
+jest.mock("../../src/log/errorhandler");
 let waitedCallback: ((...args: any[]) => any) | null;
 global.lre = new Logger();
 global.wait = jest.fn((delay, cb) => (waitedCallback = cb));
@@ -130,13 +132,25 @@ describe("DataBatcher async send data", () => {
     expect(sheet.setData).not.toBeCalled();
     expect(sheet.setData).toBeCalledTimes(0);
     dataBatcher.setData({
-        fortyTwo: 44
+      fortyTwo: 44,
     });
     itHasWaitedEnough();
     expect(sheet.setData).toBeCalledTimes(1);
     expect((sheet.setData as jest.Mock).mock.calls[0][0]).toMatchObject({
-        fortyTwo: 44,
-        fortyThree: 43,
+      fortyTwo: 44,
+      fortyThree: 43,
     });
+  });
+
+  test("Databatcher raise and log an error when data processed failed", () => {
+    dataBatcher.on("processed", () => {
+      /* @ts-ignore */
+      no();
+    });
+    dataBatcher.setData({
+      a: "any",
+    });
+    itHasWaitedEnough();
+    expect(handleError).toBeCalled();
   });
 });
