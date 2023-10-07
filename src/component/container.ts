@@ -10,3 +10,10 @@ export interface ComponentContainer {
 }
 export type ComponentFinder = (id: string) => ComponentSearchResult;
 export type ComponentSearchResult = Component | null;
+
+export class Container extends Component {
+  constructor(raw: LetsRole.Component, sheet: Sheet, realId: string) {
+    super(raw, sheet, realId);
+    this.lreType("container");
+  }
+}
