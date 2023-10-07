@@ -1,4 +1,4 @@
-import {Component} from "./component";
+import {Component} from ".";
 
 export class Choice extends Component {
 
