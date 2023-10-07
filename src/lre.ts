@@ -3,12 +3,6 @@ import { handleError } from "./log/errorhandler";
 import { Sheet } from "./sheet";
 import { SheetCollection } from "./sheet/collection";
 
-enum LogLevel {
-  none = 0,
-  error,
-  warning,
-  all,
-}
 
 firstInit = undefined;
 
