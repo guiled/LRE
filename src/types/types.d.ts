@@ -139,7 +139,7 @@ declare namespace LetsRole {
   export type Error = {
     name: string;
     message: string;
-    trace: ErrorTrace[];
+    trace?: ErrorTrace[];
   };
 }
 declare function log(input: any): void;

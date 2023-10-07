@@ -1,5 +1,5 @@
-export function handleError(e: LetsRole.Error, additionals?: unknown) {
-  const trace = e?.trace || [];
+export function handleError(lrError: LetsRole.Error, additional?: unknown) {
+  const trace = lrError?.trace || [];
   const last = trace.find(function (t) {
     return (
       lre.__debug ||
@@ -19,9 +19,9 @@ export function handleError(e: LetsRole.Error, additionals?: unknown) {
   } else {
     sMessage += `at line ${start}`;
   }
-  sMessage += ` => ${e.name}: ${e.message}`;
+  sMessage += ` => ${lrError.name}: ${lrError.message}`;
   lre.error(sMessage);
   if (arguments.length > 1) {
-    lre.error(`Additional information : ${additionals}`);
+    lre.error(`Additional information : ${additional}`);
   }
 }
