@@ -43,7 +43,7 @@ export class Component<
   #lreType: ComponentType = "component";
   #parent: ComponentContainer | undefined;
   #repeater: Repeater | undefined;
-  #entry: Repeater | undefined;
+  #entry: Entry | undefined;
 
   constructor(raw: LetsRole.Component, sheet: Sheet, realId: string) {
     super([

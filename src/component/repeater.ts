@@ -6,4 +6,12 @@ export class Repeater extends Component {
     super(raw, sheet, realId);
     this.lreType("repeater");
   }
+
+  add() {
+
+  }
+
+  remove() {
+    
+  }
 }
