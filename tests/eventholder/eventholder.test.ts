@@ -669,8 +669,8 @@ describe("Event holder triggers events", () => {
     });
 
     test("Link event", () => {
-      const subject1Cb = jest.fn(() => {});
-      const subject2Cb = jest.fn(() => {});
+      const subject1Cb = jest.fn();
+      const subject2Cb = jest.fn();
       subject1.on("click", subject1Cb);
       subject2.on("test", subject2Cb);
       subject1.linkEventTo("click", subject2, "test");
@@ -682,9 +682,9 @@ describe("Event holder triggers events", () => {
     });
 
     test("Link event by default", () => {
-      const subject1Cb = jest.fn(() => {});
-      const subject2Cb = jest.fn(() => {});
-      const subject2Cb2 = jest.fn(() => {});
+      const subject1Cb = jest.fn();
+      const subject2Cb = jest.fn();
+      const subject2Cb2 = jest.fn();
       subject1.on("click", subject1Cb);
       subject2.on("test", subject2Cb);
       subject2.on("click", subject2Cb2);

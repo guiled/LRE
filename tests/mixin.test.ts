@@ -44,7 +44,7 @@ describe("Mixin tests", () => {
   });
 
   test("Single Class Mixin calls constructor", () => {
-    const ctor = jest.fn(() => {});
+    const ctor = jest.fn();
     const Subject = Mixin(createDummyClass(ctor));
     expect(ctor).toBeCalledTimes(0);
     const a = new Subject();
@@ -56,7 +56,7 @@ describe("Mixin tests", () => {
     const mocks = [];
     const nbClasses = 5;
     for (let i = 0; i < nbClasses; i++) {
-      const mock = jest.fn(() => {});
+      const mock = jest.fn();
       mocks.push(mock);
       classes.push(createDummyClass(mock));
     }
@@ -99,12 +99,12 @@ describe("Mixin tests", () => {
 
   test("Mixin have all public methods", () => {
     const methods1 = {
-      getA: jest.fn(() => {}),
-      getB: jest.fn(() => {}),
-      getC: jest.fn(() => {}),
+      getA: jest.fn(),
+      getB: jest.fn(),
+      getC: jest.fn(),
     };
     const methods2 = {
-      getC: jest.fn(() => {}),
+      getC: jest.fn(),
     };
     const class1 = createDummyClass(null, methods1);
     const class2 = createDummyClass(null, methods2);

@@ -7,7 +7,7 @@ export type MockedComponent = LetsRole.Component & {
 type Params = {
   id: LetsRole.ComponentID;
   sheet: LetsRole.Sheet;
-  cntr?: MockedComponent;
+  cntr?: MockedComponent | undefined;
   classes?: Array<string>;
 };
 
@@ -37,11 +37,11 @@ export const MockComponent = ({
         handlers[args[0]] = args[1];
       }
     }),
-    off: jest.fn(() => {}),
-    hide: jest.fn(() => {}),
-    show: jest.fn(() => {}),
-    addClass: jest.fn(() => {}),
-    removeClass: jest.fn(() => {}),
+    off: jest.fn(),
+    hide: jest.fn(),
+    show: jest.fn(),
+    addClass: jest.fn(),
+    removeClass: jest.fn(),
     getClasses: jest.fn(() => classes),
     hasClass: jest.fn((c) => classes.includes(c)),
     value: jest.fn((newValue?: LetsRole.ComponentValue) => {
@@ -55,7 +55,7 @@ export const MockComponent = ({
     rawValue: jest.fn(() => 0),
     text: jest.fn(() => "0"),
     visible: jest.fn(() => true),
-    setChoices: jest.fn(() => {}),
+    setChoices: jest.fn(),
     _trigger: jest.fn((event: string, target?: MockedComponent) => {
       if (cntr) {
         cntr._trigger(event, cmp);
