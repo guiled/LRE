@@ -57,7 +57,7 @@ describe("DataBatcher async send data", () => {
       fortyTwo: 42,
       fortyThree: 43,
     };
-    const processedCallback = jest.fn(() => {});
+    const processedCallback = jest.fn();
     dataBatcher.on("processed", processedCallback);
     dataBatcher.setData(data);
     expect(processedCallback).not.toBeCalled();
