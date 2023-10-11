@@ -1,6 +1,6 @@
 import { LogLevel, Logger } from "../../src/log";
 
-global.log = jest.fn(() => null);
+global.log = jest.fn();
 
 describe("Test all log method", () => {
   test("Check all method", () => {

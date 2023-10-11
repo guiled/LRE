@@ -1,4 +1,4 @@
-import { MockComponent, MockedComponent } from "./component.mock";
+import { MockComponent } from "./component.mock";
 
 type Params = {
   id: string;

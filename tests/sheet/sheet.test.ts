@@ -238,13 +238,13 @@ describe("Sheet get component", () => {
   });
 
   test("Prevent errors", () => {
-    /* @ts-ignore Voluntary for tests */
+    /* @ts-ignore On purpose for tests */
     expect(sheet1.get({})).toBeNull();
-    /* @ts-ignore Voluntary for tests */
+    /* @ts-ignore On purpose for tests */
     expect(sheet1.get(123)).toBeNull();
-    /* @ts-ignore Voluntary for tests */
+    /* @ts-ignore On purpose for tests */
     expect(sheet1.get("123")).toBeNull();
-    /* @ts-ignore Voluntary for tests */
+    /* @ts-ignore On purpose for tests */
     expect(sheet1.get(new String("123"))).toBeNull();
   });
 
