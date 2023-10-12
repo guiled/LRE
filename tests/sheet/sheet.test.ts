@@ -1,11 +1,11 @@
 import { Component } from "../../src/component";
-import { Logger } from "../../src/log";
 import { MockServer } from "../mock/letsrole/server.mock";
 import { MockSheet, MockedSheet } from "../mock/letsrole/sheet.mock";
 import { Sheet } from "../../src/sheet/index";
+import { LRE } from "../../src/lre";
 jest.mock("../../src/log");
 
-global.lre = new Logger();
+global.lre = new LRE();
 let waitedCallbacks: Array<(...args: any[]) => any> = [];
 global.wait = jest.fn((delay, cb) => waitedCallbacks.push(cb));
 
@@ -118,7 +118,7 @@ describe("Sheet data handling", () => {
       realId: "4242",
     });
     server.registerMockedSheet(raw2);
-    expect(raw2.getData()).toMatchObject(validObject);
+    expect(raw2.getData()).toEqual(validObject);
   });
 
   test("setData and getData are batched", () => {
@@ -143,7 +143,7 @@ describe("Sheet data handling", () => {
     });
     expect(raw.setData).not.toBeCalled();
     expect(processedCb).not.toBeCalled();
-    expect(sheet.getData()).toMatchObject({
+    expect(sheet.getData()).toEqual({
       a: 11,
       b: 2,
       c: 3,
@@ -216,6 +216,85 @@ describe("Sheet persisting data", () => {
     itHasWaitedEnough();
     expect(sheet2.isInitialized()).toBeTruthy();
   });
+
+  test("Persisting cmp data", () => {
+    const newData = {
+      v1: 1,
+      v2: 2,
+    };
+    const v = sheet1.persistingCmpData("123", newData);
+    expect(sheet1.raw().setData).not.toBeCalled();
+    expect(itHasWaitedEnough).not.toThrowError();
+    expect(sheet1.raw().setData).toBeCalled();
+    expect(v).toEqual(newData);
+    const v2 = sheet2.persistingCmpData("123");
+    expect(v2).toEqual(newData);
+
+    const newData1 = {
+      ...newData,
+      v3: 3,
+    };
+    const newData2 = {
+      ...newData,
+      v4: 4,
+    };
+    expect(sheet1.persistingCmpData("123", newData1)).toEqual(newData1);
+    expect(sheet2.persistingCmpData("123", newData2)).toEqual(newData2);
+    itHasWaitedEnough();
+    expect(sheet1.persistingCmpData("123")).toEqual({
+      ...newData1,
+      ...newData2,
+    });
+    expect(sheet2.persistingCmpData("123")).toEqual({
+      ...newData1,
+      ...newData2,
+    });
+    const newData3 = {
+      ...newData1,
+      v5: {
+        v1: 1,
+        v2: ["1", "2", "3"],
+      },
+    };
+    const newData4 = {
+      ...newData2,
+      v5: {
+        v3: 42,
+        v2: ["4", "5"],
+      },
+    };
+    const result = {
+      ...newData1,
+      ...newData2,
+      v5: {
+        v1: 1,
+        v2: ["1", "2", "3"],
+        v3: 42,
+      },
+    };
+    expect(sheet1.persistingCmpData("123", newData3)).toEqual(newData3);
+    expect(sheet2.persistingCmpData("123", newData4)).toEqual(newData4);
+    itHasWaitedEnough();
+    expect(sheet1.persistingCmpData("123")).toEqual(result);
+    expect(sheet2.persistingCmpData("123")).toEqual(result);
+  });
+
+  test("Persisting cmp classes", () => {
+    const c = ["class1"];
+    expect(sheet1.persistingCmpClasses("123", c)).toEqual(c);
+    expect(sheet1.persistingCmpClasses("123")).toEqual(c);
+    expect(sheet2.persistingCmpClasses("123")).not.toEqual(c);
+    expect(itHasWaitedEnough).not.toThrowError();
+    expect(sheet2.persistingCmpClasses("123")).toEqual(c);
+    const c1 = ["class1", "class1b"]
+    const c2 = ["class2"]
+    sheet1.persistingCmpClasses("123", c1);
+    sheet2.persistingCmpClasses("123", c2);
+    expect(itHasWaitedEnough).not.toThrowError();
+    // no need today to merge the two arrays of classes
+    expect(sheet1.persistingCmpClasses("123")).toEqual(c1);
+    expect(sheet2.persistingCmpClasses("123")).toEqual(c1);
+  });
 });
 
 describe("Sheet get component", () => {
@@ -249,9 +328,21 @@ describe("Sheet get component", () => {
   });
 
   test("Get component is cached", () => {
-    const cmp1 = sheet1.get('abcd');
-    const cmp2 = sheet1.get('abcd');
+    const cmp1 = sheet1.get("abcd");
+    const cmp2 = sheet1.get("abcd");
     expect(cmp1).toStrictEqual(cmp2);
     expect(cmp1).toBeInstanceOf(Component);
-  })
+  });
+
+  test("Find and get are the same", () => {
+    const cmp1 = sheet1.get("abcd");
+    const cmp2 = sheet1.find("abcd");
+    expect(cmp1).toStrictEqual(cmp2);
+    expect(cmp1).toBeInstanceOf(Component);
+  });
+
+  test("Find a component in a repeater", () => {
+    expect(sheet1.get("a.b.c")).toBeInstanceOf(Component);
+    expect(sheet1.get(MockServer.UNKNOWN_CMP_ID + ".b.c")).toBeNull();
+  });
 });

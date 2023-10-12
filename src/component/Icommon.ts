@@ -1,6 +1,4 @@
 import { Sheet } from "../sheet";
-import { Entry } from "./entry";
-import { Repeater } from "./repeater";
 
 export interface ComponentCommon {
   lreType: (newType?: ComponentType) => ComponentType;
