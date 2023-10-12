@@ -9,7 +9,7 @@ import {
 } from "../component/container";
 import { DataBatcher } from "./databatcher";
 import { ComponentFactory } from "../component/factory";
-import { ComponentCommon } from "../component/common";
+import { ComponentCommon } from "../component/Icommon";
 import { Mixin } from "../mixin";
 
 type PendingData = {
@@ -57,40 +57,30 @@ export class Sheet
       .find as unknown as ComponentFinder;
   }
 
-
   #persistingDataOperation<
     T extends keyof Omit<SheetStoredState, "initialized">,
     R extends SheetStoredState[T][keyof SheetStoredState[T]]
-  >(type: T, componentId: LetsRole.ComponentID, newData?: R): undefined | R {
+  >(type: T, componentId: LetsRole.ComponentID, newData?: R): R {
     this.#loadState();
     if (newData !== void 0) {
       this.#storedState![type][componentId] = newData;
+      this.#saveStoredState();
     }
     return this.#storedState![type][componentId];
   }
 
   #handleDataUpdate(): void {
-    lre.trace("data updated from server…")
+    lre.trace("data updated from server…");
     this.#loadState();
     const data = this.raw().getData();
+    
     const newSheetStoredState: SheetStoredState =
       (data[this.id()] as SheetStoredState) || {};
     const hasPendingData = !!this.getPendingData(this.id());
 
-    this.#storedState = {
-      ...this.#storedState,
-      ...newSheetStoredState,
-      cmpData: {
-        ...this.#storedState?.cmpData,
-        ...newSheetStoredState.cmpData,
-      },
-      cmpClasses: {
-        ...this.#storedState?.cmpClasses,
-        ...newSheetStoredState.cmpClasses,
-      },
-    };
+    this.#storedState = lre.deepMerge(this.#storedState, newSheetStoredState);
     if (hasPendingData) {
-      lre.trace("pending data update")
+      lre.trace("pending data update");
       this.#saveStoredState();
     }
   }
@@ -155,7 +145,7 @@ export class Sheet
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore id instance of is for live checks
     if (!((typeof id === "string" || id instanceof String) && isNaN(id))) {
-      lre.error(`Invalid component id for sheet.get, ${id} given`)
+      lre.error(`Invalid component id for sheet.get, ${id} given`);
       return null;
     }
     id = "" + id;
@@ -224,13 +214,11 @@ export class Sheet
   persistingCmpData(
     componentId: LetsRole.ComponentID,
     newData?: LetsRole.ViewData
-  ): LetsRole.ComponentValue {
+  ): LetsRole.ViewData {
     if (arguments.length > 1) {
-      return (
-        this.#persistingDataOperation("cmpData", componentId, newData) || {}
-      );
+      return this.#persistingDataOperation("cmpData", componentId, newData);
     } else {
-      return this.#persistingDataOperation("cmpData", componentId) || {};
+      return this.#persistingDataOperation("cmpData", componentId);
     }
   }
 
@@ -240,8 +228,7 @@ export class Sheet
   ): Array<LetsRole.ClassName> {
     if (arguments.length > 1) {
       return (
-        this.#persistingDataOperation("cmpClasses", componentId, newClasses!) ||
-        []
+        this.#persistingDataOperation("cmpClasses", componentId, newClasses!)
       );
     } else {
       return this.#persistingDataOperation("cmpClasses", componentId) || [];

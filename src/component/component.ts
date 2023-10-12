@@ -2,7 +2,7 @@ import { EventDef, EventHolder } from "../eventholder";
 import { HasRaw } from "../hasraw";
 import { ComponentContainer, ComponentSearchResult } from "./container";
 import { Sheet } from "../sheet";
-import { ComponentCommon } from "./common";
+import { ComponentCommon } from "./Icommon";
 import { Mixin } from "../mixin";
 import { Repeater } from "./repeater";
 import { Entry } from "./entry";

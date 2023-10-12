@@ -1,7 +1,5 @@
 declare interface ILRE {
-  error(...args: any[]): void;
-  warn(...args: any[]): void;
-  trace(...args: any[]): void;
+  deepMerge(target: any, ...sources: any[]): any;
   __debug: boolean = false;
 }
 

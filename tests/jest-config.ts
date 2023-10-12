@@ -1,0 +1,2 @@
+
+global.firstInit = undefined;
