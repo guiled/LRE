@@ -1,11 +1,11 @@
-import { Logger } from "../../src/log";
 import { MockSheet, MockedSheet } from "../mock/letsrole/sheet.mock";
 import { DataBatcher } from "../../src/sheet/databatcher";
 import { handleError } from "../../src/log/errorhandler";
+import { LRE } from "../../src/lre";
 
 jest.mock("../../src/log/errorhandler");
 let waitedCallback: ((...args: any[]) => any) | null;
-global.lre = new Logger();
+global.lre = new LRE();
 global.wait = jest.fn((delay, cb) => (waitedCallback = cb));
 
 const itHasWaitedEnough = () => {
@@ -46,10 +46,10 @@ describe("DataBatcher async send data", () => {
     expect(sheet.setData).not.toBeCalled();
     expect(dataBatcher.getPendingData("fortyTwo")).toStrictEqual(42);
     expect(dataBatcher.getPendingData("fortyTour")).toBeUndefined();
-    expect(dataBatcher.getPendingData()).toMatchObject(data);
+    expect(dataBatcher.getPendingData()).toEqual(data);
     itHasWaitedEnough();
     expect(sheet.setData).toBeCalled();
-    expect((sheet.setData as jest.Mock).mock.calls[0][0]).toMatchObject(data);
+    expect((sheet.setData as jest.Mock).mock.calls[0][0]).toEqual(data);
   });
 
   it("setData triggers event", () => {
@@ -76,7 +76,7 @@ describe("DataBatcher async send data", () => {
     expect(sheet.setData).not.toBeCalled();
     itHasWaitedEnough();
     expect(sheet.setData).toBeCalled();
-    expect((sheet.setData as jest.Mock).mock.calls[0][0]).toMatchObject({
+    expect((sheet.setData as jest.Mock).mock.calls[0][0]).toEqual({
       fortyTwo: 42,
       fortyThree: 43,
     });
@@ -120,7 +120,7 @@ describe("DataBatcher async send data", () => {
     expect(sheet.setData).toBeCalledTimes(1);
     itHasWaitedEnough();
     expect(sheet.setData).toBeCalledTimes(1);
-    expect((sheet.setData as jest.Mock).mock.calls[0][0]).toMatchObject(data);
+    expect((sheet.setData as jest.Mock).mock.calls[0][0]).toEqual(data);
   });
 
   it("delayed data send with last value", () => {
@@ -136,7 +136,7 @@ describe("DataBatcher async send data", () => {
     });
     itHasWaitedEnough();
     expect(sheet.setData).toBeCalledTimes(1);
-    expect((sheet.setData as jest.Mock).mock.calls[0][0]).toMatchObject({
+    expect((sheet.setData as jest.Mock).mock.calls[0][0]).toEqual({
       fortyTwo: 44,
       fortyThree: 43,
     });
