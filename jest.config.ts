@@ -29,7 +29,8 @@ export default {
   coveragePathIgnorePatterns: [
      "\\.d\\.ts$",
      "\\/I[a-zA-Z]*\\.ts",
-     "src\\/swc\\/"
+     "src\\/swc\\/",
+     "src\\/index\\.ts",
   ],
 
   // Indicates which provider should be used to instrument code for coverage
