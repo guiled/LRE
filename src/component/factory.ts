@@ -19,7 +19,7 @@ export class ComponentFactory {
     let cmp: Component;
     realId += rawComponent.id();
 
-    cmp = ComponentFactory.#createCmp(rawComponent, container, realId);
+    cmp = ComponentFactory.createCmp(rawComponent, container, realId);
     cmp.parent(container);
     const containerLreType = container.lreType();
     if (containerLreType === "entry") {
@@ -33,7 +33,7 @@ export class ComponentFactory {
     return cmp;
   }
 
-  static #createCmp(
+  static createCmp(
     raw: LetsRole.Component,
     container: ComponentContainer,
     realId: string
