@@ -3,7 +3,9 @@ declare interface ILRE {
   __debug: boolean = false;
 }
 
-declare var lre: ILRE & Logger;
+type cb = (thisArg: any, argArray?: any) => (rawSheet: LetsRole.Sheet) => void;
+
+declare var lre: ILRE & Logger & cb;
 declare var firstInit: undefined | ((sheet: Sheet) => boolean);
 declare var errExclFirstLine: number, errExclLastLine: number;
 

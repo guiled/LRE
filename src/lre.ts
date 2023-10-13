@@ -3,10 +3,11 @@ import { handleError } from "./log/errorhandler";
 import { Sheet } from "./sheet";
 import { SheetCollection } from "./sheet/collection";
 
-
 firstInit = undefined;
 
-export interface LRE extends ILRE, Logger {}
+type cb = (thisArg: any, argArray?: any) => (rawSheet: LetsRole.Sheet) => void;
+
+export interface LRE extends ILRE, Logger, cb {}
 
 export class LRE extends Logger implements ILRE {
   sheets: SheetCollection;
@@ -15,7 +16,7 @@ export class LRE extends Logger implements ILRE {
   apply(thisArg: any, argArray?: any) {
     this.log("prepare init");
     const [callback] = argArray;
-    return (rawSheet: LetsRole.Sheet) => {
+    return (rawSheet: LetsRole.Sheet): void => {
       // The wait may allow a faster display
       wait(0, () => {
         const sheetId = rawSheet.getSheetId();
@@ -87,8 +88,10 @@ export class LRE extends Logger implements ILRE {
   }
 
   isObject(object: any): boolean {
-    return object != null && typeof object === 'object' && !Array.isArray(object);
-}
+    return (
+      object != null && typeof object === "object" && !Array.isArray(object)
+    );
+  }
 
   deepMerge(target: any, ...sources: any[]): any {
     if (!sources.length) return target;
