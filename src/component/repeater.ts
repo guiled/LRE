@@ -7,11 +7,11 @@ export class Repeater extends Component {
     this.lreType("repeater");
   }
 
-  add() {
+  // add() {
 
-  }
+  // }
 
-  remove() {
+  // remove() {
     
-  }
+  // }
 }
