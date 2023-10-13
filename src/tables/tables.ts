@@ -1,8 +1,7 @@
 import { HasRaw } from "../hasraw";
 import { Table } from "./table";
 
-interface LreTables extends HasRaw<LetsRole.Tables> {}
-class LreTables implements LetsRole.Tables {
+class LreTables extends HasRaw<LetsRole.Tables> implements LetsRole.Tables {
   #tables: Record<LetsRole.TableID, Table> = {};
 
   get(id: LetsRole.TableID): Table {
@@ -13,7 +12,7 @@ class LreTables implements LetsRole.Tables {
   }
 
   constructor(raw: LetsRole.Tables) {
-    Object.assign(this, new HasRaw(raw));
+    super(raw);
   }
 }
 
