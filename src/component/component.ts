@@ -53,20 +53,19 @@ export class Component<
           rawCmp: LetsRole.Component,
           event: EventDef
         ): EventHolder<LetsRole.Component> => {
-          return {} as EventHolder<LetsRole.Component>;
+          let idToFind: string = "";
+  
+          if (event.delegated && rawCmp.index()) {
+            idToFind = rawCmp.index() + REP_ID_SEP + rawCmp.id();
+          } else if (event.delegated) {
+            idToFind = rawCmp.id();
+          }
+  
+          if (idToFind !== "") {
+            return this.find(idToFind) as EventHolder<LetsRole.Component>;
+          }
+          return this as EventHolder<LetsRole.Component>;
         },
-        // let idToFind: string = "";
-
-        // if (event.delegated && rawCmp.index()) {
-        //   idToFind = rawCmp.index() + REP_ID_SEP + rawCmp.id();
-        // } else if (event.delegated) {
-        //   idToFind = rawCmp.id();
-        // }
-
-        // if (idToFind !== "") {
-        //   return this.find(idToFind) as EventHolder<LetsRole.Component>;
-        // }
-        // return this as EventHolder<LetsRole.Component>;
       ],
       [/* HasRaw */ raw],
     ]);
@@ -146,7 +145,7 @@ export class Component<
     return this.raw().getClasses();
   }
   value(newValue?: unknown): void | LetsRole.ComponentValue {
-    throw new Error("Method not implemented.");
+    throw new Error("Method not implemented." + newValue);
   }
   virtualValue(
     newValue?: LetsRole.ComponentValue

@@ -242,7 +242,6 @@ class ClassExtend extends Visitor {
     this.constructorFound = true;
     const res = super.visitConstructor(n);
     if (this.currentSuperClass && !this.isSuperConstructorFound) {
-      const span: Span = this.currentSuperClass.span;
       n.body?.stmts.unshift(this.#createSuperCallStmt(this.currentSuperClass));
     }
     this.inConstructor = false;

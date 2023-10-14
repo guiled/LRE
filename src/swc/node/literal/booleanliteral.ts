@@ -1,4 +1,4 @@
-import { BooleanLiteral, NumericLiteral, Span, StringLiteral } from "@swc/core";
+import { BooleanLiteral } from "@swc/core";
 
 export default function booleanliteral({
   span,

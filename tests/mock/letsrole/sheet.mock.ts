@@ -17,17 +17,10 @@ export const MockSheet = ({ id, realId = "12345", properName = "properName" }: P
     get: jest.fn((cmpId: LetsRole.ComponentID) =>
       MockComponent({ id: cmpId, sheet })
     ),
-    getVariable: jest.fn((id: string) => 12),
-    prompt: jest.fn(
-      (
-        title: string,
-        view: string,
-        callback: (result: LetsRole.ViewData) => void,
-        callbackInit: (promptView: LetsRole.Sheet) => void
-      ) => {}
-    ),
-    setData: jest.fn((data: LetsRole.ViewData) => {}),
-    getData: jest.fn(() => ({})),
+    getVariable: jest.fn(() => 12),
+    prompt: jest.fn(),
+    setData: jest.fn(),
+    getData: jest.fn(),
   };
 
   return sheet;

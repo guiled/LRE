@@ -1,9 +1,8 @@
-import exp from "constants";
 import { Table } from "../../src/tables/table";
 
 describe("Table test", () => {
   const mockRawTable = (
-    name: string,
+    _name: string,
     data?: Record<string, LetsRole.TableRow>
   ): LetsRole.Table => {
     return {

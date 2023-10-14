@@ -1,14 +1,12 @@
 import { bootstrap } from "../src/bootstrap";
 import { LRE } from "../src/lre";
 
-let saveConsole: any;
 beforeAll(() => {
-  saveConsole = console;
   global.lre = null;
   global.isNaN = null as unknown as (c: any) => any;
   global.structuredClone = null as unknown as (c: any) => any;
   global.Tables = {
-    get: jest.fn((id: string) => ({
+    get: jest.fn((_id: string) => ({
       each: jest.fn(),
       get: jest.fn(),
       random: jest.fn(),
@@ -42,7 +40,6 @@ describe("LRE bootstrap", () => {
       d: ["a", 2],
     };
     const d = structuredClone(c);
-    saveConsole.log("🚀 ~ file: bootstrap.test.ts:44 ~ test ~ d", d)
     expect(d).not.toBe(c)
     expect(d).toEqual(c);
   });

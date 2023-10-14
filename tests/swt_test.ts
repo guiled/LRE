@@ -190,7 +190,7 @@
      input: "const {a = 2} = toto;",
      output: `var a = typeof toto.a !== "undefined" ? toto.a : 2;`
   },
-].forEach(({ input, output }, i) => {
+].forEach(() => {
   // var oldConsole = console;
   // let res;
   // try {

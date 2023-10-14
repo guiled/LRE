@@ -1,5 +1,4 @@
 import { Identifier, Param } from "@swc/core";
-import identifier from "./identifier";
 
 export function paramidentifier({
   span,

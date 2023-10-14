@@ -1,10 +1,9 @@
-import { Component, REP_ID_SEP } from "../component";
-import { EventDef, EventHolder } from "../eventholder";
+import { REP_ID_SEP } from "../component";
+import { EventHolder } from "../eventholder";
 import { HasRaw } from "../hasraw";
 import { ComponentCache } from "../component/cache";
 import {
   ComponentContainer,
-  ComponentFinder,
   ComponentSearchResult,
 } from "../component/container";
 import { DataBatcher } from "./databatcher";
@@ -12,18 +11,16 @@ import { ComponentFactory } from "../component/factory";
 import { ComponentCommon } from "../component/ICommon";
 import { Mixin } from "../mixin";
 
-type PendingData = {
-  k: LetsRole.ComponentID;
-  v: LetsRole.ComponentValue;
-};
-
-type SheetStoredState = {
+type SheetProtectedStoredState = {
   initialized: boolean;
   cmpData: Record<LetsRole.ComponentID, any>;
   cmpClasses: Record<LetsRole.ComponentID, Array<LetsRole.ClassName>>;
-} & Record<string, any>;
+}
 
-type StoredState = keyof SheetStoredState | string;
+type SheetStoredState = SheetProtectedStoredState & Record<string, any>;
+
+type ProtectedStoredState = keyof SheetProtectedStoredState;
+type StoredState = ProtectedStoredState | string;
 
 type SheetEvents = "data:processed";
 
@@ -37,7 +34,7 @@ export class Sheet
     ComponentContainer,
     ComponentCommon
 {
-  #silentFind: ComponentFinder;
+  //#silentFind: ComponentFinder;
   #batcher: DataBatcher;
   #storedState: SheetStoredState | undefined;
   #componentCache: ComponentCache;
@@ -53,17 +50,17 @@ export class Sheet
     this.#componentCache = new ComponentCache();
     this.#cmp = rawSheet.get(rawSheet.id())!;
     this.#cmp.on("update", this.#handleDataUpdate.bind(this));
-    this.#silentFind = rawSheet.get(rawSheet.id())
-      .find as unknown as ComponentFinder;
+    //this.#silentFind = rawSheet.get(rawSheet.id())
+    //  .find as unknown as ComponentFinder;
   }
 
   #persistingDataOperation<
     T extends keyof Omit<SheetStoredState, "initialized">,
     R extends SheetStoredState[T][keyof SheetStoredState[T]]
   >(type: T, componentId: LetsRole.ComponentID, newData?: R): R {
-    this.#loadState();
+    this.#loadState(this.#storedState);
     if (newData !== void 0) {
-      this.#storedState![type][componentId] = newData;
+      this.#storedState[type][componentId] = newData;
       this.#saveStoredState();
     }
     return this.#storedState![type][componentId];
@@ -71,7 +68,7 @@ export class Sheet
 
   #handleDataUpdate(): void {
     lre.trace("data updated from server…");
-    this.#loadState();
+    this.#loadState(this.#storedState);
     const data = this.raw().getData();
     
     const newSheetStoredState: SheetStoredState =
@@ -85,7 +82,7 @@ export class Sheet
     }
   }
 
-  #loadState(): SheetStoredState {
+  #loadState(_state: SheetStoredState | undefined): asserts _state is SheetStoredState {
     if (!this.#storedState) {
       const data = this.raw().getData();
       const persist: SheetStoredState | undefined = data?.[
@@ -98,7 +95,6 @@ export class Sheet
         ...persist,
       };
     }
-    return this.#storedState;
   }
 
   #saveStoredState(): void {
@@ -141,7 +137,7 @@ export class Sheet
   properName(): string {
     return this.raw().properName();
   }
-  get(id: string, silent = false): ComponentSearchResult {
+  get(id: string, _silent = false): ComponentSearchResult {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore id instance of is for live checks
     if (!((typeof id === "string" || id instanceof String) && isNaN(id))) {
@@ -194,17 +190,25 @@ export class Sheet
     dataName: T,
     value?: any
   ): SheetStoredState[T] {
-    this.#loadState();
+    this.#loadState(this.#storedState);
     if (value !== void 0) {
-      this.#storedState![dataName] = value;
+      this.#storedState[dataName] = value;
       this.#saveStoredState();
     }
     return this.#storedState![dataName];
   }
 
+  deletePersistingData(dataName: Exclude<string, ProtectedStoredState>): void {
+    this.#loadState(this.#storedState);
+    if (this.#storedState.hasOwnProperty(dataName)) {
+      delete this.#storedState[dataName];
+      this.#saveStoredState();
+    }
+  }
+
   isInitialized(): boolean {
-    this.#loadState();
-    return !!this.#storedState!["initialized"];
+    this.#loadState(this.#storedState);
+    return !!this.#storedState["initialized"];
   }
 
   getPendingData(id: LetsRole.ComponentID): LetsRole.ComponentValue {
