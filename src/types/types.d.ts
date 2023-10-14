@@ -63,7 +63,7 @@ declare namespace LetsRole {
   export interface Component<ValueType = ComponentValue> extends Object {
     id(): LetsRole.ComponentID;
 
-    index(): Index;
+    index(): Index | null;
 
     name(): Name;
 
