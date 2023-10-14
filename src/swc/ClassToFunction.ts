@@ -286,8 +286,6 @@ class ClassToFunction extends Visitor {
     let staticProperties: Array<PropertyToVariable> = [];
     let constructorFunctionStatement: ExpressionStatement | undefined;
     let staticStmts: Statement[] = [];
-    const publicStatic: Array<PublicMethodToFunctionStatement | PublicPropertyToVariable> = [];
-    const privateStatic: Array<PrivateMethodToFunctionStatement | PrivatePropertyToVariable> = [];
     const ctor: Constructor | undefined = body.find((n: ClassMember) => n.type === "Constructor" && n.body) as Constructor;
 
     if (ctor) {

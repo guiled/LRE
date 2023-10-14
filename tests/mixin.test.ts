@@ -21,10 +21,10 @@ describe("Mixin tests", () => {
   };
 
   test("Test dummy class", () => {
-    const ctor = jest.fn((a) => {});
+    const ctor = jest.fn();
     const methods = {
-      getA: jest.fn((b, c) => {}),
-      getB: jest.fn((d) => {}),
+      getA: jest.fn(),
+      getB: jest.fn(),
     };
     const Dummy = createDummyClass(ctor, methods);
     expect(ctor).toBeCalledTimes(0);
@@ -47,7 +47,7 @@ describe("Mixin tests", () => {
     const ctor = jest.fn();
     const Subject = Mixin(createDummyClass(ctor));
     expect(ctor).toBeCalledTimes(0);
-    const a = new Subject();
+    new Subject();
     expect(ctor).toBeCalledTimes(1);
   });
 
@@ -62,16 +62,16 @@ describe("Mixin tests", () => {
     }
     const Subject = Mixin.apply(null, classes);
     mocks.forEach((m) => expect(m).toBeCalledTimes(0));
-    const a = new Subject();
+    new Subject();
     mocks.forEach((m) => expect(m).toBeCalledTimes(1));
   });
   test("Mixin calls all constructors with args", () => {
-    const ctor1 = jest.fn((arg1, arg2) => {});
-    const ctor2 = jest.fn((arg3) => {});
+    const ctor1 = jest.fn();
+    const ctor2 = jest.fn();
     const args1 = [42, "tooth"];
     const args2 = [{ a: 13 }];
     const Subject = Mixin(createDummyClass(ctor1), createDummyClass(ctor2));
-    const a = new Subject([args1, args2]);
+    new Subject([args1, args2]);
     expect(ctor1).toBeCalledTimes(1);
     expect(ctor1.mock.calls[0]).toHaveLength(args1.length);
     expect(ctor1.mock.calls[0]).toEqual(args1);
@@ -144,7 +144,7 @@ describe("Mixin tests", () => {
       abstract getId(): number;
       getThroughB(): string {
         //return this.#name;
-        return "" + this.getId();
+        return "" + this.getId() + this.#name;
       }
     }
 
@@ -156,7 +156,7 @@ describe("Mixin tests", () => {
     const id = 42;
     const name = "glop";
     const subject = new C(id, name);
-    expect(subject.getThroughB()).toEqual("42");
+    expect(subject.getThroughB()).toEqual("42glop");
   });
 
   test("Getter and setter inheritance and override", () => {

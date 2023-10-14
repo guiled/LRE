@@ -6,7 +6,6 @@ import { Icon } from "../../src/component/icon";
 import { Label } from "../../src/component/label";
 import { MultiChoice } from "../../src/component/multichoice";
 import { Logger } from "../../src/log";
-import { LRE } from "../../src/lre";
 import { Sheet } from "../../src/sheet";
 import { MockComponent } from "../mock/letsrole/component.mock";
 import { MockSheet } from "../mock/letsrole/sheet.mock";

@@ -272,8 +272,6 @@ export abstract class EventHolder<
       EventType<AdditionalEvents>,
       ...string[]
     ];
-    //let eventName: EventType<AdditionalEvents> = event;
-    let cmpId: LetsRole.ComponentID | null = null;
     let handlerId = rest.join(EVENT_SEP) || DEFAULT_HANDLER_ID;
 
     let eventName = eventId;

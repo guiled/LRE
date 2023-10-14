@@ -19,7 +19,7 @@ class NoArraySpreading extends Visitor {
   visitArrayExpression(e: ArrayExpression): Expression {
     const firstSpreadPosition = e.elements.findIndex(this.#isSpread);
     if (firstSpreadPosition > -1) {
-      const firstArrayPart = e.elements.slice(0, firstSpreadPosition);
+      e.elements.slice(0, firstSpreadPosition);
       let secondArrayPart: ArrayExpression["elements"] =
         e.elements.slice(firstSpreadPosition);
       const concatArgs: Argument[] = [

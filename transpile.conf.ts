@@ -2,7 +2,7 @@ import { Options, plugins } from "@swc/core";
 import classExtend from "./src/swc/ClassExtend";
 import classToFunction from "./src/swc/ClassToFunction";
 import computedObjectProps from "./src/swc/ComputedObjectProp";
-import defaultVisitor from "./src/swc/DefaultVisitor";
+//import defaultVisitor from "./src/swc/DefaultVisitor";
 import keepInstanceOf from "./src/swc/KeepInstanceOf";
 import noArraySpreading from "./src/swc/NoArraySpreading";
 import noVoid0 from "./src/swc/NoVoid0";
