@@ -9,7 +9,7 @@ import {
 } from "../component/container";
 import { DataBatcher } from "./databatcher";
 import { ComponentFactory } from "../component/factory";
-import { ComponentCommon } from "../component/Icommon";
+import { ComponentCommon } from "../component/ICommon";
 import { Mixin } from "../mixin";
 
 type PendingData = {

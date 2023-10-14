@@ -2,7 +2,7 @@ import { EventDef, EventHolder } from "../eventholder";
 import { HasRaw } from "../hasraw";
 import { ComponentContainer, ComponentSearchResult } from "./container";
 import { Sheet } from "../sheet";
-import { ComponentCommon } from "./Icommon";
+import { ComponentCommon } from "./ICommon";
 import { Mixin } from "../mixin";
 import { Repeater } from "./repeater";
 import { Entry } from "./entry";
@@ -53,19 +53,20 @@ export class Component<
           rawCmp: LetsRole.Component,
           event: EventDef
         ): EventHolder<LetsRole.Component> => {
-          let idToFind: string = "";
-
-          if (event.delegated && rawCmp.index()) {
-            idToFind = rawCmp.index() + REP_ID_SEP + rawCmp.id();
-          } else if (event.delegated) {
-            idToFind = rawCmp.id();
-          }
-
-          if (idToFind !== "") {
-            return this.find(idToFind) as EventHolder<LetsRole.Component>;
-          }
-          return this as EventHolder<LetsRole.Component>;
+          return {} as EventHolder<LetsRole.Component>;
         },
+        // let idToFind: string = "";
+
+        // if (event.delegated && rawCmp.index()) {
+        //   idToFind = rawCmp.index() + REP_ID_SEP + rawCmp.id();
+        // } else if (event.delegated) {
+        //   idToFind = rawCmp.id();
+        // }
+
+        // if (idToFind !== "") {
+        //   return this.find(idToFind) as EventHolder<LetsRole.Component>;
+        // }
+        // return this as EventHolder<LetsRole.Component>;
       ],
       [/* HasRaw */ raw],
     ]);
@@ -89,11 +90,11 @@ export class Component<
   realId(): string {
     return this.#realId;
   }
-  index(): string {
-    throw new Error("Method not implemented.");
+  index(): string | null {
+    return this.raw().index();
   }
   name(): string {
-    throw new Error("Method not implemented.");
+    return this.raw().name();
   }
   sheet(): Sheet {
     return this.#sheet;
@@ -127,22 +128,22 @@ export class Component<
     return this.find(completeId);
   }
   hide(): void {
-    throw new Error("Method not implemented.");
+    this.raw().hide();
   }
   show(): void {
-    throw new Error("Method not implemented.");
+    this.raw().show();
   }
   addClass(className: LetsRole.ClassName): void {
-    throw new Error("Method not implemented.");
+    this.raw().addClass(className);
   }
   removeClass(className: LetsRole.ClassName): void {
-    throw new Error("Method not implemented.");
+    this.raw().removeClass(className);
   }
   hasClass(className: LetsRole.ClassName): boolean {
-    throw new Error("Method not implemented.");
+    return this.raw().hasClass(className);
   }
   getClasses(): LetsRole.ClassName[] {
-    throw new Error("Method not implemented.");
+    return this.raw().getClasses();
   }
   value(newValue?: unknown): void | LetsRole.ComponentValue {
     throw new Error("Method not implemented.");
@@ -150,19 +151,27 @@ export class Component<
   virtualValue(
     newValue?: LetsRole.ComponentValue
   ): void | LetsRole.ComponentValue {
-    throw new Error("Method not implemented.");
+    if (arguments.length > 0) {
+      this.raw().virtualValue(newValue!);
+      return;
+    }
+    return this.raw().virtualValue();
   }
   rawValue(): LetsRole.ComponentValue {
     throw new Error("Method not implemented.");
   }
-  text(replacement?: unknown): string | void {
-    throw new Error("Method not implemented.");
+  text(replacement?: string): string | void {
+    if (arguments.length > 0) {
+      this.raw().text(replacement!);
+      return;
+    }
+    return this.raw().text();
   }
   visible(): boolean {
-    throw new Error("Method not implemented.");
+    return this.raw().visible();
   }
   setChoices(choices: LetsRole.Choices): void {
-    throw new Error("Method not implemented.");
+    return this.raw().setChoices(choices);
   }
 
   // actionOnRawEvent({
