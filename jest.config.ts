@@ -28,7 +28,7 @@ export default {
   // An array of regexp pattern strings used to skip coverage collection
   coveragePathIgnorePatterns: [
      "\\.d\\.ts$",
-     "\\/I[a-zA-Z]*\\.ts",
+     "\\/I[A-Z][^\.]*\\.ts",
      "src\\/swc\\/",
      "src\\/index\\.ts",
   ],
