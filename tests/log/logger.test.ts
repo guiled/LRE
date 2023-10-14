@@ -1,4 +1,4 @@
-import { LogLevel, Logger } from "../../src/log";
+import { Logger } from "../../src/log";
 
 global.log = jest.fn();
 

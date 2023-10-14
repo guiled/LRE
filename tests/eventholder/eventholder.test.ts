@@ -15,7 +15,7 @@ type TestedEvents = "test" | "unused" | "click" | "update";
 
 class Dummy extends EventHolder<LetsRole.Component, TestedEvents> {
   constructor(protected _raw: LetsRole.Component, subRaw?: LetsRole.Component) {
-    super(_raw.id(), (target: any, event: any): EventHolder => {
+    super(_raw.id(), (target: any): EventHolder => {
       if (subRaw && target === subRaw) {
         return new Dummy(subRaw) as EventHolder;
       } else {
@@ -44,15 +44,15 @@ describe("Test simple events", () => {
   test("No raw event calls for custom event", () => {
     subject.on(
       "test",
-      jest.fn((cmp) => {})
+      jest.fn()
     );
     subject.on(
       "test:a",
-      jest.fn((cmp) => {})
+      jest.fn()
     );
     subject.on(
       "test:b",
-      jest.fn((cmp) => {})
+      jest.fn()
     );
     expect(rawCmp.on).toBeCalledTimes(0);
     subject.off("test");
@@ -62,15 +62,15 @@ describe("Test simple events", () => {
   test("Only one raw event added for custom event", () => {
     subject.on(
       "click",
-      jest.fn((cmp) => {})
+      jest.fn()
     );
     subject.on(
       "click:a",
-      jest.fn((cmp) => {})
+      jest.fn()
     );
     subject.on(
       "click:b",
-      jest.fn((cmp) => {})
+      jest.fn()
     );
     expect(rawCmp.on).toBeCalledTimes(1);
     subject.off("click");
@@ -84,12 +84,12 @@ describe("Test simple events", () => {
   });
 
   test("Handlers triggered from raw", () => {
-    const eventHandler = jest.fn((cmp) => {});
+    const eventHandler = jest.fn();
     subject.on("click", eventHandler);
     expect(rawCmp.on).toBeCalledTimes(1);
     rawCmp._trigger("click");
     expect(eventHandler).toBeCalledTimes(1);
-    const eventHandler2 = jest.fn((cmp) => {});
+    const eventHandler2 = jest.fn();
     subject.on("click:second", eventHandler2);
     expect(rawCmp.on).toBeCalledTimes(1);
     rawCmp._trigger("click");
@@ -115,7 +115,7 @@ describe("Test simple events", () => {
   });
 
   test("Simple trigger with additional parameters", () => {
-    const eventHandler = jest.fn((cmp, val, obj) => {});
+    const eventHandler = jest.fn();
     subject.on("test", eventHandler);
     const param = 42;
     subject.trigger("test", param);
@@ -133,8 +133,8 @@ describe("Test simple events", () => {
   });
 
   test("Simple trigger with two handlers", () => {
-    const eventHandler1 = jest.fn((cmp) => {});
-    const eventHandler2 = jest.fn((cmp) => {});
+    const eventHandler1 = jest.fn();
+    const eventHandler2 = jest.fn();
     subject.on("test", eventHandler1);
     subject.on("test", eventHandler2);
     subject.trigger("test");
@@ -143,13 +143,13 @@ describe("Test simple events", () => {
   });
 
   test("Trigger an non-existing event", () => {
-    const eventHandler = jest.fn((cmp) => {});
+    const eventHandler = jest.fn();
     subject.trigger("test");
     expect(eventHandler).toBeCalledTimes(0);
   });
 
   test("Off an event handler", () => {
-    const eventHandler = jest.fn((cmp) => {});
+    const eventHandler = jest.fn();
     subject.on("test", eventHandler);
     subject.trigger("test");
     expect(eventHandler).toBeCalledTimes(1);
@@ -160,7 +160,7 @@ describe("Test simple events", () => {
   });
 
   test("Disable events", () => {
-    const eventHandler = jest.fn((cmp) => {});
+    const eventHandler = jest.fn();
     subject.on("test", eventHandler);
     subject.trigger("test");
     expect(eventHandler).toBeCalledTimes(1);
@@ -184,15 +184,15 @@ describe("Many working handlers on same event", () => {
   });
 
   test("Named event trigger of named event", () => {
-    const eventHandler = jest.fn((cmp) => {});
+    const eventHandler = jest.fn();
     subject.on("test:first", eventHandler);
     subject.trigger("test:first");
     expect(eventHandler).toBeCalledTimes(1);
   });
 
   test("Named event trigger of named event", () => {
-    const eventHandler1 = jest.fn((cmp) => {});
-    const eventHandler2 = jest.fn((cmp) => {});
+    const eventHandler1 = jest.fn();
+    const eventHandler2 = jest.fn();
     subject.on("test:first", eventHandler1);
     subject.on("test:second", eventHandler2);
     subject.trigger("test");
@@ -201,8 +201,8 @@ describe("Many working handlers on same event", () => {
   });
 
   test("Named event trigger specifically of named event", () => {
-    const eventHandler1 = jest.fn((cmp) => {});
-    const eventHandler2 = jest.fn((cmp) => {});
+    const eventHandler1 = jest.fn();
+    const eventHandler2 = jest.fn();
     subject.on("test:first", eventHandler1);
     subject.on("test:second", eventHandler2);
     subject.trigger("test:first");
@@ -211,8 +211,8 @@ describe("Many working handlers on same event", () => {
   });
 
   test("Named event trigger for overwritten event", () => {
-    const eventHandler1 = jest.fn((cmp) => {});
-    const eventHandler2 = jest.fn((cmp) => {});
+    const eventHandler1 = jest.fn();
+    const eventHandler2 = jest.fn();
     subject.on("test:first", eventHandler1);
     subject.on("test:first", eventHandler2);
     subject.trigger("test:first");
@@ -221,8 +221,8 @@ describe("Many working handlers on same event", () => {
   });
 
   test("Switch off a named trigger", () => {
-    const eventHandler1 = jest.fn((cmp) => {});
-    const eventHandler2 = jest.fn((cmp) => {});
+    const eventHandler1 = jest.fn();
+    const eventHandler2 = jest.fn();
     subject.on("test:first", eventHandler1);
     subject.on("test:second", eventHandler2);
     subject.trigger("test");
@@ -235,8 +235,8 @@ describe("Many working handlers on same event", () => {
   });
 
   test("Switch off unset event", () => {
-    const eventHandler1 = jest.fn((cmp) => {});
-    const eventHandler2 = jest.fn((cmp) => {});
+    const eventHandler1 = jest.fn();
+    const eventHandler2 = jest.fn();
     subject.on("test:first", eventHandler1);
     subject.on("test:second", eventHandler2);
     subject.trigger("test");
@@ -266,7 +266,7 @@ describe("Event executed only once", () => {
   });
 
   test("Event executed only once", () => {
-    const eventHandler = jest.fn((cmp) => {});
+    const eventHandler = jest.fn();
     subject.once("test", eventHandler);
     subject.trigger("test");
     expect(eventHandler).toBeCalledTimes(1);
@@ -275,8 +275,8 @@ describe("Event executed only once", () => {
   });
 
   test("Named event executed only once", () => {
-    const eventHandler1 = jest.fn((cmp) => {});
-    const eventHandler2 = jest.fn((cmp) => {});
+    const eventHandler1 = jest.fn();
+    const eventHandler2 = jest.fn();
     subject.on("test", eventHandler1);
     subject.once("test:ah", eventHandler2);
     subject.trigger("test");
@@ -288,8 +288,8 @@ describe("Event executed only once", () => {
   });
 
   test("Handlers triggered once from raw", () => {
-    const eventHandler = jest.fn((cmp) => {});
-    const eventHandler2 = jest.fn((cmp) => {});
+    const eventHandler = jest.fn();
+    const eventHandler2 = jest.fn();
     subject.once("click", eventHandler);
     expect(rawCmp.on).toBeCalledTimes(1);
     rawCmp._trigger("click");
@@ -325,14 +325,14 @@ describe("Delegated events", () => {
     subject = new Dummy(rawCmp, rawCmpSub);
   });
   test("Delegate an event", () => {
-    const eventHandler1 = jest.fn((cmp) => {});
+    const eventHandler1 = jest.fn();
     subject.on("click", "hop", eventHandler1);
     rawCmpSub._trigger("click");
     expect(eventHandler1).toBeCalledTimes(1);
   });
 
   test("Delegate an once event", () => {
-    const eventHandler1 = jest.fn((cmp) => {});
+    const eventHandler1 = jest.fn();
     subject.once("click", "hop", eventHandler1);
     rawCmpSub._trigger("click");
     rawCmpSub._trigger("click");
@@ -347,9 +347,9 @@ describe("Delegated events", () => {
   });
 
   test("Switch off a delegated event", () => {
-    const eventHandler0 = jest.fn((cmp) => {});
-    const eventHandler1 = jest.fn((cmp) => {});
-    const eventHandler2 = jest.fn((cmp) => {});
+    const eventHandler0 = jest.fn();
+    const eventHandler1 = jest.fn();
+    const eventHandler2 = jest.fn();
     subject.on("click", "hop", eventHandler1);
     subject.off("click", "hop");
     rawCmpSub._trigger("click");
@@ -397,11 +397,11 @@ describe("Disabling event", () => {
   });
 
   test("Simple test disabling", () => {
-    const eventHandler = jest.fn((cmp) => {});
+    const eventHandler = jest.fn();
     const eventHandler2 = jest.fn((cmp) => {
       cmp.disableEvent("test");
     });
-    const eventHandler3 = jest.fn((cmp) => {});
+    const eventHandler3 = jest.fn();
     subject.on("test", eventHandler);
     subject.on("test:shit", eventHandler2);
     subject.on("test:glue", eventHandler3);
@@ -440,11 +440,11 @@ describe("Cancel event", () => {
   });
 
   test("Cancel event", () => {
-    const eventHandler = jest.fn((cmp) => {});
+    const eventHandler = jest.fn();
     const eventHandler2 = jest.fn((cmp) => {
       cmp.cancelEvent("test");
     });
-    const eventHandler3 = jest.fn((cmp) => {});
+    const eventHandler3 = jest.fn();
     subject.on("test", eventHandler);
     subject.on("test:shit", eventHandler2);
     subject.on("test:glue", eventHandler3);
@@ -473,7 +473,7 @@ describe("Handle error in event", () => {
   });
 
   test("Handle error", () => {
-    const eventHandler = jest.fn((cmp) => {
+    const eventHandler = jest.fn(() => {
       let a = undefined;
       /* @ts-ignore This is intended to be erroneous */
       a();
@@ -502,11 +502,10 @@ describe("Transfer events", () => {
   });
 
   test("Events are transfered", () => {
-    const eventHandler = jest.fn((cmp) => {});
+    const eventHandler = jest.fn();
     subject.on("click", eventHandler);
     rawCmp._trigger("click");
     expect(eventHandler).toBeCalledTimes(1);
-    let cmp = eventHandler.mock.calls[0][0];
     subject.transferEvents(rawCmpDest);
     rawCmpDest._trigger("click");
     expect(eventHandler).toBeCalledTimes(2);
@@ -528,7 +527,7 @@ describe("Handle on change event trigger", () => {
   });
 
   test("Update is triggered when value changed", () => {
-    const eventHandler = jest.fn((cmp) => {});
+    const eventHandler = jest.fn();
     subject.on("update", eventHandler);
     expect(eventHandler).not.toBeCalled();
     rawCmp.value(2);
@@ -562,7 +561,6 @@ describe("Component has not targeting", () => {
     subject = new (class extends EventHolder<LetsRole.Component, TestedEvents> {
       constructor(
         protected _raw: LetsRole.Component,
-        subRaw?: LetsRole.Component
       ) {
         super(_raw.id());
       }
@@ -574,7 +572,7 @@ describe("Component has not targeting", () => {
   });
 
   test("Update is triggered when value changed", () => {
-    const eventHandler = jest.fn((cmp) => {});
+    const eventHandler = jest.fn();
     subject.on("test", eventHandler);
     expect(eventHandler).not.toBeCalled();
     subject.trigger("test");
@@ -596,9 +594,9 @@ describe("Event holder triggers events", () => {
   });
 
   test("Events triggered", () => {
-    const added = jest.fn((cmp, event, subComponent, handler) => {});
-    const updated = jest.fn((cmp, event, subComponent, handler) => {});
-    const removed = jest.fn((cmp, event, subComponent) => {});
+    const added = jest.fn();
+    const updated = jest.fn();
+    const removed = jest.fn();
 
     subject.on("eventhandler:added", added);
     expect(added).toBeCalledTimes(1);
@@ -699,7 +697,7 @@ describe("Event holder triggers events", () => {
     });
     
     test("Test linked event params", () => {
-      const subject2Cb = jest.fn((...args: any[]) => {});
+      const subject2Cb = jest.fn();
       subject2.on("click", subject2Cb);
       subject1.linkEventTo("click", subject2);
       subject1.trigger("click");

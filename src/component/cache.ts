@@ -1,4 +1,3 @@
-import { Sheet } from "../sheet";
 import { Component, REP_ID_SEP } from "./component";
 
 export class ComponentCache {

@@ -1,5 +1,3 @@
-import { Sheet } from "../sheet";
-
 type DataId = string;
 
 export class DataHolder {

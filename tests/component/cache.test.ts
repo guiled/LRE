@@ -55,9 +55,9 @@ describe("Component cache", () => {
     cache.set("rep.1.b", cmp1a);
     const entry2 = newCmp("rep.2");
     cache.set("rep.2", entry2);
-    const cmp2a = newCmp("rep.2.a");
+    newCmp("rep.2.a");
     cache.set("rep.2.a", cmp1a);
-    const cmp2b = newCmp("rep.1.b");
+    newCmp("rep.1.b");
     cache.set("rep.2.b", cmp1b);
     expect(cache.inCache("*rep")).toBeTruthy();
     expect(cache.inCache("*reup")).toBeFalsy();

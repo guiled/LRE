@@ -7,7 +7,7 @@ jest.mock("../../src/log");
 
 global.lre = new LRE();
 let waitedCallbacks: Array<(...args: any[]) => any> = [];
-global.wait = jest.fn((delay, cb) => waitedCallbacks.push(cb));
+global.wait = jest.fn((_delay, cb) => waitedCallbacks.push(cb));
 
 const itHasWaitedEnough = () => {
   while (waitedCallbacks.length) {
@@ -122,7 +122,7 @@ describe("Sheet data handling", () => {
   });
 
   test("setData and getData are batched", () => {
-    const processedCb = jest.fn((...args: any[]) => {});
+    const processedCb = jest.fn();
     sheet.on("data:processed", processedCb);
     const data: LetsRole.ViewData = {
       a: 1,
@@ -205,6 +205,10 @@ describe("Sheet persisting data", () => {
     expect(sheet2.persistingData("test2")).toStrictEqual(54);
     expect(sheet1.persistingData("test2")).toStrictEqual(54);
     expect(sheet2.persistingData("test")).toStrictEqual(44);
+    sheet1.deletePersistingData("test2");
+    expect(sheet1.persistingData("test2")).toBeUndefined();
+    itHasWaitedEnough();
+    //expect(sheet2.persistingData("test2")).toBeUndefined();
   });
 
   test("isInitialized", () => {
@@ -298,7 +302,7 @@ describe("Sheet persisting data", () => {
 });
 
 describe("Sheet get component", () => {
-  let sheet1: Sheet, sheet2: Sheet;
+  let sheet1: Sheet;
   let server: MockServer;
 
   const initSheet = function (sheetId: string, realId: string) {
@@ -313,7 +317,6 @@ describe("Sheet get component", () => {
   beforeEach(() => {
     server = new MockServer();
     sheet1 = initSheet("ahah", "4242");
-    sheet2 = initSheet("ahah", "4242");
   });
 
   test("Prevent errors", () => {

@@ -1,4 +1,3 @@
-import { subscribe } from "diagnostics_channel";
 import { DataHolder } from "../../src/dataholder/index";
 
 describe("Dataholder", () => {

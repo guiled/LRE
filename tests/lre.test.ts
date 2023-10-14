@@ -17,17 +17,21 @@ const itHasWaitedEnough = () => {
 
 beforeAll(() => {
   waitedCallbacks = [];
-  global.wait = jest.fn((delay, cb) => waitedCallbacks.push(cb));
+  global.wait = jest.fn((_delay, cb) => waitedCallbacks.push(cb));
 });
 
 describe("LRE tests", () => {
   let subject: LRE;
-  let spyOnMathRandom;
+  let spyOnMathRandom: jest.SpyInstance;
 
   beforeEach(() => {
     subject = new LRE();
     spyOnMathRandom = jest.spyOn(global.Math, "random").mockReturnValue(1);
   });
+
+  afterEach(() => {
+    spyOnMathRandom.mockClear();
+  })
 
   test("LRE util Object deep merge", () => {
     const obj1 = {

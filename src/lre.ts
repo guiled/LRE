@@ -13,7 +13,7 @@ export class LRE extends Logger implements ILRE {
   sheets: SheetCollection;
   public __debug: boolean = false;
 
-  apply(thisArg: any, argArray?: any) {
+  apply(_thisArg: any, argArray?: any) {
     this.log("prepare init");
     const [callback] = argArray;
     return (rawSheet: LetsRole.Sheet): void => {

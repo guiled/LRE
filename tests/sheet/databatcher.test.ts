@@ -6,7 +6,7 @@ import { LRE } from "../../src/lre";
 jest.mock("../../src/log/errorhandler");
 let waitedCallback: ((...args: any[]) => any) | null;
 global.lre = new LRE();
-global.wait = jest.fn((delay, cb) => (waitedCallback = cb));
+global.wait = jest.fn((_delay, cb) => (waitedCallback = cb));
 
 const itHasWaitedEnough = () => {
   const toCall = waitedCallback;

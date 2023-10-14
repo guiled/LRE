@@ -2,7 +2,6 @@ import {
   Argument,
   CallExpression,
   FunctionExpression,
-  ParenthesisExpression,
   Span,
   Statement,
 } from "@swc/core";

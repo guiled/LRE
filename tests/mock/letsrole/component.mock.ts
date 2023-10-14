@@ -1,5 +1,3 @@
-type OnMethod = (event: string, delegate: any, callback: any) => void;
-
 export type MockedComponent = LetsRole.Component & {
   _trigger: (event: string, target?: MockedComponent) => void;
 };

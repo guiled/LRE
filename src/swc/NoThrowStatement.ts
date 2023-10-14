@@ -1,6 +1,5 @@
 import {
   Argument,
-  Expression,
   Program,
   Statement,
   ThrowStatement,

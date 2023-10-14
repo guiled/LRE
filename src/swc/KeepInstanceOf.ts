@@ -1,12 +1,9 @@
 import {
   BinaryExpression,
-  Declaration,
   EmptyStatement,
   Expression,
-  FunctionDeclaration,
   Program,
   Statement,
-  UnaryExpression,
 } from "@swc/core";
 import { Visitor } from "@swc/core/Visitor";
 import undefinedidentifier from "./node/undefinedidentifier";
@@ -79,7 +76,6 @@ class KeepInstanceOf extends Visitor {
       n.callee.type === "Identifier" &&
       n.callee.value === "_instanceof"
     ) {
-      const span = n.span;
       const binaryExpression: BinaryExpression = {
         type: "BinaryExpression",
         span: n.span,

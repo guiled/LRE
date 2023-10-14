@@ -6,7 +6,6 @@ import {
   Constructor,
   Declaration,
   ExprOrSpread,
-  ObjectExpression,
   Program,
   Span,
   Statement,
@@ -31,11 +30,7 @@ class MixinToAssign extends Visitor {
   #mixinClasses: Argument[] | undefined;
   #constructorFound: boolean = false;
 
-  #makeMixinAssigns(
-    span: Span,
-    mixins: Argument[],
-    constructorArgs: ObjectExpression["properties"]
-  ): CallExpression {
+  #makeMixinAssigns(span: Span, mixins: Argument[]): CallExpression {
     return {
       type: "CallExpression",
       callee: objectassign(span),
@@ -178,7 +173,7 @@ class MixinToAssign extends Visitor {
     if (!superFound) {
       n.body.stmts.unshift({
         type: "ExpressionStatement",
-        expression: this.#makeMixinAssigns(span, this.#mixinClasses, []),
+        expression: this.#makeMixinAssigns(span, this.#mixinClasses),
         span,
       });
     }
@@ -219,11 +214,7 @@ class MixinToAssign extends Visitor {
             stmts: [
               {
                 type: "ExpressionStatement",
-                expression: this.#makeMixinAssigns(
-                  span,
-                  this.#mixinClasses,
-                  []
-                ),
+                expression: this.#makeMixinAssigns(span, this.#mixinClasses),
                 span,
               },
             ],
