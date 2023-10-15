@@ -1,4 +1,4 @@
-import { REP_ID_SEP } from "../component";
+import { Component, REP_ID_SEP } from "../component";
 import { EventHolder } from "../eventholder";
 import { HasRaw } from "../hasraw";
 import { ComponentCache } from "../component/cache";
@@ -45,7 +45,18 @@ export class Sheet
 
   constructor(rawSheet: LetsRole.Sheet) {
     lre.log(`new sheet ${rawSheet.getSheetId()}`);
-    super([[rawSheet.name()], [rawSheet]]);
+    super([
+      [/* EventHolder params */ rawSheet.name()],
+      [
+        /* HasRaw params */ {
+          getRaw: () => rawSheet,
+          onRefresh: (newRaw: LetsRole.Sheet) => {
+            this.#cmp = newRaw.get(newRaw.id());
+            this.transferEvents(this.#cmp);
+          },
+        },
+      ],
+    ]);
     this.rand = Math.floor(Math.random() * 100);
     this.#batcher = new DataBatcher(rawSheet);
     this.#batcher.linkEventTo("processed:sheet", this, "data:processed");
@@ -158,7 +169,7 @@ export class Sheet
   properName(): string {
     return this.raw().properName();
   }
-  get(id: string, _silent = false): ComponentSearchResult {
+  get(id: string, silent = false): ComponentSearchResult {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore id instance of is for live checks
     if (!((typeof id === "string" || id instanceof String) && isNaN(id))) {
@@ -173,20 +184,33 @@ export class Sheet
       return cmpInCache;
     }
 
-    let container: ComponentContainer = this,
-      finder: LetsRole.ComponentFinder | undefined = this.raw().get,
-      tabId = id.split(REP_ID_SEP),
-      finalId = id;
+    let rawCmp: LetsRole.Component | LetsRole.Sheet,
+      container: Component | Sheet | null,
+      tabId = id.split(REP_ID_SEP);
 
-    if (tabId.length > 1) {
-      finalId = tabId.pop()!;
+    if (tabId.length === 1) {
+      container = this;
+      rawCmp = this.raw().get(id);
+    } else {
+      let finalId = tabId.pop()!;
       let containerId = tabId.join(REP_ID_SEP);
-      container = this.get(containerId)!;
-      finder = this.get(tabId.join(REP_ID_SEP))?.raw()?.find;
-      if (!finder) return null;
+      container = this.get(containerId, silent);
+      if (!container || !container.id()) {
+        !silent &&
+          lre.error("Sheet.get returns null container for " + containerId);
+        return null;
+      }
+      rawCmp = (container as Component).raw()?.find?.(finalId);
     }
 
-    const rawCmp = finder("" + finalId);
+    if (!rawCmp) {
+      !silent && lre.error("Sheet.get returns null object for " + id);
+      return null;
+    } else if (!rawCmp.id()) {
+      !silent && lre.error("Unable to find " + id);
+      return null;
+    }
+
     const cmp = ComponentFactory.create(rawCmp, container);
     this.#componentCache.set(cmp.realId(), cmp);
     return cmp;

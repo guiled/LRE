@@ -45,7 +45,7 @@ export class Component<
   #repeater: Repeater | undefined;
   #entry: Entry | undefined;
 
-  constructor(raw: LetsRole.Component, sheet: Sheet, realId: string) {
+  constructor(_raw: LetsRole.Component, sheet: Sheet, realId: string) {
     super([
       [
         /* eventHolder */ realId,
@@ -67,7 +67,12 @@ export class Component<
           return this as EventHolder<LetsRole.Component>;
         },
       ],
-      [/* HasRaw */ raw],
+      [/* HasRaw */ {
+        getRaw: () => this.#sheet.raw().get(this.#realId),
+        onRefresh: (newRaw: LetsRole.Component) => {
+          this.transferEvents(newRaw);
+        },
+      }],
     ]);
     this.#realId = realId;
     this.#sheet = sheet;

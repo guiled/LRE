@@ -24,6 +24,11 @@ function deepClone<T = any>(val: T): T {
 
 export class MockServer {
   static UNKNOWN_CMP_ID = "_unknown_";
+  static NULL_CMP_ID = "_null_";
+  static NonExistingCmpDummy: LetsRole.Component = ({
+    id: jest.fn(),
+    getClasses: jest.fn(() => []),
+  }) as unknown as LetsRole.Component;
   sheets: Record<LetsRole.SheetID, Array<MockedSheet>> = {};
   sheetData: Record<LetsRole.SheetID, LetsRole.ViewData> = {};
   cmp: Record<
@@ -62,10 +67,9 @@ export class MockServer {
 
     sheet.get = jest.fn((cmpId: LetsRole.ComponentID) => {
       if (cmpId.indexOf(MockServer.UNKNOWN_CMP_ID) !== -1) {
-        return ({
-          id: jest.fn(),
-          getClasses: jest.fn(() => []),
-        }) as unknown as LetsRole.Component;
+        return MockServer.NonExistingCmpDummy;
+      } else if (cmpId.indexOf(MockServer.NULL_CMP_ID) !== -1) {
+        return null as unknown as LetsRole.Component;
       }
       const sheetId = sheet.getSheetId();
       this.cmp[sheetId][cmpId] = this.cmp[sheetId][cmpId] || new WeakMap();

@@ -1,3 +1,5 @@
+import { MockServer } from "./server.mock";
+
 export type MockedComponent = LetsRole.Component & {
   _trigger: (event: string, target?: MockedComponent) => void;
 };
@@ -28,8 +30,14 @@ export const MockComponent = ({
     id: jest.fn(() => id),
     sheet: jest.fn(() => sheet),
     name: jest.fn(() => name),
-    find: jest.fn((id: LetsRole.ComponentID) =>
-      MockComponent({ id, sheet, cntr: cmp })
+    find: jest.fn((id: LetsRole.ComponentID) => {
+      if (id.indexOf(MockServer.UNKNOWN_CMP_ID) !== -1) {
+        return MockServer.NonExistingCmpDummy;
+      } else if (id.indexOf(MockServer.NULL_CMP_ID) !== -1) {
+        return null as unknown as LetsRole.Component;
+      }
+      return MockComponent({ id, sheet, cntr: cmp })
+    }
     ),
     index: jest.fn(() => index),
     parent: jest.fn(() =>

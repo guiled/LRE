@@ -27,12 +27,16 @@ beforeEach(() => {
     realId: "123",
   });
   sheet = new Sheet(rawSheet);
+  sheet.raw = jest.fn(() => rawSheet);
   rawCmp = MockComponent({
     id: cmpId,
     sheet: rawSheet,
     name: cmpName,
     classes: cmpClasses,
     text: cmpText,
+  });
+  rawSheet.get = jest.fn(() => {
+    return rawCmp;
   });
   cmp = new Component(rawCmp, sheet, realId);
 });

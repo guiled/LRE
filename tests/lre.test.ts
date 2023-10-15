@@ -35,6 +35,7 @@ describe("LRE tests", () => {
   })
 
   test("LRE util Object deep merge", () => {
+    expect(subject.deepMerge({}, {})).toEqual({});
     const obj1 = {
       a: 1,
       c: {
