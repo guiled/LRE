@@ -1,6 +1,16 @@
 declare interface ILRE {
   deepMerge(target: any, ...sources: any[]): any;
+  numToAlpha(n: number): string;
+  alphaToNum(s: string): number;
   __debug: boolean = false;
+}
+
+declare interface Logger {
+  error(...args: any[]): void;
+  warn(...args: any[]): void;
+  trace(...args: any[]): void;
+  log(...args: any[]): void;
+  setLogLevel(level: keyof typeof LogLevel): void;
 }
 
 type cb = (thisArg: any, argArray?: any) => (rawSheet: LetsRole.Sheet) => void;
