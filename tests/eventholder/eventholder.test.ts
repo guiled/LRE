@@ -1,4 +1,4 @@
-import { Logger } from "../../src/log";
+import { LRE } from "../../src/lre";
 import { handleError } from "../../src/log/errorhandler";
 import {
   MockComponent,
@@ -7,9 +7,10 @@ import {
 import { MockSheet } from "../mock/letsrole/sheet.mock";
 import { EventHolder } from "../../src/eventholder/index";
 
-global.lre = new Logger();
-
+jest.mock("../../src/lre");
 jest.mock("../../src/log/errorhandler");
+
+global.lre = new LRE();
 
 type TestedEvents = "test" | "unused" | "click" | "update";
 
@@ -42,36 +43,18 @@ describe("Test simple events", () => {
   });
 
   test("No raw event calls for custom event", () => {
-    subject.on(
-      "test",
-      jest.fn()
-    );
-    subject.on(
-      "test:a",
-      jest.fn()
-    );
-    subject.on(
-      "test:b",
-      jest.fn()
-    );
+    subject.on("test", jest.fn());
+    subject.on("test:a", jest.fn());
+    subject.on("test:b", jest.fn());
     expect(rawCmp.on).toBeCalledTimes(0);
     subject.off("test");
     expect(rawCmp.off).toBeCalledTimes(0);
   });
 
   test("Only one raw event added for custom event", () => {
-    subject.on(
-      "click",
-      jest.fn()
-    );
-    subject.on(
-      "click:a",
-      jest.fn()
-    );
-    subject.on(
-      "click:b",
-      jest.fn()
-    );
+    subject.on("click", jest.fn());
+    subject.on("click:a", jest.fn());
+    subject.on("click:b", jest.fn());
     expect(rawCmp.on).toBeCalledTimes(1);
     subject.off("click");
     expect(rawCmp.off).toBeCalledTimes(0);
@@ -559,9 +542,7 @@ describe("Component has not targeting", () => {
     });
     rawCmp.value(1);
     subject = new (class extends EventHolder<LetsRole.Component, TestedEvents> {
-      constructor(
-        protected _raw: LetsRole.Component,
-      ) {
+      constructor(protected _raw: LetsRole.Component) {
         super(_raw.id());
       }
 
@@ -695,7 +676,7 @@ describe("Event holder triggers events", () => {
       expect(subject2Cb).toBeCalledTimes(0);
       expect(subject2Cb2).toBeCalledTimes(1);
     });
-    
+
     test("Test linked event params", () => {
       const subject2Cb = jest.fn();
       subject2.on("click", subject2Cb);

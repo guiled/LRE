@@ -1,9 +1,9 @@
-import { Logger } from "../../src/log";
 import { handleError } from "../../src/log/errorhandler";
+import { LRE } from "../../src/lre";
 
-jest.mock("../../src/log");
+jest.mock("../../src/lre");
 
-global.lre = new Logger();
+global.lre = new LRE();
 global.errExclFirstLine = 100;
 global.errExclLastLine = 150;
 
