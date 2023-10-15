@@ -205,10 +205,42 @@ describe("Sheet persisting data", () => {
     expect(sheet2.persistingData("test2")).toStrictEqual(54);
     expect(sheet1.persistingData("test2")).toStrictEqual(54);
     expect(sheet2.persistingData("test")).toStrictEqual(44);
+
     sheet1.deletePersistingData("test2");
     expect(sheet1.persistingData("test2")).toBeUndefined();
     itHasWaitedEnough();
-    //expect(sheet2.persistingData("test2")).toBeUndefined();
+    expect(sheet2.persistingData("test2")).toBeUndefined();
+
+    sheet2.persistingData("test2", 55);
+    expect(sheet1.persistingData("test2")).toBeUndefined();
+    expect(sheet2.persistingData("test2")).toStrictEqual(55);
+    itHasWaitedEnough();
+    expect(sheet1.persistingData("test2")).toStrictEqual(55);
+    expect(sheet2.persistingData("test2")).toStrictEqual(55);
+    sheet1.deletePersistingData("test2");
+    sheet2.persistingData("test2", 56);
+    expect(sheet1.persistingData("test2")).toBeUndefined();
+    expect(sheet2.persistingData("test2")).toStrictEqual(56);
+    itHasWaitedEnough();
+    expect(sheet1.persistingData("test2")).toBeUndefined();
+    expect(sheet2.persistingData("test2")).toBeUndefined();
+    sheet1.persistingData("test3", 3);
+    sheet2.deletePersistingData("test3");
+    expect(sheet1.persistingData("test3")).toStrictEqual(3);
+    expect(sheet2.persistingData("test3")).toBeUndefined();
+    itHasWaitedEnough();
+    expect(sheet1.persistingData("test3")).toStrictEqual(3);
+    expect(sheet2.persistingData("test3")).toStrictEqual(3);
+    
+    const persistingCmpData = sheet1.persistingData("cmpData");
+    const persistingCmpClasses = sheet1.persistingData("cmpClasses");
+    const persistingInitialized = sheet1.persistingData("initialized");
+    sheet1.deletePersistingData("cmpData");
+    sheet1.deletePersistingData("cmpClasses");
+    sheet1.deletePersistingData("initialized");
+    expect(sheet1.persistingData("cmpData")).toBe(persistingCmpData);
+    expect(sheet1.persistingData("cmpClasses")).toBe(persistingCmpClasses);
+    expect(sheet1.persistingData("initialized")).toBe(persistingInitialized);
   });
 
   test("isInitialized", () => {
@@ -290,8 +322,8 @@ describe("Sheet persisting data", () => {
     expect(sheet2.persistingCmpClasses("123")).not.toEqual(c);
     expect(itHasWaitedEnough).not.toThrowError();
     expect(sheet2.persistingCmpClasses("123")).toEqual(c);
-    const c1 = ["class1", "class1b"]
-    const c2 = ["class2"]
+    const c1 = ["class1", "class1b"];
+    const c2 = ["class2"];
     sheet1.persistingCmpClasses("123", c1);
     sheet2.persistingCmpClasses("123", c2);
     expect(itHasWaitedEnough).not.toThrowError();
