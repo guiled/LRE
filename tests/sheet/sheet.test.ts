@@ -3,7 +3,6 @@ import { MockServer } from "../mock/letsrole/server.mock";
 import { MockSheet, MockedSheet } from "../mock/letsrole/sheet.mock";
 import { Sheet } from "../../src/sheet/index";
 import { LRE } from "../../src/lre";
-jest.mock("../../src/log");
 
 global.lre = new LRE();
 let waitedCallbacks: Array<(...args: any[]) => any> = [];
@@ -65,7 +64,7 @@ describe("Sheet basics", () => {
     const res = sheet.getSheetId();
     expect(res).toEqual("4242");
     expect(raw.getSheetId).toBeCalledTimes(1);
-    expect(sheet.getSheetAlphaId()).toBe("Bde")
+    expect(sheet.getSheetAlphaId()).toBe("Bde");
   });
 
   test("name and properName call raw methods", () => {
@@ -97,13 +96,14 @@ describe("Sheet basics", () => {
 
 describe("Sheet data handling", () => {
   const sheetId = "testedSheet";
+  const rawSheetData = {
+    id: sheetId,
+    realId: "4242",
+  };
   let raw: MockedSheet, sheet: Sheet;
   let server: MockServer;
   beforeEach(() => {
-    raw = MockSheet({
-      id: sheetId,
-      realId: "4242",
-    });
+    raw = MockSheet(rawSheetData);
     server = new MockServer();
     server.registerMockedSheet(raw);
     sheet = new Sheet(raw);
@@ -122,8 +122,8 @@ describe("Sheet data handling", () => {
     expect(raw2.getData()).toEqual(validObject);
   });
 
-  test("setData and getData are batched", () => {
-    const processedCb = jest.fn();
+  test("setData and getData are batched and events are triggered", () => {
+    const processedCb: jest.Mock = jest.fn();
     sheet.on("data:processed", processedCb);
     const data: LetsRole.ViewData = {
       a: 1,
@@ -154,6 +154,21 @@ describe("Sheet data handling", () => {
     expect(sheet.getPendingData("a")).toStrictEqual(11);
     itHasWaitedEnough();
     expect(raw.setData).toBeCalled();
+    expect(processedCb).toBeCalled();
+    processedCb.mockClear();
+
+    const newRaw = MockSheet(rawSheetData);
+    const prevRaw = sheet.raw();
+    expect(newRaw).not.toBe(prevRaw);
+    sheet.refreshRaw(newRaw);
+    expect(sheet.raw()).toBe(newRaw);
+    expect(sheet.raw()).not.toBe(prevRaw);
+    sheet.setData({
+      a: 11,
+      d: 4,
+    });
+    expect(processedCb).not.toBeCalled();
+    itHasWaitedEnough();
     expect(processedCb).toBeCalled();
   });
 
@@ -232,7 +247,7 @@ describe("Sheet persisting data", () => {
     itHasWaitedEnough();
     expect(sheet1.persistingData("test3")).toStrictEqual(3);
     expect(sheet2.persistingData("test3")).toStrictEqual(3);
-    
+
     const persistingCmpData = sheet1.persistingData("cmpData");
     const persistingCmpClasses = sheet1.persistingData("cmpClasses");
     const persistingInitialized = sheet1.persistingData("initialized");
@@ -286,6 +301,12 @@ describe("Sheet persisting data", () => {
       ...newData1,
       ...newData2,
     });
+    const newRawSheet1 = MockSheet({
+      id: sheet1.id(),
+      realId: sheet1.getSheetId(),
+    });
+    server.registerMockedSheet(newRawSheet1);
+    sheet1.refreshRaw(newRawSheet1);
     const newData3 = {
       ...newData1,
       v5: {
@@ -378,7 +399,45 @@ describe("Sheet get component", () => {
   });
 
   test("Find a component in a repeater", () => {
+    expect(sheet1.get("a.b")).toBeInstanceOf(Component);
     expect(sheet1.get("a.b.c")).toBeInstanceOf(Component);
-    expect(sheet1.get(MockServer.UNKNOWN_CMP_ID + ".b.c")).toBeNull();
+  });
+
+  test("Non existing component search", () => {
+    const errorLogSpy = jest.spyOn(lre, "error");
+    expect(sheet1.get(MockServer.UNKNOWN_CMP_ID)).toBeNull();
+    expect(errorLogSpy).toBeCalled();
+    errorLogSpy.mockClear();
+    expect(sheet1.get(`${MockServer.UNKNOWN_CMP_ID}.b.c`)).toBeNull();
+    expect(errorLogSpy).toBeCalled();
+    errorLogSpy.mockClear();
+    expect(sheet1.get(`a.${MockServer.UNKNOWN_CMP_ID}.c`)).toBeNull();
+    expect(errorLogSpy).toBeCalled();
+    errorLogSpy.mockClear();
+    expect(sheet1.get(`a.b.${MockServer.UNKNOWN_CMP_ID}`)).toBeNull();
+    expect(errorLogSpy).toBeCalled();
+    errorLogSpy.mockClear();
+    expect(sheet1.get(MockServer.NULL_CMP_ID)).toBeNull();
+    expect(errorLogSpy).toBeCalled();
+    errorLogSpy.mockClear();
+    expect(sheet1.get(`${MockServer.NULL_CMP_ID}.b.c`)).toBeNull();
+    expect(errorLogSpy).toBeCalled();
+    errorLogSpy.mockClear();
+    expect(sheet1.get(`a.${MockServer.NULL_CMP_ID}.c`)).toBeNull();
+    expect(errorLogSpy).toBeCalled();
+    errorLogSpy.mockClear();
+    expect(sheet1.get(`a.b.${MockServer.NULL_CMP_ID}`)).toBeNull();
+    expect(errorLogSpy).toBeCalled();
+    errorLogSpy.mockClear();
+
+    expect(sheet1.get(MockServer.UNKNOWN_CMP_ID, true)).toBeNull();
+    expect(sheet1.get(`${MockServer.UNKNOWN_CMP_ID}.b.c`, true)).toBeNull();
+    expect(sheet1.get(`a.${MockServer.UNKNOWN_CMP_ID}.c`, true)).toBeNull();
+    expect(sheet1.get(`a.b.${MockServer.UNKNOWN_CMP_ID}`, true)).toBeNull();
+    expect(sheet1.get(MockServer.NULL_CMP_ID, true)).toBeNull();
+    expect(sheet1.get(`${MockServer.NULL_CMP_ID}.b.c`, true)).toBeNull();
+    expect(sheet1.get(`a.${MockServer.NULL_CMP_ID}.c`, true)).toBeNull();
+    expect(sheet1.get(`a.b.${MockServer.NULL_CMP_ID}`, true)).toBeNull();
+    expect(errorLogSpy).toBeCalledTimes(0);
   });
 });
