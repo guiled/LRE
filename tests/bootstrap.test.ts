@@ -2,7 +2,8 @@ import { bootstrap } from "../src/bootstrap";
 import { LRE } from "../src/lre";
 
 beforeAll(() => {
-  global.lre = null;
+  /* @ts-ignore */
+  global.lre = null; 
   global.isNaN = null as unknown as (c: any) => any;
   global.structuredClone = null as unknown as (c: any) => any;
   global.Tables = {
