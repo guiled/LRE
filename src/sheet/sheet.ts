@@ -15,7 +15,7 @@ type SheetProtectedStoredState = {
   initialized: boolean;
   cmpData: Record<LetsRole.ComponentID, any>;
   cmpClasses: Record<LetsRole.ComponentID, Array<LetsRole.ClassName>>;
-}
+};
 
 type SheetStoredState = SheetProtectedStoredState & Record<string, any>;
 
@@ -37,6 +37,7 @@ export class Sheet
   //#silentFind: ComponentFinder;
   #batcher: DataBatcher;
   #storedState: SheetStoredState | undefined;
+  #storedStateReceivedKeys: Array<string> = [];
   #componentCache: ComponentCache;
   #cmp: LetsRole.Component;
   rand: number;
@@ -70,19 +71,33 @@ export class Sheet
     lre.trace("data updated from server…");
     this.#loadState(this.#storedState);
     const data = this.raw().getData();
-    
+
     const newSheetStoredState: SheetStoredState =
       (data[this.id()] as SheetStoredState) || {};
     const hasPendingData = !!this.getPendingData(this.id());
 
+    const newStoreStateKeys = Object.keys(newSheetStoredState);
+
+    const keysToDelete = this.#storedStateReceivedKeys.filter(
+      (k) => !newStoreStateKeys.includes(k)
+    );
+    keysToDelete.forEach((k) => {
+      if (this.#storedState!.hasOwnProperty(k)) {
+        delete this.#storedState![k];
+      }
+    });
+
     this.#storedState = lre.deepMerge(this.#storedState, newSheetStoredState);
+    this.#storedStateReceivedKeys = Object.keys(this.#storedState!);
     if (hasPendingData) {
       lre.trace("pending data update");
       this.#saveStoredState();
     }
   }
 
-  #loadState(_state: SheetStoredState | undefined): asserts _state is SheetStoredState {
+  #loadState(
+    _state: SheetStoredState | undefined
+  ): asserts _state is SheetStoredState {
     if (!this.#storedState) {
       const data = this.raw().getData();
       const persist: SheetStoredState | undefined = data?.[
@@ -94,6 +109,7 @@ export class Sheet
         cmpClasses: {},
         ...persist,
       };
+      this.#storedStateReceivedKeys = Object.keys(this.#storedState);
     }
   }
 
@@ -199,6 +215,10 @@ export class Sheet
   }
 
   deletePersistingData(dataName: Exclude<string, ProtectedStoredState>): void {
+    if (["initialized", "cmpData", "cmpClasses"].includes(dataName)) {
+      lre.warn("Unauthorized persisting data deletion " + dataName);
+      return;
+    }
     this.#loadState(this.#storedState);
     if (this.#storedState.hasOwnProperty(dataName)) {
       delete this.#storedState[dataName];
@@ -231,8 +251,10 @@ export class Sheet
     newClasses?: Array<LetsRole.ClassName>
   ): Array<LetsRole.ClassName> {
     if (arguments.length > 1) {
-      return (
-        this.#persistingDataOperation("cmpClasses", componentId, newClasses!)
+      return this.#persistingDataOperation(
+        "cmpClasses",
+        componentId,
+        newClasses!
       );
     } else {
       return this.#persistingDataOperation("cmpClasses", componentId) || [];
