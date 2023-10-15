@@ -7,6 +7,7 @@ export interface ComponentContainer {
   lreType(): ComponentType;
   realId(): string;
   sheet(): Sheet;
+  raw(): LetsRole.Component | LetsRole.Sheet
 }
 export type ComponentFinder = (id: string) => ComponentSearchResult;
 export type ComponentSearchResult = Component | null;

@@ -12,7 +12,9 @@ class LreTables extends HasRaw<LetsRole.Tables> implements LetsRole.Tables {
   }
 
   constructor(raw: LetsRole.Tables) {
-    super(raw);
+    super({
+      getRaw: () => raw,
+    });
   }
 }
 

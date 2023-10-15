@@ -20,6 +20,8 @@ export class Table extends HasRaw<LetsRole.Table> implements LetsRole.Table {
   }
 
   constructor(raw: LetsRole.Table) {
-    super(raw);
+    super({
+      getRaw: () => raw,
+    });
   }
 }
