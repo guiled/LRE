@@ -65,6 +65,7 @@ describe("Sheet basics", () => {
     const res = sheet.getSheetId();
     expect(res).toEqual("4242");
     expect(raw.getSheetId).toBeCalledTimes(1);
+    expect(sheet.getSheetAlphaId()).toBe("Bde")
   });
 
   test("name and properName call raw methods", () => {

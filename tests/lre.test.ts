@@ -5,7 +5,8 @@ import { Sheet } from "../src/sheet";
 import { MockSheet } from "./mock/letsrole/sheet.mock";
 
 jest.mock("../src/log/errorhandler");
-global.lre = new Logger();
+jest.mock("../src/log");
+global.lre = new Logger() as ILRE & Logger & cb;
 let waitedCallbacks: Array<(...args: any[]) => any>;
 
 const itHasWaitedEnough = () => {
@@ -108,7 +109,7 @@ describe("LRE tests", () => {
     expect(cb.mock.calls[1][0]).toBeInstanceOf(Sheet);
 
     const cbErr: jest.Mock = jest.fn(() => {throw new Error('arf')})
-    global.firstInit = jest.fn(() => {throw new Error('outch')})
+    global.firstInit = jest.fn(() => {throw new Error('wow')})
     let initErr = subject.apply(subject, [cbErr]);
     initErr(sheet1);
     expect(cbErr).toBeCalledTimes(0);

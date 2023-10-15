@@ -40,6 +40,7 @@ export class Sheet
   #storedStateReceivedKeys: Array<string> = [];
   #componentCache: ComponentCache;
   #cmp: LetsRole.Component;
+  #alphaId: string | undefined = undefined;
   rand: number;
 
   constructor(rawSheet: LetsRole.Sheet) {
@@ -140,6 +141,10 @@ export class Sheet
   }
   id(): string {
     return this.raw().id();
+  }
+  getSheetAlphaId(): string {
+    this.#alphaId ??= lre.numToAlpha(Number(this.getSheetId()));
+    return this.#alphaId!;
   }
   realId(): string {
     return this.raw().id();
