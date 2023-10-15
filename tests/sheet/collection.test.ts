@@ -1,12 +1,12 @@
-import { Logger } from "../../src/log";
+import { LRE } from "../../src/lre";
 import { Sheet } from "../../src/sheet";
 import { SheetCollection } from "../../src/sheet/collection";
 import { MockServer } from "../mock/letsrole/server.mock";
 import { MockSheet } from "../mock/letsrole/sheet.mock";
 
-jest.mock("../../src/log");
+jest.mock("../../src/lre");
 
-global.lre = new Logger();
+global.lre = new LRE();
 
 describe("Sheet collection", () => {
   let sheet1: Sheet, sheet2: Sheet;

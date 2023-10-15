@@ -1,13 +1,15 @@
-import { Logger } from "../../src/log";
 import { MockComponent } from "../mock/letsrole/component.mock";
 import { MockSheet } from "../mock/letsrole/sheet.mock";
 import { Sheet } from "../../src/sheet";
 import { ComponentCache } from "../../src/component/cache";
 import { Component } from "../../src/component/component";
+import { LRE } from "../../src/lre";
+
+jest.mock("../../src/lre");
 jest.mock("../../src/sheet");
 jest.mock("../../src/component/component");
 
-global.lre = new Logger();
+global.lre = new LRE();
 
 let cache: ComponentCache;
 const rawSheet = MockSheet({
@@ -63,7 +65,11 @@ describe("Component cache", () => {
     expect(cache.inCache("*reup")).toBeFalsy();
     expect(cache.inCache("*rep.1")).toBeTruthy();
     expect(cache.inCache("*rep.1")).toBeTruthy();
-    expect(cache.children("rep.1").sort()).toEqual(["rep.1.a", "rep.1.b"].sort());
-    expect(cache.children("rep").sort()).toEqual(["rep.2.a", "rep.2", "rep.1", "rep.2.b", "rep.1.a", "rep.1.b"].sort());
+    expect(cache.children("rep.1").sort()).toEqual(
+      ["rep.1.a", "rep.1.b"].sort()
+    );
+    expect(cache.children("rep").sort()).toEqual(
+      ["rep.2.a", "rep.2", "rep.1", "rep.2.b", "rep.1.a", "rep.1.b"].sort()
+    );
   });
 });
