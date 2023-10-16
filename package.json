@@ -23,7 +23,8 @@
   "scripts": {
     "test": "jest",
     "testswc": "npx tsx test.ts",
-    "build": "tsx build.ts",
-    "buildcopy": "tsx build.ts && (cat build/lre.js | pbcopy)"
+    "count_output": "echo \"Number of lines in build/lre.js $(cat build/lre.js | wc -l) ($(cat build/lre.js | wc -c) caracters)\"",
+    "build": "tsx build.ts && yarn count_output",
+    "buildcopy": "yarn build && (cat build/lre.js | pbcopy)"
   }
 }
