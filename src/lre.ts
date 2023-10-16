@@ -108,6 +108,6 @@ export class LRE extends Logger implements ILRE {
       }
     }
 
-    return this.deepMerge(target, ...sources);
+    return this.deepMerge.apply(this, [target, ...sources]);
   }
 }
