@@ -439,5 +439,41 @@ describe("Sheet get component", () => {
     expect(sheet1.get(`a.${MockServer.NULL_CMP_ID}.c`, true)).toBeNull();
     expect(sheet1.get(`a.b.${MockServer.NULL_CMP_ID}`, true)).toBeNull();
     expect(errorLogSpy).toBeCalledTimes(0);
+
+    expect(sheet1.componentExists("a")).toBeTruthy();
+    expect(sheet1.componentExists(MockServer.NULL_CMP_ID)).toBeFalsy();
+    expect(sheet1.componentExists(MockServer.UNKNOWN_CMP_ID)).toBeFalsy();
+    sheet1.raw().getData = jest.fn(() => {
+      return {
+        a: {
+          b: {
+            c: "ah",
+          },
+        },
+      };
+    });
+    expect(sheet1.componentExists("a.b")).toBeTruthy();
+    expect(sheet1.componentExists("a.b.c")).toBeTruthy();
+    expect(sheet1.componentExists("a.z")).toBeFalsy();
+    expect(sheet1.componentExists("a.z.y")).toBeFalsy();
+    expect(sheet1.componentExists("a.z.y")).toBeFalsy();
+    expect(
+      sheet1.componentExists(`${MockServer.UNKNOWN_CMP_ID}.b.c`)
+    ).toBeFalsy();
+    expect(
+      sheet1.componentExists(`a.${MockServer.UNKNOWN_CMP_ID}.c`)
+    ).toBeFalsy();
+    expect(
+      sheet1.componentExists(`a.b.${MockServer.UNKNOWN_CMP_ID}`)
+    ).toBeFalsy();
+    expect(sheet1.componentExists(MockServer.NULL_CMP_ID)).toBeFalsy();
+    expect(sheet1.componentExists(`${MockServer.NULL_CMP_ID}.b.c`)).toBeFalsy();
+    expect(sheet1.componentExists(`a.${MockServer.NULL_CMP_ID}.c`)).toBeFalsy();
+    expect(sheet1.componentExists(`a.b.${MockServer.NULL_CMP_ID}`)).toBeFalsy();
+    expect(sheet1.componentExists(`${MockServer.NON_EXISTING_CMP_ID}.b.c`)).toBeFalsy();
+    expect(sheet1.componentExists(`a.${MockServer.NON_EXISTING_CMP_ID}.c`)).toBeFalsy();
+    expect(sheet1.componentExists(`a.b.${MockServer.NON_EXISTING_CMP_ID}`)).toBeFalsy();
+
+    expect(errorLogSpy).toBeCalledTimes(0);
   });
 });

@@ -34,7 +34,7 @@ export class Sheet
     ComponentContainer,
     ComponentCommon
 {
-  //#silentFind: ComponentFinder;
+  #silentFind: LetsRole.Component["find"];
   #batcher: DataBatcher;
   #storedState: SheetStoredState | undefined;
   #storedStateReceivedKeys: Array<string> = [];
@@ -62,6 +62,7 @@ export class Sheet
     this.#batcher.linkEventTo("processed:sheet", this, "data:processed");
     this.#componentCache = new ComponentCache();
     this.#cmp = rawSheet.get(rawSheet.id())!;
+    this.#silentFind = this.#cmp.find;
     this.#cmp.on("update", this.#handleDataUpdate.bind(this));
     //this.#silentFind = rawSheet.get(rawSheet.id())
     //  .find as unknown as ComponentFinder;
@@ -218,6 +219,38 @@ export class Sheet
 
   find(id: string): ComponentSearchResult {
     return this.get(id);
+  }
+
+  componentExists(realId: string): boolean {
+    const parts = realId.split(REP_ID_SEP);
+    const cmp = this.#silentFind(parts[0]);
+    if (!cmp || !cmp.id()) {
+      return false;
+    }
+    if (parts.length > 1) {
+      const val = this.raw().getData()[parts[0]];
+      if (!val || !val.hasOwnProperty(parts[1])) {
+        return false;
+      }
+      if (parts.length > 2) {
+        let tmp = this.#silentFind(realId);
+        if (!tmp || !tmp.id()) {
+          return false;
+        }
+        tmp = this.raw().get(realId);
+        let result = true;
+        try {
+          tmp.addClass("__lre_dummy");
+          tmp.removeClass("__lre_dummy");
+        } catch (e) {
+          result = false;
+        }
+        if (!result) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   setData(data: LetsRole.ViewData): void {
