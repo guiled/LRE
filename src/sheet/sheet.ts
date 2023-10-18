@@ -52,7 +52,9 @@ export class Sheet
           getRaw: () => rawSheet,
           onRefresh: (newRaw: LetsRole.Sheet) => {
             this.#cmp = newRaw.get(newRaw.id());
+            this.#silentFind = this.#cmp.find;
             this.transferEvents(this.#cmp);
+            this.#batcher.transferEvents(this.#cmp);
           },
         },
       ],
@@ -64,8 +66,51 @@ export class Sheet
     this.#cmp = rawSheet.get(rawSheet.id())!;
     this.#silentFind = this.#cmp.find;
     this.#cmp.on("update", this.#handleDataUpdate.bind(this));
-    //this.#silentFind = rawSheet.get(rawSheet.id())
-    //  .find as unknown as ComponentFinder;
+  }
+
+  cleanCmpData(): void {
+    this.#loadState(this.#storedState);
+
+    const cmpIdsInCmpData: Array<string> = Object.keys(
+      this.#storedState.cmpData
+    );
+    const cmpIdsInCmpClasses: Array<string> = Object.keys(
+      this.#storedState.cmpClasses
+    );
+    const realIdToChecked: Array<string> = [
+      ...cmpIdsInCmpData,
+      ...cmpIdsInCmpClasses,
+    ];
+    const realIdToForget: Array<string> = [];
+
+    const analyzeRealId = () => {
+      const checking = realIdToChecked.splice(0, 20);
+      checking.forEach((realId: string) => {
+        const parts = realId.split(REP_ID_SEP);
+        const length = parts.length;
+        const base = parts.pop();
+        if (length === 1 && !this.componentExists(base!)) {
+          // forget data for non-existing components
+          realIdToForget.push(realId);
+        } else if (
+          length === 3 &&
+          !this.componentExists(parts.join(REP_ID_SEP))
+        ) {
+          // forget data for components in non-existing repeater entries
+          realIdToForget.push(realId);
+        }
+      });
+      if (realIdToChecked.length > 0) {
+        wait(200, analyzeRealId);
+      } else {
+        realIdToForget.forEach((realId) => {
+          delete this.#storedState!.cmpData[realId];
+          delete this.#storedState!.cmpClasses[realId];
+        });
+        this.#saveStoredState();
+      }
+    };
+    wait(200, analyzeRealId);
   }
 
   #persistingDataOperation<
@@ -321,5 +366,9 @@ export class Sheet
     } else {
       return this.#persistingDataOperation("cmpClasses", componentId) || [];
     }
+  }
+
+  group(): any {
+    // todo
   }
 }

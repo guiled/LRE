@@ -21,6 +21,7 @@ export class LRE extends Logger implements ILRE {
       wait(0, () => {
         const sheetId = rawSheet.getSheetId();
         const _sheet = new Sheet(rawSheet);
+        _sheet.cleanCmpData();
         this.sheets.add(_sheet);
         if (!_sheet.isInitialized() && firstInit !== void 0) {
           this.log(`sheet first initialization`);
