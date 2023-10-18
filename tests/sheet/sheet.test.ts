@@ -197,14 +197,14 @@ describe("Sheet persisting data", () => {
 
   beforeEach(() => {
     server = new MockServer();
-    sheet1 = initSheet("ahah", "4242");
-    sheet2 = initSheet("ahah", "4242");
+    sheet1 = initSheet("main", "4242");
+    sheet2 = initSheet("main", "4242");
   });
   test("Persisting data shared between sheets", () => {
     sheet1.persistingData("test", 42);
     expect(sheet1.persistingData("test")).toStrictEqual(42);
     itHasWaitedEnough();
-    const testSheet = initSheet("ahah", "4242");
+    const testSheet = initSheet("main", "4242");
     expect(testSheet.persistingData("test")).toStrictEqual(42);
     sheet2.persistingData("test", 43);
     expect(sheet1.persistingData("test")).toStrictEqual(42);
@@ -355,6 +355,102 @@ describe("Sheet persisting data", () => {
   });
 });
 
+describe("Sheet clean data", () => {
+  let raw: LetsRole.Sheet;
+  let server: MockServer;
+
+  beforeEach(() => {
+    raw = MockSheet({
+      id: "main",
+      realId: "123",
+    });
+    server = new MockServer();
+    server.registerMockedSheet(raw);
+  });
+
+  test("Clean data", () => {
+    let data: LetsRole.ViewData = {
+      main: {
+        cmpData: {},
+        cmpClasses: {},
+        initialized: false,
+      },
+    };
+    raw.getData = jest.fn(() => data);
+    raw.setData = jest.fn((d) => (data = { ...data, ...d }));
+    let save = structuredClone(data);
+    let sheet = new Sheet(raw);
+    sheet.cleanCmpData();
+    expect(sheet.getData()).toEqual(save);
+    itHasWaitedEnough();
+    expect(sheet.getData()).toEqual(save);
+    data = {
+      main: {
+        cmpData: {
+          a: { love: "test" },
+        },
+        cmpClasses: {},
+        initialized: false,
+      },
+    };
+    save = structuredClone(data);
+    sheet = new Sheet(raw);
+    sheet.cleanCmpData();
+    expect(sheet.getData()).toEqual(save);
+    itHasWaitedEnough();
+    expect(sheet.getData()).toEqual(save);
+    const large = createLargeObject(30);
+    data = {
+      main: {
+        cmpData: {
+          ...large,
+          a: { love: "test" },
+          [MockServer.UNKNOWN_CMP_ID]: { itWillBe: "deleted" },
+          [MockServer.UNKNOWN_CMP_ID + ".b.c"]: { itWillBe: "deleted" },
+          [`a.${MockServer.UNKNOWN_CMP_ID}.c`]: { itWillBe: "deleted" },
+          [`a.b.${MockServer.UNKNOWN_CMP_ID}`]: { itWillBe: "deleted" },
+        },
+        cmpClasses: {
+          ...large,
+          b: { love: "test" },
+          ["a" + MockServer.UNKNOWN_CMP_ID]: ["cl1", "cl2"],
+          [MockServer.UNKNOWN_CMP_ID + ".a.c"]: ["cl1", "cl2"],
+          [`b.${MockServer.UNKNOWN_CMP_ID}.c`]: ["cl1", "cl2"],
+          [`b.b.${MockServer.UNKNOWN_CMP_ID}`]: ["cl1", "cl2"],
+        },
+        initialized: false,
+      },
+    };
+    save = structuredClone(data);
+    let save2 = structuredClone(data);
+    sheet = new Sheet(raw);
+    sheet.cleanCmpData();
+    expect(sheet.getData()).toEqual(save);
+    itHasWaitedEnough();
+    /* @ts-ignore */
+    delete save2.main!.cmpData![MockServer.UNKNOWN_CMP_ID];
+    /* @ts-ignore */
+    delete save2.main!.cmpData![MockServer.UNKNOWN_CMP_ID + ".b.c"];
+    /* @ts-ignore */
+    delete save2.main!.cmpData![`a.${MockServer.UNKNOWN_CMP_ID}.c`];
+    /* @ts-ignore */
+    delete save2.main!.cmpData![`a.b.${MockServer.UNKNOWN_CMP_ID}`];
+    /* @ts-ignore */
+    delete save2.main!.cmpClasses!["a" + MockServer.UNKNOWN_CMP_ID];
+    /* @ts-ignore */
+    delete save2.main!.cmpClasses![MockServer.UNKNOWN_CMP_ID + ".a.c"];
+    /* @ts-ignore */
+    delete save2.main!.cmpClasses![`b.${MockServer.UNKNOWN_CMP_ID}.c`];
+    /* @ts-ignore */
+    delete save2.main!.cmpClasses![`b.b.${MockServer.UNKNOWN_CMP_ID}`];
+    expect(sheet.getData()).toEqual(save2);
+    expect(sheet.getData()).not.toEqual(save);
+    itHasWaitedEnough();
+    expect(sheet.getData()).toEqual(save2);
+    expect(sheet.getData()).not.toEqual(save);
+  });
+});
+
 describe("Sheet get component", () => {
   let sheet1: Sheet;
   let server: MockServer;
@@ -370,7 +466,7 @@ describe("Sheet get component", () => {
 
   beforeEach(() => {
     server = new MockServer();
-    sheet1 = initSheet("ahah", "4242");
+    sheet1 = initSheet("main", "4242");
   });
 
   test("Prevent errors", () => {
@@ -470,9 +566,15 @@ describe("Sheet get component", () => {
     expect(sheet1.componentExists(`${MockServer.NULL_CMP_ID}.b.c`)).toBeFalsy();
     expect(sheet1.componentExists(`a.${MockServer.NULL_CMP_ID}.c`)).toBeFalsy();
     expect(sheet1.componentExists(`a.b.${MockServer.NULL_CMP_ID}`)).toBeFalsy();
-    expect(sheet1.componentExists(`${MockServer.NON_EXISTING_CMP_ID}.b.c`)).toBeFalsy();
-    expect(sheet1.componentExists(`a.${MockServer.NON_EXISTING_CMP_ID}.c`)).toBeFalsy();
-    expect(sheet1.componentExists(`a.b.${MockServer.NON_EXISTING_CMP_ID}`)).toBeFalsy();
+    expect(
+      sheet1.componentExists(`${MockServer.NON_EXISTING_CMP_ID}.b.c`)
+    ).toBeFalsy();
+    expect(
+      sheet1.componentExists(`a.${MockServer.NON_EXISTING_CMP_ID}.c`)
+    ).toBeFalsy();
+    expect(
+      sheet1.componentExists(`a.b.${MockServer.NON_EXISTING_CMP_ID}`)
+    ).toBeFalsy();
 
     expect(errorLogSpy).toBeCalledTimes(0);
   });
