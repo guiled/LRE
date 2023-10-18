@@ -10,6 +10,10 @@ type ComponentStructure = {
 
 type ComponentStructureList = Array<ComponentStructure>;
 
+type ExtendedMockedComponent = MockedComponent & {
+  _realId: () => string;
+};
+
 export class MockServer {
   static UNKNOWN_CMP_ID = "_unknown_";
   static NULL_CMP_ID = "_null_";
@@ -24,6 +28,10 @@ export class MockServer {
     LetsRole.SheetID,
     Record<LetsRole.ComponentID, WeakMap<MockedSheet, MockedComponent>>
   > = {};
+
+  unknownComponents: Array<LetsRole.ComponentID> = [];
+  nullComponents: Array<LetsRole.ComponentID> = [];
+  nonExistingComponents: Array<LetsRole.ComponentID> = [];
 
   registerMockedSheet(
     sheet: MockedSheet,
@@ -61,11 +69,20 @@ export class MockServer {
     });
 
     sheet.get = jest.fn((cmpId: LetsRole.ComponentID) => {
-      if (cmpId.indexOf(MockServer.UNKNOWN_CMP_ID) !== -1) {
+      if (
+        this.unknownComponents.includes(cmpId) ||
+        cmpId.indexOf(MockServer.UNKNOWN_CMP_ID) !== -1
+      ) {
         return { ...MockServer.NonExistingCmpDummy };
-      } else if (cmpId.indexOf(MockServer.NULL_CMP_ID) !== -1) {
+      } else if (
+        this.nullComponents.includes(cmpId) ||
+        cmpId.indexOf(MockServer.NULL_CMP_ID) !== -1
+      ) {
         return null as unknown as LetsRole.Component;
-      } else if (cmpId.indexOf(MockServer.NON_EXISTING_CMP_ID) !== -1) {
+      } else if (
+        this.nonExistingComponents.includes(cmpId) ||
+        cmpId.indexOf(MockServer.NON_EXISTING_CMP_ID) !== -1
+      ) {
         return {
           ...MockServer.NonExistingCmpDummy,
           id: jest.fn(() => "42"),
@@ -93,17 +110,66 @@ export class MockServer {
           cmpStructureList = cmpStructure?.children;
         });
       }
-      const cmp = MockComponent({
+      const cmp: MockedComponent = this.registerMockedComponent(MockComponent({
         id: cmpId,
         sheet,
         cntr: cmpContainerId
           ? (sheet.get(cmpContainerId!) as MockedComponent)
           : undefined,
         classes: cmpStructure?.classes,
-      });
+      }));
       this.cmp[sheetId][cmpId].set(sheet, cmp);
-
       return cmp;
     });
+  }
+
+  registerMockedComponent(
+    cmp: LetsRole.Component,
+    container?: ExtendedMockedComponent
+  ): ExtendedMockedComponent {
+    const prevCmpFind = cmp.find;
+    const newCmp: ExtendedMockedComponent = Object.assign(
+      {
+        _realId: jest.fn(
+          () => (container ? container._realId() + "." : "") + cmp.id()
+        ),
+      },
+      cmp
+    );
+    newCmp.find = jest.fn((id: LetsRole.ComponentID) => {
+      const searchedComponentId =
+      (container ? container._realId() + "." : "") + id;
+      if (
+        this.unknownComponents.includes(searchedComponentId) ||
+        id.indexOf(MockServer.UNKNOWN_CMP_ID) !== -1
+      ) {
+        return { ...MockServer.NonExistingCmpDummy };
+      } else if (
+        this.nullComponents.includes(searchedComponentId) ||
+        id.indexOf(MockServer.NULL_CMP_ID) !== -1
+      ) {
+        return null as unknown as LetsRole.Component;
+      } else if (
+        this.nonExistingComponents.includes(searchedComponentId) ||
+        id.indexOf(MockServer.NON_EXISTING_CMP_ID) !== -1
+      ) {
+        return {
+          ...MockServer.NonExistingCmpDummy,
+          id: jest.fn(() => id),
+          addClass: () => {
+            throw Error("non");
+          },
+          removeClass: () => {
+            throw Error("non");
+          },
+        };
+      }
+      /* @ts-ignored */
+      const foundCmp = prevCmpFind(id);
+      this.registerMockedComponent(foundCmp, newCmp);
+      return foundCmp;
+    });
+
+    return newCmp;
   }
 }
