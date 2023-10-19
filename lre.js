@@ -338,7 +338,9 @@ function lre(_arg) {
                 argsWithComponent.push(cmp);
                 argsWithComponent = argsWithComponent.concat(args);
                 let results = [];
-                event.handlers.some(function (fcn) {
+                Object.keys(event.handlers).some(function (handlerId) {
+                    const fcn = event.handlers[handlerId];
+
                     if (!eventIsEnabled(eventName)) {
                         return true;
                     }
@@ -374,9 +376,11 @@ function lre(_arg) {
 
         this.on = function (event, subComponent, handler) {
             let delegated = false;
-            let eventName = event;
+            const eventParts = event.split(':');
+            let eventName = eventParts[0];
+            let handlerId = eventParts[1] || 'default'
             if (arguments.length === 3) {
-                eventName = event + repeaterIdSeparator + subComponent;
+                eventName = eventName + repeaterIdSeparator + subComponent;
                 delegated = true;
             } else if (arguments.length === 2) {
                 handler = subComponent;
@@ -384,14 +388,14 @@ function lre(_arg) {
             if (synonyms.hasOwnProperty(event)) {
                 event = synonyms[event];
             }
-            if (!events.hasOwnProperty(eventName) || events[eventName].handlers.length === 0) {
+            if (!events.hasOwnProperty(eventName) || Object.keys(events[eventName].handlers).length === 0) {
                 events[eventName] = {
                     name: eventName,
                     event: event,
                     delegated: delegated,
                     subComponent: delegated ? subComponent : null,
                     state: true,
-                    handlers: [],
+                    handlers: {},
                     rawHandler: runEvents(this, eventName),
                 };
                 if (existingRawEvents.includes(event)) {
@@ -403,10 +407,12 @@ function lre(_arg) {
                     }
                 }
             }
-            if (!events[eventName].handlers.includes(handler)) {
-                events[eventName].handlers.push(handler);
+            if (!events[eventName].handlers.hasOwnProperty(handlerId)) {
                 this.trigger('eventhandleradded', event, subComponent, handler);
+            } else {
+                this.trigger('eventhandlerchanged', event, subComponent, handler);
             }
+            events[eventName].handlers[handlerId] = handler;
         };
 
         // Cancel the next callbacks of an event
@@ -439,21 +445,30 @@ function lre(_arg) {
         }
 
         this.off = function (eventName, handler) {
+            const eventPart = eventName.split(':');
+            eventName = eventPart[0];
+            handlerId = eventPart[1] || 'default';
             if (!events.hasOwnProperty(eventName)) {
                 return;
             }
             const event = events[eventName];
-            if (handler !== undefined) {
-                const idx = event.handlers.indexOf(handler);
-                if (handler !== -1) {
-                    event.handlers.splice(idx, 1);
+            if (handlerId !== 'default') {
+                delete event.handlers[handlerId];
+            } else if (handler !== undefined) {
+                const handlerIds = Object.keys(event.handlers);
+
+                const idToRemove = handlerIds.findIndex(function (id) {
+                    return event.handlers[id] === handler;
+                })
+
+                if (idToRemove !== -1) {
+                    delete event.handlers[handlerIds[idToRemove]];
                 }
             } else {
-                event.handlers = []
+                event.handlers = {};
             }
-            if (event.handlers.length === 0) {
+            if (Object.keys(event.handlers).length === 0) {
                 this.raw().off(eventName);
-
             }
         };
 
@@ -569,6 +584,8 @@ function lre(_arg) {
         let parent;
         let lreEntry;
         let lreRepeater;
+        let valueData;
+        let valueKey;
         let mustSaveClasses = false;
         let classChanges = {}; // object of key=className and value=0 deleted =1 added
 
@@ -671,6 +688,11 @@ function lre(_arg) {
         this.refreshRaw = function () {
             const newRaw = sheet.raw().get(realId);
             this.transferEvents(newRaw)
+            for (i in component) {
+                if (component.hasOwnProperty(i) && this.hasOwnProperty(i) && component[i] === this[i]) {
+                    this[i] = newRaw[i];
+                }
+            }
             component = newRaw;
             return this;
         };
@@ -681,6 +703,8 @@ function lre(_arg) {
             return this.show();
         }
         this.initiate = function () {
+            Object.assign(this, new lreSingleDataComponent(this));
+            Object.assign(this, new lreDataReceiver(setDataFromDataCollection.bind(this)));
             this.setInitiated(true);
         };
         this.setInitiated = function (_initiated) {
@@ -714,6 +738,22 @@ function lre(_arg) {
         this.knownChildren = function () {
             return sheet.knownChildren(this);
         };
+
+        this.valueData = function () {
+            return valueData;
+        };
+        this.valueKey = function () {
+            return valueKey;
+        };
+
+        const setDataFromDataCollection = function (data) {
+            const keys = Object.keys(data);
+            const firstElement = data[keys[0]];
+            valueData = firstElement.data;
+            this.value(firstElement.val);
+            valueKey = firstElement.id;
+        };
+
         const saveClassChanges = function () {
             classChanges = sheet.persistingCmpClasses(realId, classChanges);
         };
@@ -1726,7 +1766,16 @@ function lre(_arg) {
      *                DataReceiver                *
      ** * * * * * * * * * * * * * * * * * * * * * */
     const lreDataReceiver = function (_args) {
-        let dataOrigin;
+        const parent = new (Function.prototype.bind.apply(lreMultiDataReceiver, [lreMultiDataReceiver, _args]));
+        Object.assign(this, parent);
+
+        this.populateFrom = function (collection, mapping) {
+            parent.populateFrom([collection], mapping);
+        };
+    };
+
+    const lreMultiDataReceiver = function (_args) {
+        let dataOrigins;
         let dataMapping = function (item, key, data) {
             return {
                 id: key,
@@ -1734,56 +1783,64 @@ function lre(_arg) {
                 data: data,
             };
         };
-        const dataMappingKeepData = function (_mapper) {
-            if (typeof _mapper === 'function') {
-                return function (item, key, data) {
-                    return Object.assign({
-                        id: key,
-                        val: item,
-                        data: data,
-                    }, _mapper(item, key, data));
-                };
-            } else if (typeof _mapper === 'string') {
-                return function (item, key, data) {
-                    return {
-                        id: key,
-                        val: data[_mapper],
-                        data: data,
-                    };
-                };
-            } else {
-                log('[LRE] Invalid data mapper. Must be a string or a function. ' + (typeof _mapper) + ' given.')
-            }
+        const populateById = {};
+        const dataMappingKeepData = function (_cb) {
+            return function (item, key, data) {
+                return Object.assign({
+                    id: key,
+                    val: item,
+                    data: data,
+                }, _cb(item, key, data));
+            };
         };
         let dataSetter = _args[0];
+        const dataById = {};
 
-        const populate = function (source) {
-            source.mapData(dataMapping, dataSetter);
+        const setterById = function (id) {
+            return function (data) {
+                dataById[id] = data;
+                let dataToSetter = {};
+                each(dataById, function (dataOnId) {
+                    Object.assign(dataToSetter, dataOnId);
+                });
+                dataSetter(dataToSetter)
+            };
         };
 
-        this.populateFrom = function (collection, mapping, dependencies) {
-            if (arguments.length < 3) {
-                dependencies = [];
+        const getPopulateForCollectionId = function (id) {
+            if (!populateById.hasOwnProperty(id)) {
+                populateById[id] = function (source) {
+                    source.mapData(dataMapping, setterById(id));
+                };
             }
-            if (dataOrigin) {
-                dataOrigin.off('dataChange', populate);
+            return populateById[id];
+        }
+
+        this.populateFrom = function (collections, mapping) {
+            if (!collections instanceof Array) {
+                log('Bad collections type')
             }
-            dataOrigin = collection;
+            if (dataOrigins) {
+                dataOrigins.forEach(function (collection, id) {
+                    collection.off('dataChange', getPopulateForCollectionId(id));
+                });
+                populateById = {};
+            }
+            dataOrigins = collections;
             if (arguments.length > 1) {
                 dataMapping = dataMappingKeepData(mapping);
             }
-            dataOrigin.on('dataChange', populate);
-            if (dependencies && dependencies.forEach) {
-                dependencies.forEach(function (cmp) {
-                    cmp.on('update', refresh);
-                });
-            }
+            dataOrigins.forEach(function (collection, id) {
+                collection.on('dataChange', getPopulateForCollectionId(id));
+            });
             this.refresh = refresh;
             this.refresh();
         };
 
         const refresh = function () {
-            populate(dataOrigin);
+            dataOrigins.forEach(function (collection, id) {
+                getPopulateForCollectionId(id)(collection);
+            });
         };
     };
 
@@ -2059,6 +2116,43 @@ function lre(_arg) {
         });
     }
 
+    const lreSingleDataComponent = function (_args) {
+        const dataSource = _args[0];
+        const getDataValue = function () {
+            const result = {};
+            result[dataSource.id()] = {
+                id: dataSource.id(),
+                val: dataSource.value(),
+                data: dataSource.value(),
+            };
+            return result;
+        };
+
+        Object.assign(dataSource, new lreDataCollection(dataSource, DataCollection.getDataMapper(getDataValue.bind(dataSource)).bind(dataSource)));
+        dataSource.on('update', function (cmp) {
+            cmp.trigger('dataChange');
+        });
+    };
+
+    /** * * * * * * * * * * * * * * * * * * * * * *
+     *                  LreContainer              *
+     ** * * * * * * * * * * * * * * * * * * * * * */
+    const lreContainer = function () {
+        Object.assign(this, new lreDataReceiver(populate.bind(this)));
+
+        const populate = function (data) {
+            const values = Object.values(data);
+            if (values.length > 0) {
+                each(values[0], function (fieldValue, fieldName) {
+                    const field = this.find(fieldName);
+                    if (field.exists()) {
+                        field.value(fieldValue);
+                    }
+                });
+            }
+        };
+    };
+
     /** * * * * * * * * * * * * * * * * * * * * * *
      *                   LreTable                 *
      ** * * * * * * * * * * * * * * * * * * * * * */
@@ -2303,6 +2397,10 @@ function lre(_arg) {
                 Object.assign(cmp, new lreLabel);
             } else if (classes.includes('checkbox')) {
                 Object.assign(cmp, new lreCheckbox);
+            } else if (classes.some(function (c) {
+                return ['widget-container', 'view', 'row', 'col'].includes(c);
+            })) {
+                Object.assign(cmp, new lreContainer);
             }
             cmp.parent(lreContainer);
             if (lreContainer.lreType() === 'entry') {
@@ -2572,6 +2670,35 @@ function lre(_arg) {
             }
             return persistingData.cmpClasses[componentId];
         };
+
+        this.group = function () { //WIP
+            const dataCollections = [];
+
+            const getDataCollectionFromArg = function (arg) {
+                let cmp = arg;
+                if (typeof arg === 'string') {
+                    cmp = this.get(arg);
+                }
+                return cmp;
+            };
+
+            for (let i = 0; i < arguments.length; i++) {
+                dataCollections.push(getDataCollectionFromArg(arguments[i]))
+            }
+
+            const getDataValue = function () {
+                const result = {};
+                dataCollections.forEach(function (cmp) {
+                    result[cmp.id()] = {
+                        id: cmp.id(),
+                        val: cmp.value(),
+                        data: cmp.valueData(),
+                    };
+                });
+            };
+            const dataCollection = new lreDataCollection(dataSource, DataCollection.getDataMapper(getDataValue.bind(dataSource)).bind(dataSource));
+        };
+
     };
 
     if (!lreInitiated) {
