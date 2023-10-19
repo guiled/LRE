@@ -11,6 +11,7 @@ import replaceInOperator from "./src/swc/ReplaceInOperator";
 import noThrowStatement from "./src/swc/NoThrowStatement";
 import { noDoWhile } from "./src/swc/NoDoWhile";
 import { mixinToAssign } from "./src/swc/MixinToAssign";
+import { noRestElement } from "./src/swc/NoRestElement";
 
 const transformForLR: Options = {
   jsc: {
@@ -26,7 +27,7 @@ const transformForLR: Options = {
   module: {
     type: "es6",
   },
-  plugin: plugins([noDoWhile(), noArraySpreading(), replaceInOperator(), defaultParameter(), computedObjectProps(), mixinToAssign(), classExtend(), classToFunction(), defaultParameter()]),
+  plugin: plugins([noDoWhile(), noArraySpreading(), noRestElement(), replaceInOperator(), defaultParameter(), computedObjectProps(), mixinToAssign(), classExtend(), classToFunction(), defaultParameter()]),
   sourceMaps: false,
 };
 
