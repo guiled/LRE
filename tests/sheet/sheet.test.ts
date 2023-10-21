@@ -454,9 +454,10 @@ describe("Sheet clean data", () => {
 describe("Sheet get component", () => {
   let sheet1: Sheet;
   let server: MockServer;
+  let raw: MockedSheet;
 
   const initSheet = function (sheetId: string, realId: string) {
-    const raw = MockSheet({
+    raw = MockSheet({
       id: sheetId,
       realId: realId,
     });
@@ -577,5 +578,20 @@ describe("Sheet get component", () => {
     ).toBeFalsy();
 
     expect(errorLogSpy).toBeCalledTimes(0);
+  });
+
+  test("Sheet remember/forget component", () => {
+    (raw.get as jest.Mock).mockClear();
+    expect(raw.get).toBeCalledTimes(0);
+    sheet1.remember("abc");
+    expect(raw.get).toBeCalledTimes(0);
+    itHasWaitedEnough();
+    expect(raw.get).toBeCalledTimes(1);
+    sheet1.get("abc");
+    expect(raw.get).toBeCalledTimes(1);
+    sheet1.forget("abc");
+    itHasWaitedEnough();
+    sheet1.get("abc");
+    expect(raw.get).toBeCalledTimes(2);
   });
 });
