@@ -1,15 +1,18 @@
 import { MockComponent } from "../mock/letsrole/component.mock";
 import { MockSheet } from "../mock/letsrole/sheet.mock";
-import { Sheet } from "../../src/sheet";
 import { ComponentCache } from "../../src/component/cache";
 import { Component } from "../../src/component/component";
 import { LRE } from "../../src/lre";
+import { ComponentSearchResult } from "../../src/component/container";
+import { newMockedWait } from "../mock/letsrole/wait.mock";
+import { Sheet } from "../../src/sheet";
 
 jest.mock("../../src/lre");
-jest.mock("../../src/sheet");
 jest.mock("../../src/component/component");
 
 global.lre = new LRE();
+const mockedWaitDefs = newMockedWait();
+global.wait = mockedWaitDefs.wait;
 
 let cache: ComponentCache;
 const rawSheet = MockSheet({
@@ -17,45 +20,64 @@ const rawSheet = MockSheet({
   realId: "realId",
 });
 const sheet = new Sheet(rawSheet);
+const UNKNOWN_CMP_ID = "_unknown_";
 
-const newCmp = (id: string) => {
-  const rawCmp = MockComponent({
-    id: id,
-    sheet: rawSheet,
-  });
+const newCmp = jest.fn((id: string): ComponentSearchResult => {
+  if (id === UNKNOWN_CMP_ID) {
+    return null;
+  }
 
-  return new Component(rawCmp, sheet, id);
-};
+  const cmp = new Component(
+    MockComponent({
+      id: id,
+      sheet: rawSheet,
+    }),
+    sheet,
+    id
+  );
 
-beforeAll(() => {
-  cache = new ComponentCache();
+  jest.spyOn(cmp, "realId").mockReturnValue(id);
+
+  return cmp;
 });
 
-describe("Component cache", () => {
+beforeAll(() => {
+  cache = new ComponentCache(newCmp);
+});
+
+describe("Component cache set/get/unset/inCache", () => {
   test("Set / Get / Incache", () => {
-    expect(cache.get("123")).toBeNull();
-    const cmp = newCmp("123");
+    expect(cache.get(UNKNOWN_CMP_ID)).toBeNull();
+    expect(newCmp).toBeCalledTimes(1);
+    expect(cache.inCache(UNKNOWN_CMP_ID)).toBeFalsy();
     expect(cache.inCache("123")).toBeFalsy();
-    cache.set("123", cmp);
-    expect(cache.get("123")).toStrictEqual(cmp);
+    expect(newCmp).toBeCalledTimes(1);
+    newCmp.mockClear();
+    expect(cache.get("123")).not.toBeNull();
+    expect(newCmp).toBeCalledTimes(1);
     expect(cache.inCache("123")).toBeTruthy();
-    const cmp2 = newCmp("123");
-    cache.set("123", cmp2);
-    expect(cache.get("123")).toStrictEqual(cmp2);
+    const cmp = newCmp("123")!;
+    cache.set("123", cmp);
+    newCmp.mockClear();
+    expect(newCmp).not.toBeCalled();
+    expect(cache.get("123")).toStrictEqual(cmp);
+    expect(newCmp).not.toBeCalled();
     cache.unset("123");
-    expect(cache.get("123")).toBeNull();
+    expect(newCmp).not.toBeCalled();
+    expect(cache.get("123")).not.toStrictEqual(cmp);
+    expect(newCmp).toBeCalledTimes(1);
   });
 
   test("Set / Get / Incache for repeaters", () => {
-    const rep = newCmp("rep");
+    const rep = newCmp("rep")!;
     cache.set("rep", rep);
-    const entry1 = newCmp("rep.1");
+    const entry1 = newCmp("rep.1")!;
     cache.set("rep.1", entry1);
-    const cmp1a = newCmp("rep.1.a");
+    const cmp1a = newCmp("rep.1.a")!;
     cache.set("rep.1.a", cmp1a);
-    const cmp1b = newCmp("rep.1.b");
+    const cmp1b = newCmp("rep.1.b")!;
     cache.set("rep.1.b", cmp1a);
-    const entry2 = newCmp("rep.2");
+    const entry2 = newCmp("rep.2")!;
     cache.set("rep.2", entry2);
     newCmp("rep.2.a");
     cache.set("rep.2.a", cmp1a);
@@ -71,5 +93,38 @@ describe("Component cache", () => {
     expect(cache.children("rep").sort()).toEqual(
       ["rep.2.a", "rep.2", "rep.1", "rep.2.b", "rep.1.a", "rep.1.b"].sort()
     );
+  });
+});
+
+describe("Component cache forget/remember", () => {
+  beforeEach(() => {
+    cache = new ComponentCache(newCmp);
+  });
+
+  test("forget/remember", () => {
+    expect(cache.inCache("123")).toBeFalsy();
+    cache.remember("123");
+    cache.remember("abc");
+    expect(newCmp).not.toBeCalled();
+    cache.get("123.b.c");
+    expect(cache.inCache("123")).toBeFalsy();
+    mockedWaitDefs.itHasWaitedEverything();
+    expect(cache.inCache("123")).not.toBeFalsy();
+    expect(newCmp).toBeCalled();
+    expect(cache.inCache("123.b.c")).not.toBeFalsy();
+    cache.forget("123");
+    expect(cache.inCache("123.b.c")).not.toBeFalsy();
+    expect(cache.inCache("123")).not.toBeFalsy();
+    mockedWaitDefs.itHasWaitedEverything();
+    expect(cache.inCache("123.b.c")).toBeFalsy();
+    expect(cache.inCache("123")).toBeFalsy();
+    cache.get("b");
+    cache.forget("b");
+    cache.remember("a");
+    cache.remember("b");
+    cache.forget("a");
+    mockedWaitDefs.itHasWaitedEverything();
+    expect(cache.inCache("a")).toBeFalsy();
+    expect(cache.inCache("b")).not.toBeFalsy();
   });
 });

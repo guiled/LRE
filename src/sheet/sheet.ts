@@ -62,55 +62,43 @@ export class Sheet
     this.rand = Math.floor(Math.random() * 100);
     this.#batcher = new DataBatcher(rawSheet);
     this.#batcher.linkEventTo("processed:sheet", this, "data:processed");
-    this.#componentCache = new ComponentCache();
+    this.#componentCache = new ComponentCache(this.#componentGetter.bind(this));
     this.#cmp = rawSheet.get(rawSheet.id())!;
     this.#silentFind = this.#cmp.find;
     this.#cmp.on("update", this.#handleDataUpdate.bind(this));
   }
 
-  cleanCmpData(): void {
-    this.#loadState(this.#storedState);
+  #componentGetter(id: string, silent = false): ComponentSearchResult {
+    let rawCmp: LetsRole.Component | LetsRole.Sheet,
+      container: Component | Sheet | null,
+      tabId = id.split(REP_ID_SEP);
 
-    const cmpIdsInCmpData: Array<string> = Object.keys(
-      this.#storedState.cmpData
-    );
-    const cmpIdsInCmpClasses: Array<string> = Object.keys(
-      this.#storedState.cmpClasses
-    );
-    const realIdToChecked: Array<string> = [
-      ...cmpIdsInCmpData,
-      ...cmpIdsInCmpClasses,
-    ];
-    const realIdToForget: Array<string> = [];
-
-    const analyzeRealId = () => {
-      const checking = realIdToChecked.splice(0, 20);
-      checking.forEach((realId: string) => {
-        const parts = realId.split(REP_ID_SEP);
-        const length = parts.length;
-        const base = parts.pop();
-        if (length === 1 && !this.componentExists(base!)) {
-          // forget data for non-existing components
-          realIdToForget.push(realId);
-        } else if (
-          length === 3 &&
-          !this.componentExists(parts.join(REP_ID_SEP))
-        ) {
-          // forget data for components in non-existing repeater entries
-          realIdToForget.push(realId);
-        }
-      });
-      if (realIdToChecked.length > 0) {
-        wait(200, analyzeRealId);
-      } else {
-        realIdToForget.forEach((realId) => {
-          delete this.#storedState!.cmpData[realId];
-          delete this.#storedState!.cmpClasses[realId];
-        });
-        this.#saveStoredState();
+    if (tabId.length === 1) {
+      container = this;
+      rawCmp = this.raw().get(id);
+    } else {
+      let finalId = tabId.pop()!;
+      let containerId = tabId.join(REP_ID_SEP);
+      container = this.get(containerId, silent);
+      if (!container || !container.id()) {
+        !silent &&
+          lre.error("Sheet.get returns null container for " + containerId);
+        return null;
       }
-    };
-    wait(200, analyzeRealId);
+      rawCmp = (container as Component).raw()?.find?.(finalId);
+    }
+
+    if (!rawCmp) {
+      !silent && lre.error("Sheet.get returns null object for " + id);
+      return null;
+    } else if (!rawCmp.id()) {
+      !silent && lre.error("Unable to find " + id);
+      return null;
+    }
+
+    const cmp = ComponentFactory.create(rawCmp, container);
+
+    return cmp;
   }
 
   #persistingDataOperation<
@@ -177,6 +165,51 @@ export class Sheet
     this.setData(newData);
   }
 
+  cleanCmpData(): void {
+    this.#loadState(this.#storedState);
+
+    const cmpIdsInCmpData: Array<string> = Object.keys(
+      this.#storedState.cmpData
+    );
+    const cmpIdsInCmpClasses: Array<string> = Object.keys(
+      this.#storedState.cmpClasses
+    );
+    const realIdToChecked: Array<string> = [
+      ...cmpIdsInCmpData,
+      ...cmpIdsInCmpClasses,
+    ];
+    const realIdToForget: Array<string> = [];
+
+    const analyzeRealId = () => {
+      const checking = realIdToChecked.splice(0, 20);
+      checking.forEach((realId: string) => {
+        const parts = realId.split(REP_ID_SEP);
+        const length = parts.length;
+        const base = parts.pop();
+        if (length === 1 && !this.componentExists(base!)) {
+          // forget data for non-existing components
+          realIdToForget.push(realId);
+        } else if (
+          length === 3 &&
+          !this.componentExists(parts.join(REP_ID_SEP))
+        ) {
+          // forget data for components in non-existing repeater entries
+          realIdToForget.push(realId);
+        }
+      });
+      if (realIdToChecked.length > 0) {
+        wait(200, analyzeRealId);
+      } else {
+        realIdToForget.forEach((realId) => {
+          delete this.#storedState!.cmpData[realId];
+          delete this.#storedState!.cmpClasses[realId];
+        });
+        this.#saveStoredState();
+      }
+    };
+    wait(200, analyzeRealId);
+  }
+
   lreType(): ComponentType {
     return "sheet";
   }
@@ -215,51 +248,17 @@ export class Sheet
   properName(): string {
     return this.raw().properName();
   }
+
   get(id: string, silent = false): ComponentSearchResult {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore id instance of is for live checks
+    // @ts-ignore "id instanceof" on purpose for live checks
     if (!((typeof id === "string" || id instanceof String) && isNaN(id))) {
       lre.error(`Invalid component id for sheet.get, ${id} given`);
       return null;
     }
     id = "" + id;
 
-    const cmpInCache = this.#componentCache.inCache(id);
-
-    if (cmpInCache) {
-      return cmpInCache;
-    }
-
-    let rawCmp: LetsRole.Component | LetsRole.Sheet,
-      container: Component | Sheet | null,
-      tabId = id.split(REP_ID_SEP);
-
-    if (tabId.length === 1) {
-      container = this;
-      rawCmp = this.raw().get(id);
-    } else {
-      let finalId = tabId.pop()!;
-      let containerId = tabId.join(REP_ID_SEP);
-      container = this.get(containerId, silent);
-      if (!container || !container.id()) {
-        !silent &&
-          lre.error("Sheet.get returns null container for " + containerId);
-        return null;
-      }
-      rawCmp = (container as Component).raw()?.find?.(finalId);
-    }
-
-    if (!rawCmp) {
-      !silent && lre.error("Sheet.get returns null object for " + id);
-      return null;
-    } else if (!rawCmp.id()) {
-      !silent && lre.error("Unable to find " + id);
-      return null;
-    }
-
-    const cmp = ComponentFactory.create(rawCmp, container);
-    this.#componentCache.set(cmp.realId(), cmp);
-    return cmp;
+    return this.#componentCache.get(id, silent);
   }
 
   find(id: string): ComponentSearchResult {
@@ -368,7 +367,19 @@ export class Sheet
     }
   }
 
-  group(): any {
-    // todo
+  forget(realId: LetsRole.ComponentID): void {
+    this.#componentCache.forget(realId);
   }
+
+  remember(realId: LetsRole.ComponentID): void {
+    this.#componentCache.remember(realId);
+  }
+
+  // knownChildren(cmp: Component): Array<Component> {
+  //   return this.#componentCache.children(cmp.realId());
+  // }
+
+  // group(): any {
+  //   // todo
+  // }
 }
