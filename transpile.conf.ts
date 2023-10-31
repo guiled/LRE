@@ -27,13 +27,13 @@ const transformForLR: Options = {
   module: {
     type: "es6",
   },
-  plugin: plugins([noDoWhile(), noArraySpreading(), noRestElement(), replaceInOperator(), defaultParameter(), computedObjectProps(), mixinToAssign(), classExtend(), classToFunction(), defaultParameter()]),
+  plugin: plugins([noThrowStatement(), noDoWhile(), noArraySpreading(), noRestElement(), replaceInOperator(), defaultParameter(), computedObjectProps(), mixinToAssign(), classExtend(), classToFunction(), defaultParameter()]),
   sourceMaps: false,
 };
 
 const noVoid0Plugin: Options = {
   ...transformForLR,
-  plugin: plugins([noThrowStatement(), noVoid0(), keepInstanceOf()]),
+  plugin: plugins([noVoid0(), keepInstanceOf()]),
 };
 
 export { transformForLR, noVoid0Plugin };
