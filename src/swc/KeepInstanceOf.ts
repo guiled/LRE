@@ -44,13 +44,13 @@ class KeepInstanceOf extends Visitor {
     if (n.operator === "instanceof") {
       this.instanceOfFound = true;
     }
-    return n;
+    return super.visitBinaryExpression(n);
   }
 
   visitStatement(stmt: Statement): Statement {
     if (
       stmt.type === "FunctionDeclaration" &&
-      stmt.identifier.value === "_instanceof"
+      /instanceof\d*$/.test(stmt.identifier.value)
     ) {
       const newStmt: EmptyStatement = {
         type: "EmptyStatement",
@@ -74,7 +74,7 @@ class KeepInstanceOf extends Visitor {
     if (
       n.type === "CallExpression" &&
       n.callee.type === "Identifier" &&
-      n.callee.value === "_instanceof"
+      /instanceof\d*$/.test(n.callee.value)
     ) {
       const binaryExpression: BinaryExpression = {
         type: "BinaryExpression",

@@ -1,6 +1,12 @@
 {
   "version": "0.2",
   "language": "en",
-  "words": ["letsrole", "hasraw", "eventholder", "ILRE"],
+  "words": [
+    "eventholder",
+    "hasraw",
+    "ILRE",
+    "letsrole",
+    "multichoice"
+  ],
   "flagWords": []
 }

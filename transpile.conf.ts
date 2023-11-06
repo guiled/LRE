@@ -12,6 +12,7 @@ import noThrowStatement from "./src/swc/NoThrowStatement";
 import { noDoWhile } from "./src/swc/NoDoWhile";
 import { mixinToAssign } from "./src/swc/MixinToAssign";
 import { noRestElement } from "./src/swc/NoRestElement";
+import noInstanceOf from "./src/swc/NoInstanceOf";
 
 const transformForLR: Options = {
   jsc: {
@@ -27,13 +28,13 @@ const transformForLR: Options = {
   module: {
     type: "es6",
   },
-  plugin: plugins([noThrowStatement(), noDoWhile(), noArraySpreading(), noRestElement(), replaceInOperator(), defaultParameter(), computedObjectProps(), mixinToAssign(), classExtend(), classToFunction(), defaultParameter()]),
+  plugin: plugins([noThrowStatement(), noInstanceOf(), noDoWhile(), noArraySpreading(), noRestElement(), replaceInOperator(), defaultParameter(), computedObjectProps(), mixinToAssign(), classExtend(), classToFunction(), defaultParameter()]),
   sourceMaps: false,
 };
 
 const noVoid0Plugin: Options = {
   ...transformForLR,
-  plugin: plugins([noVoid0(), keepInstanceOf()]),
+  plugin: plugins([noVoid0()]),
 };
 
 export { transformForLR, noVoid0Plugin };
