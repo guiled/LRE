@@ -8,7 +8,7 @@ import {
 } from "../component/container";
 import { DataBatcher } from "./databatcher";
 import { ComponentFactory } from "../component/factory";
-import { ComponentCommon } from "../component/ICommon";
+import { ComponentCommon } from "../component/Icommon";
 import { Mixin } from "../mixin";
 
 type SheetProtectedStoredState = {
@@ -375,9 +375,9 @@ export class Sheet
     this.#componentCache.remember(realId);
   }
 
-  // knownChildren(cmp: Component): Array<Component> {
-  //   return this.#componentCache.children(cmp.realId());
-  // }
+  //knownChildren(cmp: Component): Array<Component> {
+  //  return this.#componentCache.children(cmp.realId());
+  //}
 
   // group(): any {
   //   // todo

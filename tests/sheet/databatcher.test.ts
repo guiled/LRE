@@ -1,9 +1,8 @@
 import { MockSheet, MockedSheet } from "../mock/letsrole/sheet.mock";
 import { DataBatcher } from "../../src/sheet/databatcher";
-import { handleError } from "../../src/log/errorhandler";
 import { LRE } from "../../src/lre";
 
-jest.mock("../../src/log/errorhandler");
+jest.mock("../../src/lre");
 let waitedCallback: ((...args: any[]) => any) | null;
 global.lre = new LRE();
 global.wait = jest.fn((_delay, cb) => (waitedCallback = cb));
@@ -150,7 +149,8 @@ describe("DataBatcher async send data", () => {
     dataBatcher.setData({
       a: "any",
     });
+    expect(lre.error).not.toBeCalled();
     itHasWaitedEnough();
-    expect(handleError).toBeCalled();
+    expect(lre.error).toBeCalled();
   });
 });

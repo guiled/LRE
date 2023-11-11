@@ -2,11 +2,13 @@
   "version": "0.2",
   "language": "en",
   "words": [
+    "eventhandler",
     "eventholder",
     "hasraw",
     "ILRE",
     "letsrole",
-    "multichoice"
+    "multichoice",
+    "uncancel"
   ],
   "flagWords": []
 }

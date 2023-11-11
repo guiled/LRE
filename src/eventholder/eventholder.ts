@@ -1,5 +1,5 @@
+import { Error } from "../error";
 import { HasRaw } from "../hasraw";
-import { handleError } from "../log/errorhandler";
 
 type EventHandler<Holder = any> = (cmp: Holder, ...rest: Array<any>) => void;
 
@@ -65,6 +65,7 @@ export abstract class EventHolder<
     holderId: string,
     targetGetter: EventTargetGetter<AdditionalEvents> | undefined = undefined
   ) {
+    (() => new Error())();
     this.#holderId = holderId;
     this.#getTarget = targetGetter;
   }
@@ -132,18 +133,17 @@ export abstract class EventHolder<
         }
 
         try {
-          //results!.push(
           fcn.apply(this, [cmp, ...args]);
-          //  );
         } catch (e) {
-          handleError(e as LetsRole.Error, `event ${e} on ${rawTarget.id()}`);
+          lre.error(
+            `[Event:${[rawTarget.id(), eventName, hId].join(EVENT_SEP)}] Unhandled error : ${e}`
+          );
         }
 
         return false;
       });
 
       this.#uncancelEvent(eventName);
-      //return results;
     };
   }
 

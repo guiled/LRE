@@ -1,5 +1,4 @@
 import { Logger } from "./log";
-import { handleError } from "./log/errorhandler";
 import { Sheet } from "./sheet";
 import { SheetCollection } from "./sheet/collection";
 
@@ -28,7 +27,7 @@ export class LRE extends Logger implements ILRE {
           try {
             _sheet.persistingData("initialized", firstInit(_sheet));
           } catch (e) {
-            handleError(e as LetsRole.Error);
+            this.error("[Firstinit] Unhandled error : " + e);
           }
         }
         this.log(
@@ -38,8 +37,8 @@ export class LRE extends Logger implements ILRE {
         );
         try {
           callback.call(this, _sheet);
-        } catch (e) {
-          handleError(e as LetsRole.Error);
+        } catch (e: unknown) {
+          this.error("[Init] Unhandled error : " + e);
         }
       });
     };

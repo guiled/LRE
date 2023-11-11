@@ -74,8 +74,8 @@ const transformSuperCallToObjectAssign = (
           },
         }),
         right: newAsApply
-          ? newexpression(
-              call({
+          ? newexpression({
+              callee: call({
                 span,
                 args: [
                   { expression: currentSuperClass },
@@ -99,10 +99,11 @@ const transformSuperCallToObjectAssign = (
                   property: identifier({ span, value: "apply" }),
                 }),
               }),
-              [],
-              span
-            )
-          : newexpression(currentSuperClass, n.arguments, span),
+            })
+          : newexpression({
+              callee: currentSuperClass,
+              arguments: n.arguments,
+            }),
       },
     },
   ];

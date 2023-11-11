@@ -2,10 +2,11 @@ import { EventDef, EventHolder } from "../eventholder";
 import { HasRaw } from "../hasraw";
 import { ComponentContainer, ComponentSearchResult } from "./container";
 import { Sheet } from "../sheet";
-import { ComponentCommon } from "./ICommon";
+import { ComponentCommon } from "./Icommon";
 import { Mixin } from "../mixin";
 import { Repeater } from "./repeater";
 import { Entry } from "./entry";
+import { Error } from "../error";
 
 export const REP_ID_SEP = ".";
 
@@ -150,7 +151,7 @@ export class Component<
     return this.raw().getClasses();
   }
   value(newValue?: unknown): void | LetsRole.ComponentValue {
-    throw new Error("Method not implemented." + newValue);
+    throw new Error("Method not implemented." + (newValue ?? ''));
   }
   virtualValue(
     newValue?: LetsRole.ComponentValue

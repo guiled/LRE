@@ -4,6 +4,7 @@ import { LRE } from "../src/lre";
 beforeAll(() => {
   /* @ts-ignore */
   global.lre = null; 
+  global.lastException = null;
   global.isNaN = null as unknown as (c: any) => any;
   global.structuredClone = null as unknown as (c: any) => any;
   global.Tables = {

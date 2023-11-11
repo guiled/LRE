@@ -1,5 +1,4 @@
 import { LRE } from "../../src/lre";
-import { handleError } from "../../src/log/errorhandler";
 import {
   MockComponent,
   MockedComponent,
@@ -8,7 +7,6 @@ import { MockSheet } from "../mock/letsrole/sheet.mock";
 import { EventHolder } from "../../src/eventholder/index";
 
 jest.mock("../../src/lre");
-jest.mock("../../src/log/errorhandler");
 
 global.lre = new LRE();
 
@@ -462,8 +460,9 @@ describe("Handle error in event", () => {
       a();
     });
     subject.on("test", eventHandler);
-    subject.trigger("test");
-    expect(handleError).toBeCalled();
+    expect(lre.error).not.toBeCalled();
+    subject.trigger("test")
+    expect(lre.error).toBeCalled();
   });
 });
 
