@@ -375,9 +375,12 @@ export class Sheet
     this.#componentCache.remember(realId);
   }
 
-  //knownChildren(cmp: Component): Array<Component> {
-  //  return this.#componentCache.children(cmp.realId());
-  //}
+  knownChildren(cmp: Component): Array<Component> {
+    return this.#componentCache
+      .children(cmp.realId())
+      .map((id) => this.get(id))
+      .filter((c) => !!c) as Array<Component>;
+  }
 
   // group(): any {
   //   // todo
