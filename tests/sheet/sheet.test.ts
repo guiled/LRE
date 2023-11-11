@@ -594,4 +594,21 @@ describe("Sheet get component", () => {
     sheet1.get("abc");
     expect(raw.get).toBeCalledTimes(2);
   });
+
+  test("Sheet get children of a component", () => {
+    const rep = sheet1.get("a")!;
+    const searchedIds = ["a.b.c1", "a.b.c2", "a.b.c3", "a.b.c4"];
+
+    const foundCmp = searchedIds.map((id) => sheet1.get(id));
+    const knownChildren = sheet1.knownChildren(rep);
+
+    expect(
+      foundCmp.every((cmp) => knownChildren.some((child) => child === cmp))
+    );
+    expect(
+      knownChildren.every((children) =>
+        foundCmp.some((cmp) => children === cmp)
+      )
+    );
+  });
 });
