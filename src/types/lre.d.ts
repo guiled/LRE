@@ -5,6 +5,13 @@ declare interface ILRE {
   __debug: boolean = false;
 }
 
+declare var isNaN = (n: any) => boolean;
+declare var structuredClone = function (val: any): any;
+declare var lastException: any;
+declare var throwError = (err: any) => undefined;
+declare var newError = (err: message) => any;
+declare var stringify = (obj: any, indent: string = "") => string;
+
 declare interface Logger {
   error(...args: any[]): void;
   warn(...args: any[]): void;

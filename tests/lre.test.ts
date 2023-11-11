@@ -1,10 +1,9 @@
+import { Error } from "../src/error";
 import { Logger } from "../src/log";
-import { handleError } from "../src/log/errorhandler";
 import { LRE } from "../src/lre";
 import { Sheet } from "../src/sheet";
 import { MockSheet } from "./mock/letsrole/sheet.mock";
 
-jest.mock("../src/log/errorhandler");
 jest.mock("../src/log");
 global.lre = new Logger() as ILRE & Logger & cb;
 let waitedCallbacks: Array<(...args: any[]) => any>;
@@ -32,7 +31,7 @@ describe("LRE tests", () => {
 
   afterEach(() => {
     spyOnMathRandom.mockClear();
-  })
+  });
 
   test("LRE util Object deep merge", () => {
     expect(subject.deepMerge({}, {})).toEqual({});
@@ -94,7 +93,7 @@ describe("LRE tests", () => {
     const sheet2 = MockSheet({ id: "main", realId: "", properName: "" });
 
     let init = subject.apply(subject, [cb]);
-  
+
     expect(cb).toBeCalledTimes(0);
     init(sheet1);
     expect(cb).toBeCalledTimes(0);
@@ -103,22 +102,26 @@ describe("LRE tests", () => {
     expect(cb).toBeCalledTimes(1);
     expect(cb.mock.calls[0][0]).toBeInstanceOf(Sheet);
     expect(global.firstInit).toBeCalledTimes(1);
-    expect((global.firstInit as jest.Mock).mock.calls[0][0]).toBeInstanceOf(Sheet);
+    expect((global.firstInit as jest.Mock).mock.calls[0][0]).toBeInstanceOf(
+      Sheet
+    );
     init(sheet2);
     itHasWaitedEnough();
     expect(cb).toBeCalledTimes(2);
     expect(cb.mock.calls[1][0]).toBeInstanceOf(Sheet);
 
-    const cbErr: jest.Mock = jest.fn(() => {throw new Error('arf')})
-    global.firstInit = jest.fn(() => {throw new Error('wow')})
+    const cbErr: jest.Mock = jest.fn(() => {
+      throw new Error("arf");
+    });
+    global.firstInit = jest.fn(() => {
+      throw new Error("wow");
+    });
     let initErr = subject.apply(subject, [cbErr]);
     initErr(sheet1);
     expect(cbErr).toBeCalledTimes(0);
-    expect(handleError).toBeCalledTimes(0)
-    expect(global.firstInit).toBeCalledTimes(0)
+    expect(global.firstInit).toBeCalledTimes(0);
     itHasWaitedEnough();
     expect(cbErr).toThrowError();
-    expect(global.firstInit).toThrowError()
-    expect(handleError).toBeCalledTimes(2)
+    expect(global.firstInit).toThrowError();
   });
 });

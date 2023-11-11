@@ -38,7 +38,9 @@ class MixinToAssign extends Visitor {
       arguments: [
         { expression: thisexpression({ span }) },
         ...mixins.map<Argument>((mixin: Argument) => ({
-          expression: newexpression(mixin.expression, [], span),
+          expression: newexpression({
+            callee: mixin.expression,
+          }),
         })),
       ],
     };
