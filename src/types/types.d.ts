@@ -135,6 +135,9 @@ declare namespace LetsRole {
   type ErrorTrace = {
     type: string;
     loc: ErrorTraceLoc;
+    callee?: {
+      name: string,
+    }
   };
   export type Error = {
     name: string;

@@ -1,14 +1,20 @@
-import { Argument, Expression, NewExpression, Span } from "@swc/core";
+import { HasSpan, NewExpression, Span } from "@swc/core";
 
-export const newexpression = (
-  superClass: Expression,
-  args: Argument[] | undefined,
-  span: Span
-): NewExpression => {
+type NewExpressionArgs = {
+  callee: NewExpression["callee"],
+  arguments?: NewExpression["arguments"],
+  span?: Span,
+};
+
+export const newexpression = ({
+  callee,
+  arguments: args = [],
+  span = (callee as HasSpan).span,
+}: NewExpressionArgs): NewExpression => {
   return {
     type: "NewExpression",
-    span: span,
-    callee: superClass,
+    span,
+    callee,
     arguments: args,
   };
 };

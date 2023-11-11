@@ -16,6 +16,8 @@ import assignment from "./node/expression/assignment";
 import { objectassign } from "./node/expression/objectassign";
 import member from "./node/expression/member";
 import binary from "./node/expression/binary";
+import parenthesis from "./node/expression/parenthesis";
+import { newexpression } from "./node/expression/newexpression";
 
 class NoThrowStatement extends Visitor {
   #throwErrorStatement(span: Span): ExpressionStatement {
@@ -64,60 +66,6 @@ class NoThrowStatement extends Visitor {
         ],
       },
     };
-
-    const result: Statement = {
-      type: "TryStatement",
-      span,
-      block: {
-        type: "BlockStatement",
-        span,
-        stmts: [this.#throwErrorStatement(span)],
-      },
-      handler: {
-        type: "CatchClause",
-        span,
-        param: _identifier,
-        body: {
-          type: "BlockStatement",
-          span,
-          stmts: [
-            {
-              type: "ExpressionStatement",
-              span,
-              expression: assignment({
-                span,
-                left: this.#lastExceptionIdentifier(span),
-                right: {
-                  ...newExpr,
-                  arguments: [
-                    ...(newExpr.arguments || []),
-                    {
-                      expression: {
-                        type: "ObjectExpression",
-                        span,
-                        properties: [
-                          {
-                            type: "KeyValueProperty",
-                            key: identifier({
-                              span,
-                              value: "cause",
-                            }),
-                            value: _identifier,
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
-                operator: "=",
-              }),
-            },
-            this.#throwErrorStatement(span),
-          ],
-        },
-      },
-    };
-    return result;
   }
 
   visitCatchClause(handler: CatchClause | undefined): CatchClause | undefined {
@@ -132,32 +80,44 @@ class NoThrowStatement extends Visitor {
         expression: assignment({
           span: handler.param.span,
           left: handler.param,
-          right: binary({
+          right: call({
             span: handler.param.span,
-            operator: "||",
-            left: call(
-              {
+            callee: member({
+              span: handler.param.span,
+              object: parenthesis({
                 span: handler.param.span,
-                callee: member(
-                  {
-                    span: handler.param.span,
-                    object: this.#lastExceptionIdentifier(handler.span),
-                    property: identifier({
+                expression: binary({
+                  left: this.#lastExceptionIdentifier(handler.span),
+                  right: call({
+                    callee: identifier({
                       span: handler.param.span,
-                      value: "thrownBy",
+                      value: "newError",
                     }),
-                  },
-                  true
-                ),
-                args: [
-                  {
-                    expression: handler.param,
-                  },
-                ],
+                    args: [
+                      {
+                        expression: member({
+                          object: handler.param,
+                          property: identifier({
+                            span: handler.param.span,
+                            value: "message",
+                          }),
+                        }, true),
+                      },
+                    ],
+                  }),
+                  operator: "||",
+                }),
+              }),
+              property: identifier({
+                span: handler.param.span,
+                value: "thrownBy",
+              }),
+            }),
+            args: [
+              {
+                expression: handler.param,
               },
-              true
-            ),
-            right: handler.param,
+            ],
           }),
           operator: "=",
         }),
