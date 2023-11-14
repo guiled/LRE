@@ -82,17 +82,17 @@ export class Sheet
       container = this.get(containerId, silent);
       if (!container || !container.id()) {
         !silent &&
-          lre.error("Sheet.get returns null container for " + containerId);
+          lre.error(`Sheet.get returns null container for ${containerId}`);
         return null;
       }
       rawCmp = (container as Component).raw()?.find?.(finalId);
     }
 
     if (!rawCmp) {
-      !silent && lre.error("Sheet.get returns null object for " + id);
+      !silent && lre.error(`Sheet.get returns null object for ${id}`);
       return null;
     } else if (!rawCmp.id()) {
-      !silent && lre.error("Unable to find " + id);
+      !silent && lre.error(`Unable to find ${id}`);
       return null;
     }
 
@@ -132,13 +132,32 @@ export class Sheet
         delete this.#storedState![k];
       }
     });
-
+    const cmpWithChangedData = this.#getCmpWithChangedData(
+      newSheetStoredState.cmpData,
+      this.#storedState.cmpData
+    );
     this.#storedState = lre.deepMerge(this.#storedState, newSheetStoredState);
     this.#storedStateReceivedKeys = Object.keys(this.#storedState!);
+    cmpWithChangedData.forEach(c => c.trigger("data:update"));
+    
     if (hasPendingData) {
       lre.trace("pending data update");
       this.#saveStoredState();
     }
+  }
+
+  #getCmpWithChangedData(
+    newData: SheetProtectedStoredState["cmpData"],
+    oldData: SheetProtectedStoredState["cmpData"]
+  ): Array<Component> {
+    const cmps: Array<Component> = [];
+    Object.keys(newData || {}).forEach((cmpId) => {
+      const cmpFromCache = this.#componentCache.inCache(cmpId);
+      if (!lre.deepEqual(newData[cmpId], oldData[cmpId]) && !!cmpFromCache) {
+        cmps.push(cmpFromCache);
+      }
+    });
+    return cmps;
   }
 
   #loadState(

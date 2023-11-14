@@ -7,6 +7,7 @@ import { Mixin } from "../mixin";
 import { Repeater } from "./repeater";
 import { Entry } from "./entry";
 import { Error } from "../error";
+import { DataHolder } from "../dataholder";
 
 export const REP_ID_SEP = ".";
 
@@ -15,12 +16,14 @@ abstract class ComponentEventHolder<T extends string> extends EventHolder<
   T
 > {}
 
+type ComponentLREEventTypes = "data:update" | "class:update";
+
 export class Component<
     TypeValue extends LetsRole.ComponentValue = LetsRole.ComponentValue,
     AdditionalEvents extends string = LetsRole.EventType
   >
-  extends Mixin(ComponentEventHolder, HasRaw)<
-    AdditionalEvents,
+  extends Mixin(ComponentEventHolder, HasRaw, DataHolder)<
+    AdditionalEvents | ComponentLREEventTypes,
     Component<TypeValue>
   >
   implements
@@ -46,7 +49,7 @@ export class Component<
   #repeater: Repeater | undefined;
   #entry: Entry | undefined;
 
-  constructor(_raw: LetsRole.Component, sheet: Sheet, realId: string) {
+  constructor(raw: LetsRole.Component, sheet: Sheet, realId: string) {
     super([
       [
         /* eventHolder */ realId,
@@ -55,28 +58,33 @@ export class Component<
           event: EventDef
         ): EventHolder<LetsRole.Component> => {
           let idToFind: string = "";
-  
+
           if (event.delegated && rawCmp.index()) {
             idToFind = rawCmp.index() + REP_ID_SEP + rawCmp.id();
           } else if (event.delegated) {
             idToFind = rawCmp.id();
           }
-  
+
           if (idToFind !== "") {
             return this.find(idToFind) as EventHolder<LetsRole.Component>;
           }
           return this as EventHolder<LetsRole.Component>;
         },
       ],
-      [/* HasRaw */ {
-        getRaw: () => this.#sheet.raw().get(this.#realId),
-        onRefresh: (newRaw: LetsRole.Component) => {
-          this.transferEvents(newRaw);
+      [
+        /* HasRaw */ {
+          raw,
+          getRaw: () => this.#sheet.raw().get(this.#realId),
+          onRefresh: (newRaw: LetsRole.Component) => {
+            this.transferEvents(newRaw);
+          },
         },
-      }],
+      ],
+      [/* DataHolder*/ sheet, realId],
     ]);
     this.#realId = realId;
     this.#sheet = sheet;
+    this.on("data:update", this.loadPersistent);
   }
 
   init(): this {
@@ -151,7 +159,7 @@ export class Component<
     return this.raw().getClasses();
   }
   value(newValue?: unknown): void | LetsRole.ComponentValue {
-    throw new Error("Method not implemented." + (newValue ?? ''));
+    throw new Error("Method not implemented." + (newValue ?? ""));
   }
   virtualValue(
     newValue?: LetsRole.ComponentValue

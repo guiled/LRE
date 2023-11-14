@@ -5,11 +5,12 @@ import { Repeater } from "../../src/component/repeater";
 import { Sheet } from "../../src/sheet";
 import { MockComponent } from "../mock/letsrole/component.mock";
 import { MockSheet } from "../mock/letsrole/sheet.mock";
+import { LRE } from "../../src/lre";
+import { MockServer } from "../mock/letsrole/server.mock";
+import { initLetsRole, itHasWaitedEverything } from "../mock/letsrole/letsrole.mock";
 
-jest.mock("../../src/component/container");
-jest.mock("../../src/component/entry");
-jest.mock("../../src/component/repeater");
-jest.mock("../../src/sheet");
+global.lre = new LRE();
+initLetsRole();
 
 let rawSheet: LetsRole.Sheet;
 let sheet: Sheet;
@@ -21,13 +22,19 @@ const cmpClasses = ["cl1", "cl2", "cl3"];
 const realId = "main.cmp";
 const cmpText = "cmpText";
 
+let server: MockServer;
+
 beforeEach(() => {
+  server = new MockServer();
   rawSheet = MockSheet({
     id: "main",
     realId: "123",
   });
+  server.registerMockedSheet(rawSheet);
+
   sheet = new Sheet(rawSheet);
   sheet.raw = jest.fn(() => rawSheet);
+  jest.spyOn(sheet, "get");
   rawCmp = MockComponent({
     id: cmpId,
     sheet: rawSheet,
@@ -40,6 +47,7 @@ beforeEach(() => {
   });
   cmp = new Component(rawCmp, sheet, realId);
 });
+
 describe("Component construction", () => {
   test("Instantiates correctly", () => {
     expect(cmp.init()).toBe(cmp);
@@ -167,6 +175,38 @@ describe("Component value", () => {
   test("temp tests waiting for implementation", () => {
     expect(cmp.rawValue).toThrowError();
     expect(cmp.value).toThrowError();
+  });
+});
+
+describe("Persistent data are sync between sheets", () => {
+  test("Sync persistent data", () => {
+    const rawSheet2 = MockSheet({
+      id: "main",
+      realId: "123",
+    });
+    /* @ts-ignore */
+    rawSheet.num = 1;
+    /* @ts-ignore */
+    rawSheet2.num = 2;
+    server.registerMockedSheet(rawSheet2);
+
+    const sheet2 = new Sheet(rawSheet2);
+    const cmp2 = sheet2.get("rep.a.b")!;
+    /* @ts-ignore */
+    sheet.sheet = '1';
+    /* @ts-ignore */
+    sheet2.sheet = '2';
+    const cmp1 = new Component(rawCmp, sheet, "rep.a.b");
+    //const cmp2 = new Component(rawCmp, sheet2, "rep.a.b");
+    expect(cmp1.data("not")).toBeUndefined();
+    expect(cmp2.data("not")).toBeUndefined();
+    expect(sheet.persistingCmpData("rep.a.b")).toBeUndefined();
+    cmp1.data("test", 42, true);
+    expect(sheet.persistingCmpData("rep.a.b")).toStrictEqual({ test: 42 });
+    expect(cmp2.data("test")).toBeUndefined();
+    itHasWaitedEverything();
+    expect(sheet2.persistingCmpData("rep.a.b")).toStrictEqual({ test: 42 });
+    expect(cmp2.data("test")).toBe(42);
   });
 });
 
