@@ -3,17 +3,11 @@ import { MockServer } from "../mock/letsrole/server.mock";
 import { MockSheet, MockedSheet } from "../mock/letsrole/sheet.mock";
 import { Sheet } from "../../src/sheet/index";
 import { LRE } from "../../src/lre";
+import { newMockedWait } from "../mock/letsrole/wait.mock";
 
 global.lre = new LRE();
-let waitedCallbacks: Array<(...args: any[]) => any> = [];
-global.wait = jest.fn((_delay, cb) => waitedCallbacks.push(cb));
-
-const itHasWaitedEnough = () => {
-  while (waitedCallbacks.length) {
-    const toCall = waitedCallbacks.shift();
-    toCall?.();
-  }
-};
+const mockedWaitDefs = newMockedWait();
+global.wait = mockedWaitDefs.wait;
 
 const createLargeObject = (nbKeys: number): Record<string, number> =>
   Array(nbKeys)
@@ -152,7 +146,7 @@ describe("Sheet data handling", () => {
     });
     expect(raw.getData).toBeCalled();
     expect(sheet.getPendingData("a")).toStrictEqual(11);
-    itHasWaitedEnough();
+    mockedWaitDefs.itHasWaitedEverything();
     expect(raw.setData).toBeCalled();
     expect(processedCb).toBeCalled();
     processedCb.mockClear();
@@ -168,16 +162,16 @@ describe("Sheet data handling", () => {
       d: 4,
     });
     expect(processedCb).not.toBeCalled();
-    itHasWaitedEnough();
+    mockedWaitDefs.itHasWaitedEverything();
     expect(processedCb).toBeCalled();
   });
 
   test("No error when sending too much data", () => {
     sheet.setData(createLargeObject(35));
     expect(raw.setData).not.toBeCalled();
-    expect(itHasWaitedEnough).not.toThrowError();
+    expect(mockedWaitDefs.itHasWaitedEverything).not.toThrowError();
     expect(raw.setData).toBeCalled();
-    expect(itHasWaitedEnough).not.toThrowError();
+    expect(mockedWaitDefs.itHasWaitedEverything).not.toThrowError();
     expect(raw.setData).toBeCalledTimes(2);
   });
 });
@@ -203,12 +197,12 @@ describe("Sheet persisting data", () => {
   test("Persisting data shared between sheets", () => {
     sheet1.persistingData("test", 42);
     expect(sheet1.persistingData("test")).toStrictEqual(42);
-    itHasWaitedEnough();
+    mockedWaitDefs.itHasWaitedEverything();
     const testSheet = initSheet("main", "4242");
     expect(testSheet.persistingData("test")).toStrictEqual(42);
     sheet2.persistingData("test", 43);
     expect(sheet1.persistingData("test")).toStrictEqual(42);
-    itHasWaitedEnough();
+    mockedWaitDefs.itHasWaitedEverything();
     expect(sheet1.persistingData("test")).toStrictEqual(43);
     sheet1.persistingData("test", 44);
     sheet2.persistingData("test2", 54);
@@ -216,7 +210,7 @@ describe("Sheet persisting data", () => {
     expect(sheet2.persistingData("test2")).toStrictEqual(54);
     expect(sheet1.persistingData("test2")).toBeUndefined();
     expect(sheet2.persistingData("test")).toStrictEqual(43);
-    itHasWaitedEnough();
+    mockedWaitDefs.itHasWaitedEverything();
     expect(sheet1.persistingData("test")).toStrictEqual(44);
     expect(sheet2.persistingData("test2")).toStrictEqual(54);
     expect(sheet1.persistingData("test2")).toStrictEqual(54);
@@ -224,27 +218,27 @@ describe("Sheet persisting data", () => {
 
     sheet1.deletePersistingData("test2");
     expect(sheet1.persistingData("test2")).toBeUndefined();
-    itHasWaitedEnough();
+    mockedWaitDefs.itHasWaitedEverything();
     expect(sheet2.persistingData("test2")).toBeUndefined();
 
     sheet2.persistingData("test2", 55);
     expect(sheet1.persistingData("test2")).toBeUndefined();
     expect(sheet2.persistingData("test2")).toStrictEqual(55);
-    itHasWaitedEnough();
+    mockedWaitDefs.itHasWaitedEverything();
     expect(sheet1.persistingData("test2")).toStrictEqual(55);
     expect(sheet2.persistingData("test2")).toStrictEqual(55);
     sheet1.deletePersistingData("test2");
     sheet2.persistingData("test2", 56);
     expect(sheet1.persistingData("test2")).toBeUndefined();
     expect(sheet2.persistingData("test2")).toStrictEqual(56);
-    itHasWaitedEnough();
+    mockedWaitDefs.itHasWaitedEverything();
     expect(sheet1.persistingData("test2")).toBeUndefined();
     expect(sheet2.persistingData("test2")).toBeUndefined();
     sheet1.persistingData("test3", 3);
     sheet2.deletePersistingData("test3");
     expect(sheet1.persistingData("test3")).toStrictEqual(3);
     expect(sheet2.persistingData("test3")).toBeUndefined();
-    itHasWaitedEnough();
+    mockedWaitDefs.itHasWaitedEverything();
     expect(sheet1.persistingData("test3")).toStrictEqual(3);
     expect(sheet2.persistingData("test3")).toStrictEqual(3);
 
@@ -265,7 +259,7 @@ describe("Sheet persisting data", () => {
     sheet1.persistingData("initialized", true);
     expect(sheet1.isInitialized()).toBeTruthy();
     expect(sheet2.isInitialized()).toBeFalsy();
-    itHasWaitedEnough();
+    mockedWaitDefs.itHasWaitedEverything();
     expect(sheet2.isInitialized()).toBeTruthy();
   });
 
@@ -276,7 +270,7 @@ describe("Sheet persisting data", () => {
     };
     const v = sheet1.persistingCmpData("123", newData);
     expect(sheet1.raw().setData).not.toBeCalled();
-    expect(itHasWaitedEnough).not.toThrowError();
+    expect(mockedWaitDefs.itHasWaitedEverything).not.toThrowError();
     expect(sheet1.raw().setData).toBeCalled();
     expect(v).toEqual(newData);
     const v2 = sheet2.persistingCmpData("123");
@@ -292,7 +286,7 @@ describe("Sheet persisting data", () => {
     };
     expect(sheet1.persistingCmpData("123", newData1)).toEqual(newData1);
     expect(sheet2.persistingCmpData("123", newData2)).toEqual(newData2);
-    itHasWaitedEnough();
+    mockedWaitDefs.itHasWaitedEverything();
     expect(sheet1.persistingCmpData("123")).toEqual({
       ...newData1,
       ...newData2,
@@ -332,7 +326,7 @@ describe("Sheet persisting data", () => {
     };
     expect(sheet1.persistingCmpData("123", newData3)).toEqual(newData3);
     expect(sheet2.persistingCmpData("123", newData4)).toEqual(newData4);
-    itHasWaitedEnough();
+    mockedWaitDefs.itHasWaitedEverything();
     expect(sheet1.persistingCmpData("123")).toEqual(result);
     expect(sheet2.persistingCmpData("123")).toEqual(result);
   });
@@ -342,13 +336,13 @@ describe("Sheet persisting data", () => {
     expect(sheet1.persistingCmpClasses("123", c)).toEqual(c);
     expect(sheet1.persistingCmpClasses("123")).toEqual(c);
     expect(sheet2.persistingCmpClasses("123")).not.toEqual(c);
-    expect(itHasWaitedEnough).not.toThrowError();
+    expect(mockedWaitDefs.itHasWaitedEverything).not.toThrowError();
     expect(sheet2.persistingCmpClasses("123")).toEqual(c);
     const c1 = ["class1", "class1b"];
     const c2 = ["class2"];
     sheet1.persistingCmpClasses("123", c1);
     sheet2.persistingCmpClasses("123", c2);
-    expect(itHasWaitedEnough).not.toThrowError();
+    expect(mockedWaitDefs.itHasWaitedEverything).not.toThrowError();
     // no need today to merge the two arrays of classes
     expect(sheet1.persistingCmpClasses("123")).toEqual(c1);
     expect(sheet2.persistingCmpClasses("123")).toEqual(c1);
@@ -382,7 +376,7 @@ describe("Sheet clean data", () => {
     let sheet = new Sheet(raw);
     sheet.cleanCmpData();
     expect(sheet.getData()).toEqual(save);
-    itHasWaitedEnough();
+    mockedWaitDefs.itHasWaitedEverything();
     expect(sheet.getData()).toEqual(save);
     data = {
       main: {
@@ -397,7 +391,7 @@ describe("Sheet clean data", () => {
     sheet = new Sheet(raw);
     sheet.cleanCmpData();
     expect(sheet.getData()).toEqual(save);
-    itHasWaitedEnough();
+    mockedWaitDefs.itHasWaitedEverything();
     expect(sheet.getData()).toEqual(save);
     const large = createLargeObject(30);
     data = {
@@ -426,7 +420,7 @@ describe("Sheet clean data", () => {
     sheet = new Sheet(raw);
     sheet.cleanCmpData();
     expect(sheet.getData()).toEqual(save);
-    itHasWaitedEnough();
+    mockedWaitDefs.itHasWaitedEverything();
     /* @ts-ignore */
     delete save2.main!.cmpData![MockServer.UNKNOWN_CMP_ID];
     /* @ts-ignore */
@@ -445,7 +439,7 @@ describe("Sheet clean data", () => {
     delete save2.main!.cmpClasses![`b.b.${MockServer.UNKNOWN_CMP_ID}`];
     expect(sheet.getData()).toEqual(save2);
     expect(sheet.getData()).not.toEqual(save);
-    itHasWaitedEnough();
+    mockedWaitDefs.itHasWaitedEverything();
     expect(sheet.getData()).toEqual(save2);
     expect(sheet.getData()).not.toEqual(save);
   });
@@ -508,10 +502,10 @@ describe("Sheet get component", () => {
     expect(sheet1.get(`${MockServer.UNKNOWN_CMP_ID}.b.c`)).toBeNull();
     expect(errorLogSpy).toBeCalled();
     errorLogSpy.mockClear();
-    expect(sheet1.get(`a.${MockServer.UNKNOWN_CMP_ID}.c`)).toBeNull();
+    expect(sheet1.get(`rep.${MockServer.UNKNOWN_CMP_ID}.c`)).toBeNull();
     expect(errorLogSpy).toBeCalled();
     errorLogSpy.mockClear();
-    expect(sheet1.get(`a.b.${MockServer.UNKNOWN_CMP_ID}`)).toBeNull();
+    expect(sheet1.get(`rep.b.${MockServer.UNKNOWN_CMP_ID}`)).toBeNull();
     expect(errorLogSpy).toBeCalled();
     errorLogSpy.mockClear();
     expect(sheet1.get(MockServer.NULL_CMP_ID)).toBeNull();
@@ -520,21 +514,21 @@ describe("Sheet get component", () => {
     expect(sheet1.get(`${MockServer.NULL_CMP_ID}.b.c`)).toBeNull();
     expect(errorLogSpy).toBeCalled();
     errorLogSpy.mockClear();
-    expect(sheet1.get(`a.${MockServer.NULL_CMP_ID}.c`)).toBeNull();
+    expect(sheet1.get(`rep.${MockServer.NULL_CMP_ID}.c`)).toBeNull();
     expect(errorLogSpy).toBeCalled();
     errorLogSpy.mockClear();
-    expect(sheet1.get(`a.b.${MockServer.NULL_CMP_ID}`)).toBeNull();
+    expect(sheet1.get(`rep.b.${MockServer.NULL_CMP_ID}`)).toBeNull();
     expect(errorLogSpy).toBeCalled();
     errorLogSpy.mockClear();
 
     expect(sheet1.get(MockServer.UNKNOWN_CMP_ID, true)).toBeNull();
     expect(sheet1.get(`${MockServer.UNKNOWN_CMP_ID}.b.c`, true)).toBeNull();
-    expect(sheet1.get(`a.${MockServer.UNKNOWN_CMP_ID}.c`, true)).toBeNull();
-    expect(sheet1.get(`a.b.${MockServer.UNKNOWN_CMP_ID}`, true)).toBeNull();
+    expect(sheet1.get(`rep.${MockServer.UNKNOWN_CMP_ID}.c`, true)).toBeNull();
+    expect(sheet1.get(`rep.b.${MockServer.UNKNOWN_CMP_ID}`, true)).toBeNull();
     expect(sheet1.get(MockServer.NULL_CMP_ID, true)).toBeNull();
     expect(sheet1.get(`${MockServer.NULL_CMP_ID}.b.c`, true)).toBeNull();
-    expect(sheet1.get(`a.${MockServer.NULL_CMP_ID}.c`, true)).toBeNull();
-    expect(sheet1.get(`a.b.${MockServer.NULL_CMP_ID}`, true)).toBeNull();
+    expect(sheet1.get(`rep.${MockServer.NULL_CMP_ID}.c`, true)).toBeNull();
+    expect(sheet1.get(`rep.b.${MockServer.NULL_CMP_ID}`, true)).toBeNull();
     expect(errorLogSpy).toBeCalledTimes(0);
 
     expect(sheet1.componentExists("a")).toBeTruthy();
@@ -585,12 +579,12 @@ describe("Sheet get component", () => {
     expect(raw.get).toBeCalledTimes(0);
     sheet1.remember("abc");
     expect(raw.get).toBeCalledTimes(0);
-    itHasWaitedEnough();
+    mockedWaitDefs.itHasWaitedEverything();
     expect(raw.get).toBeCalledTimes(1);
     sheet1.get("abc");
     expect(raw.get).toBeCalledTimes(1);
     sheet1.forget("abc");
-    itHasWaitedEnough();
+    mockedWaitDefs.itHasWaitedEverything();
     sheet1.get("abc");
     expect(raw.get).toBeCalledTimes(2);
   });

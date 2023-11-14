@@ -110,14 +110,19 @@ export class MockServer {
           cmpStructureList = cmpStructure?.children;
         });
       }
-      const cmp: MockedComponent = this.registerMockedComponent(MockComponent({
-        id: cmpId,
-        sheet,
-        cntr: cmpContainerId
-          ? (sheet.get(cmpContainerId!) as MockedComponent)
-          : undefined,
-        classes: cmpStructure?.classes,
-      }));
+      const cmp: MockedComponent = this.registerMockedComponent(
+        MockComponent({
+          id: cmpId,
+          sheet,
+          cntr: cmpContainerId
+            ? (sheet.get(cmpContainerId!) as MockedComponent)
+            : undefined,
+          classes: [
+            ...(cmpStructure?.classes || []),
+            cmpId.indexOf("rep") !== -1 ? "repeater" : "",
+          ],
+        })
+      );
       this.cmp[sheetId][cmpId].set(sheet, cmp);
       return cmp;
     });
@@ -138,7 +143,7 @@ export class MockServer {
     );
     newCmp.find = jest.fn((id: LetsRole.ComponentID) => {
       const searchedComponentId =
-      (container ? container._realId() + "." : "") + id;
+        (container ? container._realId() + "." : "") + id;
       if (
         this.unknownComponents.includes(searchedComponentId) ||
         id.indexOf(MockServer.UNKNOWN_CMP_ID) !== -1
@@ -166,8 +171,7 @@ export class MockServer {
       }
       /* @ts-ignored */
       const foundCmp = prevCmpFind(id);
-      this.registerMockedComponent(foundCmp, newCmp);
-      return foundCmp;
+      return this.registerMockedComponent(foundCmp, newCmp);
     });
 
     return newCmp;

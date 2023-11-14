@@ -1,4 +1,5 @@
 type HasRawConstructorParams<T> = {
+  raw?: T,
   getRaw: () => T;
   onRefresh?: (newRaw: T) => void;
 };
@@ -8,7 +9,8 @@ export class HasRaw<T = LetsRole.Sheet | LetsRole.Component> {
   #getRaw: HasRawConstructorParams<T>["getRaw"];
   #onRefresh: HasRawConstructorParams<T>["onRefresh"];
 
-  constructor({ getRaw, onRefresh }: HasRawConstructorParams<T>) {
+  constructor({ raw, getRaw, onRefresh }: HasRawConstructorParams<T>) {
+    this.#raw = raw;
     this.#getRaw = getRaw;
     this.#onRefresh = onRefresh;
   }
