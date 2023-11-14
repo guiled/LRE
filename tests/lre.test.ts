@@ -124,4 +124,18 @@ describe("LRE tests", () => {
     expect(cbErr).toThrowError();
     expect(global.firstInit).toThrowError();
   });
+
+  test("LRE util Object deep equal", () => {
+    const a = {};
+    expect(subject.deepEqual(a, a)).toBeTruthy();
+    expect(subject.deepEqual({}, {})).toBeTruthy();
+    expect(subject.deepEqual({}, [1])).toBeFalsy();
+    expect(subject.deepEqual({}, 1)).toBeFalsy();
+    expect(subject.deepEqual([], [])).toBeTruthy();
+    expect(subject.deepEqual({a: 1, b: 2, c: a}, {b: 2, c:a, a: 1})).toBeTruthy();
+    expect(subject.deepEqual({a: 1, b: 2, c: a}, {b: 2, c:{}, a: 1})).toBeTruthy();
+    expect(subject.deepEqual({a: 1, b: 2, c: a}, {b: 2, c:{a:1}, a: 1})).toBeFalsy();
+    expect(subject.deepEqual({a: 1, b: 2, c: a, d: 3}, {b: 2, c:{}, a: 1})).toBeFalsy();
+    expect(subject.deepEqual({a: 1, b: 2, c: a, d: 3}, {e: 4, b: 2, c:{}, a: 1})).toBeFalsy();
+  })
 });

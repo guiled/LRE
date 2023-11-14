@@ -1,5 +1,6 @@
 declare interface ILRE {
   deepMerge(target: any, ...sources: any[]): any;
+  deepEqual(x: any, y: any): boolean;
   numToAlpha(n: number): string;
   alphaToNum(s: string): number;
   __debug: boolean = false;
