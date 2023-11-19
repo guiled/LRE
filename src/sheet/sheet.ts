@@ -138,7 +138,7 @@ export class Sheet
     );
     this.#storedState = lre.deepMerge(this.#storedState, newSheetStoredState);
     this.#storedStateReceivedKeys = Object.keys(this.#storedState!);
-    cmpWithChangedData.forEach(c => c.trigger("data:update"));
+    cmpWithChangedData.forEach(c => c.trigger("dataupdate"));
     
     if (hasPendingData) {
       lre.trace("pending data update");
@@ -153,7 +153,7 @@ export class Sheet
     const cmps: Array<Component> = [];
     Object.keys(newData || {}).forEach((cmpId) => {
       const cmpFromCache = this.#componentCache.inCache(cmpId);
-      if (!lre.deepEqual(newData[cmpId], oldData[cmpId]) && !!cmpFromCache) {
+      if (!!cmpFromCache && !lre.deepEqual(newData[cmpId], oldData[cmpId])) {
         cmps.push(cmpFromCache);
       }
     });
