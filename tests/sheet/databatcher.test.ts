@@ -56,9 +56,13 @@ describe("DataBatcher async send data", () => {
       fortyTwo: 42,
       fortyThree: 43,
     };
+    const pendingCallback = jest.fn();
     const processedCallback = jest.fn();
+    dataBatcher.on("pending", pendingCallback);
     dataBatcher.on("processed", processedCallback);
+    expect(pendingCallback).not.toBeCalled();
     dataBatcher.setData(data);
+    expect(pendingCallback).toBeCalledTimes(1);
     expect(processedCallback).not.toBeCalled();
     itHasWaitedEnough();
     expect(processedCallback).toBeCalledTimes(1);
@@ -139,6 +143,17 @@ describe("DataBatcher async send data", () => {
       fortyTwo: 44,
       fortyThree: 43,
     });
+  });
+
+  test("Databatcher raise and log an error when data pending failed", () => {
+    dataBatcher.on("pending", () => {
+      /* @ts-ignore */
+      no();
+    });
+    dataBatcher.setData({
+      a: "any",
+    });
+    expect(lre.error).toBeCalled();
   });
 
   test("Databatcher raise and log an error when data processed failed", () => {

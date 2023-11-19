@@ -210,4 +210,6 @@ describe("Persistent data are sync between sheets", () => {
   });
 });
 
-describe("Component events on sub component", () => {});
+describe("Component events on sub component", () => {
+  // @todo
+});

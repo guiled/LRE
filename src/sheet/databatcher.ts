@@ -5,7 +5,7 @@ type PendingData = {
   k: string;
 };
 
-type DataBatcherEventType = "processed";
+type DataBatcherEventType = "processed" | "pending";
 
 const ASYNC_DATA_SET_DELAY = 50;
 const MAX_DATA_BATCH_SIZE = 20;
@@ -58,7 +58,7 @@ export class DataBatcher extends EventHolder<any, DataBatcherEventType> {
       try {
         this.trigger("processed");
       } catch (e) {
-        lre.error('[Event:data:processed] ' + e);
+        lre.error('[Batcher:event:processed] ' + e);
       }
     }
   }
@@ -78,6 +78,11 @@ export class DataBatcher extends EventHolder<any, DataBatcherEventType> {
       if (!this.#isSendPending && this.#pending.length > 0) {
         this.#isSendPending = true;
         wait(ASYNC_DATA_SET_DELAY, this.#sendBatch.bind(this));
+        try {
+          this.trigger("pending");
+        } catch (e) {
+          lre.error('[Batcher:event:pending] ' + e);
+        }
       }
     }
   }
