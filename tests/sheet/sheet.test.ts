@@ -118,7 +118,9 @@ describe("Sheet data handling", () => {
 
   test("setData and getData are batched and events are triggered", () => {
     const processedCb: jest.Mock = jest.fn();
-    sheet.on("data:processed", processedCb);
+    const pendingCb: jest.Mock = jest.fn();
+    sheet.on("data-processed", processedCb);
+    sheet.on("data-pending", pendingCb);
     const data: LetsRole.ViewData = {
       a: 1,
       b: 2,
@@ -132,10 +134,12 @@ describe("Sheet data handling", () => {
         data[i] = d[i];
       }
     });
+    expect(pendingCb).not.toBeCalled();
     sheet.setData({
       a: 11,
       d: 4,
     });
+    expect(pendingCb).toBeCalledTimes(1);
     expect(raw.setData).not.toBeCalled();
     expect(processedCb).not.toBeCalled();
     expect(sheet.getData()).toEqual({
@@ -148,22 +152,26 @@ describe("Sheet data handling", () => {
     expect(sheet.getPendingData("a")).toStrictEqual(11);
     mockedWaitDefs.itHasWaitedEverything();
     expect(raw.setData).toBeCalled();
+    expect(pendingCb).toBeCalledTimes(1);
     expect(processedCb).toBeCalled();
     processedCb.mockClear();
-
+    
     const newRaw = MockSheet(rawSheetData);
     const prevRaw = sheet.raw();
     expect(newRaw).not.toBe(prevRaw);
     sheet.refreshRaw(newRaw);
     expect(sheet.raw()).toBe(newRaw);
     expect(sheet.raw()).not.toBe(prevRaw);
+    expect(pendingCb).toBeCalledTimes(1);
     sheet.setData({
       a: 11,
       d: 4,
     });
+    expect(pendingCb).toBeCalledTimes(2);
     expect(processedCb).not.toBeCalled();
     mockedWaitDefs.itHasWaitedEverything();
     expect(processedCb).toBeCalled();
+    expect(pendingCb).toBeCalledTimes(2);
   });
 
   test("No error when sending too much data", () => {

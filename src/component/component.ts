@@ -16,7 +16,7 @@ export const REP_ID_SEP = ".";
 //   T
 // > {}
 
-type ComponentLREEventTypes = "dataupdate" | "classupdate";
+type ComponentLREEventTypes = "data-updated" | "class-updated";
 
 export class Component<
     TypeValue extends LetsRole.ComponentValue = LetsRole.ComponentValue,
@@ -84,7 +84,7 @@ export class Component<
     ]);
     this.#realId = realId;
     this.#sheet = sheet;
-    this.on("dataupdate", this.loadPersistent.bind(this));
+    this.on("data-updated:__lre__", this.loadPersistent.bind(this));
   }
 
   init(): this {

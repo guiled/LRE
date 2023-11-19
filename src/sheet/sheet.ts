@@ -22,7 +22,7 @@ type SheetStoredState = SheetProtectedStoredState & Record<string, any>;
 type ProtectedStoredState = keyof SheetProtectedStoredState;
 type StoredState = ProtectedStoredState | string;
 
-type SheetEvents = "data:processed";
+type SheetEvents = "data-pending" | "data-processed" | "data-updated";
 
 export class Sheet
   extends Mixin(EventHolder, HasRaw<LetsRole.Sheet>)<
@@ -61,7 +61,8 @@ export class Sheet
     ]);
     this.rand = Math.floor(Math.random() * 100);
     this.#batcher = new DataBatcher(rawSheet);
-    this.#batcher.linkEventTo("processed:sheet", this, "data:processed");
+    this.#batcher.linkEventTo("processed:sheet", this, "data-processed");
+    this.#batcher.linkEventTo("pending:sheet", this, "data-pending");
     this.#componentCache = new ComponentCache(this.#componentGetter.bind(this));
     this.#cmp = rawSheet.get(rawSheet.id())!;
     this.#silentFind = this.#cmp.find;
@@ -138,7 +139,8 @@ export class Sheet
     );
     this.#storedState = lre.deepMerge(this.#storedState, newSheetStoredState);
     this.#storedStateReceivedKeys = Object.keys(this.#storedState!);
-    cmpWithChangedData.forEach(c => c.trigger("dataupdate"));
+    this.trigger("data-updated:__lre__");
+    cmpWithChangedData.forEach(c => c.trigger("data-updated"));
     
     if (hasPendingData) {
       lre.trace("pending data update");
