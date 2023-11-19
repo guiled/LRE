@@ -11,19 +11,19 @@ import { DataHolder } from "../dataholder";
 
 export const REP_ID_SEP = ".";
 
-abstract class ComponentEventHolder<T extends string> extends EventHolder<
-  LetsRole.Component,
-  T
-> {}
+// abstract class ComponentEventHolder<T extends string> extends EventHolder<
+//   LetsRole.Component,
+//   T
+// > {}
 
-type ComponentLREEventTypes = "data:update" | "class:update";
+type ComponentLREEventTypes = "dataupdate" | "classupdate";
 
 export class Component<
     TypeValue extends LetsRole.ComponentValue = LetsRole.ComponentValue,
     AdditionalEvents extends string = LetsRole.EventType
   >
-  extends Mixin(ComponentEventHolder, HasRaw, DataHolder)<
-    AdditionalEvents | ComponentLREEventTypes,
+  extends Mixin(EventHolder, HasRaw, DataHolder)<
+  LetsRole.Component, AdditionalEvents | ComponentLREEventTypes,
     Component<TypeValue>
   >
   implements
@@ -84,7 +84,7 @@ export class Component<
     ]);
     this.#realId = realId;
     this.#sheet = sheet;
-    this.on("data:update", this.loadPersistent);
+    this.on("dataupdate", this.loadPersistent.bind(this));
   }
 
   init(): this {

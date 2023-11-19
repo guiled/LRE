@@ -169,11 +169,11 @@ var _Mixin: MixinFunction = function <R extends any[]>(
           descriptor = {
             ...p.descriptor,
             get: function (...args: any[]) {
-              /* @ts-ignore */
+              /* @ts-ignore this.instances WILL BE defined in the instance */
               return getter.apply(this.instances[index], args);
             },
             set: function (...args: any[]) {
-              /* @ts-ignore */
+              /* @ts-ignore this.instances WILL BE defined in the instance */
               return setter.apply(this.instances[index], args);
             },
           };
@@ -182,7 +182,7 @@ var _Mixin: MixinFunction = function <R extends any[]>(
           descriptor = {
             ...p.descriptor,
             value: function (...args: any[]) {
-              /* @ts-ignore */
+              /* @ts-ignore this.instances WILL BE defined in the instance */
               return cb.apply(this.instances[index], args);
             },
           };
