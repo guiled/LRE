@@ -86,6 +86,7 @@ declare namespace LetsRole {
     removeClass(className: ClassName): void;
     getClasses(): ClassName[];
     hasClass(className: ClassName): boolean;
+    toggleClass(className: ClassName): void;
 
     value(): ValueType;
     value(newValue: ValueType): void;

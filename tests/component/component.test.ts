@@ -7,7 +7,10 @@ import { MockComponent } from "../mock/letsrole/component.mock";
 import { MockSheet } from "../mock/letsrole/sheet.mock";
 import { LRE } from "../../src/lre";
 import { MockServer } from "../mock/letsrole/server.mock";
-import { initLetsRole, itHasWaitedEverything } from "../mock/letsrole/letsrole.mock";
+import {
+  initLetsRole,
+  itHasWaitedEverything,
+} from "../mock/letsrole/letsrole.mock";
 
 global.lre = new LRE();
 initLetsRole();
@@ -21,6 +24,7 @@ const cmpName = "ComponentName";
 const cmpClasses = ["cl1", "cl2", "cl3"];
 const realId = "main.cmp";
 const cmpText = "cmpText";
+let cmpDefs;
 
 let server: MockServer;
 
@@ -35,13 +39,14 @@ beforeEach(() => {
   sheet = new Sheet(rawSheet);
   sheet.raw = jest.fn(() => rawSheet);
   jest.spyOn(sheet, "get");
-  rawCmp = MockComponent({
+  cmpDefs = {
     id: cmpId,
     sheet: rawSheet,
     name: cmpName,
-    classes: cmpClasses,
+    classes: [...cmpClasses],
     text: cmpText,
-  });
+  };
+  rawCmp = MockComponent(cmpDefs);
   rawSheet.get = jest.fn(() => {
     return rawCmp;
   });
@@ -124,10 +129,30 @@ describe("Component construction", () => {
     cmp.addClass("cl0");
     expect(rawCmp.addClass).toBeCalledTimes(1);
     expect(cmp.hasClass("cl0")).toBeTruthy();
-    expect(rawCmp.hasClass).toBeCalledTimes(5);
     cmp.removeClass("cl2");
     expect(cmp.getClasses().sort()).toEqual(["cl0", "cl1", "cl3"].sort());
     expect(cmp.hasClass("cl2")).toBeFalsy();
+    cmp.toggleClass("cl2");
+    expect(cmp.hasClass("cl2")).toBeTruthy();
+    cmp.toggleClass("cl2");
+    expect(cmp.hasClass("cl2")).toBeFalsy();
+  });
+
+  test("Component save classes", () => {
+    jest.spyOn(sheet, "persistingCmpClasses");
+    expect(sheet.persistingCmpClasses).toBeCalledTimes(0);
+    expect(cmp.autoLoadSaveClasses()).toBe(cmp);
+    expect(sheet.persistingCmpClasses).toBeCalledTimes(1);
+    cmp.addClass("clX");
+    cmp.removeClass("cl2");
+    expect(sheet.persistingCmpClasses).toBeCalledTimes(3);
+    const rawCmp2 = MockComponent(cmpDefs!);
+    expect(rawCmp2.hasClass("clX")).toBeTruthy();
+    expect(rawCmp2.hasClass("clY")).toBeFalsy();
+    const cmp2 = new Component(rawCmp2, sheet, realId);
+    cmp2.autoLoadSaveClasses();
+    expect(cmp2.hasClass("clX")).toBeTruthy();
+    expect(cmp2.hasClass("clY")).toBeFalsy();
   });
 });
 
@@ -193,9 +218,9 @@ describe("Persistent data are sync between sheets", () => {
     const sheet2 = new Sheet(rawSheet2);
     const cmp2 = sheet2.get("rep.a.b")!;
     /* @ts-ignore */
-    sheet.sheet = '1';
+    sheet.sheet = "1";
     /* @ts-ignore */
-    sheet2.sheet = '2';
+    sheet2.sheet = "2";
     const cmp1 = new Component(rawCmp, sheet, "rep.a.b");
     //const cmp2 = new Component(rawCmp, sheet2, "rep.a.b");
     expect(cmp1.data("not")).toBeUndefined();

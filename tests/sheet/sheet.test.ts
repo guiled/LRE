@@ -1,7 +1,7 @@
 import { Component } from "../../src/component";
 import { MockServer } from "../mock/letsrole/server.mock";
 import { MockSheet, MockedSheet } from "../mock/letsrole/sheet.mock";
-import { Sheet } from "../../src/sheet/index";
+import { ClassChanges, Sheet } from "../../src/sheet/index";
 import { LRE } from "../../src/lre";
 import { newMockedWait } from "../mock/letsrole/wait.mock";
 
@@ -155,7 +155,7 @@ describe("Sheet data handling", () => {
     expect(pendingCb).toBeCalledTimes(1);
     expect(processedCb).toBeCalled();
     processedCb.mockClear();
-    
+
     const newRaw = MockSheet(rawSheetData);
     const prevRaw = sheet.raw();
     expect(newRaw).not.toBe(prevRaw);
@@ -340,20 +340,24 @@ describe("Sheet persisting data", () => {
   });
 
   test("Persisting cmp classes", () => {
-    const c = ["class1"];
+    const c: ClassChanges = { class1: 1 };
     expect(sheet1.persistingCmpClasses("123", c)).toEqual(c);
     expect(sheet1.persistingCmpClasses("123")).toEqual(c);
     expect(sheet2.persistingCmpClasses("123")).not.toEqual(c);
     expect(mockedWaitDefs.itHasWaitedEverything).not.toThrowError();
     expect(sheet2.persistingCmpClasses("123")).toEqual(c);
-    const c1 = ["class1", "class1b"];
-    const c2 = ["class2"];
+    const c1: ClassChanges = { class1: -1, class1b: 1 };
+    const c2: ClassChanges = { class2: 1 };
     sheet1.persistingCmpClasses("123", c1);
     sheet2.persistingCmpClasses("123", c2);
     expect(mockedWaitDefs.itHasWaitedEverything).not.toThrowError();
     // no need today to merge the two arrays of classes
-    expect(sheet1.persistingCmpClasses("123")).toEqual(c1);
-    expect(sheet2.persistingCmpClasses("123")).toEqual(c1);
+    const result: ClassChanges = {
+      ...c1,
+      ...c2,
+    };
+    expect(sheet1.persistingCmpClasses("123")).toEqual(result);
+    expect(sheet2.persistingCmpClasses("123")).toEqual(result);
   });
 });
 

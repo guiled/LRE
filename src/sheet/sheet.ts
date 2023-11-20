@@ -11,10 +11,12 @@ import { ComponentFactory } from "../component/factory";
 import { ComponentCommon } from "../component/Icommon";
 import { Mixin } from "../mixin";
 
+export type ClassChanges = Record<LetsRole.ClassName, 1 | -1>
+
 type SheetProtectedStoredState = {
   initialized: boolean;
   cmpData: Record<LetsRole.ComponentID, any>;
-  cmpClasses: Record<LetsRole.ComponentID, Array<LetsRole.ClassName>>;
+  cmpClasses: Record<LetsRole.ComponentID, ClassChanges>;
 };
 
 type SheetStoredState = SheetProtectedStoredState & Record<string, any>;
@@ -133,14 +135,19 @@ export class Sheet
         delete this.#storedState![k];
       }
     });
-    const cmpWithChangedData = this.#getCmpWithChangedData(
+    const cmpWithChangedData = this.#getCmpWithChanges(
       newSheetStoredState.cmpData,
       this.#storedState.cmpData
     );
+    const cmpWithChangedClasses = this.#getCmpWithChanges(
+      newSheetStoredState.cmpClasses,
+      this.#storedState.cmpClasses
+    );
     this.#storedState = lre.deepMerge(this.#storedState, newSheetStoredState);
     this.#storedStateReceivedKeys = Object.keys(this.#storedState!);
-    this.trigger("data-updated:__lre__");
+    this.trigger("data-updated");
     cmpWithChangedData.forEach(c => c.trigger("data-updated"));
+    cmpWithChangedClasses.forEach(c => c.trigger("class-updated"));
     
     if (hasPendingData) {
       lre.trace("pending data update");
@@ -148,7 +155,7 @@ export class Sheet
     }
   }
 
-  #getCmpWithChangedData(
+  #getCmpWithChanges(
     newData: SheetProtectedStoredState["cmpData"],
     oldData: SheetProtectedStoredState["cmpData"]
   ): Array<Component> {
@@ -375,16 +382,16 @@ export class Sheet
 
   persistingCmpClasses(
     componentId: LetsRole.ComponentID,
-    newClasses?: Array<LetsRole.ClassName>
-  ): Array<LetsRole.ClassName> {
+    classChanges?: ClassChanges
+  ): ClassChanges {
     if (arguments.length > 1) {
       return this.#persistingDataOperation(
         "cmpClasses",
         componentId,
-        newClasses!
+        classChanges
       );
     } else {
-      return this.#persistingDataOperation("cmpClasses", componentId) || [];
+      return this.#persistingDataOperation("cmpClasses", componentId) || {};
     }
   }
 
