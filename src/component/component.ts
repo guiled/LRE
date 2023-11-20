@@ -1,7 +1,7 @@
 import { EventDef, EventHolder } from "../eventholder";
 import { HasRaw } from "../hasraw";
 import { ComponentContainer, ComponentSearchResult } from "./container";
-import { Sheet } from "../sheet";
+import { ClassChanges, Sheet } from "../sheet";
 import { ComponentCommon } from "./Icommon";
 import { Mixin } from "../mixin";
 import { Repeater } from "./repeater";
@@ -16,14 +16,15 @@ export const REP_ID_SEP = ".";
 //   T
 // > {}
 
-type ComponentLREEventTypes = "data-updated" | "class-updated";
+type ComponentLREEventTypes = string & ("data-updated" | "class-updated");
 
 export class Component<
     TypeValue extends LetsRole.ComponentValue = LetsRole.ComponentValue,
     AdditionalEvents extends string = LetsRole.EventType
   >
   extends Mixin(EventHolder, HasRaw, DataHolder)<
-  LetsRole.Component, AdditionalEvents | ComponentLREEventTypes,
+    LetsRole.Component,
+    AdditionalEvents | ComponentLREEventTypes,
     Component<TypeValue>
   >
   implements
@@ -48,6 +49,15 @@ export class Component<
   #parent: ComponentContainer | undefined;
   #repeater: Repeater | undefined;
   #entry: Entry | undefined;
+  #mustSaveClasses: boolean = false;
+  #classChanges: ClassChanges = {};
+  #classChangesApplication:
+    | undefined
+    | {
+        loaded: () => void;
+        added: (...args: any[]) => any;
+        removed: (...args: any[]) => any;
+      } = undefined;
 
   constructor(raw: LetsRole.Component, sheet: Sheet, realId: string) {
     super([
@@ -85,6 +95,7 @@ export class Component<
     this.#realId = realId;
     this.#sheet = sheet;
     this.on("data-updated:__lre__", this.loadPersistent.bind(this));
+    this.on("class-updated:__lre__", this.#applyClassChanges.bind(this));
   }
 
   init(): this {
@@ -146,17 +157,46 @@ export class Component<
   show(): void {
     this.raw().show();
   }
-  addClass(className: LetsRole.ClassName): void {
-    this.raw().addClass(className);
+  autoLoadSaveClasses(): this {
+    this.#mustSaveClasses = true;
+    this.#classChanges = this.#sheet.persistingCmpClasses(this.#realId);
+    this.trigger("class-updated", "", "loaded");
+    return this;
   }
-  removeClass(className: LetsRole.ClassName): void {
-    this.raw().removeClass(className);
+  addClass(className: LetsRole.ClassName): this {
+    if (!this.raw().hasClass(className)) {
+      this.#classChanges[className] = 1;
+      this.#saveClassChanges();
+      this.trigger("class-updated", className, "added");
+    }
+
+    return this;
+  }
+  removeClass(className: LetsRole.ClassName): this {
+    if (this.raw().hasClass(className)) {
+      this.#classChanges[className] = -1;
+      this.#saveClassChanges();
+      this.trigger("class-updated", className, "removed");
+    }
+
+    return this;
   }
   hasClass(className: LetsRole.ClassName): boolean {
     return this.raw().hasClass(className);
   }
   getClasses(): LetsRole.ClassName[] {
     return this.raw().getClasses();
+  }
+  toggleClass(className: LetsRole.ClassName): this {
+    this.#classChanges[className] = this.raw().hasClass(className) ? -1 : 1;
+    this.#saveClassChanges();
+    this.trigger(
+      "class-updated",
+      className,
+      this.#classChanges[className] === 1 ? "added" : "removed"
+    );
+
+    return this;
   }
   value(newValue?: unknown): void | LetsRole.ComponentValue {
     throw new Error("Method not implemented." + (newValue ?? ""));
@@ -185,6 +225,33 @@ export class Component<
   }
   setChoices(choices: LetsRole.Choices): void {
     return this.raw().setChoices(choices);
+  }
+
+  #saveClassChanges() {
+    if (this.#mustSaveClasses) {
+      this.#sheet.persistingCmpClasses(this.#realId, this.#classChanges);
+    }
+  }
+
+  #applyClassChanges(
+    _cmp: this,
+    className: LetsRole.ClassName,
+    action: "added" | "removed" | "loaded"
+  ) {
+    this.#classChangesApplication ??= {
+      loaded: () => {
+        Object.keys(this.#classChanges).forEach(
+          (className: LetsRole.ClassName) => {
+            this.#classChangesApplication![
+              this.#classChanges[className] === 1 ? "added" : "removed"
+            ](className);
+          }
+        );
+      },
+      added: this.raw().addClass,
+      removed: this.raw().removeClass,
+    };
+    this.#classChangesApplication[action](className);
   }
 
   // actionOnRawEvent({
