@@ -3,7 +3,7 @@ import classExtend from "./src/swc/ClassExtend";
 import classToFunction from "./src/swc/ClassToFunction";
 import computedObjectProps from "./src/swc/ComputedObjectProp";
 //import defaultVisitor from "./src/swc/DefaultVisitor";
-import keepInstanceOf from "./src/swc/KeepInstanceOf";
+//import keepInstanceOf from "./src/swc/KeepInstanceOf";
 import noArraySpreading from "./src/swc/NoArraySpreading";
 import noVoid0 from "./src/swc/NoVoid0";
 import defaultParameter from "./src/swc/ParamDefaultValue";
@@ -13,6 +13,7 @@ import { noDoWhile } from "./src/swc/NoDoWhile";
 import { mixinToAssign } from "./src/swc/MixinToAssign";
 import { noRestElement } from "./src/swc/NoRestElement";
 import noInstanceOf from "./src/swc/NoInstanceOf";
+import noObjectSpreading from "./src/swc/NoObjectSpread";
 
 const transformForLR: Options = {
   jsc: {
@@ -28,7 +29,7 @@ const transformForLR: Options = {
   module: {
     type: "es6",
   },
-  plugin: plugins([noThrowStatement(), noInstanceOf(), noDoWhile(), noArraySpreading(), noRestElement(), replaceInOperator(), defaultParameter(), computedObjectProps(), mixinToAssign(), classExtend(), classToFunction(), defaultParameter()]),
+  plugin: plugins([noThrowStatement(), noInstanceOf(), noDoWhile(), noArraySpreading(), noObjectSpreading(), noRestElement(), replaceInOperator(), defaultParameter(), computedObjectProps(), mixinToAssign(), classExtend(), classToFunction(), defaultParameter()]),
   sourceMaps: false,
 };
 
