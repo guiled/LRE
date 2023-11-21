@@ -35,6 +35,7 @@ declare namespace LetsRole {
   export type SheetID = string;
   export type ComponentID = string;
   export type VariableID = string;
+  export type TooltipPlacement = "top" | "right" | "bottom" | "left";
 
   export interface Sheet extends Object {
     /** get the id of the sheet */
@@ -101,6 +102,8 @@ declare namespace LetsRole {
     visible(): boolean;
 
     setChoices(choices: LetsRole.Choices): void;
+
+    setTooltip(text: string, placement?: TooltipPlacement): void;
   }
 
   export type Variable = {};
