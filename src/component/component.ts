@@ -120,6 +120,12 @@ export class Component<
   name(): string {
     return this.raw().name();
   }
+  setTooltip(text: string, placement?: LetsRole.TooltipPlacement): void {
+    if (arguments.length > 1) {
+      return this.raw().setTooltip(text, placement);
+    }
+    return this.raw().setTooltip(text);
+  }
   sheet(): Sheet {
     return this.#sheet;
   }
