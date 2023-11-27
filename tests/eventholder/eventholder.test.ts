@@ -456,7 +456,7 @@ describe("Handle error in event", () => {
   test("Handle error", () => {
     const eventHandler = jest.fn(() => {
       let a = undefined;
-      /* @ts-ignore This is intended to be erroneous */
+      /* @ts-expect-error This is intended to be erroneous */
       a();
     });
     subject.on("test", eventHandler);

@@ -49,6 +49,11 @@ export const MockComponent = ({
     removeClass: jest.fn((a) => (classes = classes.filter((c) => c !== a))),
     getClasses: jest.fn(() => classes),
     hasClass: jest.fn((c) => classes.includes(c)),
+    toggleClass: jest.fn((a) => {
+      classes.includes(a)
+        ? (classes = classes.filter((c) => c !== a))
+        : classes.push(a);
+    }),
     value: jest.fn((newValue?: LetsRole.ComponentValue) => {
       if (newValue !== void 0) {
         value = newValue;
@@ -76,6 +81,7 @@ export const MockComponent = ({
         handlers[event]?.(cmp);
       }
     }),
+    setTooltip: jest.fn((t) => t),
   };
   return cmp;
 };
