@@ -169,7 +169,6 @@ export class MockServer {
           },
         };
       }
-      /* @ts-ignored */
       const foundCmp = prevCmpFind(id);
       return this.registerMockedComponent(foundCmp, newCmp);
     });

@@ -477,13 +477,12 @@ describe("Sheet get component", () => {
   });
 
   test("Prevent errors", () => {
-    /* @ts-ignore On purpose for tests */
+    /* @ts-expect-error On purpose for tests */
     expect(sheet1.get({})).toBeNull();
-    /* @ts-ignore On purpose for tests */
+    /* @ts-expect-error On purpose for tests */
     expect(sheet1.get(123)).toBeNull();
-    /* @ts-ignore On purpose for tests */
     expect(sheet1.get("123")).toBeNull();
-    /* @ts-ignore On purpose for tests */
+    /* @ts-expect-error On purpose for tests */
     expect(sheet1.get(new String("123"))).toBeNull();
   });
 

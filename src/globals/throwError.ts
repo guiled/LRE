@@ -2,7 +2,7 @@ import { Error } from "../error";
 
 export const throwError = function (err: any): undefined {
   lastException = err;
-  /* @ts-ignore intentional error */
+  /* @ts-expect-error intentional error */
   null();
 };
 
