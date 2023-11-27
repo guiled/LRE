@@ -147,7 +147,7 @@ describe("DataBatcher async send data", () => {
 
   test("Databatcher raise and log an error when data pending failed", () => {
     dataBatcher.on("pending", () => {
-      /* @ts-ignore */
+      /* @ts-expect-error */
       no();
     });
     dataBatcher.setData({
@@ -158,7 +158,7 @@ describe("DataBatcher async send data", () => {
 
   test("Databatcher raise and log an error when data processed failed", () => {
     dataBatcher.on("processed", () => {
-      /* @ts-ignore */
+      /* @ts-expect-error */
       no();
     });
     dataBatcher.setData({
