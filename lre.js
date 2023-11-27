@@ -2180,6 +2180,7 @@ function lre(_arg) {
         this.prompt = sheet.prompt;
         this.id = sheet.id;
         this.realId = sheet.id;
+        this.properName = sheet.properName;
         this.getSheetId = sheet.getSheetId;
         this.getSheetAlphaId = function () {
             return sheetAlphaId;
