@@ -25,6 +25,9 @@ import func from "./node/expression/func";
 import parenthesis from "./node/expression/parenthesis";
 import memberchained from "./node/expression/memberchained";
 import nullliteral from "./node/literal/nullliteral";
+import onevariable from "./node/declaration/onevariable";
+import returnstmt from "./node/statement/returnstmt";
+import expression from "./node/expression";
 
 class MixinToAssign extends Visitor {
   #mixinClasses: Argument[] | undefined;
@@ -57,6 +60,14 @@ class MixinToAssign extends Visitor {
     const _m = identifier({ span, value: "_m" });
     const _idx = identifier({ span, value: "_idx" });
     let superFound = false;
+    const parentMixin = identifier({
+      span,
+      value: "_parentMixin",
+    });
+    const parentMixins = identifier({
+      span,
+      value: "_parents",
+    });
     n.body.stmts = n.body?.stmts.map<Statement>(
       (stmt: Statement): Statement => {
         if (
@@ -66,10 +77,10 @@ class MixinToAssign extends Visitor {
         ) {
           superFound = true;
           const callExpression: CallExpression = stmt.expression;
-          return {
+          return onevariable({
             span,
-            type: "ExpressionStatement",
-            expression: iife({
+            id: parentMixins,
+            init: iife({
               span,
               called: { expression: thisexpression({ span }) },
               params: [
@@ -77,28 +88,25 @@ class MixinToAssign extends Visitor {
                 paramidentifier({ span, param: _a }),
               ],
               args: [
-                {
-                  expression: arrayexpression({
+                expression(
+                  arrayexpression({
                     span,
                     elements: this.#mixinClasses!.map<ExprOrSpread>((m) => m),
-                  }),
-                },
+                  })
+                ),
                 ...callExpression.arguments,
               ],
               stmts: [
-                {
-                  type: "ExpressionStatement",
+                returnstmt({
                   span,
-                  expression: call({
-                    span,
+                  argument: call({
                     callee: member({
-                      span,
                       object: _mixins,
-                      property: identifier({ span, value: "forEach" }),
+                      property: identifier({ span, value: "map" }),
                     }),
                     args: [
-                      {
-                        expression: func({
+                      expression(
+                        func({
                           span,
                           params: [
                             paramidentifier({ span, param: _m }),
@@ -106,68 +114,72 @@ class MixinToAssign extends Visitor {
                           ],
                           binded: { expression: thisexpression({ span }) },
                           stmts: [
+                            onevariable({
+                              span,
+                              id: parentMixin,
+                              init: {
+                                type: "NewExpression",
+                                span,
+                                callee: parenthesis({
+                                  span,
+                                  expression: call({
+                                    callee: memberchained({
+                                      span,
+                                      properties: ["_m", "bind", "apply"],
+                                    }),
+                                    args: [
+                                      expression(_m),
+                                      expression(
+                                        arrayexpression({
+                                          span,
+                                          elements: [
+                                            expression(
+                                              nullliteral({
+                                                span,
+                                              })
+                                            ),
+                                            expression(
+                                              member({
+                                                object: _a,
+                                                property: {
+                                                  type: "Computed",
+                                                  span,
+                                                  expression: _idx,
+                                                },
+                                              })
+                                            ),
+                                          ],
+                                        })
+                                      ),
+                                    ],
+                                  }),
+                                }),
+                              },
+                            }),
                             {
                               type: "ExpressionStatement",
                               span,
                               expression: call({
-                                span,
                                 callee: objectassign(span),
                                 args: [
-                                  { expression: thisexpression({ span }) },
-                                  {
-                                    expression: {
-                                      type: "NewExpression",
-                                      span,
-                                      callee: parenthesis({
-                                        span,
-                                        expression: call({
-                                          span,
-                                          callee: memberchained({
-                                            span,
-                                            properties: ["_m", "bind", "apply"],
-                                          }),
-                                          args: [
-                                            { expression: _m },
-                                            {
-                                              expression: arrayexpression({
-                                                span,
-                                                elements: [
-                                                  {
-                                                    expression: nullliteral({
-                                                      span,
-                                                    }),
-                                                  },
-                                                  {
-                                                    expression: member({
-                                                      span,
-                                                      object: _a,
-                                                      property: {
-                                                        type: "Computed",
-                                                        span,
-                                                        expression: _idx,
-                                                      },
-                                                    }),
-                                                  },
-                                                ],
-                                              }),
-                                            },
-                                          ],
-                                        }),
-                                      }),
-                                    },
-                                  },
+                                  expression(thisexpression({ span })),
+                                  expression(parentMixin),
                                 ],
                               }),
                             },
+                            returnstmt({
+                              span,
+                              argument: parentMixin,
+                            }),
                           ],
-                        }),
-                      },
+                        })
+                      ),
                     ],
                   }),
-                },
+                }),
               ],
             }),
-          };
+          });
         }
         return stmt;
       }
@@ -191,7 +203,7 @@ class MixinToAssign extends Visitor {
       superClass.callee.value === "Mixin"
     ) {
       const span = decl.span;
-      const newClass = {
+      const newClass: ClassDeclaration = {
         ...decl,
         superClass: undefined,
       };

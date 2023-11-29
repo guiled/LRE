@@ -1,5 +1,4 @@
 import { Options, plugins } from "@swc/core";
-import classExtend from "./src/swc/ClassExtend";
 import classToFunction from "./src/swc/ClassToFunction";
 import computedObjectProps from "./src/swc/ComputedObjectProp";
 //import defaultVisitor from "./src/swc/DefaultVisitor";
@@ -29,7 +28,20 @@ const transformForLR: Options = {
   module: {
     type: "es6",
   },
-  plugin: plugins([noThrowStatement(), noInstanceOf(), noDoWhile(), noArraySpreading(), noObjectSpreading(), noRestElement(), replaceInOperator(), defaultParameter(), computedObjectProps(), mixinToAssign(), classExtend(), classToFunction(), defaultParameter()]),
+  plugin: plugins([
+    noThrowStatement(),
+    noInstanceOf(),
+    noDoWhile(),
+    noArraySpreading(),
+    noObjectSpreading(),
+    noRestElement(),
+    replaceInOperator(),
+    defaultParameter(),
+    computedObjectProps(),
+    mixinToAssign(),
+    classToFunction(),
+    defaultParameter(),
+  ]),
   sourceMaps: false,
 };
 
