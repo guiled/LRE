@@ -7,7 +7,7 @@ declare interface ILRE {
 }
 
 declare var isNaN = (n: any) => boolean;
-declare var structuredClone = function (val: any): any;
+declare var structuredClone = (val: any) => any;
 declare var lastException: any;
 declare var throwError = (err: any) => undefined;
 declare var newError = (err: message) => any;

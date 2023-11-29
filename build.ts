@@ -43,9 +43,9 @@ esbuild
     const endCode = fs.readFileSync("assemble/end.js", "utf8");
     code = [
       code.substring(0, insertAtStartCode),
-      startCode,
+      //startCode,
       code.substring(insertAtStartCode, insertAtEndCode),
-      endCode,
+      //endCode,
       code.substring(insertAtEndCode)
     ].join('');
     return fs.writeFileSync("build/lre.js", `//region LRE ${process.env.npm_package_version} ${Date.now()}
