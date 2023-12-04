@@ -1,13 +1,16 @@
 import {
   ArrayPattern,
+  ArrowFunctionExpression,
   BlockStatement,
   Expression,
   Fn,
+  HasSpan,
   ObjectPattern,
   ObjectPatternProperty,
   Param,
   Pattern,
   Program,
+  Span,
   TsType,
 } from "@swc/core";
 import { Visitor } from "@swc/core/Visitor";
@@ -16,6 +19,7 @@ import memberchained from "./node/expression/memberchained";
 import identifier from "./node/identifier";
 import numericliteral from "./node/literal/numericliteral";
 import undefinedidentifier from "./node/undefinedidentifier";
+import returnstmt from "./node/statement/returnstmt";
 
 const ARGS = "_arg";
 export function hasPropWithValue(o: ObjectPattern): boolean {
@@ -49,102 +53,164 @@ export function hasArrayItemWithValue(a: ArrayPattern): boolean {
 }
 
 class DefaultParameter extends Visitor {
+  #parsePattern(
+    pat: Pattern,
+    index: number,
+    span: Span
+  ): [Pattern | null, BlockStatement["stmts"]] {
+    const statementsToAdd: BlockStatement["stmts"] = [];
+    let defaultValue: Expression | undefined = undefined;
+    let id: Pattern | undefined = undefined;
+    let newPat: Pattern | null = null;
+    if (pat.type === "Identifier" && pat.optional) {
+      id = {
+        ...pat,
+        optional: false,
+      };
+      defaultValue = undefinedidentifier({ span: span });
+    } else if (pat.type === "AssignmentPattern") {
+      id = pat.left;
+      defaultValue = pat.right;
+    } else if (
+      (pat.type === "ObjectPattern" && hasPropWithValue(pat)) ||
+      (pat.type === "ArrayPattern" && hasArrayItemWithValue(pat))
+    ) {
+      const newArg = identifier({
+        span: span,
+        value: ARGS + index,
+      });
+      statementsToAdd.push({
+        type: "VariableDeclaration",
+        span: span,
+        kind: "var",
+        declare: false,
+        declarations: [
+          {
+            type: "VariableDeclarator",
+            span: span,
+            id: pat,
+            init: newArg,
+            definite: false,
+          },
+        ],
+      });
+      newPat = newArg;
+    } else {
+      newPat = pat;
+    }
+
+    if (defaultValue && id) {
+      statementsToAdd.push({
+        type: "VariableDeclaration",
+        span: span,
+        kind: "var",
+        declare: false,
+        declarations: [
+          {
+            type: "VariableDeclarator",
+            span: span,
+            id,
+            init: {
+              type: "ConditionalExpression",
+              span: span,
+              test: {
+                type: "ParenthesisExpression",
+                span: span,
+                expression: {
+                  type: "BinaryExpression",
+                  span: span,
+                  operator: "<",
+                  left: memberchained({
+                    span: span,
+                    properties: ["arguments", "length"],
+                  }),
+                  right: numericliteral({
+                    span: span,
+                    value: index + 1,
+                  }),
+                },
+              },
+              consequent: defaultValue,
+              alternate: member({
+                span: span,
+                object: identifier({
+                  span: span,
+                  value: "arguments",
+                }),
+                property: {
+                  type: "Computed",
+                  span: span,
+                  expression: numericliteral({
+                    span: span,
+                    value: index,
+                  }),
+                },
+              }),
+            },
+            definite: false,
+          },
+        ],
+      });
+      newPat = null;
+    }
+    return [newPat, statementsToAdd];
+  }
+
+  visitArrowFunctionExpression(e: ArrowFunctionExpression): Expression {
+    if (typeof e.body !== "undefined" && e.body) {
+      const bodyStatements: BlockStatement["stmts"] = [];
+      const newParams = e.params
+        .map((p: Pattern, index: number) => {
+          const [newPat, newStmts] = this.#parsePattern(p, index, e.span);
+          bodyStatements.push.apply(bodyStatements, newStmts);
+          return newPat;
+        })
+        .filter(Boolean) as Array<Pattern>;
+      if (bodyStatements.length > 0) {
+        if (e.body.type !== "BlockStatement") {
+          bodyStatements.push(
+            returnstmt({
+              span: e.span,
+              argument: e.body,
+            })
+          );
+        } else {
+          bodyStatements.push(...e.body.stmts);
+        }
+        return this.visitExpression({
+          type: "FunctionExpression",
+          span: e.span,
+          body: {
+            type: "BlockStatement",
+            span: (e.body as HasSpan).span,
+            stmts: bodyStatements,
+          },
+          params: newParams.filter(Boolean).map(
+            (p: Pattern | null): Param => ({
+              type: "Parameter",
+              span: e.span,
+              pat: p!,
+            })
+          ),
+          generator: false,
+          async: false,
+        });
+      }
+    }
+    return super.visitArrowFunctionExpression(e);
+  }
+
   visitFunction<T extends Fn>(n: T): T {
     if (typeof n.body !== "undefined" && n.body) {
       const statementsToAdd: BlockStatement["stmts"] = [];
-      n.params.forEach((p: Param, index: number) => {
-        let defaultValue: Expression | undefined = undefined;
-        let id: Pattern | undefined = undefined;
-        if (p.pat.type === "Identifier" && p.pat.optional) {
-          id = {
-            ...p.pat,
-            optional: false,
-          };
-          defaultValue = undefinedidentifier({ span: p.span });
-        } else if (p.pat.type === "AssignmentPattern") {
-          id = p.pat.left;
-          defaultValue = p.pat.right;
-        } else if (
-          (p.pat.type === "ObjectPattern" && hasPropWithValue(p.pat)) ||
-          (p.pat.type === "ArrayPattern" && hasArrayItemWithValue(p.pat))
-        ) {
-          const newArg = identifier({
-            span: p.span,
-            value: ARGS + index,
-          });
-          statementsToAdd.push({
-            type: "VariableDeclaration",
-            span: p.span,
-            kind: "var",
-            declare: false,
-            declarations: [
-              {
-                type: "VariableDeclarator",
-                span: p.span,
-                id: p.pat,
-                init: newArg,
-                definite: false,
-              },
-            ],
-          });
-          p.pat = newArg;
-        }
-
-        if (defaultValue && id) {
-          statementsToAdd.push({
-            type: "VariableDeclaration",
-            span: p.span,
-            kind: "var",
-            declare: false,
-            declarations: [
-              {
-                type: "VariableDeclarator",
-                span: p.span,
-                id,
-                init: {
-                  type: "ConditionalExpression",
-                  span: p.span,
-                  test: {
-                    type: "ParenthesisExpression",
-                    span: p.span,
-                    expression: {
-                      type: "BinaryExpression",
-                      span: p.span,
-                      operator: "<",
-                      left: memberchained({
-                        span: p.span,
-                        properties: ["arguments", "length"],
-                      }),
-                      right: numericliteral({
-                        span: p.span,
-                        value: index + 1,
-                      }),
-                    },
-                  },
-                  consequent: defaultValue,
-                  alternate: member({
-                    span: p.span,
-                    object: identifier({
-                      span: p.span,
-                      value: "arguments",
-                    }),
-                    property: {
-                      type: "Computed",
-                      span: p.span,
-                      expression: numericliteral({
-                        span: p.span,
-                        value: index,
-                      }),
-                    },
-                  }),
-                },
-                definite: false,
-              },
-            ],
-          });
-          p.pat = id;
-        }
-      });
+      n.params = n.params
+        .map((p: Param, index: number) => {
+          const [newPat, newStmts] = this.#parsePattern(p.pat, index, p.span);
+          p.pat = newPat!;
+          statementsToAdd.push.apply(statementsToAdd, newStmts);
+          return p;
+        })
+        .filter((p) => !!p.pat);
       n.body.stmts = [...statementsToAdd, ...n.body?.stmts];
     }
     return super.visitFunction(n);
