@@ -15,7 +15,7 @@ export class Error {
   #handleTrace(trace: LetsRole.Error["trace"]) {
     if (!trace) return;
     this.trace = trace;
-    const location = trace.find(function (tr) {
+    let location = trace.find(function (tr) {
       return (
         (lre.__debug &&
           tr.type === "CallExpression" &&
@@ -27,6 +27,10 @@ export class Error {
     if (location) {
       this.lineNumber = location.loc.start.line;
       this.columnNumber = location.loc.start.column;
+    } else if (lre.__debug) {
+      location = trace[0];
+      this.lineNumber = location?.loc?.start?.line;
+      this.columnNumber = location?.loc?.start?.column;
     }
   }
 
