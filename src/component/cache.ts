@@ -31,7 +31,7 @@ export class ComponentCache {
     }
 
     if (this.#toDelete.length > 0) {
-      wait(this.#DEFERRED_DELAY, this.#deferredForget.bind(this));
+      lre.wait(this.#DEFERRED_DELAY, this.#deferredForget.bind(this), "deferredForget");
       this.#isWaitingForget = true;
     }
   }
@@ -44,7 +44,7 @@ export class ComponentCache {
     this.get(realId, true);
 
     if (this.#toAdd.length > 0) {
-      wait(this.#DEFERRED_DELAY, this.#deferredRemember.bind(this));
+      lre.wait(this.#DEFERRED_DELAY, this.#deferredRemember.bind(this), "deferredRemember");
       this.#isWaitingRemember = true;
     }
   }
@@ -126,7 +126,7 @@ export class ComponentCache {
     }
     this.#deleteFromToAdd(realId);
     if (!this.#isWaitingForget) {
-      wait(this.#DEFERRED_DELAY, this.#deferredForget.bind(this));
+      lre.wait(this.#DEFERRED_DELAY, this.#deferredForget.bind(this), "deferredForget");
       this.#isWaitingRemember = false;
     }
   }
@@ -140,7 +140,7 @@ export class ComponentCache {
     }
     this.#deleteFromToDelete(realId);
     if (!this.#isWaitingRemember) {
-      wait(this.#DEFERRED_DELAY, this.#deferredRemember.bind(this));
+      lre.wait(this.#DEFERRED_DELAY, this.#deferredRemember.bind(this), "deferredRemember");
       this.#isWaitingRemember = true;
     }
   }
