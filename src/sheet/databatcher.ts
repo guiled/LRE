@@ -48,7 +48,7 @@ export class DataBatcher extends EventHolder<any, DataBatcherEventType> {
         }
       }
       if (arguments.length === 0) {
-        wait(ASYNC_DATA_SET_DELAY, this.#sendBatch.bind(this));
+        lre.wait(ASYNC_DATA_SET_DELAY, this.#sendBatch.bind(this), "sendBatch");
       }
     }
     if (added > 0) {
@@ -77,7 +77,7 @@ export class DataBatcher extends EventHolder<any, DataBatcherEventType> {
       }
       if (!this.#isSendPending && this.#pending.length > 0) {
         this.#isSendPending = true;
-        wait(ASYNC_DATA_SET_DELAY, this.#sendBatch.bind(this));
+        lre.wait(ASYNC_DATA_SET_DELAY, this.#sendBatch.bind(this), "sendBatch");
         try {
           this.trigger("pending");
         } catch (e) {

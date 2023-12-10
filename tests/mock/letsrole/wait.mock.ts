@@ -12,9 +12,9 @@ const newMockedWait = () => {
   };
 
   return {
-    wait: (_delay: number, cb: WaitedCallback) => {
+    wait: jest.fn((_delay: number, cb: WaitedCallback) => {
       waitedCallbacks.push(cb);
-    },
+    }),
     itHasWaitedEnough,
     itHasWaitedEverything: () => {
       while (waitedCallbacks.length > 0) {

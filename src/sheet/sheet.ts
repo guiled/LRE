@@ -226,7 +226,7 @@ export class Sheet
         }
       });
       if (realIdToChecked.length > 0) {
-        wait(200, analyzeRealId);
+        lre.wait(200, analyzeRealId, "analyzeRealId");
       } else {
         realIdToForget.forEach((realId) => {
           delete this.#storedState!.cmpData[realId];
@@ -235,7 +235,7 @@ export class Sheet
         this.#saveStoredState();
       }
     };
-    wait(200, analyzeRealId);
+    lre.wait(200, analyzeRealId, "analyzeRealId");
   }
 
   lreType(): ComponentType {
