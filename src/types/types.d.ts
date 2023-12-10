@@ -33,6 +33,7 @@ declare namespace LetsRole {
 
   export type ViewID = string;
   export type SheetID = string;
+  export type SheetRealID = string;
   export type ComponentID = string;
   export type VariableID = string;
   export type TooltipPlacement = "top" | "right" | "bottom" | "left";
@@ -41,7 +42,7 @@ declare namespace LetsRole {
     /** get the id of the sheet */
     id(): LetsRole.SheetID;
 
-    getSheetId(): string;
+    getSheetId(): LetsRole.SheetRealID;
 
     name(): Name;
     properName(): Name;
