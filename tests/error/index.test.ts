@@ -100,4 +100,46 @@ describe("Test error handler", () => {
     expect(err2.lineNumber).toStrictEqual(120);
     expect(err2.columnNumber).toStrictEqual(1);
   });
+
+  test("Error in debug with no throwError", () => {
+    const trace = {
+      name: "error",
+      message: "err",
+      trace: [
+        {
+          type: "inside lre",
+          callee: {
+            name: "throwError",
+          },
+          loc: {
+            start: {
+              line: 120,
+              column: 1,
+            },
+            end: {
+              line: 140,
+              column: 12,
+            },
+          },
+        },
+        {
+          type: "inside lre",
+          loc: {
+            start: {
+              line: 128,
+              column: 1,
+            },
+            end: {
+              line: 129,
+              column: 12,
+            },
+          },
+        },
+      ],
+    };
+    lre.__debug = true;
+    const err = new Error("err", {cause: trace});
+    expect(err.lineNumber).toStrictEqual(120);
+    expect(err.columnNumber).toStrictEqual(1);
+  });
 });
