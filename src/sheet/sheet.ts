@@ -54,7 +54,7 @@ export class Sheet
           getRaw: () => rawSheet,
           onRefresh: (newRaw: LetsRole.Sheet) => {
             this.#cmp = newRaw.get(newRaw.id());
-            this.#silentFind = this.#cmp.find;
+            this.#silentFind = this.#cmp.find.bind(this.#cmp);
             this.transferEvents(this.#cmp);
             this.#batcher.transferEvents(this.#cmp);
           },
@@ -67,7 +67,7 @@ export class Sheet
     this.#batcher.linkEventTo("pending:sheet", this, "data-pending");
     this.#componentCache = new ComponentCache(this.#componentGetter.bind(this));
     this.#cmp = rawSheet.get(rawSheet.id())!;
-    this.#silentFind = this.#cmp.find;
+    this.#silentFind = this.#cmp.find.bind(this.#cmp);
     this.#cmp.on("update", this.#handleDataUpdate.bind(this));
   }
 
@@ -295,7 +295,7 @@ export class Sheet
 
   componentExists(realId: string): boolean {
     const parts = realId.split(REP_ID_SEP);
-    const cmp = this.#silentFind(parts[0]);
+    const cmp = (this.#silentFind)(parts[0]);
     if (!cmp || !cmp.id()) {
       return false;
     }
@@ -305,7 +305,7 @@ export class Sheet
         return false;
       }
       if (parts.length > 2) {
-        let tmp = this.#silentFind(realId);
+        let tmp = (this.#silentFind)(realId);
         if (!tmp || !tmp.id()) {
           return false;
         }

@@ -254,8 +254,8 @@ export class Component<
           }
         );
       },
-      added: this.raw().addClass,
-      removed: this.raw().removeClass,
+      added: this.raw().addClass.bind(this.raw()),
+      removed: this.raw().removeClass.bind(this.raw()),
     };
     this.#classChangesApplication[action](className);
   }
