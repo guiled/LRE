@@ -142,6 +142,15 @@ describe("LRE tests", () => {
   });
 });
 
+describe("LRE is a proxy mode handler", () => {
+  test("Set mode and get modes works", () => {
+    const subject = new LRE();
+    expect(subject.getMode()).toBe("real");
+    subject.setMode("virtual");
+    expect(subject.getMode()).toBe("virtual");
+  });
+});
+
 describe("LRE wait", () => {
   let subject: LRE;
 

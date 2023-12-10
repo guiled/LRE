@@ -39,10 +39,10 @@ export class MockServer {
   ) {
     (() => {
       const id = sheet.getSheetId();
-      this.sheets[id] = this.sheets[id] || [];
+      this.sheets[id] ??= [];
       this.sheets[id].push(sheet);
-      this.sheetData[id] = this.sheetData[id] || {};
-      this.cmp[id] = this.cmp[id] || {};
+      this.sheetData[id] ??= sheet.getData() || {};
+      this.cmp[id] ??= {};
     })();
 
     sheet.getData = jest.fn(() => {
@@ -121,8 +121,16 @@ export class MockServer {
             ...(cmpStructure?.classes || []),
             cmpId.indexOf("rep") !== -1 ? "repeater" : "",
           ],
+          value: this.sheetData[sheet.getSheetId()][cmpId],
         })
       );
+      cmp.value = (newValue?: LetsRole.ComponentValue) => {
+        if (newValue !== void 0) {
+          this.sheetData[sheet.getSheetId()][cmpId] = newValue;
+          return;
+        }
+        return this.sheetData[sheet.getSheetId()][cmpId] || "";
+      };
       this.cmp[sheetId][cmpId].set(sheet, cmp);
       return cmp;
     });

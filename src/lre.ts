@@ -1,4 +1,6 @@
 import { Logger } from "./log";
+import { ProxyMode, ProxyModeHandler } from "./proxy";
+import { SheetProxy } from "./proxy/sheet";
 import { Sheet } from "./sheet";
 import { SheetCollection } from "./sheet/collection";
 
@@ -8,9 +10,10 @@ type cb = (thisArg: any, argArray?: any) => (rawSheet: LetsRole.Sheet) => void;
 
 export interface LRE extends ILRE, Logger, cb {}
 
-export class LRE extends Logger implements ILRE {
+export class LRE extends Logger implements ILRE, ProxyModeHandler {
   sheets: SheetCollection;
   public __debug: boolean = false;
+  #mode: ProxyMode = "real";
 
   apply(_thisArg: any, argArray?: any) {
     this.log("prepare init");
@@ -135,6 +138,14 @@ export class LRE extends Logger implements ILRE {
 
       return true;
     } else return false;
+  }
+
+  setMode(newMode: ProxyMode) {
+    this.#mode = newMode;
+  }
+
+  getMode(): ProxyMode {
+    return this.#mode;
   }
 
   wait(delay: number, cb: () => void, waitName: string = "No-name") {
