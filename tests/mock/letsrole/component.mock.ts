@@ -10,6 +10,8 @@ type Params = {
   index?: string | null;
   name?: string;
   text?: string;
+  parent?: MockedComponent;
+  value?: LetsRole.ComponentValue;
 };
 
 export const MockComponent = ({
@@ -20,9 +22,10 @@ export const MockComponent = ({
   index = null,
   name = "name",
   text = "text",
+  parent,
+  value = "",
 }: Params): MockedComponent => {
   const handlers: Record<string, (cmp: LetsRole.Component) => void> = {};
-  let value: LetsRole.ComponentValue = "";
   let visible: boolean = true;
   const cmp: MockedComponent = {
     id: jest.fn(() => id),
@@ -32,8 +35,8 @@ export const MockComponent = ({
       return MockComponent({ id, sheet, cntr: cmp });
     }),
     index: jest.fn(() => index),
-    parent: jest.fn(() =>
-      MockComponent({ id: id + "parent", sheet, cntr: cmp })
+    parent: jest.fn(
+      () => parent || MockComponent({ id: id + "parent", sheet, cntr })
     ),
     on: jest.fn((...args: any[]): void => {
       if (args.length === 3) {
@@ -58,10 +61,13 @@ export const MockComponent = ({
       if (newValue !== void 0) {
         value = newValue;
         cmp._trigger("update");
+        sheet.setData({
+          [cmp.id()]: newValue,
+        })
       }
       return value;
     }),
-    virtualValue: jest.fn(() => 0),
+    virtualValue: jest.fn(() => null),
     rawValue: jest.fn(() => 0),
     text: jest.fn((t?: string): string | void => {
       if (t) {
