@@ -496,7 +496,6 @@ class ClassToFunction extends Visitor {
     ];
     let classFunction: FunctionExpression = {
       type: "FunctionExpression",
-      identifier: _identifier,
       params: [
         {
           type: "Parameter",

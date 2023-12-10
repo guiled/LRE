@@ -35,8 +35,8 @@ esbuild
   .then(() => transformFile("build/lre.tmp.js", noVoid0Plugin))
   .then((result) => {
     let code = result.code.trim();
-    const libStart = '(function() {';
-    const libEnd = '})();';
+    const libStart = "(function() {";
+    const libEnd = "})();";
     const insertAtStartCode = code.indexOf(libStart) + libStart.length;
     const insertAtEndCode = code.lastIndexOf(libEnd);
     const startCode = fs.readFileSync("assemble/start.js", "utf8");
@@ -46,11 +46,21 @@ esbuild
       startCode,
       code.substring(insertAtStartCode, insertAtEndCode),
       endCode,
-      code.substring(insertAtEndCode)
-    ].join('');
-    return fs.writeFileSync("build/lre.js", `//region LRE ${process.env.npm_package_version} ${Date.now()}
+      code.substring(insertAtEndCode),
+    ].join("");
+    [
+      /^\s*(.*)/gm,  // remove spaces from line starts
+      /\n+\s*(\n)/g, // remove multiple line breaks
+      /([\{\[])\n+\s*/g,  // remove spaces after opening brackets
+      /\n+\s*([\}\]]\)?;?)/g,// remove spaces before opening brackets
+      /((?=^.*,)(?!^.+[:;]).+?)\n[\s\n]*/gm,
+      /[ \t]*([^\s\w"']+)[ \t]*/g,
+    ].forEach((e) => (code = code.replace(e, "$1")));
+    return fs.writeFileSync(
+      "build/lre.js",
+      `//region LRE ${process.env.npm_package_version} ${Date.now()}
 ${code}
 //endregion LRE ${process.env.npm_package_version}
-`)
+`
+    );
   });
-
