@@ -13,6 +13,7 @@ jest.mock("../../src/component/component");
 global.lre = new LRE();
 const mockedWaitDefs = newMockedWait();
 global.wait = mockedWaitDefs.wait;
+lre.wait = wait;
 
 let cache: ComponentCache;
 const rawSheet = MockSheet({
@@ -98,6 +99,7 @@ describe("Component cache set/get/unset/inCache", () => {
 
 describe("Component cache forget/remember", () => {
   beforeEach(() => {
+    newCmp.mockClear();
     cache = new ComponentCache(newCmp);
   });
 

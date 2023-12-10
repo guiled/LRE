@@ -3,6 +3,7 @@ declare interface ILRE {
   deepEqual(x: any, y: any): boolean;
   numToAlpha(n: number): string;
   alphaToNum(s: string): number;
+  wait(delay: number, cb: () => void, name: string = "");
   __debug: boolean = false;
 }
 

@@ -15,32 +15,37 @@ export class LRE extends Logger implements ILRE {
   apply(_thisArg: any, argArray?: any) {
     this.log("prepare init");
     const [callback] = argArray;
+    const thisLre = this;
     return (rawSheet: LetsRole.Sheet): void => {
       // The wait may allow a faster display
-      wait(0, () => {
-        const sheetId = rawSheet.getSheetId();
-        const _sheet = new Sheet(rawSheet);
-        _sheet.cleanCmpData();
-        this.sheets.add(_sheet);
-        if (!_sheet.isInitialized() && firstInit !== void 0) {
-          this.log(`sheet first initialization`);
-          try {
-            _sheet.persistingData("initialized", firstInit(_sheet));
-          } catch (e) {
-            this.error("[Firstinit] Unhandled error : " + e);
+      thisLre.wait(
+        0,
+        () => {
+          const sheetId = rawSheet.getSheetId();
+          const _sheet = new Sheet(new SheetProxy(this, rawSheet));
+          _sheet.cleanCmpData();
+          this.sheets.add(_sheet);
+          if (!_sheet.isInitialized() && firstInit !== void 0) {
+            this.log(`sheet first initialization`);
+            try {
+              _sheet.persistingData("initialized", firstInit(_sheet));
+            } catch (e) {
+              this.error("[Firstinit] Unhandled error : " + e);
+            }
           }
-        }
-        this.log(
-          `init sheet ${rawSheet.id()} (${rawSheet.name()} ${
-            rawSheet.properName() || ""
-          } ${sheetId ? "#" + sheetId : ""})`
-        );
-        try {
-          callback.call(this, _sheet);
-        } catch (e: unknown) {
-          this.error("[Init] Unhandled error : " + e);
-        }
-      });
+          this.log(
+            `init sheet ${rawSheet.id()} (${rawSheet.name()} ${
+              rawSheet.properName() || ""
+            } ${sheetId ? "#" + sheetId : ""})`
+          );
+          try {
+            callback.call(this, _sheet);
+          } catch (e: unknown) {
+            this.error("[Init] Unhandled error : " + e);
+          }
+        },
+        "sheet init"
+      );
     };
   }
 
@@ -130,5 +135,17 @@ export class LRE extends Logger implements ILRE {
 
       return true;
     } else return false;
+  }
+
+  wait(delay: number, cb: () => void, waitName: string = "No-name") {
+    if (this.getMode() !== "virtual") {
+      wait(delay, () => {
+        try {
+          cb();
+        } catch (e) {
+          lre.error(`[Wait:${waitName} Unhandled error : ${e}`);
+        }
+      });
+    }
   }
 }

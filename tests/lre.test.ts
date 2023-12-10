@@ -3,22 +3,14 @@ import { Logger } from "../src/log";
 import { LRE } from "../src/lre";
 import { Sheet } from "../src/sheet";
 import { MockSheet } from "./mock/letsrole/sheet.mock";
+import { newMockedWait } from "./mock/letsrole/wait.mock";
 
 jest.mock("../src/log");
 global.lre = new Logger() as ILRE & Logger & cb;
-let waitedCallbacks: Array<(...args: any[]) => any>;
 
-const itHasWaitedEnough = () => {
-  while (waitedCallbacks.length) {
-    const toCall = waitedCallbacks.shift();
-    toCall?.();
-  }
-};
-
-beforeAll(() => {
-  waitedCallbacks = [];
-  global.wait = jest.fn((_delay, cb) => waitedCallbacks.push(cb));
-});
+const { wait, itHasWaitedEverything } = newMockedWait();
+global.wait = wait;
+lre.wait = wait;
 
 describe("LRE tests", () => {
   let subject: LRE;
@@ -98,7 +90,7 @@ describe("LRE tests", () => {
     init(sheet1);
     expect(cb).toBeCalledTimes(0);
     expect(global.firstInit).toBeCalledTimes(0);
-    itHasWaitedEnough();
+    itHasWaitedEverything();
     expect(cb).toBeCalledTimes(1);
     expect(cb.mock.calls[0][0]).toBeInstanceOf(Sheet);
     expect(global.firstInit).toBeCalledTimes(1);
@@ -106,7 +98,7 @@ describe("LRE tests", () => {
       Sheet
     );
     init(sheet2);
-    itHasWaitedEnough();
+    itHasWaitedEverything();
     expect(cb).toBeCalledTimes(2);
     expect(cb.mock.calls[1][0]).toBeInstanceOf(Sheet);
 
@@ -120,7 +112,7 @@ describe("LRE tests", () => {
     initErr(sheet1);
     expect(cbErr).toBeCalledTimes(0);
     expect(global.firstInit).toBeCalledTimes(0);
-    itHasWaitedEnough();
+    itHasWaitedEverything();
     expect(cbErr).toThrowError();
     expect(global.firstInit).toThrowError();
   });
@@ -132,10 +124,46 @@ describe("LRE tests", () => {
     expect(subject.deepEqual({}, [1])).toBeFalsy();
     expect(subject.deepEqual({}, 1)).toBeFalsy();
     expect(subject.deepEqual([], [])).toBeTruthy();
-    expect(subject.deepEqual({a: 1, b: 2, c: a}, {b: 2, c:a, a: 1})).toBeTruthy();
-    expect(subject.deepEqual({a: 1, b: 2, c: a}, {b: 2, c:{}, a: 1})).toBeTruthy();
-    expect(subject.deepEqual({a: 1, b: 2, c: a}, {b: 2, c:{a:1}, a: 1})).toBeFalsy();
-    expect(subject.deepEqual({a: 1, b: 2, c: a, d: 3}, {b: 2, c:{}, a: 1})).toBeFalsy();
-    expect(subject.deepEqual({a: 1, b: 2, c: a, d: 3}, {e: 4, b: 2, c:{}, a: 1})).toBeFalsy();
+    expect(
+      subject.deepEqual({ a: 1, b: 2, c: a }, { b: 2, c: a, a: 1 })
+    ).toBeTruthy();
+    expect(
+      subject.deepEqual({ a: 1, b: 2, c: a }, { b: 2, c: {}, a: 1 })
+    ).toBeTruthy();
+    expect(
+      subject.deepEqual({ a: 1, b: 2, c: a }, { b: 2, c: { a: 1 }, a: 1 })
+    ).toBeFalsy();
+    expect(
+      subject.deepEqual({ a: 1, b: 2, c: a, d: 3 }, { b: 2, c: {}, a: 1 })
+    ).toBeFalsy();
+    expect(
+      subject.deepEqual({ a: 1, b: 2, c: a, d: 3 }, { e: 4, b: 2, c: {}, a: 1 })
+    ).toBeFalsy();
+  });
+});
+
+describe("LRE wait", () => {
+  let subject: LRE;
+
+  beforeEach(() => {
+    subject = new LRE();
+  });
+
+  test("calls native wait", () => {
+    (wait as jest.Mock).mockClear();
+    const cb = jest.fn();
+    subject.wait(100, cb, "hop");
+    expect(wait).toBeCalledTimes(1);
+    itHasWaitedEverything();
+    expect(cb).toBeCalledTimes(1);
+  });
+
+  test("handles errors", () => {
+    /* @ts-expect-error */
+    const cb = () => null();
+    subject.wait(100, cb, "hop");
+    (lre.error as jest.Mock).mockClear();
+    expect(itHasWaitedEverything).not.toThrowError();
+    expect(lre.error).toBeCalled();
   })
 });
