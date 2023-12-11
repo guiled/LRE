@@ -4,6 +4,7 @@ import { MockSheet } from "../mock/letsrole/sheet.mock";
 import { LRE } from "../../src/lre";
 import { newMockedWait } from "../mock/letsrole/wait.mock";
 import { MockServer } from "../mock/letsrole/server.mock";
+import { DataBatcher } from "../../src/sheet/databatcher";
 
 const { wait, itHasWaitedEverything } = newMockedWait();
 global.wait = wait;
@@ -20,7 +21,13 @@ describe("Dataholder", () => {
       realId: realId,
     });
     server.registerMockedSheet(raw);
-    return new Sheet(raw);
+    return new Sheet(raw, new DataBatcher(
+      {
+        getMode: () => "real",
+        setMode: () => {},
+      },
+      raw
+    ));
   };
 
   beforeEach(() => {
