@@ -1,5 +1,7 @@
 import { globals } from "./globals";
 import { LRE } from "./lre";
+import { registerLreBindings } from "./proxy/bindings";
+import { registerLreRollBuilder } from "./proxy/rollBuilder";
 import { registerLreWait } from "./proxy/wait";
 import { overloadTables } from "./tables";
 
@@ -18,6 +20,9 @@ export const bootstrap = () => {
   overloadTables(Tables);
   lre = new LRE();
   wait = registerLreWait(lre, wait);
+  Bindings = registerLreBindings(lre, Bindings);
+  /* @ts-ignore-error */
+  RollBuilder = registerLreRollBuilder(lre, RollBuilder);
 
   // @ts-ignore Overload console for some edge cases like throw new Error changed into console.error
   console = {
