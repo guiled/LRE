@@ -13,7 +13,10 @@ declare namespace LetsRole {
     "keyup",
   ] as const;
   export type EventType = (typeof RAW_EVENTS)[number];
-  export type EventCallback<T=Component> = (cmp: T, ...args: unknown[]) => void;
+  export type EventCallback<T = Component> = (
+    cmp: T,
+    ...args: unknown[]
+  ) => void;
   export type ClassName = string;
   export type ClassSelector = `.${ClassName}`;
 
@@ -37,6 +40,7 @@ declare namespace LetsRole {
   export type ComponentID = string;
   export type VariableID = string;
   export type TooltipPlacement = "top" | "right" | "bottom" | "left";
+  export type RollVisibility = "visible" | "gm" | "gmonly";
 
   export interface Sheet extends Object {
     /** get the id of the sheet */
@@ -141,8 +145,8 @@ declare namespace LetsRole {
     type: string;
     loc: ErrorTraceLoc;
     callee?: {
-      name: string,
-    }
+      name: string;
+    };
   };
   export type Error = {
     name: string;
@@ -151,11 +155,16 @@ declare namespace LetsRole {
   };
 
   export type Bindings = {
-    add: (name: string, componentId: LetsRole.ComponentID, viewId: LetsRole.ViewID, dataCallback: () => LetsRole.ViewData) => void,
-    send: (sheet: LetsRole.Sheet, name: string) => void,
-    remove: (name: string) => void,
-    clear: (componentId: LetsRole.ComponentID) => void,
-  }
+    add: (
+      name: string,
+      componentId: LetsRole.ComponentID,
+      viewId: LetsRole.ViewID,
+      dataCallback: (...args: any[]) => LetsRole.ViewData
+    ) => void;
+    send: (sheet: LetsRole.Sheet, name: string) => void;
+    remove: (name: string) => void;
+    clear: (componentId: LetsRole.ComponentID) => void;
+  };
 }
 declare function log(input: any): void;
 declare var wait: (delay: number, callback: (...args: any[]) => void) => void;
@@ -167,3 +176,14 @@ declare var init: LetsRole.InitCallback;
 declare var Tables: LetsRole.Tables;
 
 declare var Bindings: LetsRole.Bindings;
+
+declare class RollBuilder {
+  constructor(sheet: LetsRole.Sheet);
+  roll();
+  expression(expr: string);
+  title(title: string);
+  visibility(visibility: LetsRole.RollVisibility);
+  addAction(title: string, callback: (...args: any[]) => void);
+  removeAction(title: string);
+  onRoll(callback: (...args: any[]) => void);
+}
