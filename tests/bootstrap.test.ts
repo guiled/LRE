@@ -3,7 +3,7 @@ import { LRE } from "../src/lre";
 
 beforeAll(() => {
   /* @ts-ignore */
-  global.lre = null; 
+  global.lre = null;
   global.lastException = null;
   global.isNaN = null as unknown as (c: any) => any;
   global.structuredClone = null as unknown as (c: any) => any;
@@ -19,6 +19,7 @@ beforeAll(() => {
       f(o[k], k);
     }
   });
+  global.wait = jest.fn();
 });
 
 describe("LRE bootstrap", () => {
@@ -26,12 +27,14 @@ describe("LRE bootstrap", () => {
     expect(global.isNaN).toBeNull();
     expect(global.lre).not.toBeInstanceOf(LRE);
     expect(global.structuredClone).toBeNull();
+    const oldWait = global.wait;
     bootstrap();
     expect(global.lre).toBeInstanceOf(LRE);
     expect(global.isNaN).not.toBeNull();
     expect(global.structuredClone).not.toBeNull();
     expect(global.isNaN(123)).toBeFalsy();
     expect(global.isNaN(global as unknown as number)).toBeTruthy();
+    expect(global.wait).not.toBe(oldWait);
     const c = {
       a: 1,
       b: "2",
@@ -42,7 +45,7 @@ describe("LRE bootstrap", () => {
       d: ["a", 2],
     };
     const d = structuredClone(c);
-    expect(d).not.toBe(c)
+    expect(d).not.toBe(c);
     expect(d).toEqual(c);
   });
 });

@@ -1,5 +1,6 @@
 import { globals } from "./globals";
 import { LRE } from "./lre";
+import { registerLreWait } from "./proxy/wait";
 import { overloadTables } from "./tables";
 
 export const bootstrap = () => {
@@ -16,6 +17,7 @@ export const bootstrap = () => {
 
   overloadTables(Tables);
   lre = new LRE();
+  wait = registerLreWait(lre, wait);
 
   // @ts-ignore Overload console for some edge cases like throw new Error changed into console.error
   console = {
