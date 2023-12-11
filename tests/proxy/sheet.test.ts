@@ -1,4 +1,3 @@
-import { ProxyMode, ProxyModeHandler } from "../../src/proxy";
 import { SheetProxy } from "../../src/proxy/sheet";
 import { MockServer } from "../mock/letsrole/server.mock";
 import { MockSheet } from "../mock/letsrole/sheet.mock";

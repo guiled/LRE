@@ -1,5 +1,4 @@
 import { Logger } from "./log";
-import { ProxyMode, ProxyModeHandler } from "./proxy";
 import { SheetProxy } from "./proxy/sheet";
 import { Sheet } from "./sheet";
 import { SheetCollection } from "./sheet/collection";

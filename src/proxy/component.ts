@@ -1,4 +1,4 @@
-import { ProxyModeHandler, disabledMethod } from ".";
+import { disabledMethod } from ".";
 import { LreProxy } from "./proxy";
 import { SheetContext, SheetProxy } from "./sheet";
 

@@ -1,4 +1,4 @@
-import { LreProxy, ProxyMode, ProxyModeHandler } from "../../src/proxy";
+import { LreProxy } from "../../src/proxy";
 
 describe("Proxy generic class tests", () => {
   test("Generic proxy", () => {
