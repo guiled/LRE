@@ -7,6 +7,12 @@ declare interface ILRE {
   __debug: boolean = false;
 }
 
+declare interface ProxyModeHandler {
+  setMode: (newMode: ProxyMode) => void;
+  getMode: () => ProxyMode;
+}
+declare type ProxyMode = "real" | "virtual";
+
 declare var isNaN = (n: any) => boolean;
 declare var structuredClone = (val: any) => any;
 declare var lastException: any;
@@ -24,7 +30,7 @@ declare interface Logger {
 
 type cb = (thisArg: any, argArray?: any) => (rawSheet: LetsRole.Sheet) => void;
 
-declare var lre: ILRE & Logger & cb;
+declare var lre: ILRE & Logger & cb & ProxyModeHandler;
 declare var firstInit: undefined | ((sheet: Sheet) => boolean);
 declare var errExclFirstLine: number, errExclLastLine: number;
 

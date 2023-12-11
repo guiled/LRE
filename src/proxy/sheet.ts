@@ -1,4 +1,3 @@
-import { ProxyModeHandler } from ".";
 import { ComponentProxy } from "./component";
 import { LreProxy } from "./proxy";
 

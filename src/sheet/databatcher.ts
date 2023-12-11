@@ -1,5 +1,4 @@
 import { EventHolder } from "../eventholder";
-import { ProxyMode, ProxyModeHandler } from "../proxy";
 
 type PendingData = {
   v: LetsRole.ComponentValue;
@@ -153,8 +152,8 @@ export class DataBatcher extends EventHolder<any, DataBatcherEventType> {
       this.#currentMode === "virtual" &&
       this.#indexes.virtual.hasOwnProperty(id)
     ) {
-      // this will never happens as virtual mode immediately sends pendingData
-      //return this.#pending.virtual[this.#indexes.virtual[id]].v;
+      // this would never happens as virtual mode immediately sends pendingData
+      return this.#pending.virtual[this.#indexes.virtual[id]].v;
     } else if (this.#indexes.real.hasOwnProperty(id)) {
       return this.#pending.real[this.#indexes.real[id]].v;
     }

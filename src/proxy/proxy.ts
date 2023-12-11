@@ -1,6 +1,3 @@
-import { ProxyModeHandler } from ".";
-
-export type ProxyMode = "real" | "virtual";
 
 type ProxyInitiator<T> = (dest: T) => T;
 
