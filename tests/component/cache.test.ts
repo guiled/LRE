@@ -6,6 +6,7 @@ import { LRE } from "../../src/lre";
 import { ComponentSearchResult } from "../../src/component/container";
 import { newMockedWait } from "../mock/letsrole/wait.mock";
 import { Sheet } from "../../src/sheet";
+import { DataBatcher } from "../../src/sheet/databatcher";
 
 jest.mock("../../src/lre");
 jest.mock("../../src/component/component");
@@ -20,7 +21,16 @@ const rawSheet = MockSheet({
   id: "sheet",
   realId: "realId",
 });
-const sheet = new Sheet(rawSheet);
+const sheet = new Sheet(
+  rawSheet,
+  new DataBatcher(
+    {
+      getMode: () => "real",
+      setMode: () => {},
+    },
+    rawSheet
+  )
+);
 const UNKNOWN_CMP_ID = "_unknown_";
 
 const newCmp = jest.fn((id: string): ComponentSearchResult => {

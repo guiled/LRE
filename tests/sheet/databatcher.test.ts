@@ -1,6 +1,8 @@
 import { MockSheet, MockedSheet } from "../mock/letsrole/sheet.mock";
 import { DataBatcher } from "../../src/sheet/databatcher";
 import { LRE } from "../../src/lre";
+import { ProxyMode, ProxyModeHandler } from "../../src/proxy";
+import { SheetProxy } from "../../src/proxy/sheet";
 
 jest.mock("../../src/lre");
 let waitedCallback: ((...args: any[]) => any) | null;
@@ -20,7 +22,13 @@ describe("DataBatcher instantiation", () => {
 
   beforeEach(() => {
     sheet = MockSheet({ id: "123" });
-    dataBatcher = new DataBatcher(sheet);
+    dataBatcher = new DataBatcher(
+      {
+        getMode: () => "real",
+        setMode: () => {},
+      },
+      sheet
+    );
   });
 
   it("has raw method", () => {
@@ -34,7 +42,13 @@ describe("DataBatcher async send data", () => {
 
   beforeEach(() => {
     sheet = MockSheet({ id: "123" });
-    dataBatcher = new DataBatcher(sheet);
+    dataBatcher = new DataBatcher(
+      {
+        getMode: () => "real",
+        setMode: () => {},
+      },
+      sheet
+    );
   });
 
   it("delayed data send and getPendingData", () => {
@@ -168,5 +182,44 @@ describe("DataBatcher async send data", () => {
     expect(lre.error).not.toBeCalled();
     itHasWaitedEnough();
     expect(lre.error).toBeCalled();
+  });
+});
+
+describe("Handle virtual and real modes", () => {
+  let mode: ProxyMode = "real";
+  let modeHandler: ProxyModeHandler;
+  let dataBatcher: DataBatcher;
+  let sheet: LetsRole.Sheet;
+  let sheetProxy: LetsRole.Sheet;
+
+  beforeEach(() => {
+    modeHandler = {
+      getMode: () => mode,
+      setMode: (newMode: ProxyMode) => (mode = newMode),
+    };
+    sheet = MockSheet({ id: "123" });
+    sheetProxy = new SheetProxy(modeHandler, sheet);
+    jest.spyOn(sheetProxy, "setData");
+    dataBatcher = new DataBatcher(modeHandler, sheetProxy);
+    (sheet.setData as jest.Mock).mockClear();
+  });
+
+  test("Virtual mode", () => {
+    modeHandler.setMode("virtual");
+    const pendingCallback = jest.fn();
+    const processedCallback = jest.fn();
+    dataBatcher.on("pending", pendingCallback);
+    dataBatcher.on("processed", processedCallback);
+    const data = {
+      cmp1: 42,
+      cmp2: 43,
+    };
+    dataBatcher.setData(data);
+    expect(pendingCallback).toBeCalled();
+    expect(processedCallback).toBeCalled();
+    expect(sheetProxy.setData).toBeCalled();
+    expect(sheet.setData).not.toBeCalled();
+    expect(dataBatcher.getPendingData()).toMatchObject({});
+    expect(dataBatcher.getPendingData("cmp1")).toBeUndefined();
   });
 });

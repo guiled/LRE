@@ -3,6 +3,7 @@ import { ProxyMode, ProxyModeHandler } from "./proxy";
 import { SheetProxy } from "./proxy/sheet";
 import { Sheet } from "./sheet";
 import { SheetCollection } from "./sheet/collection";
+import { DataBatcher } from "./sheet/databatcher";
 
 firstInit = undefined;
 
@@ -25,7 +26,11 @@ export class LRE extends Logger implements ILRE, ProxyModeHandler {
         0,
         () => {
           const sheetId = rawSheet.getSheetId();
-          const _sheet = new Sheet(new SheetProxy(this, rawSheet));
+          const sheetProxy = new SheetProxy(this, rawSheet);
+          const _sheet = new Sheet(
+            sheetProxy,
+            new DataBatcher(this, sheetProxy)
+          );
           _sheet.cleanCmpData();
           this.sheets.add(_sheet);
           if (!_sheet.isInitialized() && firstInit !== void 0) {

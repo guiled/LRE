@@ -11,6 +11,7 @@ import {
   initLetsRole,
   itHasWaitedEverything,
 } from "../mock/letsrole/letsrole.mock";
+import { DataBatcher } from "../../src/sheet/databatcher";
 
 global.lre = new LRE();
 initLetsRole();
@@ -36,7 +37,16 @@ beforeEach(() => {
   });
   server.registerMockedSheet(rawSheet);
 
-  sheet = new Sheet(rawSheet);
+  sheet = new Sheet(
+    rawSheet,
+    new DataBatcher(
+      {
+        getMode: () => "real",
+        setMode: () => {},
+      },
+      rawSheet
+    )
+  );
   sheet.raw = jest.fn(() => rawSheet);
   jest.spyOn(sheet, "get");
   cmpDefs = {
@@ -215,7 +225,13 @@ describe("Persistent data are sync between sheets", () => {
     rawSheet2.num = 2;
     server.registerMockedSheet(rawSheet2);
 
-    const sheet2 = new Sheet(rawSheet2);
+    const sheet2 = new Sheet(rawSheet2, new DataBatcher(
+      {
+        getMode: () => "real",
+        setMode: () => {},
+      },
+      rawSheet2
+    ));
     const cmp2 = sheet2.get("rep.a.b")!;
     /* @ts-ignore */
     sheet.sheet = "1";
