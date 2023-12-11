@@ -151,7 +151,7 @@ declare namespace LetsRole {
   };
 }
 declare function log(input: any): void;
-declare function wait(delay: number, callback: (...args: any[]) => void);
+declare var wait: (delay: number, callback: (...args: any[]) => void) => void;
 declare function each(
   data: Array | Object,
   callback: (d: any, k?: any) => void
