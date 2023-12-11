@@ -149,6 +149,13 @@ declare namespace LetsRole {
     message: string;
     trace?: ErrorTrace[];
   };
+
+  export type Bindings = {
+    add: (name: string, componentId: LetsRole.ComponentID, viewId: LetsRole.ViewID, dataCallback: () => LetsRole.ViewData) => void,
+    send: (sheet: LetsRole.Sheet, name: string) => void,
+    remove: (name: string) => void,
+    clear: (componentId: LetsRole.ComponentID) => void,
+  }
 }
 declare function log(input: any): void;
 declare var wait: (delay: number, callback: (...args: any[]) => void) => void;
@@ -158,3 +165,5 @@ declare function each(
 );
 declare var init: LetsRole.InitCallback;
 declare var Tables: LetsRole.Tables;
+
+declare var Bindings: LetsRole.Bindings;

@@ -10,6 +10,13 @@ const initLetsRole = () => {
   });
 
   global.wait = wait;
+  
+  global.Bindings = {
+    add: jest.fn(),
+    clear: jest.fn(),
+    remove: jest.fn(),
+    send: jest.fn(),
+  } as LetsRole.Bindings;
 };
 
 export { initLetsRole, itHasWaitedEnough, itHasWaitedEverything };
