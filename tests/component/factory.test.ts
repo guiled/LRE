@@ -7,6 +7,7 @@ import { Label } from "../../src/component/label";
 import { MultiChoice } from "../../src/component/multichoice";
 import { LRE } from "../../src/lre";
 import { Sheet } from "../../src/sheet";
+import { DataBatcher } from "../../src/sheet/databatcher";
 import { MockComponent } from "../mock/letsrole/component.mock";
 import { MockSheet } from "../mock/letsrole/sheet.mock";
 
@@ -22,7 +23,13 @@ describe("Component factory", () => {
       id: "main",
       realId: "123",
     });
-    sheet = new Sheet(rawSheet);
+    sheet = new Sheet(rawSheet, new DataBatcher(
+      {
+        getMode: () => "real",
+        setMode: () => {},
+      },
+      rawSheet
+    ));
     rawCmp = MockComponent({
       id: "cmp1",
       sheet: rawSheet,

@@ -4,6 +4,7 @@ import { MockSheet, MockedSheet } from "../mock/letsrole/sheet.mock";
 import { ClassChanges, Sheet } from "../../src/sheet/index";
 import { LRE } from "../../src/lre";
 import { newMockedWait } from "../mock/letsrole/wait.mock";
+import { DataBatcher } from "../../src/sheet/databatcher";
 
 global.lre = new LRE();
 const mockedWaitDefs = newMockedWait();
@@ -25,7 +26,16 @@ describe("Sheet basics", () => {
       id: sheetId,
       realId: "4242",
     });
-    sheet = new Sheet(raw);
+    sheet = new Sheet(
+      raw,
+      new DataBatcher(
+        {
+          getMode: () => "real",
+          setMode: () => {},
+        },
+        raw
+      )
+    );
   });
   test("Create from raw", () => {
     expect(sheet.lreType()).toEqual("sheet");
@@ -100,7 +110,16 @@ describe("Sheet data handling", () => {
     raw = MockSheet(rawSheetData);
     server = new MockServer();
     server.registerMockedSheet(raw);
-    sheet = new Sheet(raw);
+    sheet = new Sheet(
+      raw,
+      new DataBatcher(
+        {
+          getMode: () => "real",
+          setMode: () => {},
+        },
+        raw
+      )
+    );
   });
 
   test("Test sheet mock", () => {
@@ -194,7 +213,16 @@ describe("Sheet persisting data", () => {
       realId: realId,
     });
     server.registerMockedSheet(raw);
-    return new Sheet(raw);
+    return new Sheet(
+      raw,
+      new DataBatcher(
+        {
+          getMode: () => "real",
+          setMode: () => {},
+        },
+        raw
+      )
+    );
   };
 
   beforeEach(() => {
@@ -385,7 +413,16 @@ describe("Sheet clean data", () => {
     raw.getData = jest.fn(() => data);
     raw.setData = jest.fn((d) => (data = { ...data, ...d }));
     let save = structuredClone(data);
-    let sheet = new Sheet(raw);
+    let sheet = new Sheet(
+      raw,
+      new DataBatcher(
+        {
+          getMode: () => "real",
+          setMode: () => {},
+        },
+        raw
+      )
+    );
     sheet.cleanCmpData();
     expect(sheet.getData()).toEqual(save);
     mockedWaitDefs.itHasWaitedEverything();
@@ -400,7 +437,16 @@ describe("Sheet clean data", () => {
       },
     };
     save = structuredClone(data);
-    sheet = new Sheet(raw);
+    sheet = new Sheet(
+      raw,
+      new DataBatcher(
+        {
+          getMode: () => "real",
+          setMode: () => {},
+        },
+        raw
+      )
+    );
     sheet.cleanCmpData();
     expect(sheet.getData()).toEqual(save);
     mockedWaitDefs.itHasWaitedEverything();
@@ -429,7 +475,16 @@ describe("Sheet clean data", () => {
     };
     save = structuredClone(data);
     let save2 = structuredClone(data);
-    sheet = new Sheet(raw);
+    sheet = new Sheet(
+      raw,
+      new DataBatcher(
+        {
+          getMode: () => "real",
+          setMode: () => {},
+        },
+        raw
+      )
+    );
     sheet.cleanCmpData();
     expect(sheet.getData()).toEqual(save);
     mockedWaitDefs.itHasWaitedEverything();
@@ -468,7 +523,16 @@ describe("Sheet get component", () => {
       realId: realId,
     });
     server.registerMockedSheet(raw);
-    return new Sheet(raw);
+    return new Sheet(
+      raw,
+      new DataBatcher(
+        {
+          getMode: () => "real",
+          setMode: () => {},
+        },
+        raw
+      )
+    );
   };
 
   beforeEach(() => {

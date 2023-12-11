@@ -45,7 +45,7 @@ export class Sheet
   #alphaId: string | undefined = undefined;
   rand: number;
 
-  constructor(rawSheet: LetsRole.Sheet) {
+  constructor(rawSheet: LetsRole.Sheet, dataBatcher: DataBatcher) {
     lre.log(`new sheet ${rawSheet.getSheetId()}`);
     super([
       [/* EventHolder params */ rawSheet.name()],
@@ -62,7 +62,7 @@ export class Sheet
       ],
     ]);
     this.rand = Math.floor(Math.random() * 100);
-    this.#batcher = new DataBatcher(rawSheet);
+    this.#batcher = dataBatcher;
     this.#batcher.linkEventTo("processed:sheet", this, "data-processed");
     this.#batcher.linkEventTo("pending:sheet", this, "data-pending");
     this.#componentCache = new ComponentCache(this.#componentGetter.bind(this));

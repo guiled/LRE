@@ -1,6 +1,7 @@
 import { LRE } from "../../src/lre";
 import { Sheet } from "../../src/sheet";
 import { SheetCollection } from "../../src/sheet/collection";
+import { DataBatcher } from "../../src/sheet/databatcher";
 import { MockServer } from "../mock/letsrole/server.mock";
 import { MockSheet } from "../mock/letsrole/sheet.mock";
 
@@ -19,7 +20,13 @@ describe("Sheet collection", () => {
       realId: realId,
     });
     server.registerMockedSheet(raw);
-    return new Sheet(raw);
+    return new Sheet(raw, new DataBatcher(
+      {
+        getMode: () => "real",
+        setMode: () => {},
+      },
+      raw
+    ));
   };
 
   beforeEach(() => {
