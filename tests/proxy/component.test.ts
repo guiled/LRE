@@ -1,4 +1,3 @@
-import { ProxyMode, ProxyModeHandler } from "../../src/proxy";
 import { ComponentProxy } from "../../src/proxy/component";
 import { SheetProxy } from "../../src/proxy/sheet";
 import {

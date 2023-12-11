@@ -1,7 +1,6 @@
 import { MockSheet, MockedSheet } from "../mock/letsrole/sheet.mock";
 import { DataBatcher } from "../../src/sheet/databatcher";
 import { LRE } from "../../src/lre";
-import { ProxyMode, ProxyModeHandler } from "../../src/proxy";
 import { SheetProxy } from "../../src/proxy/sheet";
 
 jest.mock("../../src/lre");
