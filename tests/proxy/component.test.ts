@@ -301,3 +301,46 @@ describe("Virtual mode changes are applied", () => {
     expect(subject.text()).toBe("1313");
   });
 });
+
+describe("Proxy logs", () => {
+  let subject: ComponentProxy;
+
+  beforeEach(() => {
+    subject = initTestMocks();
+    subject.getDest();
+    (raw.value as jest.Mock).mockClear();
+    (raw.getClasses as jest.Mock).mockClear();
+  });
+
+  test.each(["value", "rawValue", "virtualValue", "text", "visible"])(
+    "logs %s",
+    (logType: any) => {
+      expect(modeHandlerMock.logAccess).toBeCalledTimes(0);
+      /* @ts-ignore */
+      subject[logType]!();
+      expect(modeHandlerMock.logAccess).toBeCalledTimes(1);
+      expect((modeHandlerMock.logAccess as jest.Mock).mock.calls[0][0]).toBe(
+        logType
+      );
+      expect((modeHandlerMock.logAccess as jest.Mock).mock.calls[0][1]).toBe(
+        subject.id()
+      );
+    }
+  );
+
+  test.each(["hasClass", "getClasses"])(
+    "Class access with %s",
+    (method: any) => {
+      expect(modeHandlerMock.logAccess).toBeCalledTimes(0);
+      /* @ts-ignore */
+      subject[method]!("toto");
+      expect(modeHandlerMock.logAccess).toBeCalledTimes(1);
+      expect((modeHandlerMock.logAccess as jest.Mock).mock.calls[0][0]).toBe(
+        "class"
+      );
+      expect((modeHandlerMock.logAccess as jest.Mock).mock.calls[0][1]).toBe(
+        subject.id()
+      );
+    }
+  );
+});
