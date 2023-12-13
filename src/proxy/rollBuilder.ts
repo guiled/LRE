@@ -1,15 +1,15 @@
 export const registerLreRollBuilder = (
   modeHandler: ProxyModeHandler,
-  initialRollBuilder: typeof RollBuilder
+  initialRollBuilder: LetsRole.RollBuilder
 ): typeof RollBuilder =>
   class {
-    #raw: RollBuilder;
+    #raw: LetsRole.RollBuilderInstance;
     constructor(sheet: LetsRole.Sheet) {
       this.#raw = new initialRollBuilder(sheet);
     }
 
     public roll() {
-      if (modeHandler.getMode() === "real") {
+      if (modeHandler.getMode() !== "virtual") {
         this.#raw.roll();
       }
     }
