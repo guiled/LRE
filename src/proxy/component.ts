@@ -146,9 +146,11 @@ class ComponentProxy
     this.getDest().removeClass(className);
   }
   getClasses(): LetsRole.ClassName[] {
+    this._proxyModeHandler.logAccess("class", this.getDest().id());
     return this.getDest().getClasses();
   }
   hasClass(className: LetsRole.ClassName): boolean {
+    this._proxyModeHandler.logAccess("class", this.getDest().id());
     return this.getDest().hasClass(className);
   }
   toggleClass(className: LetsRole.ClassName): void {
@@ -159,10 +161,12 @@ class ComponentProxy
       this.getDest().virtualValue(newValue);
       return;
     }
+    this._proxyModeHandler.logAccess("virtualValue", this.getDest().id());
     return this.getDest().virtualValue();
   }
 
   rawValue() {
+    this._proxyModeHandler.logAccess("rawValue", this.getDest().id());
     return this.getDest().rawValue();
   }
 
@@ -171,10 +175,12 @@ class ComponentProxy
       this.getDest().text(replacement!);
       return;
     }
+    this._proxyModeHandler.logAccess("text", this.getDest().id());
     return this.getDest().text();
   }
 
   visible(): boolean {
+    this._proxyModeHandler.logAccess("visible", this.getDest().id());
     return this.getDest().visible();
   }
 
@@ -190,6 +196,7 @@ class ComponentProxy
       this.getDest().value(newValue);
       return;
     }
+    this._proxyModeHandler.logAccess("value", this.getDest().id());
     return this.getDest().value();
   }
   sheet() {

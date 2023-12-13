@@ -8,10 +8,10 @@ export const modeHandlerMock: ProxyModeHandler = {
     mode = newMode;
     return modeHandlerMock;
   },
-  getAccessLog: (_type) => [],
-  logAccess: (_type, _value) => modeHandlerMock,
-  resetAccessLog: () => modeHandlerMock,
+  getAccessLog: jest.fn((_type) => []),
+  logAccess: jest.fn((_type, _value) => modeHandlerMock),
+  resetAccessLog: jest.fn(() => modeHandlerMock),
 
-  setContext: (_id: string, _context: any) => modeHandlerMock,
-  getContext: (_id: string) => modeHandlerMock,
+  setContext: jest.fn((_id: string, _context: any) => modeHandlerMock),
+  getContext: jest.fn((_id: string) => ({} as any)),
 };

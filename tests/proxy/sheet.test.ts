@@ -168,3 +168,26 @@ describe("Sheet real usages in virtual", () => {
     expect(cmp1a.value()).toBe(41);
   });
 });
+
+describe("Proxy logs", () => {
+  test("get cmp is logged", () => {
+    const data = {
+      cmp1: "42",
+    };
+    const raw = MockSheet({
+      id: "main",
+      realId: "12345",
+      properName: "TheProperName",
+      data,
+      name: "theSheet",
+      variables: {
+        var1: 101,
+        var2: 102,
+      },
+    });
+    const subject = new SheetProxy(context, raw);
+    expect(context.getAccessLog("cmp")).toStrictEqual([]);
+    subject.get("cmp1");
+    expect(context.getAccessLog("cmp").length).toBe(1);
+  });
+});
