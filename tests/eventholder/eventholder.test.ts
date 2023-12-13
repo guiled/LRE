@@ -5,10 +5,11 @@ import {
 } from "../mock/letsrole/component.mock";
 import { MockSheet } from "../mock/letsrole/sheet.mock";
 import { EventHolder } from "../../src/eventholder/index";
+import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 jest.mock("../../src/lre");
 
-global.lre = new LRE();
+global.lre = new LRE(modeHandlerMock);
 
 type TestedEvents = "test" | "unused" | "click" | "update";
 

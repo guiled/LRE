@@ -4,10 +4,11 @@ import { SheetCollection } from "../../src/sheet/collection";
 import { DataBatcher } from "../../src/sheet/databatcher";
 import { MockServer } from "../mock/letsrole/server.mock";
 import { MockSheet } from "../mock/letsrole/sheet.mock";
+import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 jest.mock("../../src/lre");
 
-global.lre = new LRE();
+global.lre = new LRE(modeHandlerMock);
 
 describe("Sheet collection", () => {
   let sheet1: Sheet, sheet2: Sheet;
@@ -20,13 +21,7 @@ describe("Sheet collection", () => {
       realId: realId,
     });
     server.registerMockedSheet(raw);
-    return new Sheet(raw, new DataBatcher(
-      {
-        getMode: () => "real",
-        setMode: () => {},
-      },
-      raw
-    ));
+    return new Sheet(raw, new DataBatcher(modeHandlerMock, raw));
   };
 
   beforeEach(() => {
