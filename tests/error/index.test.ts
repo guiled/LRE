@@ -1,9 +1,10 @@
 import { Error } from "../../src/error";
 import { LRE } from "../../src/lre";
+import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 jest.mock("../../src/lre");
 
-global.lre = new LRE();
+global.lre = new LRE(modeHandlerMock);
 global.errExclFirstLine = 100;
 global.errExclLastLine = 150;
 

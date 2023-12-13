@@ -165,6 +165,97 @@ declare namespace LetsRole {
     remove: (name: string) => void;
     clear: (componentId: LetsRole.ComponentID) => void;
   };
+
+  export type DiceResult = any; // todo
+
+  export type InitRollCallback = (
+    result: DiceResult,
+    callback: (
+      view: LetsRole.ViewID,
+      onRender: (sheet: LetsRole.Sheet) => void
+    ) => void
+  ) => void;
+
+  export type GetReferenceCallback = (
+    sheet: LetsRole.Sheet
+  ) => LetsRole.ViewData;
+
+  export type BarAttributes = Record<
+    LetsRole.ComponentID,
+    [LetsRole.ComponentID, LetsRole.ComponentID | number]
+  >;
+
+  export type GetBarAttributesCallback = (
+    sheet: LetsRole.Sheet
+  ) => BarAttributes;
+
+  type NumericalString = `${number}` | number;
+
+  export type CriticalHits = Record<
+    NumericalString,
+    Record<CriticalHitColors, Array<number>>
+  >;
+
+  export type CriticalHitColors =
+    | "critical"
+    | "fumble"
+    | "red"
+    | "orange"
+    | "yellow"
+    | "green"
+    | "cyan"
+    | "magenta"
+    | "pink";
+
+  export type GetCriticalHitsCallback = (result: DiceResult) => CriticalHits;
+
+  export type DropDiceCallback = (
+    result: DiceResult,
+    to: LetsRole.Sheet
+  ) => void;
+
+  export type DropCallback = (from: Sheet, to: Sheet) => void | string;
+
+  export type DiceCompare = "<" | ">" | "<=" | ">=";
+
+  export type DiceCreated = {
+    add: (value: number) => DiceCreated;
+    minus: (value: number) => DiceCreated;
+    multiply: (value: number) => DiceCreated;
+    divide: (value: number) => DiceCreated;
+    tag: (...tags: string[]) => DiceCreated;
+    compare: (type: DiceCompare, right: number, weights?: any) => DiceCreated;
+    round: () => DiceCreated;
+    ceil: () => DiceCreated;
+    floor: () => DiceCreated;
+    keeph: (max: number) => DiceCreated;
+    keepl: (max: number) => DiceCreated;
+    remh: (max: number) => DiceCreated;
+    reml: (max: number) => DiceCreated;
+    expl: (...explodes: number[]) => DiceCreated;
+    expladd: (...explodes: number[]) => DiceCreated;
+    mul: (multiplier: number) => DiceCreated;
+    reroll: (...reroll: number[]) => DiceCreated;
+    rerolln: (...reroll: number[], max) => DiceCreated;
+    ternary: (then: string, _else: string) => DiceCreated;
+  };
+
+  export type DiceAPI = {
+    create: (formula: string) => DiceCreated;
+    roll: (dice: DiceCreated) => void;
+  };
+
+  export type RollBuilderInstance = {
+    roll();
+    expression(expr: string);
+    title(title: string);
+    visibility(visibility: LetsRole.RollVisibility);
+    addAction(title: string, callback: (...args: any[]) => void);
+    removeAction(title: string);
+    onRoll(callback: (...args: any[]) => void);
+  }
+
+  export type RollBuilder = new (...args: any[]) => RollBuilderInstance
 }
 declare function log(input: any): void;
 declare var wait: (delay: number, callback: (...args: any[]) => void) => void;
@@ -177,13 +268,12 @@ declare var Tables: LetsRole.Tables;
 
 declare var Bindings: LetsRole.Bindings;
 
-declare class RollBuilder {
-  constructor(sheet: LetsRole.Sheet);
-  roll();
-  expression(expr: string);
-  title(title: string);
-  visibility(visibility: LetsRole.RollVisibility);
-  addAction(title: string, callback: (...args: any[]) => void);
-  removeAction(title: string);
-  onRoll(callback: (...args: any[]) => void);
-}
+declare var RollBuilder: LetsRole.RollBuilder;
+
+declare var initRoll: LetsRole.InitRollCallback;
+declare var getReferences: LetsRole.GetReferenceCallback;
+declare var getBarAttributes: LetsRole.GetBarAttributesCallback;
+declare var getCriticalHits: LetsRole.GetCriticalHitsCallback;
+declare var dropDice: LetsRole.DropDiceCallback;
+declare var drop: LetsRole.DropCallback;
+declare var Dice: LetsRole.DiceAPI;

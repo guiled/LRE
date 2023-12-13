@@ -1,20 +1,12 @@
+import { Context } from "../../src/context";
 import { SheetProxy } from "../../src/proxy/sheet";
 import { MockServer } from "../mock/letsrole/server.mock";
 import { MockSheet } from "../mock/letsrole/sheet.mock";
 
-let mode: ProxyMode = "real";
-let modes: ProxyModeHandler;
-
+let context: ProxyModeHandler;
 beforeEach(() => {
-  modes = {
-    getMode() {
-      return mode;
-    },
-    setMode(newMode) {
-      mode = newMode;
-    },
-  };
-  modes.setMode("real");
+  context = new Context();
+  context.setMode("real");
 });
 
 describe("SheetProxy test", () => {
@@ -33,7 +25,7 @@ describe("SheetProxy test", () => {
         var2: 102,
       },
     });
-    const subject = new SheetProxy(modes, raw);
+    const subject = new SheetProxy(context, raw);
     expect(raw.id).not.toBeCalled();
     expect(raw.getSheetId).not.toBeCalled();
     expect(raw.name).not.toBeCalled();
@@ -94,8 +86,8 @@ describe("SheetProxy test", () => {
         var2: 102,
       },
     });
-    const subject = new SheetProxy(modes, raw);
-    modes.setMode("virtual");
+    const subject = new SheetProxy(context, raw);
+    context.setMode("virtual");
     (raw.getData as jest.Mock).mockClear();
     expect(subject.id()).toBe("main");
     expect(raw.id).toBeCalled();
@@ -112,7 +104,7 @@ describe("SheetProxy test", () => {
     expect(subject.getData()).toMatchObject(data);
     expect(raw.getData).not.toBeCalled();
 
-    const addedData = { cm2: 43 };
+    const addedData = { cmp2: 43 };
     subject.setData(addedData);
     expect(raw.setData).not.toBeCalled();
     expect(subject.getData()).toMatchObject({ ...data, ...addedData });
@@ -152,7 +144,7 @@ describe("Sheet real usages in virtual", () => {
     server = new MockServer();
     server.registerMockedSheet(raw);
 
-    subject = new SheetProxy(modes, raw);
+    subject = new SheetProxy(context, raw);
   });
 
   test("Two instances are synchronized", () => {
@@ -165,14 +157,14 @@ describe("Sheet real usages in virtual", () => {
     expect(raw.getData().cmp1).toBe(41);
     expect(cmp1b.value()).toBe(41);
 
-    modes.setMode("virtual");
+    context.setMode("virtual");
     expect(cmp1a.value()).toBe(41);
     expect(cmp1b.value()).toBe(41);
     cmp1a.value(43);
     expect(cmp1a.value()).toBe(43);
     expect(cmp1b.value()).toBe(43);
     expect(raw.getData().cmp1).toBe(41);
-    modes.setMode("real");
+    context.setMode("real");
     expect(cmp1a.value()).toBe(41);
   });
 });

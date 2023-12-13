@@ -5,10 +5,11 @@ import { LRE } from "../../src/lre";
 import { newMockedWait } from "../mock/letsrole/wait.mock";
 import { MockServer } from "../mock/letsrole/server.mock";
 import { DataBatcher } from "../../src/sheet/databatcher";
+import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 const { wait, itHasWaitedEverything } = newMockedWait();
 global.wait = wait;
-global.lre = new LRE();
+global.lre = new LRE(modeHandlerMock);
 
 describe("Dataholder", () => {
   let sheet1: Sheet;
@@ -21,13 +22,7 @@ describe("Dataholder", () => {
       realId: realId,
     });
     server.registerMockedSheet(raw);
-    return new Sheet(raw, new DataBatcher(
-      {
-        getMode: () => "real",
-        setMode: () => {},
-      },
-      raw
-    ));
+    return new Sheet(raw, new DataBatcher(modeHandlerMock, raw));
   };
 
   beforeEach(() => {
@@ -81,7 +76,6 @@ describe("Dataholder", () => {
     expect(subject.data("d1", val + 1, true)).toBe(subject);
     expect(subject.hasData("d1")).toBeTruthy();
     expect(subject2.hasData("d1")).toBeTruthy();
-
   });
 
   test("Handle moving data from volatile to persistent", () => {});

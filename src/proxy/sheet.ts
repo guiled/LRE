@@ -8,33 +8,39 @@ export type SheetContext = {
   cmpTexts: Record<string, string>;
 };
 
-const sheetContexts: Record<LetsRole.SheetRealID, SheetContext> = {};
-
 export class SheetProxy
   extends LreProxy<LetsRole.Sheet>
   implements LetsRole.Sheet
 {
-  #id!: LetsRole.SheetRealID;
   constructor(proxyModeHandler: ProxyModeHandler, sheet: LetsRole.Sheet) {
     super(proxyModeHandler, sheet);
-
     this.setModeDest("virtual", (sheet: LetsRole.Sheet) => {
-      this.#id = sheet.getSheetId();
+      const contextId: string = `sheet-${sheet.getSheetId()}`;
+
       const newData = sheet.getData();
-      sheetContexts[this.#id] = {
+      this._proxyModeHandler.setContext(contextId, {
         sheetData: newData,
         cmpClasses: {},
         cmpTexts: {},
         virtualValues: {},
+      });
+      const getContext = (): SheetContext => {
+        return this._proxyModeHandler.getContext<SheetContext>(contextId);
       };
       return {
         ...sheet,
-        getData: () => sheetContexts[this.#id].sheetData,
+        getData: () => {
+          return getContext().sheetData;
+        },
         setData: (d: LetsRole.ViewData) => {
-          sheetContexts[this.#id].sheetData = {
-            ...sheetContexts[this.#id].sheetData,
-            ...d,
-          };
+          const ctx = getContext();
+          this._proxyModeHandler.setContext(contextId, {
+            ...ctx,
+            sheetData: {
+              ...ctx.sheetData,
+              ...d,
+            },
+          });
         },
         get: this.get,
         prompt: (
@@ -72,7 +78,9 @@ export class SheetProxy
       this,
       () => {
         this.getDest();
-        return sheetContexts[this.#id];
+        return this._proxyModeHandler.getContext<SheetContext>(
+          "sheet-" + this.getSheetId()
+        );
       }
     );
   }

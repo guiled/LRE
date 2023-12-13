@@ -4,6 +4,7 @@ import { LRE } from "../src/lre";
 import { Sheet } from "../src/sheet";
 import { MockSheet } from "./mock/letsrole/sheet.mock";
 import { newMockedWait } from "./mock/letsrole/wait.mock";
+import { modeHandlerMock } from "./mock/modeHandler.mock";
 
 jest.mock("../src/log");
 global.lre = new Logger() as ILRE & Logger & cb;
@@ -17,7 +18,7 @@ describe("LRE tests", () => {
   let spyOnMathRandom: jest.SpyInstance;
 
   beforeEach(() => {
-    subject = new LRE();
+    subject = new LRE(modeHandlerMock);
     spyOnMathRandom = jest.spyOn(global.Math, "random").mockReturnValue(1);
   });
 
@@ -142,20 +143,11 @@ describe("LRE tests", () => {
   });
 });
 
-describe("LRE is a proxy mode handler", () => {
-  test("Set mode and get modes works", () => {
-    const subject = new LRE();
-    expect(subject.getMode()).toBe("real");
-    subject.setMode("virtual");
-    expect(subject.getMode()).toBe("virtual");
-  });
-});
-
 describe("LRE wait", () => {
   let subject: LRE;
 
   beforeEach(() => {
-    subject = new LRE();
+    subject = new LRE(modeHandlerMock);
   });
 
   test("calls native wait", () => {

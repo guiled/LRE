@@ -10,10 +10,11 @@ import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
 import { MockComponent } from "../mock/letsrole/component.mock";
 import { MockSheet } from "../mock/letsrole/sheet.mock";
+import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 jest.mock("../../src/lre");
 
-global.lre = new LRE();
+global.lre = new LRE(modeHandlerMock);
 
 describe("Component factory", () => {
   let rawCmp: LetsRole.Component, sheet: Sheet;
@@ -23,13 +24,7 @@ describe("Component factory", () => {
       id: "main",
       realId: "123",
     });
-    sheet = new Sheet(rawSheet, new DataBatcher(
-      {
-        getMode: () => "real",
-        setMode: () => {},
-      },
-      rawSheet
-    ));
+    sheet = new Sheet(rawSheet, new DataBatcher(modeHandlerMock, rawSheet));
     rawCmp = MockComponent({
       id: "cmp1",
       sheet: rawSheet,
