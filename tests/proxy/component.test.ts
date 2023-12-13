@@ -5,6 +5,7 @@ import {
   MockedComponent,
 } from "../mock/letsrole/component.mock";
 import { MockSheet } from "../mock/letsrole/sheet.mock";
+import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 jest.mock("../../src/sheet");
 
@@ -17,15 +18,6 @@ const initClasses = ["class1", "class2"];
 const initText = "42";
 
 const initTestMocks = (isVirtual: boolean = false): ComponentProxy => {
-  let mode: ProxyMode = "real";
-  const modes: ProxyModeHandler = {
-    getMode() {
-      return mode;
-    },
-    setMode(newMode) {
-      mode = newMode;
-    },
-  };
   rawSheet = MockSheet({
     id: "main",
     realId: "1234",
@@ -43,16 +35,16 @@ const initTestMocks = (isVirtual: boolean = false): ComponentProxy => {
     classes: [...initClasses],
     text: initText,
   });
-  sheetProxy = new SheetProxy(modes, rawSheet);
+  sheetProxy = new SheetProxy(modeHandlerMock, rawSheet);
 
-  const subject = new ComponentProxy(modes, raw, sheetProxy, () => ({
+  const subject = new ComponentProxy(modeHandlerMock, raw, sheetProxy, () => ({
     cmpClasses: {},
     cmpTexts: {},
     sheetData: {},
     virtualValues: {},
   }));
 
-  isVirtual && modes.setMode("virtual");
+  isVirtual && modeHandlerMock.setMode("virtual");
 
   return subject;
 };
@@ -290,7 +282,7 @@ describe("Virtual mode changes are applied", () => {
     expect(raw.hasClass).not.toBeCalled();
     expect(raw.getClasses).not.toBeCalled();
   });
-  
+
   test("Virtualvalues are virtually applied", () => {
     const nbMockCalls = (raw.virtualValue as jest.Mock).mock.calls.length;
     expect(subject.virtualValue()).toBeNull();

@@ -10,10 +10,10 @@ type cb = (thisArg: any, argArray?: any) => (rawSheet: LetsRole.Sheet) => void;
 
 export interface LRE extends ILRE, Logger, cb {}
 
-export class LRE extends Logger implements ILRE, ProxyModeHandler {
+export class LRE extends Logger implements ILRE {
+  #context: ProxyModeHandler;
   sheets: SheetCollection;
   public __debug: boolean = false;
-  #mode: ProxyMode = "real";
 
   apply(_thisArg: any, argArray?: any) {
     this.log("prepare init");
@@ -25,10 +25,10 @@ export class LRE extends Logger implements ILRE, ProxyModeHandler {
         0,
         () => {
           const sheetId = rawSheet.getSheetId();
-          const sheetProxy = new SheetProxy(this, rawSheet);
+          const sheetProxy = new SheetProxy(this.#context, rawSheet);
           const _sheet = new Sheet(
             sheetProxy,
-            new DataBatcher(this, sheetProxy)
+            new DataBatcher(this.#context, sheetProxy)
           );
           _sheet.cleanCmpData();
           this.sheets.add(_sheet);
@@ -56,9 +56,9 @@ export class LRE extends Logger implements ILRE, ProxyModeHandler {
     };
   }
 
-  constructor() {
+  constructor(context: ProxyModeHandler) {
     super();
-    //Object.assign(this, new Logger());
+    this.#context = context;
     this.log(`init`);
     this.sheets = new SheetCollection();
   }
@@ -144,16 +144,8 @@ export class LRE extends Logger implements ILRE, ProxyModeHandler {
     } else return false;
   }
 
-  setMode(newMode: ProxyMode) {
-    this.#mode = newMode;
-  }
-
-  getMode(): ProxyMode {
-    return this.#mode;
-  }
-
   wait(delay: number, cb: () => void, waitName: string = "No-name") {
-    if (this.getMode() !== "virtual") {
+    if (this.#context.getMode() !== "virtual") {
       wait(delay, () => {
         try {
           cb();

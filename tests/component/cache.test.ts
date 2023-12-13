@@ -7,11 +7,12 @@ import { ComponentSearchResult } from "../../src/component/container";
 import { newMockedWait } from "../mock/letsrole/wait.mock";
 import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
+import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 jest.mock("../../src/lre");
 jest.mock("../../src/component/component");
 
-global.lre = new LRE();
+global.lre = new LRE(modeHandlerMock);
 const mockedWaitDefs = newMockedWait();
 global.wait = mockedWaitDefs.wait;
 lre.wait = wait;
@@ -24,10 +25,7 @@ const rawSheet = MockSheet({
 const sheet = new Sheet(
   rawSheet,
   new DataBatcher(
-    {
-      getMode: () => "real",
-      setMode: () => {},
-    },
+    modeHandlerMock,
     rawSheet
   )
 );

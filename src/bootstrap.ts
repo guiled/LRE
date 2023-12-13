@@ -1,3 +1,4 @@
+import { Context } from "./context";
 import { globals } from "./globals";
 import { LRE } from "./lre";
 import { registerLreBindings } from "./proxy/bindings";
@@ -5,7 +6,8 @@ import { registerLreRollBuilder } from "./proxy/rollBuilder";
 import { registerLreWait } from "./proxy/wait";
 import { overloadTables } from "./tables";
 
-export const bootstrap = () => {
+export const bootstrap = (): ProxyModeHandler => {
+  const context = new Context();
   // @ts-ignore Define isNaN because it is missing in Let's Role
   isNaN = globals.isNaN;
 
@@ -18,11 +20,11 @@ export const bootstrap = () => {
   stringify = globals.stringify;
 
   overloadTables(Tables);
-  lre = new LRE();
-  wait = registerLreWait(lre, wait);
-  Bindings = registerLreBindings(lre, Bindings);
+  lre = new LRE(context);
+  wait = registerLreWait(context, wait);
+  Bindings = registerLreBindings(context, Bindings);
   /* @ts-ignore-error */
-  RollBuilder = registerLreRollBuilder(lre, RollBuilder);
+  RollBuilder = registerLreRollBuilder(context, RollBuilder);
 
   // @ts-ignore Overload console for some edge cases like throw new Error changed into console.error
   console = {
@@ -31,4 +33,6 @@ export const bootstrap = () => {
     trace: lre.log,
     warn: lre.warn,
   };
+
+  return context;
 };
