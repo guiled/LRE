@@ -35,7 +35,7 @@ export class DataBatcher extends EventHolder<any, DataBatcherEventType> {
 
   #checkMode() {
     const mode = this.#modeHandler.getMode();
-    if (mode === "virtual" && this.#currentMode === "real") {
+    if (mode === "virtual" && this.#currentMode !== "virtual") {
       this.#indexes.virtual = {};
       this.#pending.virtual = [];
     }
