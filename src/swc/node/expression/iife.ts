@@ -18,7 +18,7 @@ type IIFE_PARAM = {
   identifier?: FunctionExpression["identifier"];
   params?: FunctionExpression["params"];
   args?: CallExpression["arguments"];
-  called?: Argument | null;
+  called?: Argument | boolean | null;
   applied?: Argument | null;
 };
 
@@ -61,7 +61,11 @@ export default ({
         value: "call",
       }),
     });
-    firstArg = [{ expression: thisexpression({ span }) }];
+    if (called === true) {
+      firstArg = [{ expression: thisexpression({ span }) }];
+    } else {
+      firstArg = [called];
+    }
   } else {
     callee = fcn;
   }
