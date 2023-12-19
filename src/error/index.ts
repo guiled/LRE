@@ -15,22 +15,28 @@ export class Error {
   #handleTrace(trace: LetsRole.Error["trace"]) {
     if (!trace) return;
     this.trace = trace;
-    let location = trace.find(function (tr) {
+    let throwErrorLocation = trace.find(function (tr) {
       return (
-        (lre.__debug &&
-          tr.type === "CallExpression" &&
-          tr.callee!.name === "throwError") ||
-        tr?.loc?.start?.line < errExclFirstLine ||
-        tr?.loc?.start?.line > errExclLastLine
+        lre.__debug &&
+        tr.type === "CallExpression" &&
+        tr.callee!.name === "throwError"
       );
     });
-    if (location) {
-      this.lineNumber = location.loc.start.line;
-      this.columnNumber = location.loc.start.column;
-    } else if (lre.__debug) {
-      location = trace[0];
-      this.lineNumber = location?.loc?.start?.line;
-      this.columnNumber = location?.loc?.start?.column;
+    if (throwErrorLocation) {
+      this.lineNumber = throwErrorLocation?.loc?.start?.line;
+      this.columnNumber = throwErrorLocation?.loc?.start?.column;
+    } else {
+      let location = trace.find(function (tr) {
+        return (
+          lre.__debug ||
+          tr?.loc?.start?.line < errExclFirstLine ||
+          tr?.loc?.start?.line > errExclLastLine
+        );
+      });
+      if (location) {
+        this.lineNumber = location.loc.start.line;
+        this.columnNumber = location.loc.start.column;
+      }
     }
   }
 
