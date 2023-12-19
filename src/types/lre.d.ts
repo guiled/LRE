@@ -4,6 +4,8 @@ declare interface ILRE {
   numToAlpha(n: number): string;
   alphaToNum(s: string): number;
   wait(delay: number, cb: () => void, name: string = "");
+  autoNum(v: boolean = true): void;
+  value<T = any>(n: T): number | T;
   __debug: boolean = false;
 }
 
