@@ -18,6 +18,8 @@ export const bootstrap = (): ProxyModeHandler => {
   throwError = globals.throwError;
   newError = globals.newError;
   stringify = globals.stringify;
+  virtualCall = globals.virtualCall;
+  loggedCall = globals.loggedCall;
 
   overloadTables(Tables);
   lre = new LRE(context);
