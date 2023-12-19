@@ -38,6 +38,8 @@ declare var lastException: any;
 declare var throwError = (err: any) => undefined;
 declare var newError = (err: message) => any;
 declare var stringify = (obj: any, indent: string = "") => string;
+declare var virtualCall = <T extends any>(cb: () => T) => T;
+declare var loggedCall = <T extends any>(cb: () => T) => T;
 
 declare interface Logger {
   error(...args: any[]): void;
