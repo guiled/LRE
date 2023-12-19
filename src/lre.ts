@@ -12,6 +12,7 @@ export interface LRE extends ILRE, Logger, cb {}
 
 export class LRE extends Logger implements ILRE {
   #context: ProxyModeHandler;
+  #autoNum: boolean = false;
   sheets: SheetCollection;
   public __debug: boolean = false;
 
@@ -37,7 +38,7 @@ export class LRE extends Logger implements ILRE {
             try {
               _sheet.persistingData("initialized", firstInit(_sheet));
             } catch (e) {
-              this.error("[Firstinit] Unhandled error : " + e);
+              this.error("[First init] Unhandled error : " + e);
             }
           }
           this.log(
@@ -154,5 +155,16 @@ export class LRE extends Logger implements ILRE {
         }
       });
     }
+  }
+
+  autoNum(v: boolean = true): void {
+    this.#autoNum = v;
+  }
+
+  value<T = any>(value: T): number | T {
+    if (this.#autoNum && !isNaN(value as any) && !Array.isArray(value)) {
+      return Number(value);
+    }
+    return value;
   }
 }

@@ -166,5 +166,22 @@ describe("LRE wait", () => {
     (lre.error as jest.Mock).mockClear();
     expect(itHasWaitedEverything).not.toThrowError();
     expect(lre.error).toBeCalled();
-  })
+  });
+});
+
+describe("LRE autonum", () => {
+  let subject: LRE;
+
+  beforeEach(() => {
+    subject = new LRE(modeHandlerMock);
+  });
+
+  test.each([["a", undefined], ["1", 1], ["1as", undefined], [{}, undefined], [[], undefined]])(
+    "Value %s auto conversion",
+    (init, result?) => {
+      expect(subject.value(init)).toBe(init);
+      subject.autoNum();
+      expect(subject.value(init)).toBe(result ?? init);
+    }
+  );
 });
