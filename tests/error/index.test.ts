@@ -63,6 +63,19 @@ describe("Test error handler", () => {
       message: "err",
       trace: [
         {
+          type: "not excluded",
+          loc: {
+            start: {
+              line: 122,
+              column: 1,
+            },
+            end: {
+              line: 122,
+              column: 12,
+            },
+          },
+        },
+        {
           type: "CallExpression",
           callee: {
             name: "throwError",
