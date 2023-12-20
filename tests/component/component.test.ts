@@ -113,6 +113,17 @@ describe("Component construction", () => {
     expect(rawCmp.virtualValue).toBeCalledTimes(1);
     cmp.virtualValue("virtual");
     expect(rawCmp.virtualValue).toBeCalledTimes(2);
+
+    (rawCmp.setTooltip as jest.Mock).mockClear();
+    cmp.setTooltip("the tool tip");
+    expect(rawCmp.setTooltip).toBeCalledTimes(1);
+    expect((rawCmp.setTooltip as jest.Mock).mock.calls[0].length).toBe(1);
+    expect((rawCmp.setTooltip as jest.Mock).mock.calls[0][0]).toBe("the tool tip");
+    cmp.setTooltip("the tool tip", "top");
+    expect(rawCmp.setTooltip).toBeCalledTimes(2);
+    expect((rawCmp.setTooltip as jest.Mock).mock.calls[1].length).toBe(2);
+    expect((rawCmp.setTooltip as jest.Mock).mock.calls[1][1]).toBe("top");
+
   });
 
   test("Component classes", () => {
