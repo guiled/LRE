@@ -8,10 +8,9 @@ import {
 } from "../component/container";
 import { DataBatcher } from "./databatcher";
 import { ComponentFactory } from "../component/factory";
-import { ComponentCommon } from "../component/Icommon";
 import { Mixin } from "../mixin";
 
-export type ClassChanges = Record<LetsRole.ClassName, 1 | -1>
+export type ClassChanges = Record<LetsRole.ClassName, 1 | -1>;
 
 type SheetProtectedStoredState = {
   initialized: boolean;
@@ -295,7 +294,7 @@ export class Sheet
 
   componentExists(realId: string): boolean {
     const parts = realId.split(REP_ID_SEP);
-    const cmp = (this.#silentFind)(parts[0]);
+    const cmp = this.#silentFind(parts[0]);
     if (!cmp || !cmp.id()) {
       return false;
     }
@@ -305,7 +304,7 @@ export class Sheet
         return false;
       }
       if (parts.length > 2) {
-        let tmp = (this.#silentFind)(realId);
+        let tmp = this.#silentFind(realId);
         if (!tmp || !tmp.id()) {
           return false;
         }
