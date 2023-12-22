@@ -1,3 +1,5 @@
+import { loggedCall, virtualCall } from "../../../src/globals/virtualcall";
+import { modeHandlerMock } from "../modeHandler.mock";
 import { newMockedWait } from "./wait.mock";
 
 const { wait, itHasWaitedEnough, itHasWaitedEverything } = newMockedWait();
@@ -52,6 +54,9 @@ const initLetsRole = () => {
   global.RollBuilder = RollBuilderClass;
 
   global.Tables = Tables;
+  global.loggedCall = loggedCall;
+  global.virtualCall = virtualCall;
+  global.context = modeHandlerMock;
 };
 
 export {

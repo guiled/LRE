@@ -27,7 +27,8 @@ const sheet = new Sheet(
   new DataBatcher(
     modeHandlerMock,
     rawSheet
-  )
+  ),
+  modeHandlerMock
 );
 const UNKNOWN_CMP_ID = "_unknown_";
 
@@ -51,7 +52,7 @@ const newCmp = jest.fn((id: string): ComponentSearchResult => {
 });
 
 beforeAll(() => {
-  cache = new ComponentCache(newCmp);
+  cache = new ComponentCache(modeHandlerMock, newCmp);
 });
 
 describe("Component cache set/get/unset/inCache", () => {
@@ -108,7 +109,7 @@ describe("Component cache set/get/unset/inCache", () => {
 describe("Component cache forget/remember", () => {
   beforeEach(() => {
     newCmp.mockClear();
-    cache = new ComponentCache(newCmp);
+    cache = new ComponentCache(modeHandlerMock, newCmp);
   });
 
   test("forget/remember", () => {

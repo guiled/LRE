@@ -1,4 +1,5 @@
 
+    let context;
     let errExclFirstLine, errExclLastLine;
     try { let a = null; a() } catch (e) { errExclFirstLine = e.trace[0].loc.start.line };
 

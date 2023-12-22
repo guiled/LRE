@@ -29,7 +29,8 @@ export class LRE extends Logger implements ILRE {
           const sheetProxy = new SheetProxy(this.#context, rawSheet);
           const _sheet = new Sheet(
             sheetProxy,
-            new DataBatcher(this.#context, sheetProxy)
+            new DataBatcher(this.#context, sheetProxy),
+            this.#context
           );
           _sheet.cleanCmpData();
           this.sheets.add(_sheet);

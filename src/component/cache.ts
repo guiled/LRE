@@ -14,8 +14,10 @@ export class ComponentCache {
   #toAdd: Array<LetsRole.ComponentID> = [];
   #isWaitingForget: boolean = false;
   #isWaitingRemember: boolean = false;
+  #context: ProxyModeHandler;
 
-  constructor(componentGetter: ComponentGetter) {
+  constructor(context: ProxyModeHandler, componentGetter: ComponentGetter) {
+    this.#context = context;
     this.#getter = componentGetter;
   }
 
@@ -31,7 +33,11 @@ export class ComponentCache {
     }
 
     if (this.#toDelete.length > 0) {
-      lre.wait(this.#DEFERRED_DELAY, this.#deferredForget.bind(this), "deferredForget");
+      lre.wait(
+        this.#DEFERRED_DELAY,
+        this.#deferredForget.bind(this),
+        "deferredForget"
+      );
       this.#isWaitingForget = true;
     }
   }
@@ -44,7 +50,11 @@ export class ComponentCache {
     this.get(realId, true);
 
     if (this.#toAdd.length > 0) {
-      lre.wait(this.#DEFERRED_DELAY, this.#deferredRemember.bind(this), "deferredRemember");
+      lre.wait(
+        this.#DEFERRED_DELAY,
+        this.#deferredRemember.bind(this),
+        "deferredRemember"
+      );
       this.#isWaitingRemember = true;
     }
   }
@@ -100,7 +110,9 @@ export class ComponentCache {
       return this.#components[realId];
     }
 
+    this.#context.disableAccessLog();
     const cmp = this.#getter(realId, silent);
+    this.#context.enableAccessLog();
     if (cmp) {
       this.set(realId, cmp);
     }
@@ -126,7 +138,11 @@ export class ComponentCache {
     }
     this.#deleteFromToAdd(realId);
     if (!this.#isWaitingForget) {
-      lre.wait(this.#DEFERRED_DELAY, this.#deferredForget.bind(this), "deferredForget");
+      lre.wait(
+        this.#DEFERRED_DELAY,
+        this.#deferredForget.bind(this),
+        "deferredForget"
+      );
       this.#isWaitingRemember = false;
     }
   }
@@ -140,7 +156,11 @@ export class ComponentCache {
     }
     this.#deleteFromToDelete(realId);
     if (!this.#isWaitingRemember) {
-      lre.wait(this.#DEFERRED_DELAY, this.#deferredRemember.bind(this), "deferredRemember");
+      lre.wait(
+        this.#DEFERRED_DELAY,
+        this.#deferredRemember.bind(this),
+        "deferredRemember"
+      );
       this.#isWaitingRemember = true;
     }
   }

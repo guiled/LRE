@@ -9,6 +9,7 @@ import { LRE } from "../../src/lre";
 import { MockServer } from "../mock/letsrole/server.mock";
 import {
   initLetsRole,
+  itHasWaitedEnough,
   itHasWaitedEverything,
 } from "../mock/letsrole/letsrole.mock";
 import { DataBatcher } from "../../src/sheet/databatcher";
@@ -23,22 +24,32 @@ let rawCmp: LetsRole.Component;
 let cmp: Component;
 const cmpId = "cmp";
 const cmpName = "ComponentName";
+const cmpValue = "42";
 const cmpClasses = ["cl1", "cl2", "cl3"];
-const realId = "main.cmp";
+const realId = "cmp";
 const cmpText = "cmpText";
 let cmpDefs;
 
 let server: MockServer;
 
 beforeEach(() => {
+  modeHandlerMock.setMode("real");
+  lre.autoNum(false);
   server = new MockServer();
   rawSheet = MockSheet({
     id: "main",
     realId: "123",
+    data: {
+      cmp2: cmpValue,
+    },
   });
   server.registerMockedSheet(rawSheet);
 
-  sheet = new Sheet(rawSheet, new DataBatcher(modeHandlerMock, rawSheet));
+  sheet = new Sheet(
+    rawSheet,
+    new DataBatcher(modeHandlerMock, rawSheet),
+    modeHandlerMock
+  );
   sheet.raw = jest.fn(() => rawSheet);
   jest.spyOn(sheet, "get");
   cmpDefs = {
@@ -47,11 +58,10 @@ beforeEach(() => {
     name: cmpName,
     classes: [...cmpClasses],
     text: cmpText,
+    value: cmpValue,
   };
   rawCmp = MockComponent(cmpDefs);
-  rawSheet.get = jest.fn(() => {
-    return rawCmp;
-  });
+  server.registerMockedComponent(rawCmp);
   cmp = new Component(rawCmp, sheet, realId);
 });
 
@@ -114,16 +124,21 @@ describe("Component construction", () => {
     cmp.virtualValue("virtual");
     expect(rawCmp.virtualValue).toBeCalledTimes(2);
 
+    (rawCmp.rawValue as jest.Mock).mockClear();
+    cmp.rawValue();
+    expect(rawCmp.rawValue).toBeCalledTimes(1);
+
     (rawCmp.setTooltip as jest.Mock).mockClear();
     cmp.setTooltip("the tool tip");
     expect(rawCmp.setTooltip).toBeCalledTimes(1);
     expect((rawCmp.setTooltip as jest.Mock).mock.calls[0].length).toBe(1);
-    expect((rawCmp.setTooltip as jest.Mock).mock.calls[0][0]).toBe("the tool tip");
+    expect((rawCmp.setTooltip as jest.Mock).mock.calls[0][0]).toBe(
+      "the tool tip"
+    );
     cmp.setTooltip("the tool tip", "top");
     expect(rawCmp.setTooltip).toBeCalledTimes(2);
     expect((rawCmp.setTooltip as jest.Mock).mock.calls[1].length).toBe(2);
     expect((rawCmp.setTooltip as jest.Mock).mock.calls[1][1]).toBe("top");
-
   });
 
   test("Component classes", () => {
@@ -209,13 +224,6 @@ describe("Component tree", () => {
   });
 });
 
-describe("Component value", () => {
-  test("temp tests waiting for implementation", () => {
-    expect(cmp.rawValue).toThrowError();
-    expect(cmp.value).toThrowError();
-  });
-});
-
 describe("Persistent data are sync between sheets", () => {
   test("Sync persistent data", () => {
     const rawSheet2 = MockSheet({
@@ -230,7 +238,8 @@ describe("Persistent data are sync between sheets", () => {
 
     const sheet2 = new Sheet(
       rawSheet2,
-      new DataBatcher(modeHandlerMock, rawSheet2)
+      new DataBatcher(modeHandlerMock, rawSheet2),
+      modeHandlerMock
     );
     const cmp2 = sheet2.get("rep.a.b")!;
     /* @ts-ignore */
@@ -248,6 +257,65 @@ describe("Persistent data are sync between sheets", () => {
     itHasWaitedEverything();
     expect(sheet2.persistingCmpData("rep.a.b")).toStrictEqual({ test: 42 });
     expect(cmp2.data("test")).toBe(42);
+  });
+});
+
+describe("Component get and set value", () => {
+  test("Value get", () => {
+    const raw = rawSheet.get("cmp2");
+    const cmp = sheet.get("cmp2")!;
+    expect(cmp.value()).toBe("42");
+    expect(raw.value).toBeCalled();
+    sheet.setData({
+      [cmp.realId()]: "4242",
+    });
+    (raw.value as jest.Mock).mockClear();
+    expect(cmp.value()).toBe("4242");
+    lre.autoNum();
+    expect(cmp.value()).toBe(4242);
+    expect(raw.value).not.toBeCalled();
+    itHasWaitedEverything();
+    expect(cmp.value()).toBe(4242);
+    expect(raw.value).toBeCalled();
+    /* @ts-ignore */
+    raw.value = jest.fn(() => {
+      /* @ts-expect-error */
+      null();
+    });
+    expect(() => cmp.value()).not.toThrowError();
+    expect(cmp.value()).toBeUndefined();
+  });
+
+  test("normal value set", () => {
+    const updateEvent = jest.fn();
+    cmp.on("update", updateEvent);
+    cmp.value(cmp.value());
+    const newVal = "44";
+    expect(updateEvent).not.toBeCalled();
+    cmp.value(newVal);
+    expect(updateEvent).toBeCalled();
+    expect(cmp.value()).toBe(newVal);
+    expect(sheet.getPendingData(cmp.id())).toBe(newVal);
+    itHasWaitedEverything();
+    expect(sheet.getData()[cmp.id()]).toBe(newVal);
+  });
+
+  test("value set with a function", () => {
+    const cmp1 = sheet.get("cmp1")!;
+    const cmp2 = sheet.get("cmp2")!;
+    cmp1.value(4242);
+    cmp2.value(1313);
+    const valSet = jest.fn(() => {
+      return cmp2.value();
+    });
+    expect(() => cmp1.value(valSet)).not.toThrowError();
+    expect(valSet).toBeCalledTimes(1);
+    expect(cmp1.value()).toBe(cmp2.value());
+    itHasWaitedEnough();
+    cmp2.value(4243);
+    expect(valSet).toBeCalledTimes(2);
+    expect(cmp1.value()).toBe(cmp2.value());
+    itHasWaitedEnough();
   });
 });
 
