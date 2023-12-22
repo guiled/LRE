@@ -32,6 +32,7 @@ describe("Context access logs", () => {
     (logType: ProxyModeHandlerLogType) => {
       const subject = new Context();
       expect(subject.getAccessLog(logType)).toStrictEqual([]);
+      expect(subject.getPreviousAccessLog(logType)).toStrictEqual([]);
       const logMessage = "This is log type " + logType;
       expect(subject.logAccess(logType, logMessage)).toBe(subject);
       expect(subject.getAccessLog(logType)).toStrictEqual([logMessage]);
@@ -47,20 +48,33 @@ describe("Context access logs", () => {
     );
   });
 
-  test("Accces log is reset mode switch", () => {
+  test("Disable log access", () => {
+    const subject = new Context();
+    subject.logAccess("value", "a");
+    subject.disableAccessLog();
+    subject.logAccess("value", "b");
+    subject.enableAccessLog();
+    subject.logAccess("value", "c");
+    expect(subject.getAccessLog("value")).toStrictEqual(["a", "c"]);
+  });
+
+  test("Access log is reset mode switch", () => {
     const subject = new Context();
     allLogTypes.forEach((logType) => subject.logAccess(logType, "Message"));
     allLogTypes.forEach((logType) =>
       expect(subject.getAccessLog(logType)).not.toStrictEqual([])
     );
     subject.setMode("real");
-    allLogTypes.forEach((logType) =>
-      expect(subject.getAccessLog(logType)).not.toStrictEqual([])
-    );
+    const saveLogs: ContextLog = {};
+    allLogTypes.forEach((logType) => {
+      saveLogs[logType] = subject.getAccessLog(logType);
+      expect(saveLogs[logType]).not.toStrictEqual([]);
+    });
     subject.setMode("virtual");
-    allLogTypes.forEach((logType) =>
-      expect(subject.getAccessLog(logType)).toStrictEqual([])
-    );
+    allLogTypes.forEach((logType) => {
+      expect(subject.getAccessLog(logType)).toStrictEqual([]);
+      expect(subject.getPreviousAccessLog(logType)).toBe(saveLogs[logType]);
+    });
     allLogTypes.forEach((logType) => subject.logAccess(logType, "Message"));
     allLogTypes.forEach((logType) =>
       expect(subject.getAccessLog(logType)).not.toStrictEqual([])
@@ -89,9 +103,9 @@ describe("Context save", () => {
     subject.setMode("virtual");
     expect(subject.setContext("test1", "a")).toBe(subject);
     expect(subject.getContext("test1")).toBe("a");
-});
+  });
 
-test("Context is emptied when going back to real mode", () => {
+  test("Context is emptied when going back to real mode", () => {
     const subject = new Context();
     subject.setMode("virtual");
     expect(subject.setContext("test1", "a")).toBe(subject);

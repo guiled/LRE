@@ -44,7 +44,6 @@ export class MockServer {
       this.sheetData[id] ??= sheet.getData() || {};
       this.cmp[id] ??= {};
     })();
-
     sheet.getData = jest.fn(() => {
       return Object.assign(
         {},
@@ -124,13 +123,13 @@ export class MockServer {
           value: this.sheetData[sheet.getSheetId()][cmpId],
         })
       );
-      cmp.value = (newValue?: LetsRole.ComponentValue) => {
+      cmp.value = jest.fn((newValue?: LetsRole.ComponentValue) => {
         if (newValue !== void 0) {
           this.sheetData[sheet.getSheetId()][cmpId] = newValue;
           return;
         }
         return this.sheetData[sheet.getSheetId()][cmpId] || "";
-      };
+      });
       this.cmp[sheetId][cmpId].set(sheet, cmp);
       return cmp;
     });
