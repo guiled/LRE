@@ -7,7 +7,7 @@ import { registerLreWait } from "./proxy/wait";
 import { overloadTables } from "./tables";
 
 export const bootstrap = (): ProxyModeHandler => {
-  const context = new Context();
+  const ctx = new Context();
   // @ts-ignore Define isNaN because it is missing in Let's Role
   isNaN = globals.isNaN;
 
@@ -22,11 +22,11 @@ export const bootstrap = (): ProxyModeHandler => {
   loggedCall = globals.loggedCall;
 
   overloadTables(Tables);
-  lre = new LRE(context);
-  wait = registerLreWait(context, wait);
-  Bindings = registerLreBindings(context, Bindings);
+  lre = new LRE(ctx);
+  wait = registerLreWait(ctx, wait);
+  Bindings = registerLreBindings(ctx, Bindings);
   /* @ts-ignore-error */
-  RollBuilder = registerLreRollBuilder(context, RollBuilder);
+  RollBuilder = registerLreRollBuilder(ctx, RollBuilder);
 
   // @ts-ignore Overload console for some edge cases like throw new Error changed into console.error
   console = {
@@ -36,5 +36,5 @@ export const bootstrap = (): ProxyModeHandler => {
     warn: lre.warn,
   };
 
-  return context;
+  return ctx;
 };

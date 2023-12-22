@@ -19,15 +19,24 @@ declare type ProxyModeHandlerLogType =
   | "data"
   | "cmp";
 
+declare type ContextLog = Partial<
+  Record<ProxyModeHandlerLogType, Array<LetsRole.ComponentID>>
+>;
+
 declare interface ProxyModeHandler {
   setMode: (newMode: ProxyMode) => this;
   getMode: () => ProxyMode;
   resetAccessLog: () => this;
+  disableAccessLog: () => this;
+  enableAccessLog: () => this;
   logAccess: (
     type: ProxyModeHandlerLogType,
     value: LetsRole.ComponentID
   ) => this;
   getAccessLog: (type: ProxyModeHandlerLogType) => Array<LetsRole.ComponentID>;
+  getPreviousAccessLog: (
+    type: ProxyModeHandlerLogType
+  ) => Array<LetsRole.ComponentID>;
   setContext: (id: string, context: any) => this;
   getContext: <T = any>(id: string) => T;
 }

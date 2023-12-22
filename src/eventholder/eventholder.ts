@@ -22,7 +22,7 @@ const RAW_EVENTS = [
 ] as const;
 type __RAW_EVENTS = typeof RAW_EVENTS;
 type T_RAW_EVENTS = __RAW_EVENTS[number];
-const EVENT_SEP = ":";
+export const EVENT_SEP = ":";
 const DELEGATED_SEP = "~";
 const DEFAULT_HANDLER_ID = "default";
 
@@ -32,7 +32,7 @@ type EventHolderEvents =
   | "eventhandler:removed";
 
 type EventHolderDefaultEvents = EventHolderEvents;
-type EventType<T extends string> =
+export type EventType<T extends string> =
   | EventHolderDefaultEvents
   | T
   | `${EventHolderDefaultEvents | T}${typeof EVENT_SEP}${string}`;

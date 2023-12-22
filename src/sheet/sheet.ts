@@ -42,9 +42,14 @@ export class Sheet
   #componentCache: ComponentCache;
   #cmp: LetsRole.Component;
   #alphaId: string | undefined = undefined;
+  #context: ProxyModeHandler;
   rand: number;
 
-  constructor(rawSheet: LetsRole.Sheet, dataBatcher: DataBatcher) {
+  constructor(
+    rawSheet: LetsRole.Sheet,
+    dataBatcher: DataBatcher,
+    context: ProxyModeHandler
+  ) {
     lre.log(`new sheet ${rawSheet.getSheetId()}`);
     super([
       [/* EventHolder params */ rawSheet.name()],
@@ -60,11 +65,15 @@ export class Sheet
         },
       ],
     ]);
+    this.#context = context;
     this.rand = Math.floor(Math.random() * 100);
     this.#batcher = dataBatcher;
     this.#batcher.linkEventTo("processed:sheet", this, "data-processed");
     this.#batcher.linkEventTo("pending:sheet", this, "data-pending");
-    this.#componentCache = new ComponentCache(this.#componentGetter.bind(this));
+    this.#componentCache = new ComponentCache(
+      this.#context,
+      this.#componentGetter.bind(this)
+    );
     this.#cmp = rawSheet.get(rawSheet.id())!;
     this.#silentFind = this.#cmp.find.bind(this.#cmp);
     this.#cmp.on("update", this.#handleDataUpdate.bind(this));
@@ -145,9 +154,9 @@ export class Sheet
     this.#storedState = lre.deepMerge(this.#storedState, newSheetStoredState);
     this.#storedStateReceivedKeys = Object.keys(this.#storedState!);
     this.trigger("data-updated");
-    cmpWithChangedData.forEach(c => c.trigger("data-updated"));
-    cmpWithChangedClasses.forEach(c => c.trigger("class-updated"));
-    
+    cmpWithChangedData.forEach((c) => c.trigger("data-updated"));
+    cmpWithChangedClasses.forEach((c) => c.trigger("class-updated"));
+
     if (hasPendingData) {
       lre.trace("pending data update");
       this.#saveStoredState();

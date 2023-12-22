@@ -1,11 +1,10 @@
-import { EventDef, EventHolder } from "../eventholder";
+import { EVENT_SEP, EventDef, EventHolder, EventType } from "../eventholder";
 import { HasRaw } from "../hasraw";
 import { ComponentContainer, ComponentSearchResult } from "./container";
 import { ClassChanges, Sheet } from "../sheet";
 import { Mixin } from "../mixin";
 import { Repeater } from "./repeater";
 import { Entry } from "./entry";
-import { Error } from "../error";
 import { DataHolder } from "../dataholder";
 
 export const REP_ID_SEP = ".";
@@ -17,13 +16,41 @@ export const REP_ID_SEP = ".";
 
 type ComponentLREEventTypes = string & ("data-updated" | "class-updated");
 
+type ThisComponentEventTypes<T> =
+  | LetsRole.EventType
+  | T
+  | ComponentLREEventTypes;
+
+type ClassChangeApply = {
+  loaded: () => void;
+  added: (...args: any[]) => any;
+  removed: (...args: any[]) => any;
+};
+
+type MethodWithLoggedCallback = "value";
+
+type ComponentEventLog = Partial<Record<MethodWithLoggedCallback, ContextLog>>;
+
+const logEvent: Array<{
+  logType: ProxyModeHandlerLogType;
+  event: ThisComponentEventTypes<LetsRole.EventType | ComponentLREEventTypes>;
+}> = [
+  { logType: "value", event: "update" },
+  { logType: "rawValue", event: "update" },
+  { logType: "text", event: "update" },
+  { logType: "text", event: "update" },
+  { logType: "class", event: "class-updated" },
+  { logType: "data", event: "data-updated" },
+  { logType: "visible", event: "class-updated" },
+];
+
 export class Component<
     TypeValue extends LetsRole.ComponentValue = LetsRole.ComponentValue,
     AdditionalEvents extends string = LetsRole.EventType
   >
   extends Mixin(EventHolder, HasRaw, DataHolder)<
     LetsRole.Component,
-    AdditionalEvents | ComponentLREEventTypes,
+    ThisComponentEventTypes<AdditionalEvents>,
     Component<TypeValue>
   >
   implements
@@ -50,13 +77,8 @@ export class Component<
   #entry: Entry | undefined;
   #mustSaveClasses: boolean = false;
   #classChanges: ClassChanges = {};
-  #classChangesApplication:
-    | undefined
-    | {
-        loaded: () => void;
-        added: (...args: any[]) => any;
-        removed: (...args: any[]) => any;
-      } = undefined;
+  #classChangesApply: ClassChangeApply | undefined = undefined;
+  #eventLogs: ComponentEventLog = {};
 
   constructor(raw: LetsRole.Component, sheet: Sheet, realId: string) {
     super([
@@ -157,9 +179,11 @@ export class Component<
     return this.find(completeId);
   }
   hide(): void {
+    this.trigger("class-updated", "d-none", "added");
     this.raw().hide();
   }
   show(): void {
+    this.trigger("class-updated", "d-none", "removed");
     this.raw().show();
   }
   autoLoadSaveClasses(): this {
@@ -203,9 +227,41 @@ export class Component<
 
     return this;
   }
+
   value(newValue?: unknown): void | LetsRole.ComponentValue {
-    throw new Error("Method not implemented." + (newValue ?? ""));
+    if (arguments.length > 0) {
+      let valueToSet = newValue;
+      if (typeof newValue === "function") {
+        valueToSet = loggedCall(newValue as () => any);
+        this.#handleAccessLog("value", newValue as () => any);
+      }
+      const oldValue = this.value();
+      let data: LetsRole.ViewData = {
+        [this.realId()]: valueToSet as LetsRole.ComponentValue,
+      };
+      this.#sheet.setData(data);
+      if (oldValue !== newValue) {
+        this.trigger("update");
+      }
+    } else {
+      let val = this.#sheet.getPendingData(this.realId());
+      if (typeof val === "undefined") {
+        try {
+          // this.raw().value();
+          val = this.raw().value();
+        } catch (e) {
+          lre.trace("Unknown error. Please communicate about it" + e);
+        }
+        //} else if (this.#lreType === "repeater") {
+        // a repeater with a pending value set, we must set it immediately when we need it because it has impact on existing elements
+        //sheet.sendPendingDataFor(this.realId());
+      } else {
+        context.logAccess("value", this.realId());
+      }
+      return lre.value(val);
+    }
   }
+
   virtualValue(
     newValue?: LetsRole.ComponentValue
   ): void | LetsRole.ComponentValue {
@@ -213,10 +269,10 @@ export class Component<
       this.raw().virtualValue(newValue!);
       return;
     }
-    return this.raw().virtualValue();
+    return lre.value(this.raw().virtualValue());
   }
   rawValue(): LetsRole.ComponentValue {
-    throw new Error("Method not implemented.");
+    return lre.value(this.raw().rawValue());
   }
   text(replacement?: string): string | void {
     if (arguments.length > 0) {
@@ -243,11 +299,11 @@ export class Component<
     className: LetsRole.ClassName,
     action: "added" | "removed" | "loaded"
   ) {
-    this.#classChangesApplication ??= {
+    this.#classChangesApply ??= {
       loaded: () => {
         Object.keys(this.#classChanges).forEach(
           (className: LetsRole.ClassName) => {
-            this.#classChangesApplication![
+            this.#classChangesApply![
               this.#classChanges[className] === 1 ? "added" : "removed"
             ](className);
           }
@@ -256,7 +312,33 @@ export class Component<
       added: this.raw().addClass.bind(this.raw()),
       removed: this.raw().removeClass.bind(this.raw()),
     };
-    this.#classChangesApplication[action](className);
+    this.#classChangesApply[action](className);
+  }
+
+  #handleAccessLog(method: MethodWithLoggedCallback, cb: () => any) {
+    if (!this.#eventLogs[method]) {
+      this.#eventLogs[method] = {};
+    }
+    logEvent.forEach((t) => {
+      const oldAccessLog: LetsRole.ComponentID[] =
+        this.#eventLogs[method]![t.logType] || [];
+      const newAccessLog: LetsRole.ComponentID[] = context
+        .getPreviousAccessLog(t.logType)
+        .filter((l) => !oldAccessLog.includes(l));
+
+      newAccessLog.forEach((id) => {
+        const eventIdParts = [t.event, t.logType, this.realId()];
+        this.#sheet
+          .get(id)!
+          .on(eventIdParts.join(EVENT_SEP) as EventType<"update">, () => {
+            const valueToSet = loggedCall(cb as () => any);
+            this.#handleAccessLog(method, cb as () => any);
+            this.value(valueToSet);
+          });
+      });
+      this.#eventLogs[method]![t.logType] = [...oldAccessLog, ...newAccessLog];
+    });
+    this.#eventLogs;
   }
 
   // actionOnRawEvent({

@@ -63,9 +63,12 @@ export const MockComponent = ({
         cmp._trigger("update");
         sheet.setData({
           [cmp.id()]: newValue,
-        })
+        });
+      } else if (value !== void 0) {
+        return value;
       }
-      return value;
+      const d = sheet.getData();
+      return d[cmp.id()];
     }),
     virtualValue: jest.fn(() => null),
     rawValue: jest.fn(() => 0),
