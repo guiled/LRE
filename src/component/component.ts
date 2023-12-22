@@ -296,6 +296,10 @@ export class Component<
     }
   }
 
+  exists(): boolean {
+    return this.#sheet.componentExists(this.realId());
+  }
+
   #saveClassChanges() {
     if (this.#mustSaveClasses) {
       this.#sheet.persistingCmpClasses(this.#realId, this.#classChanges);
