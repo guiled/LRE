@@ -66,7 +66,7 @@ beforeEach(() => {
 });
 
 describe("Component construction", () => {
-  test("Instantiates correctly", () => {
+  test("Instantiates correctly and basic methods", () => {
     expect(cmp.init()).toBe(cmp);
     expect(cmp.raw()).toBe(rawCmp);
     expect(cmp.lreType()).toBe<ComponentType>("component");
@@ -139,6 +139,12 @@ describe("Component construction", () => {
     expect(rawCmp.setTooltip).toBeCalledTimes(2);
     expect((rawCmp.setTooltip as jest.Mock).mock.calls[1].length).toBe(2);
     expect((rawCmp.setTooltip as jest.Mock).mock.calls[1][1]).toBe("top");
+
+    expect(cmp.visible()).toBeTruthy();
+    cmp.toggle();
+    expect(cmp.visible()).toBeFalsy();
+    cmp.toggle();
+    expect(cmp.visible()).toBeTruthy();
   });
 
   test("Component classes", () => {

@@ -288,6 +288,14 @@ export class Component<
     return this.raw().setChoices(choices);
   }
 
+  toggle(): void {
+    if (this.visible()) {
+      this.hide();
+    } else {
+      this.show();
+    }
+  }
+
   #saveClassChanges() {
     if (this.#mustSaveClasses) {
       this.#sheet.persistingCmpClasses(this.#realId, this.#classChanges);
