@@ -300,6 +300,10 @@ export class Component<
     return this.#sheet.componentExists(this.realId());
   }
 
+  knownChildren(): Array<Component>  {
+    return this.#sheet.knownChildren(this as Component);
+  }
+
   #saveClassChanges() {
     if (this.#mustSaveClasses) {
       this.#sheet.persistingCmpClasses(this.#realId, this.#classChanges);

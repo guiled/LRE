@@ -53,6 +53,7 @@ beforeEach(() => {
   sheet.raw = jest.fn(() => rawSheet);
   jest.spyOn(sheet, "get");
   jest.spyOn(sheet, "componentExists");
+  jest.spyOn(sheet, "knownChildren");
   cmpDefs = {
     id: cmpId,
     sheet: rawSheet,
@@ -233,6 +234,8 @@ describe("Component tree", () => {
   test("Sheet methods shortcuts", () => {
     cmp.exists();
     expect(sheet.componentExists).toBeCalled();
+    cmp.knownChildren();
+    expect(sheet.knownChildren).toBeCalled();
   });
 });
 
