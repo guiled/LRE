@@ -27,7 +27,7 @@ type ClassChangeApply = {
   removed: (...args: any[]) => any;
 };
 
-type MethodWithLoggedCallback = "value";
+type MethodWithLoggedCallback = "value" | "visible";
 
 type ComponentEventLog = Partial<Record<MethodWithLoggedCallback, ContextLog>>;
 
@@ -281,7 +281,19 @@ export class Component<
     }
     return this.raw().text();
   }
-  visible(): boolean {
+  visible(newValue?: boolean | ((...args: any[]) => any)): boolean {
+    if (arguments.length > 0) {
+      let valueToSet = newValue;
+      if (typeof newValue === "function") {
+        valueToSet = loggedCall(newValue as () => any);
+        this.#handleAccessLog("visible", newValue as () => any);
+      }
+      if (!!valueToSet) {
+        this.show();
+      } else {
+        this.hide();
+      }
+    }
     return this.raw().visible();
   }
   setChoices(choices: LetsRole.Choices): void {
@@ -300,7 +312,7 @@ export class Component<
     return this.#sheet.componentExists(this.realId());
   }
 
-  knownChildren(): Array<Component>  {
+  knownChildren(): Array<Component> {
     return this.#sheet.knownChildren(this as Component);
   }
 
@@ -349,7 +361,7 @@ export class Component<
           .on(eventIdParts.join(EVENT_SEP) as EventType<"update">, () => {
             const valueToSet = loggedCall(cb as () => any);
             this.#handleAccessLog(method, cb as () => any);
-            this.value(valueToSet);
+            this[method](valueToSet);
           });
       });
       this.#eventLogs[method]![t.logType] = [...oldAccessLog, ...newAccessLog];

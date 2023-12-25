@@ -334,6 +334,35 @@ describe("Component get and set value", () => {
   });
 });
 
+describe("Component visible setter", () => {
+  test("Visible set with boolean", () => {
+    jest.spyOn(cmp, "hide");
+    jest.spyOn(cmp, "show");
+    cmp.visible(false);
+    expect(cmp.hide).toBeCalledTimes(1);
+    expect(cmp.visible()).toBeFalsy();
+    cmp.visible(true);
+    expect(cmp.show).toBeCalledTimes(1);
+    expect(cmp.visible()).toBeTruthy();
+  });
+
+  test("Visible set with a function", () => {
+    jest.spyOn(cmp, "hide");
+    jest.spyOn(cmp, "show");
+    expect(cmp.visible()).toBeTruthy();
+    const chk = sheet.get("chk")!;
+    chk.value(false);
+    cmp.visible(chk.value.bind(chk));
+    expect(cmp.visible()).toBeFalsy();
+    expect(cmp.hide).toBeCalledTimes(1);
+    expect(cmp.show).toBeCalledTimes(0);
+    chk.value(true);
+    expect(cmp.visible()).toBeTruthy();
+    expect(cmp.hide).toBeCalledTimes(1);
+    expect(cmp.show).toBeCalledTimes(1);
+  });
+});
+
 describe("Component events on sub component", () => {
   // @todo
 });
