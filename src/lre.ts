@@ -159,6 +159,7 @@ export class LRE extends Logger implements ILRE {
   }
 
   autoNum(v: boolean = true): void {
+    this.trace(`autonum ${v ? "activated" : "deactivated"}`);
     this.#autoNum = v;
   }
 
