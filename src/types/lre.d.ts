@@ -84,3 +84,104 @@ declare interface ComponentCommon {
   //entry: (entry?: Entry) => Entry | undefined;
   //repeater: (repeater?: Repeater) => Repeater | undefined;
 }
+
+declare type EventHolderEvents =
+  | "eventhandler:added"
+  | "eventhandler:updated"
+  | "eventhandler:removed";
+
+declare type EventHolderDefaultEvents = EventHolderEvents;
+declare type EventType<T extends string> =
+  | EventHolderDefaultEvents
+  | T
+  | `${EventHolderDefaultEvents | T}${typeof EVENT_SEP}${string}`;
+
+declare type LREEventTarget = Object &
+  Pick<LetsRole.Component, "id"> &
+  Partial<{
+    value: LetsRole.Component["value"];
+  }>;
+
+declare interface IEventHolder<
+  AdditionalEvents extends string = EventHolderDefaultEvents
+> {
+  on(
+    event: EventType<AdditionalEvents>,
+    subComponent: LetsRole.ComponentID | EventHandler | undefined,
+    handler?: EventHandler
+  ): void;
+
+  once(
+    event: EventType<AdditionalEvents>,
+    handlerOrId: LetsRole.ComponentID | EventHandler,
+    handler?: EventHandler
+  ): void;
+
+  // Cancel the next callbacks of an event
+  // Cancel happens only "once" per trigger
+  cancelEvent(event: EventType<AdditionalEvents>): void;
+
+  disableEvent(event: EventType<AdditionalEvents>): void;
+
+  enableEvent(event: EventType<AdditionalEvents>): void;
+
+  off(
+    event: EventType<AdditionalEvents>,
+    delegateId?: LetsRole.ComponentID
+  ): void;
+
+  trigger(event: EventType<AdditionalEvents>, ...args: unknown[]): void;
+
+  transferEvents(rawCmp: LetsRole.Component): void;
+
+  linkEventTo(
+    event: EventType<AdditionalEvents>,
+    destination: EventHolder<any, any>,
+    triggeredEvent: string = event
+  ): void;
+}
+
+declare interface ComponentBase {
+  lreType(): ComponentType;
+  realId(): string;
+  sheet(): Sheet;
+  raw(): LetsRole.Component | LetsRole.Sheet
+}
+
+declare type ComponentFinder = (id: string) => ComponentSearchResult;
+declare type ComponentSearchResult = Component | null;
+
+declare interface ComponentContainer extends ComponentBase {
+  get: ComponentFinder;
+  find: ComponentFinder;
+}
+
+declare interface IComponent extends ComponentContainer {
+  init(): this;
+  repeater(repeater?: Repeater): Repeater | undefined;
+  entry(entry?: Entry): Entry | undefined;
+  autoLoadSaveClasses(): this;
+  toggle(): void;
+  exists(): boolean;
+  knownChildren(): Array<Component>;
+  id(): LetsRole.ComponentID;
+  index(): string | null;
+  name(): string;
+  setTooltip(text: string, placement?: LetsRole.TooltipPlacement): void;
+  parent(newParent?: ComponentContainer): ComponentContainer | undefined;
+  hide(): void;
+  show(): void;
+  addClass(className: LetsRole.ClassName): this;
+  removeClass(className: LetsRole.ClassName): this;
+  hasClass(className: LetsRole.ClassName): boolean;
+  getClasses(): LetsRole.ClassName[];
+  toggleClass(className: LetsRole.ClassName): this;
+  value(newValue?: unknown): void | LetsRole.ComponentValue
+  virtualValue(
+    newValue?: TypeValue
+  ): void | TypeValue
+  rawValue(): TypeValue;
+  text(replacement?: string): string | void;
+  visible(newValue?: boolean | ((...args: any[]) => any)): boolean;
+  setChoices(choices: LetsRole.Choices): void;
+}

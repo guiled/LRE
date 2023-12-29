@@ -94,7 +94,7 @@ declare namespace LetsRole {
     hasClass(className: ClassName): boolean;
     toggleClass(className: ClassName): void;
 
-    value(): ValueType;
+    value(): ValueType | void;
     value(newValue: ValueType): void;
     virtualValue(): ValueType;
     virtualValue(newValue: ValueType): void;

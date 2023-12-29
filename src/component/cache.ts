@@ -1,5 +1,4 @@
 import { Component, REP_ID_SEP } from "./component";
-import { ComponentSearchResult } from "./container";
 
 type ComponentGetter = (
   realId: LetsRole.ComponentID,

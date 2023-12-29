@@ -1,6 +1,5 @@
-import { EVENT_SEP, EventDef, EventHolder, EventType } from "../eventholder";
+import { EVENT_SEP, EventDef, EventHolder } from "../eventholder";
 import { HasRaw } from "../hasraw";
-import { ComponentContainer, ComponentSearchResult } from "./container";
 import { ClassChanges, Sheet } from "../sheet";
 import { Mixin } from "../mixin";
 import { Repeater } from "./repeater";
@@ -66,6 +65,7 @@ export class Component<
       | "rawValue"
       | "text"
     >,
+    IComponent,
     ComponentContainer,
     ComponentCommon
 {
@@ -228,7 +228,7 @@ export class Component<
     return this;
   }
 
-  value(newValue?: unknown): void | LetsRole.ComponentValue {
+  value(newValue?: unknown): void | TypeValue {
     if (arguments.length > 0) {
       let valueToSet = newValue;
       if (typeof newValue === "function") {
@@ -244,7 +244,7 @@ export class Component<
         this.trigger("update");
       }
     } else {
-      let val = this.#sheet.getPendingData(this.realId());
+      let val: LetsRole.ComponentValue | void = this.#sheet.getPendingData(this.realId());
       if (typeof val === "undefined") {
         try {
           // this.raw().value();
@@ -258,21 +258,21 @@ export class Component<
       } else {
         context.logAccess("value", this.realId());
       }
-      return lre.value(val);
+      return lre.value(val) as TypeValue;
     }
   }
 
   virtualValue(
-    newValue?: LetsRole.ComponentValue
-  ): void | LetsRole.ComponentValue {
+    newValue?: TypeValue
+  ): void | TypeValue {
     if (arguments.length > 0) {
       this.raw().virtualValue(newValue!);
       return;
     }
-    return lre.value(this.raw().virtualValue());
+    return lre.value(this.raw().virtualValue()) as TypeValue;
   }
-  rawValue(): LetsRole.ComponentValue {
-    return lre.value(this.raw().rawValue());
+  rawValue(): TypeValue {
+    return lre.value(this.raw().rawValue()) as TypeValue;
   }
   text(replacement?: string): string | void {
     if (arguments.length > 0) {

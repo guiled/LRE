@@ -3,7 +3,6 @@ import { MockSheet } from "../mock/letsrole/sheet.mock";
 import { ComponentCache } from "../../src/component/cache";
 import { Component } from "../../src/component/component";
 import { LRE } from "../../src/lre";
-import { ComponentSearchResult } from "../../src/component/container";
 import { newMockedWait } from "../mock/letsrole/wait.mock";
 import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
