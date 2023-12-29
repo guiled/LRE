@@ -55,7 +55,7 @@ beforeAll(() => {
 });
 
 describe("Component cache set/get/unset/inCache", () => {
-  test("Set / Get / Incache", () => {
+  test("Set / Get / In cache", () => {
     expect(cache.get(UNKNOWN_CMP_ID)).toBeNull();
     expect(newCmp).toBeCalledTimes(1);
     expect(cache.inCache(UNKNOWN_CMP_ID)).toBeFalsy();
@@ -77,7 +77,7 @@ describe("Component cache set/get/unset/inCache", () => {
     expect(newCmp).toBeCalledTimes(1);
   });
 
-  test("Set / Get / Incache for repeaters", () => {
+  test("Set / Get / In cache for repeaters", () => {
     const rep = newCmp("rep")!;
     cache.set("rep", rep);
     const entry1 = newCmp("rep.1")!;
@@ -93,7 +93,7 @@ describe("Component cache set/get/unset/inCache", () => {
     newCmp("rep.1.b");
     cache.set("rep.2.b", cmp1b);
     expect(cache.inCache("*rep")).toBeTruthy();
-    expect(cache.inCache("*reup")).toBeFalsy();
+    expect(cache.inCache("*noRep")).toBeFalsy();
     expect(cache.inCache("*rep.1")).toBeTruthy();
     expect(cache.inCache("*rep.1")).toBeTruthy();
     expect(cache.children("rep.1").sort()).toEqual(
