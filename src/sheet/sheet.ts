@@ -2,10 +2,6 @@ import { Component, REP_ID_SEP } from "../component";
 import { EventHolder } from "../eventholder";
 import { HasRaw } from "../hasraw";
 import { ComponentCache } from "../component/cache";
-import {
-  ComponentContainer,
-  ComponentSearchResult,
-} from "../component/container";
 import { DataBatcher } from "./databatcher";
 import { ComponentFactory } from "../component/factory";
 import { Mixin } from "../mixin";
