@@ -79,7 +79,7 @@ describe("Component factory", () => {
     });
     expect(ComponentFactory.create(rawChoice, sheet)).toBeInstanceOf(Choice);
     const rawMultipleChoice = MockComponent({
-      id: "multiplechoice",
+      id: "multipleChoice",
       sheet: rawSheet,
       classes: ["choice", "multiple"],
     });
@@ -99,7 +99,7 @@ describe("Component factory", () => {
     });
     expect(ComponentFactory.create(label, sheet)).toBeInstanceOf(Label);
     const container1 = MockComponent({
-      id: "ctnr1",
+      id: "container1",
       sheet: rawSheet,
       classes: ["widget-container"],
     });
@@ -107,7 +107,7 @@ describe("Component factory", () => {
       Container
     );
     const container2 = MockComponent({
-      id: "ctnr2",
+      id: "container2",
       sheet: rawSheet,
       classes: ["view"],
     });
@@ -115,7 +115,7 @@ describe("Component factory", () => {
       Container
     );
     const container3 = MockComponent({
-      id: "ctnr3",
+      id: "container3",
       sheet: rawSheet,
       classes: ["row"],
     });
@@ -123,7 +123,7 @@ describe("Component factory", () => {
       Container
     );
     const container4 = MockComponent({
-      id: "ctnr4",
+      id: "container4",
       sheet: rawSheet,
       classes: ["col"],
     });
