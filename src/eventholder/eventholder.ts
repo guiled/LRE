@@ -1,7 +1,7 @@
 import { Error } from "../error";
 import { HasRaw } from "../hasraw";
 
-type EventHandler<Holder = any> = (cmp: Holder, ...rest: Array<any>) => void;
+export type EventHandler<Holder = any> = (cmp: Holder, ...rest: Array<any>) => void;
 
 export type EventDef<EventType extends string = LetsRole.EventType> = {
   name: EventType;
@@ -26,32 +26,15 @@ export const EVENT_SEP = ":";
 const DELEGATED_SEP = "~";
 const DEFAULT_HANDLER_ID = "default";
 
-type EventHolderEvents =
-  | "eventhandler:added"
-  | "eventhandler:updated"
-  | "eventhandler:removed";
-
-type EventHolderDefaultEvents = EventHolderEvents;
-export type EventType<T extends string> =
-  | EventHolderDefaultEvents
-  | T
-  | `${EventHolderDefaultEvents | T}${typeof EVENT_SEP}${string}`;
-
 type EventTargetGetter<T extends string> = (
-  target: EventTarget,
+  target: LREEventTarget,
   event: EventDef<EventType<T>>
 ) => EventHolder;
 
-export type EventTarget = Object &
-  Pick<LetsRole.Component, "id"> &
-  Partial<{
-    value: LetsRole.Component["value"];
-  }>;
-
 export abstract class EventHolder<
-  RawType extends EventTarget = LetsRole.Component,
+  RawType extends LREEventTarget = LetsRole.Component,
   AdditionalEvents extends string = EventHolderDefaultEvents
-> implements Pick<HasRaw<RawType>, "raw">
+> implements Pick<HasRaw<RawType>, "raw">, IEventHolder<AdditionalEvents>
 {
   #holderId: string;
   #getTarget: EventTargetGetter<AdditionalEvents> | undefined;
@@ -88,8 +71,8 @@ export abstract class EventHolder<
   #runEvents(
     eventName: EventType<AdditionalEvents>,
     manuallyTriggered = false
-  ): LetsRole.EventCallback<EventTarget> {
-    return (rawTarget: EventTarget, ...args: unknown[]): void => {
+  ): LetsRole.EventCallback<LREEventTarget> {
+    return (rawTarget: LREEventTarget, ...args: unknown[]): void => {
       const [eventId, ...rest] = eventName.split(
         EVENT_SEP
       ) as EventType<AdditionalEvents>[];
@@ -101,7 +84,7 @@ export abstract class EventHolder<
         this.#getTarget?.(rawTarget, event) ||
         (this as EventHolder<RawType, EventHolderEvents>);
 
-      if ("value" in rawTarget) {
+      if (rawTarget && "value" in rawTarget) {
         if (
           eventId === "update" &&
           !manuallyTriggered &&
@@ -186,7 +169,7 @@ export abstract class EventHolder<
       };
       if (this.#isRawEvent(eventId)) {
         const raw = this.raw();
-        if ("on" in raw && typeof raw.on === "function") {
+        if (raw && "on" in raw && typeof raw.on === "function") {
           const onArgs: any[] = [eventId];
           if (delegated && !!subComponent) {
             onArgs.push(subComponent);
@@ -299,7 +282,7 @@ export abstract class EventHolder<
       if (this.#isRawEvent(eventId)) {
         const raw = this.raw();
 
-        if ("off" in raw && !!raw.off && typeof raw.off === "function") {
+        if (raw && "off" in raw && !!raw.off && typeof raw.off === "function") {
           const offArgs: any[] = [eventId];
 
           if (eventDef.delegated && !!delegateId) {
@@ -316,7 +299,7 @@ export abstract class EventHolder<
   }
 
   trigger(event: EventType<AdditionalEvents>, ...args: unknown[]): void {
-    const eventHandler: LetsRole.EventCallback<EventTarget> = this.#runEvents(
+    const eventHandler: LetsRole.EventCallback<LREEventTarget> = this.#runEvents(
       event,
       true
     );
@@ -335,7 +318,7 @@ export abstract class EventHolder<
 
   linkEventTo(
     event: EventType<AdditionalEvents>,
-    destination: EventHolder<any, any>,
+    destination: IEventHolder<any>,
     triggeredEvent: string = event
   ) {
     this.on(`${event}${EVENT_SEP}linkedTo`, function (...args) {

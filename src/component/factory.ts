@@ -1,6 +1,6 @@
 import { Choice } from "./choice";
 import { Component, REP_ID_SEP } from "./component";
-import { ComponentContainer, Container } from "./container";
+import { Container } from "./container";
 import { Entry } from "./entry";
 import { Icon } from "./icon";
 import { Label } from "./label";
@@ -11,12 +11,12 @@ export class ComponentFactory {
   static create(
     rawComponent: LetsRole.Component,
     container: ComponentContainer
-  ): Component {
+  ): IComponent {
     let realId = "";
     if (container.lreType() === "entry" || container.lreType() === "repeater") {
       realId = container.realId() + REP_ID_SEP;
     }
-    let cmp: Component;
+    let cmp: IComponent;
     realId += rawComponent.id();
 
     cmp = ComponentFactory.createCmp(rawComponent, container, realId);
@@ -37,7 +37,7 @@ export class ComponentFactory {
     raw: LetsRole.Component,
     container: ComponentContainer,
     realId: string
-  ): Component {
+  ): IComponent {
     const classes = raw.getClasses();
 
     const flags = {
