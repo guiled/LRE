@@ -13,7 +13,7 @@ export default function ({span, callee}: Call_Param): BinaryExpression {
         throw new Error("Protected call : unhandled callee type " + callee.type);
     }
     return and({
-        span,
+        span: span ?? callee.span,
         left: protector,
         right: call(arguments[0]),
     });
