@@ -22,10 +22,7 @@ type StoredState = ProtectedStoredState | string;
 type SheetEvents = "data-pending" | "data-processed" | "data-updated";
 
 export class Sheet
-  extends Mixin(EventHolder, HasRaw<LetsRole.Sheet>)<
-    LetsRole.Sheet,
-    SheetEvents
-  >
+  extends Mixin(EventHolder, HasRaw)<SheetEvents, LetsRole.Sheet>
   implements
     Omit<LetsRole.Sheet, "get" | "find">,
     ComponentContainer,

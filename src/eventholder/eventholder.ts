@@ -1,10 +1,13 @@
 import { Error } from "../error";
-import { HasRaw } from "../hasraw";
 
-export type EventHandler<Holder = any> = (cmp: Holder, ...rest: Array<any>) => void;
+export type EventHandler<Holder = any> = (
+  cmp: Holder,
+  ...rest: Array<any>
+) => void;
 
 export type EventDef<EventType extends string = LetsRole.EventType> = {
   name: EventType;
+  eventId: EventType;
   event: EventType;
   delegated: boolean;
   subComponent: LetsRole.ComponentID | null;
@@ -13,15 +16,6 @@ export type EventDef<EventType extends string = LetsRole.EventType> = {
   rawHandler: LetsRole.EventCallback;
 };
 
-const RAW_EVENTS = [
-  "click",
-  "update",
-  "mouseenter",
-  "mouseleave",
-  "keyup",
-] as const;
-type __RAW_EVENTS = typeof RAW_EVENTS;
-type T_RAW_EVENTS = __RAW_EVENTS[number];
 export const EVENT_SEP = ":";
 const DELEGATED_SEP = "~";
 const DEFAULT_HANDLER_ID = "default";
@@ -31,10 +25,15 @@ type EventTargetGetter<T extends string> = (
   event: EventDef<EventType<T>>
 ) => EventHolder;
 
-export abstract class EventHolder<
-  RawType extends LREEventTarget = LetsRole.Component,
+type AttachToRawCallback<AdditionalEvents extends string> = (
+  eventDef: EventDef<EventType<AdditionalEvents>>,
+  operation: "on" | "off",
+  rawDest?: LetsRole.Component
+) => void;
+
+export class EventHolder<
   AdditionalEvents extends string = EventHolderDefaultEvents
-> implements Pick<HasRaw<RawType>, "raw">, IEventHolder<AdditionalEvents>
+> implements IEventHolder<AdditionalEvents>
 {
   #holderId: string;
   #getTarget: EventTargetGetter<AdditionalEvents> | undefined;
@@ -43,20 +42,17 @@ export abstract class EventHolder<
   }> = {};
   #canceledEvents: Array<EventType<AdditionalEvents>> = [];
   #lastUpdateEventValue: LetsRole.ComponentValue = null;
+  #attachToRaw: AttachToRawCallback<AdditionalEvents> | undefined;
 
   constructor(
     holderId: string,
-    targetGetter: EventTargetGetter<AdditionalEvents> | undefined = undefined
+    targetGetter: EventTargetGetter<AdditionalEvents> | undefined = undefined,
+    attachToRaw: AttachToRawCallback<AdditionalEvents> | undefined = undefined
   ) {
     (() => new Error())();
     this.#holderId = holderId;
     this.#getTarget = targetGetter;
-  }
-
-  abstract raw(): RawType;
-
-  #isRawEvent(eventId: EventType<AdditionalEvents>): boolean {
-    return RAW_EVENTS.some((e) => e === eventId);
+    this.#attachToRaw = attachToRaw;
   }
 
   #eventIsEnabled(eventName: EventType<AdditionalEvents>) {
@@ -68,21 +64,78 @@ export abstract class EventHolder<
     );
   }
 
+  #runHandlers(
+    eventId: EventType<AdditionalEvents>,
+    handlers: EventDef["handlers"],
+    target: any,
+    ...args: unknown[]
+  ) {
+    Object.keys(handlers).some((hId) => {
+      const fcn = handlers[hId];
+
+      if (!this.#eventIsEnabled(eventId)) {
+        return true;
+      }
+
+      try {
+        fcn.apply(this, [target, ...args]);
+      } catch (e) {
+        lre.error(
+          `[Event:${[this.#holderId, eventId, hId].join(
+            EVENT_SEP
+          )}] Unhandled error : ${e}`
+        );
+      }
+
+      return false;
+    });
+
+    this.#uncancelEvent(eventId);
+  }
+
+  #getEventIdAndHandlersFromEventName(eventName: EventType<AdditionalEvents>): {
+    eventId: EventType<AdditionalEvents>;
+    handlers: EventDef["handlers"];
+  } {
+    const [eventId, ...rest] = eventName.split(
+      EVENT_SEP
+    ) as EventType<AdditionalEvents>[];
+    let handlerId: string = rest.join(EVENT_SEP) || DEFAULT_HANDLER_ID;
+    let handlers = {} as EventDef["handlers"];
+    const event = this.#events[eventId]!;
+    if (!event) {
+      return {
+        eventId,
+        handlers,
+      };
+    }
+    if (handlerId !== DEFAULT_HANDLER_ID) {
+      if (handlerId in event.handlers) {
+        handlers = {
+          [handlerId]: event.handlers[handlerId],
+        };
+      }
+    } else {
+      handlers = { ...event.handlers };
+    }
+
+    return {
+      eventId,
+      handlers,
+    };
+  }
+
   #runEvents(
     eventName: EventType<AdditionalEvents>,
     manuallyTriggered = false
   ): LetsRole.EventCallback<LREEventTarget> {
     return (rawTarget: LREEventTarget, ...args: unknown[]): void => {
-      const [eventId, ...rest] = eventName.split(
-        EVENT_SEP
-      ) as EventType<AdditionalEvents>[];
-      let handlerId: string = rest.join(EVENT_SEP) || DEFAULT_HANDLER_ID;
+      const { eventId, handlers } =
+        this.#getEventIdAndHandlersFromEventName(eventName);
+
       if (!this.#eventIsEnabled(eventId)) return;
 
-      const event = this.#events[eventId]!;
-      const cmp =
-        this.#getTarget?.(rawTarget, event) ||
-        (this as EventHolder<RawType, EventHolderEvents>);
+      const cmp = this.#getTarget?.(rawTarget, this.#events[eventId]!) || this;
 
       if (rawTarget && "value" in rawTarget) {
         if (
@@ -98,35 +151,7 @@ export abstract class EventHolder<
         ) as LetsRole.ComponentValue;
       }
 
-      let handlers = {} as EventDef["handlers"];
-      if (handlerId !== DEFAULT_HANDLER_ID) {
-        if (handlerId in event.handlers) {
-          handlers = {
-            [handlerId]: event.handlers[handlerId],
-          };
-        }
-      } else {
-        handlers = { ...event.handlers };
-      }
-      Object.keys(handlers).some((hId) => {
-        const fcn = event.handlers[hId];
-
-        if (!this.#eventIsEnabled(eventId)) {
-          return true;
-        }
-
-        try {
-          fcn.apply(this, [cmp, ...args]);
-        } catch (e) {
-          lre.error(
-            `[Event:${[rawTarget.id(), eventName, hId].join(EVENT_SEP)}] Unhandled error : ${e}`
-          );
-        }
-
-        return false;
-      });
-
-      this.#uncancelEvent(eventName);
+      this.#runHandlers(eventId, handlers, cmp, ...args);
     };
   }
 
@@ -138,7 +163,7 @@ export abstract class EventHolder<
     let [eventId, ...rest]: EventType<AdditionalEvents>[] = event.split(
       EVENT_SEP
     ) as EventType<AdditionalEvents>[];
-    let handlerId: string = rest.join(EVENT_SEP) || "default";
+    let handlerId: string = rest.join(EVENT_SEP) || DEFAULT_HANDLER_ID;
     let delegated = false;
     //let eventId: EventType<AdditionalEvents> = eventParts[0];
     let eventName = eventId;
@@ -159,6 +184,7 @@ export abstract class EventHolder<
       Object.keys(this.#events[eventName]!.handlers).length === 0
     ) {
       this.#events[eventName] = {
+        eventId,
         name: event,
         event,
         delegated,
@@ -167,17 +193,7 @@ export abstract class EventHolder<
         handlers: {},
         rawHandler: this.#runEvents(eventName),
       };
-      if (this.#isRawEvent(eventId)) {
-        const raw = this.raw();
-        if (raw && "on" in raw && typeof raw.on === "function") {
-          const onArgs: any[] = [eventId];
-          if (delegated && !!subComponent) {
-            onArgs.push(subComponent);
-          }
-          onArgs.push(this.#events[eventName]!.rawHandler);
-          raw.on.apply(raw, onArgs);
-        }
-      }
+      this.#attachToRaw?.(this.#events[eventName]!, "on");
     }
 
     const handlerAlreadyExists = this.#events[
@@ -279,39 +295,27 @@ export abstract class EventHolder<
     delete eventDef.handlers[handlerId];
 
     if (Object.keys(eventDef.handlers).length === 0) {
-      if (this.#isRawEvent(eventId)) {
-        const raw = this.raw();
-
-        if (raw && "off" in raw && !!raw.off && typeof raw.off === "function") {
-          const offArgs: any[] = [eventId];
-
-          if (eventDef.delegated && !!delegateId) {
-            offArgs.push(delegateId);
-          }
-
-          raw.off.apply(raw, offArgs);
-        }
-      }
+      this.#attachToRaw?.(eventDef, "off");
 
       delete this.#events[eventName];
       this.trigger("eventhandler:removed", event, delegateId);
     }
   }
 
-  trigger(event: EventType<AdditionalEvents>, ...args: unknown[]): void {
-    const eventHandler: LetsRole.EventCallback<LREEventTarget> = this.#runEvents(
-      event,
-      true
-    );
-    eventHandler.apply(this, [this.raw(), ...args]);
+  trigger(eventName: EventType<AdditionalEvents>, ...args: unknown[]): void {
+    const { eventId, handlers } = this.#getEventIdAndHandlersFromEventName(eventName);
+    this.#runHandlers(eventId, handlers, this, ...args);
+    // const eventHandler: LetsRole.EventCallback<LREEventTarget> =
+    //   this.#runEvents(event, true);
+    // eventHandler.apply(this, [this.raw(), ...args]);
   }
 
   transferEvents(rawCmp: LetsRole.Component) {
     for (let eventName in this.#events) {
       const event = this.#events[eventName as EventType<AdditionalEvents>];
-      if (event && !event.delegated && this.#isRawEvent(event.event)) {
+      if (event && !event.delegated) {
         // delegated event are automatically transferred
-        rawCmp.on(event.event as T_RAW_EVENTS, event.rawHandler);
+        this.#attachToRaw?.(event, "on", rawCmp);
       }
     }
   }
