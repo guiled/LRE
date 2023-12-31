@@ -10,7 +10,7 @@ type DataBatcherEventType = "processed" | "pending";
 const ASYNC_DATA_SET_DELAY = 50;
 const MAX_DATA_BATCH_SIZE = 20;
 
-export class DataBatcher extends EventHolder<any, DataBatcherEventType> {
+export class DataBatcher extends EventHolder<DataBatcherEventType> {
   #modeHandler: ProxyModeHandler;
   #currentMode: ProxyMode;
   #sheet: LetsRole.Sheet;

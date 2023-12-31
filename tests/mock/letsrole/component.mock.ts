@@ -82,12 +82,13 @@ export const MockComponent = ({
     visible: jest.fn(() => visible),
     setChoices: jest.fn(),
     _trigger: jest.fn((event: string, target?: MockedComponent) => {
-      if (cntr) {
-        cntr._trigger(event, cmp);
-      } else if (target) {
-        handlers[event + target.id()]?.(target);
-      } else {
+      if (!target) {
         handlers[event]?.(cmp);
+        if (cntr) {
+          cntr._trigger(event, cmp);
+        }
+      } else {
+        handlers[event + target.id()]?.(target);
       }
     }),
     setTooltip: jest.fn((t) => t),
