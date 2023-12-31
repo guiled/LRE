@@ -232,7 +232,7 @@ describe("Mixin tests", () => {
     expect(c.id()).toStrictEqual(13+42);
   })
 
-  test("Super overriden public property is undefined", () => {
+  test("Super overridden public property is undefined", () => {
     class A {
       a: number = 42;
     }
@@ -245,6 +245,7 @@ describe("Mixin tests", () => {
       }
 
       getSuperA() {
+        /* @ts-ignore */
         return super.a;
       }
     }

@@ -27,7 +27,7 @@ class ComponentProxy
     const context = this.#getVirtualContext();
     let hidden: boolean | undefined;
 
-    context.sheetData[id] = cmp.value();
+    context.sheetData[id] = cmp.value()!;
     context.cmpClasses[id] = cmp.getClasses();
     context.cmpTexts[id] = cmp.text();
     context.virtualValues[id] = cmp.virtualValue();

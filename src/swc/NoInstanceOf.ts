@@ -1,13 +1,10 @@
 import {
   BinaryExpression,
-  EmptyStatement,
   Expression,
   Program,
-  Statement,
   TsType,
 } from "@swc/core";
 import { Visitor } from "@swc/core/Visitor";
-import undefinedidentifier from "./node/undefinedidentifier";
 import call from "./node/expression/call";
 import identifier from "./node/identifier";
 
