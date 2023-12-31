@@ -8,6 +8,14 @@ import { DataHolder } from "../dataholder";
 
 export const REP_ID_SEP = ".";
 
+const RAW_EVENTS = [
+  "click",
+  "update",
+  "mouseenter",
+  "mouseleave",
+  "keyup",
+] as const;
+
 // abstract class ComponentEventHolder<T extends string> extends EventHolder<
 //   LetsRole.Component,
 //   T
@@ -48,9 +56,8 @@ export class Component<
     AdditionalEvents extends string = LetsRole.EventType
   >
   extends Mixin(EventHolder, HasRaw, DataHolder)<
-    LetsRole.Component,
     ThisComponentEventTypes<AdditionalEvents>,
-    Component<TypeValue>
+    LetsRole.Component
   >
   implements
     Omit<
@@ -84,10 +91,7 @@ export class Component<
     super([
       [
         /* eventHolder */ realId,
-        (
-          rawCmp: LetsRole.Component,
-          event: EventDef
-        ): EventHolder<LetsRole.Component> => {
+        (rawCmp: LetsRole.Component, event: EventDef): EventHolder => {
           let idToFind: string = "";
 
           if (event.delegated && rawCmp.index()) {
@@ -97,9 +101,33 @@ export class Component<
           }
 
           if (idToFind !== "") {
-            return this.find(idToFind) as EventHolder<LetsRole.Component>;
+            return this.find(idToFind) as EventHolder;
           }
-          return this as EventHolder<LetsRole.Component>;
+          return this as EventHolder;
+        },
+        (
+          event: EventDef,
+          operation: "on" | "off",
+          rawDest?: LetsRole.Component
+        ) => {
+          if (RAW_EVENTS.includes(event.event)) {
+            const raw = rawDest ?? this.raw();
+            if (
+              raw &&
+              operation in raw &&
+              !!raw[operation] &&
+              typeof raw[operation] === "function"
+            ) {
+              const args: any[] = [event.eventId];
+              if (event.delegated && !!event.subComponent) {
+                args.push(event.subComponent);
+              }
+              if (operation === "on") {
+                args.push(event.rawHandler);
+              }
+              raw[operation].apply(raw, args as any);
+            }
+          }
         },
       ],
       [
@@ -244,11 +272,11 @@ export class Component<
         this.trigger("update");
       }
     } else {
-      let val: LetsRole.ComponentValue | void = this.#sheet.getPendingData(this.realId());
+      let val = this.#sheet.getPendingData(this.realId()) as TypeValue;
       if (typeof val === "undefined") {
         try {
           // this.raw().value();
-          val = this.raw().value();
+          val = this.raw().value() as TypeValue;
         } catch (e) {
           lre.trace("Unknown error. Please communicate about it" + e);
         }
@@ -262,9 +290,7 @@ export class Component<
     }
   }
 
-  virtualValue(
-    newValue?: TypeValue
-  ): void | TypeValue {
+  virtualValue(newValue?: TypeValue): void | TypeValue {
     if (arguments.length > 0) {
       this.raw().virtualValue(newValue!);
       return;

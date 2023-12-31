@@ -4,7 +4,7 @@ import {
   MockedComponent,
 } from "../mock/letsrole/component.mock";
 import { MockSheet } from "../mock/letsrole/sheet.mock";
-import { EventHolder } from "../../src/eventholder/index";
+import { EventDef, EventHolder } from "../../src/eventholder/index";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 jest.mock("../../src/lre");
@@ -13,15 +13,27 @@ global.lre = new LRE(modeHandlerMock);
 
 type TestedEvents = "test" | "unused" | "click" | "update";
 
-class Dummy extends EventHolder<LetsRole.Component, TestedEvents> {
+class Dummy extends EventHolder<TestedEvents> {
   constructor(protected _raw: LetsRole.Component, subRaw?: LetsRole.Component) {
-    super(_raw.id(), (target: any): EventHolder => {
-      if (subRaw && target === subRaw) {
-        return new Dummy(subRaw) as EventHolder;
-      } else {
-        return this as EventHolder;
+    super(
+      _raw.id(),
+      (target: any): EventHolder => {
+        if (subRaw && target === subRaw) {
+          return new Dummy(subRaw) as EventHolder;
+        } else {
+          return this as EventHolder;
+        }
+      },
+      (event: EventDef<EventType<TestedEvents>>, operation: "on" | "off", rawDest?: LetsRole.Component) => {
+        if (event.eventId === "click" || event.eventId === "update") {
+          if (event.delegated) {
+            (rawDest ?? _raw)[operation]?.(event.eventId as any, event.subComponent!, event.rawHandler);
+          } else {
+            (rawDest ?? _raw)[operation]?.(event.eventId as any, event.rawHandler);
+          }
+        }
       }
-    });
+    );
   }
 
   raw(): LetsRole.Component {
@@ -38,7 +50,7 @@ describe("Test simple events", () => {
       id: "123",
       sheet: MockSheet({ id: "main" }),
     });
-    subject = new Dummy(rawCmp);
+    subject = new Dummy(rawCmp, undefined);
   });
 
   test("No raw event calls for custom event", () => {
@@ -462,7 +474,7 @@ describe("Handle error in event", () => {
     });
     subject.on("test", eventHandler);
     expect(lre.error).not.toBeCalled();
-    subject.trigger("test")
+    subject.trigger("test");
     expect(lre.error).toBeCalled();
   });
 });
@@ -484,7 +496,7 @@ describe("Transfer events", () => {
     subject = new Dummy(rawCmp);
   });
 
-  test("Events are transfered", () => {
+  test("Events are transferred", () => {
     const eventHandler = jest.fn();
     subject.on("click", eventHandler);
     rawCmp._trigger("click");
@@ -509,7 +521,7 @@ describe("Handle on change event trigger", () => {
     subject = new Dummy(rawCmp);
   });
 
-  test("Update is triggered when value changed", () => {
+  test("Update is triggered only when value changed", () => {
     const eventHandler = jest.fn();
     subject.on("update", eventHandler);
     expect(eventHandler).not.toBeCalled();
@@ -541,7 +553,7 @@ describe("Component has not targeting", () => {
       sheet,
     });
     rawCmp.value(1);
-    subject = new (class extends EventHolder<LetsRole.Component, TestedEvents> {
+    subject = new (class extends EventHolder<TestedEvents> {
       constructor(protected _raw: LetsRole.Component) {
         super(_raw.id());
       }
