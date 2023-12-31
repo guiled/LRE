@@ -1,4 +1,4 @@
-import { isNaN as LreisNaN } from "../../src/globals/isNaN";
+import { isNaN as LreIsNaN } from "../../src/globals/isNaN";
 
 describe("isNaN polyfill implementation", () => {
   test("Complete tests", () => {
@@ -16,7 +16,7 @@ describe("isNaN polyfill implementation", () => {
       NaN,
       "",
     ].forEach((v: any) => {
-      expect(LreisNaN(v)).toStrictEqual(isNaN(v));
+      expect(LreIsNaN(v)).toStrictEqual(isNaN(v));
     });
   });
 });

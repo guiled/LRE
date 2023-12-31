@@ -283,7 +283,7 @@ describe("Virtual mode changes are applied", () => {
     expect(raw.getClasses).not.toBeCalled();
   });
 
-  test("Virtualvalues are virtually applied", () => {
+  test("Virtual values are virtually applied", () => {
     const nbMockCalls = (raw.virtualValue as jest.Mock).mock.calls.length;
     expect(subject.virtualValue()).toBeNull();
     expect(raw.virtualValue).toBeCalledTimes(nbMockCalls);
