@@ -12,7 +12,7 @@ export default function memberchained({span, properties} : Member_Type): MemberE
         span,
         object: identifier({span, value: properties[0]}),
         property: identifier({span, value: properties[1]}),
-    });
+    }) as MemberExpression;
     let index = 2;
     while (index < properties.length) {
         let p = properties[index];
@@ -20,7 +20,7 @@ export default function memberchained({span, properties} : Member_Type): MemberE
             span,
             object: obj,
             property: identifier({span, value: p}),
-        });
+        }) as MemberExpression;
         index++;
     }
     return obj;
