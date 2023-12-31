@@ -27,7 +27,7 @@ describe("Dataholder", () => {
 
   beforeEach(() => {
     server = new MockServer();
-    sheet1 = initSheet("ahah", "4242");
+    sheet1 = initSheet("main", "4242");
     subject = new DataHolder(sheet1, "a.b.c");
   });
 

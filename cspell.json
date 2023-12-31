@@ -1,7 +1,16 @@
 {
   "version": "0.2",
   "language": "en",
+  "ignorePaths": [
+    "coverage/**",
+    "node_modules/**",
+    "*.json",
+    "build/**",
+    "jest.config.ts",
+    "src/swc/**",
+  ],
   "words": [
+    "autonum",
     "cmps",
     "cntr",
     "databatcher",
@@ -23,7 +32,8 @@
     "remh",
     "reml",
     "rerolln",
-    "uncancel"
+    "uncancel",
+    "virtualcall"
   ],
   "flagWords": []
 }

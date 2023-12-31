@@ -26,8 +26,8 @@ describe("Sheet collection", () => {
 
   beforeEach(() => {
     server = new MockServer();
-    sheet1 = initSheet("ahah", "4242");
-    sheet2 = initSheet("ahah", "4243");
+    sheet1 = initSheet("main", "4242");
+    sheet2 = initSheet("main", "4243");
     subject = new SheetCollection();
   });
 
