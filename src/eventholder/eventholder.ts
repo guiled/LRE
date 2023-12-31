@@ -303,11 +303,9 @@ export class EventHolder<
   }
 
   trigger(eventName: EventType<AdditionalEvents>, ...args: unknown[]): void {
-    const { eventId, handlers } = this.#getEventIdAndHandlersFromEventName(eventName);
+    const { eventId, handlers } =
+      this.#getEventIdAndHandlersFromEventName(eventName);
     this.#runHandlers(eventId, handlers, this, ...args);
-    // const eventHandler: LetsRole.EventCallback<LREEventTarget> =
-    //   this.#runEvents(event, true);
-    // eventHandler.apply(this, [this.raw(), ...args]);
   }
 
   transferEvents(rawCmp: LetsRole.Component) {
