@@ -85,10 +85,12 @@ declare interface ComponentCommon {
   //repeater: (repeater?: Repeater) => Repeater | undefined;
 }
 
+declare const EVENT_SEP = ":";
+
 declare type EventHolderEvents =
-  | "eventhandler:added"
-  | "eventhandler:updated"
-  | "eventhandler:removed";
+  | "eventhandler-added"
+  | "eventhandler-updated"
+  | "eventhandler-removed";
 
 declare type EventHolderDefaultEvents = EventHolderEvents;
 declare type EventType<T extends string> =

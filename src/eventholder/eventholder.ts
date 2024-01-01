@@ -55,6 +55,19 @@ export class EventHolder<
     this.#attachToRaw = attachToRaw;
   }
 
+  #getEventIdAndRest(event: EventType<AdditionalEvents>): {
+    eventId: EventType<AdditionalEvents>;
+    rest: Array<EventType<AdditionalEvents>>;
+  } {
+    const [eventId, ...rest] = event.split(
+      EVENT_SEP
+    ) as EventType<AdditionalEvents>[];
+    return {
+      eventId,
+      rest,
+    };
+  }
+
   #eventIsEnabled(eventName: EventType<AdditionalEvents>) {
     return (
       eventName in this.#events &&
@@ -97,9 +110,7 @@ export class EventHolder<
     eventId: EventType<AdditionalEvents>;
     handlers: EventDef["handlers"];
   } {
-    const [eventId, ...rest] = eventName.split(
-      EVENT_SEP
-    ) as EventType<AdditionalEvents>[];
+    const { eventId, rest } = this.#getEventIdAndRest(eventName);
     let handlerId: string = rest.join(EVENT_SEP) || DEFAULT_HANDLER_ID;
     let handlers = {} as EventDef["handlers"];
     const event = this.#events[eventId]!;
@@ -155,14 +166,29 @@ export class EventHolder<
     };
   }
 
+  #triggerEventHandlerEvent(
+    eventHandlerEvent: EventHolderDefaultEvents,
+    event: EventType<AdditionalEvents>,
+    subComponent: LetsRole.ComponentID | EventHandler | undefined,
+    handler?: EventHandler
+  ) {
+    const excludedEventId: Array<EventType<AdditionalEvents>> = [
+      "eventhandler-added",
+      "eventhandler-removed",
+      "eventhandler-updated",
+    ];
+    const { eventId } = this.#getEventIdAndRest(event);
+    if (!excludedEventId.includes(eventId)) {
+      this.trigger(eventHandlerEvent, event, subComponent, handler);
+    }
+  }
+
   on(
     event: EventType<AdditionalEvents>,
     subComponent: LetsRole.ComponentID | EventHandler | undefined,
     handler?: EventHandler
   ): void {
-    let [eventId, ...rest]: EventType<AdditionalEvents>[] = event.split(
-      EVENT_SEP
-    ) as EventType<AdditionalEvents>[];
+    const { eventId, rest } = this.#getEventIdAndRest(event);
     let handlerId: string = rest.join(EVENT_SEP) || DEFAULT_HANDLER_ID;
     let delegated = false;
     //let eventId: EventType<AdditionalEvents> = eventParts[0];
@@ -204,9 +230,19 @@ export class EventHolder<
 
     let logText = "Handler added ";
     if (!handlerAlreadyExists) {
-      this.trigger("eventhandler:added", event, subComponent, handler);
+      this.#triggerEventHandlerEvent(
+        "eventhandler-added",
+        event,
+        subComponent,
+        handler
+      );
     } else {
-      this.trigger("eventhandler:updated", event, subComponent, handler);
+      this.#triggerEventHandlerEvent(
+        "eventhandler-updated",
+        event,
+        subComponent,
+        handler
+      );
       logText = "Handler updated ";
     }
     lre.trace(
@@ -267,10 +303,7 @@ export class EventHolder<
   }
 
   off(event: EventType<AdditionalEvents>, delegateId?: LetsRole.ComponentID) {
-    let [eventId, ...rest] = event.split(EVENT_SEP) as [
-      EventType<AdditionalEvents>,
-      ...string[]
-    ];
+    const { eventId, rest } = this.#getEventIdAndRest(event);
     let handlerId = rest.join(EVENT_SEP) || DEFAULT_HANDLER_ID;
 
     let eventName = eventId;
@@ -298,7 +331,7 @@ export class EventHolder<
       this.#attachToRaw?.(eventDef, "off");
 
       delete this.#events[eventName];
-      this.trigger("eventhandler:removed", event, delegateId);
+      this.#triggerEventHandlerEvent("eventhandler-removed", event, delegateId);
     }
   }
 

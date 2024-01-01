@@ -588,23 +588,26 @@ describe("Event holder triggers events", () => {
 
   test("Events triggered", () => {
     const added = jest.fn();
+    const added2 = jest.fn();
     const updated = jest.fn();
     const removed = jest.fn();
 
-    subject.on("eventhandler:added", added);
-    expect(added).toBeCalledTimes(1);
-    subject.on("eventhandler:updated", updated);
-    expect(added).toBeCalledTimes(2);
-    subject.on("eventhandler:removed", removed);
-    expect(added).toBeCalledTimes(3);
+    subject.on("eventhandler-added", added);
+    expect(added).toBeCalledTimes(0);
+    subject.on("eventhandler-added:test", added2);
+    expect(added).toBeCalledTimes(0);
+    subject.on("eventhandler-updated", updated);
+    expect(added).toBeCalledTimes(0);
+    subject.on("eventhandler-removed", removed);
+    expect(added).toBeCalledTimes(0);
 
     const fcn1 = () => {};
     subject.on("click", fcn1);
-    expect(added).toBeCalledTimes(4);
-    expect(added.mock.calls[3][0]).toStrictEqual(subject);
-    expect(added.mock.calls[3][1]).toEqual("click");
-    expect(added.mock.calls[3][2]).toBeUndefined();
-    expect(added.mock.calls[3][3]).toStrictEqual(fcn1);
+    expect(added).toBeCalledTimes(1);
+    expect(added.mock.calls[0][0]).toStrictEqual(subject);
+    expect(added.mock.calls[0][1]).toEqual("click");
+    expect(added.mock.calls[0][2]).toBeUndefined();
+    expect(added.mock.calls[0][3]).toStrictEqual(fcn1);
     expect(updated).toBeCalledTimes(0);
     const fcn2 = () => {};
     subject.on("click", fcn2);
@@ -622,11 +625,11 @@ describe("Event holder triggers events", () => {
     expect(removed.mock.calls[0][2]).toBeUndefined();
 
     subject.on("click", "bla", fcn1);
-    expect(added).toBeCalledTimes(5);
-    expect(added.mock.calls[4][0]).toStrictEqual(subject);
-    expect(added.mock.calls[4][1]).toEqual("click");
-    expect(added.mock.calls[4][2]).toEqual("bla");
-    expect(added.mock.calls[4][3]).toStrictEqual(fcn1);
+    expect(added).toBeCalledTimes(2);
+    expect(added.mock.calls[1][0]).toStrictEqual(subject);
+    expect(added.mock.calls[1][1]).toEqual("click");
+    expect(added.mock.calls[1][2]).toEqual("bla");
+    expect(added.mock.calls[1][3]).toStrictEqual(fcn1);
     subject.on("click", "bla", fcn2);
     expect(updated).toBeCalledTimes(2);
     expect(updated.mock.calls[1][0]).toStrictEqual(subject);
