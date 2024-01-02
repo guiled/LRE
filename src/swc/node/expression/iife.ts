@@ -1,5 +1,6 @@
 import {
   Argument,
+  ArrowFunctionExpression,
   CallExpression,
   FunctionExpression,
   Span,
@@ -16,7 +17,7 @@ type IIFE_PARAM = {
   span: Span;
   stmts: Statement[];
   identifier?: FunctionExpression["identifier"];
-  params?: FunctionExpression["params"];
+  params?: FunctionExpression["params"] | ArrowFunctionExpression["params"];
   args?: CallExpression["arguments"];
   called?: Argument | boolean | null;
   applied?: Argument | null;
@@ -32,13 +33,24 @@ export default ({
   applied = null,
 }: IIFE_PARAM) => {
   let callee: CallExpression["callee"];
+  const parameters: FunctionExpression["params"] = params.map(p => {
+    if (p.type == "Parameter") {
+      return p;
+    }
+    return {
+      type: "Parameter",
+      span,
+      pat: p,
+    }
+  });
+
   const fcn = parenthesis({
     span,
     expression: func({
       span,
       stmts,
       identifier,
-      params,
+      params: parameters,
     }),
   });
   let firstArg: Argument[] = [];
