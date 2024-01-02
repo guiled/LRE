@@ -13,6 +13,7 @@ import { mixinToAssign } from "./src/swc/MixinToAssign";
 import { noRestElement } from "./src/swc/NoRestElement";
 import noInstanceOf from "./src/swc/NoInstanceOf";
 import noObjectSpreading from "./src/swc/NoObjectSpread";
+import { noSpreadArgument } from "./src/swc/NoSpreadArgument";
 
 const transformForLR: Options = {
   jsc: {
@@ -34,6 +35,7 @@ const transformForLR: Options = {
     noDoWhile(),
     noArraySpreading(),
     noObjectSpreading(),
+    noSpreadArgument(),
     noRestElement(),
     replaceInOperator(),
     defaultParameter(),
