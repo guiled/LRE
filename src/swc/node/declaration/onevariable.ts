@@ -1,11 +1,12 @@
 import { Span, VariableDeclaration, VariableDeclarator } from "@swc/core";
+import { PatternWithSpan } from "../../types";
 
 type VARIABLE_PARAM = {
-  span: Span;
+  span?: Span;
   kind?: VariableDeclaration["kind"];
   declare?: VariableDeclaration["declare"];
   definite?: VariableDeclarator["definite"];
-  id: VariableDeclarator["id"],
+  id: PatternWithSpan,
   init?: VariableDeclarator["init"]
 };
 
@@ -19,12 +20,12 @@ export default function onevariable({
 }: VARIABLE_PARAM): VariableDeclaration {
   return {
     type: "VariableDeclaration",
-    span,
+    span: span ?? id.span,
     kind,
     declare,
     declarations: [{
       type: "VariableDeclarator",
-      span,
+      span: span ?? id.span,
       id,
       init,
       definite,
