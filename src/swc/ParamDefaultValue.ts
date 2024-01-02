@@ -5,6 +5,7 @@ import {
   Expression,
   Fn,
   HasSpan,
+  Identifier,
   ObjectPattern,
   ObjectPatternProperty,
   Param,
@@ -12,6 +13,7 @@ import {
   Program,
   Span,
   TsType,
+  VariableDeclaration,
 } from "@swc/core";
 import { Visitor } from "@swc/core/Visitor";
 import member from "./node/expression/member";
@@ -53,6 +55,12 @@ export function hasArrayItemWithValue(a: ArrayPattern): boolean {
 }
 
 class DefaultParameter extends Visitor {
+  #isDefaultParameter(p: Pattern): boolean {
+    return (
+      (p.type === "Identifier" && p.optional) || p.type === "AssignmentPattern"
+    );
+  }
+
   #parsePattern(
     pat: Pattern,
     index: number,
@@ -156,52 +164,112 @@ class DefaultParameter extends Visitor {
     return [newPat, statementsToAdd];
   }
 
-  visitArrowFunctionExpression(e: ArrowFunctionExpression): Expression {
-    if (typeof e.body !== "undefined" && e.body) {
-      const bodyStatements: BlockStatement["stmts"] = [];
-      const newParams = e.params
-        .map((p: Pattern, index: number) => {
-          const [newPat, newStmts] = this.#parsePattern(p, index, e.span);
-          bodyStatements.push.apply(bodyStatements, newStmts);
-          return newPat;
-        })
-        .filter(Boolean) as Array<Pattern>;
-      if (bodyStatements.length > 0) {
-        if (e.body.type !== "BlockStatement") {
-          bodyStatements.push(
-            returnstmt({
-              span: e.span,
-              argument: e.body,
-            })
-          );
-        } else {
-          bodyStatements.push(...e.body.stmts);
-        }
-        return this.visitExpression({
-          type: "FunctionExpression",
-          span: e.span,
-          body: {
-            type: "BlockStatement",
-            span: (e.body as HasSpan).span,
-            stmts: bodyStatements,
+  #createVariadicParam({ span, id }: { span: Span; id: Identifier }): Pattern {
+    return {
+      type: "RestElement",
+      span,
+      rest: span,
+      argument: id,
+    };
+  }
+
+  #createVariableDeclarationFromParams(
+    params: Pattern[],
+    span: Span,
+    init: Expression
+  ): VariableDeclaration {
+    return {
+      type: "VariableDeclaration",
+      span,
+      kind: "const",
+      declare: false,
+      declarations: [
+        {
+          type: "VariableDeclarator",
+          span,
+          definite: false,
+          id: {
+            type: "ArrayPattern",
+            span,
+            elements: params.map((p) => {
+              if (p.type === "Identifier" && p.optional) {
+                return {
+                  type: "AssignmentPattern",
+                  span,
+                  left: {
+                    ...p,
+                    optional: false,
+                  },
+                  right: undefinedidentifier({
+                    span,
+                  }),
+                };
+              }
+              return p;
+            }),
+            optional: false,
           },
-          params: newParams.filter(Boolean).map(
-            (p: Pattern | null): Param => ({
-              type: "Parameter",
-              span: e.span,
-              pat: p!,
-            })
-          ),
-          generator: false,
-          async: false,
-        });
+          init,
+        },
+      ],
+    };
+  }
+
+  visitArrowFunctionExpression(e: ArrowFunctionExpression): Expression {
+    if (
+      typeof e.body !== "undefined" &&
+      e.body &&
+      e.params.some((p) => this.#isDefaultParameter(p))
+    ) {
+      const argIdentifier = identifier({
+        span: e.span,
+        value: "args",
+      });
+      const bodyStatements: BlockStatement["stmts"] = [
+        this.#createVariableDeclarationFromParams(
+          e.params,
+          e.span,
+          argIdentifier
+        ),
+      ];
+
+      if (e.body.type !== "BlockStatement") {
+        bodyStatements.push(
+          returnstmt({
+            span: e.span,
+            argument: e.body,
+          })
+        );
+      } else {
+        bodyStatements.push(...e.body.stmts);
       }
+      return this.visitExpression({
+        type: "ArrowFunctionExpression",
+        span: e.span,
+        body: {
+          type: "BlockStatement",
+          span: (e.body as HasSpan).span,
+          stmts: bodyStatements,
+        },
+        params: [
+          this.#createVariadicParam({
+            span: e.span,
+            id: argIdentifier,
+          }),
+        ],
+        generator: false,
+        async: false,
+      });
     }
     return super.visitArrowFunctionExpression(e);
   }
 
   visitFunction<T extends Fn>(n: T): T {
-    if (typeof n.body !== "undefined" && n.body) {
+    if (
+      typeof n.body !== "undefined" &&
+      n.body &&
+      n.params.some((p) => this.#isDefaultParameter(p.pat))
+    ) {
       const statementsToAdd: BlockStatement["stmts"] = [];
       n.params = n.params
         .map((p: Param, index: number) => {
