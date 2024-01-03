@@ -194,7 +194,7 @@ export class EventHolder<
     //let eventId: EventType<AdditionalEvents> = eventParts[0];
     let eventName = eventId;
 
-    if (arguments.length === 3) {
+    if (arguments.length === 3 && subComponent !== void 0) {
       delegated = true;
       eventName = (eventId +
         DELEGATED_SEP +

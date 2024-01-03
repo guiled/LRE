@@ -80,15 +80,60 @@ describe("Test simple events", () => {
   test("Handlers triggered from raw", () => {
     const eventHandler = jest.fn();
     subject.on("click", eventHandler);
-    expect(rawCmp.on).toBeCalledTimes(1);
+    expect(rawCmp.on).toBeCalled();
     rawCmp._trigger("click");
-    expect(eventHandler).toBeCalledTimes(1);
+    expect(eventHandler).toBeCalled();
+
+    (rawCmp.on as jest.Mock).mockClear();
+    eventHandler.mockClear();
     const eventHandler2 = jest.fn();
     subject.on("click:second", eventHandler2);
-    expect(rawCmp.on).toBeCalledTimes(1);
+    expect(rawCmp.on).not.toBeCalled();
     rawCmp._trigger("click");
-    expect(eventHandler).toBeCalledTimes(2);
-    expect(eventHandler2).toBeCalledTimes(1);
+    expect(eventHandler).toBeCalled();
+    expect(eventHandler2).toBeCalled();
+
+    (rawCmp.on as jest.Mock).mockClear();
+    eventHandler.mockClear();
+    eventHandler2.mockClear();
+    const eventHandler3 = jest.fn();
+    subject.on("click:third", undefined, eventHandler3);
+    expect(rawCmp.on).not.toBeCalled();
+    rawCmp._trigger("click");
+    expect(eventHandler).toBeCalled();
+    expect(eventHandler2).toBeCalled();
+    expect(eventHandler3).toBeCalled();
+    
+    eventHandler.mockClear();
+    eventHandler2.mockClear();
+    eventHandler3.mockClear();
+    subject.off("click:third");
+    expect(rawCmp.off).not.toBeCalled();
+    rawCmp._trigger("click");
+    expect(eventHandler).toBeCalled();
+    expect(eventHandler2).toBeCalled();
+    expect(eventHandler3).not.toBeCalled();
+    
+    eventHandler.mockClear();
+    eventHandler2.mockClear();
+    eventHandler3.mockClear();
+    subject.off("click:second", undefined);
+    expect(rawCmp.off).not.toBeCalled();
+    rawCmp._trigger("click");
+    expect(eventHandler).toBeCalled();
+    expect(eventHandler2).not.toBeCalled();
+    expect(eventHandler3).not.toBeCalled();
+    
+    eventHandler.mockClear();
+    eventHandler2.mockClear();
+    eventHandler3.mockClear();
+    subject.off("click");
+    expect(rawCmp.off).toBeCalled();
+    rawCmp._trigger("click");
+    expect(eventHandler).not.toBeCalled();
+    expect(eventHandler2).not.toBeCalled();
+    expect(eventHandler3).not.toBeCalled();
+
   });
 
   test("Simple trigger", () => {

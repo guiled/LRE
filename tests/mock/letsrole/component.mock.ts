@@ -45,7 +45,13 @@ export const MockComponent = ({
         handlers[args[0]] = args[1];
       }
     }),
-    off: jest.fn(),
+    off: jest.fn((...args: any[]): void => {
+      if (args.length === 2) {
+        delete handlers[args[0] + args[1]];
+      } else {
+        delete handlers[args[0]];
+      }
+    }),
     hide: jest.fn(() => (visible = false)),
     show: jest.fn(() => (visible = true)),
     addClass: jest.fn((a) => classes.push(a)),
