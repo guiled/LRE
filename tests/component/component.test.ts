@@ -3,7 +3,7 @@ import { Container } from "../../src/component/container";
 import { Entry } from "../../src/component/entry";
 import { Repeater } from "../../src/component/repeater";
 import { Sheet } from "../../src/sheet";
-import { MockComponent } from "../mock/letsrole/component.mock";
+import { MockComponent, MockedComponent } from "../mock/letsrole/component.mock";
 import { MockSheet } from "../mock/letsrole/sheet.mock";
 import { LRE } from "../../src/lre";
 import { MockServer } from "../mock/letsrole/server.mock";
@@ -20,7 +20,7 @@ initLetsRole();
 
 let rawSheet: LetsRole.Sheet;
 let sheet: Sheet;
-let rawCmp: LetsRole.Component;
+let rawCmp: MockedComponent;
 let cmp: Component;
 const cmpId = "cmp";
 const cmpName = "ComponentName";
@@ -361,6 +361,20 @@ describe("Component visible setter", () => {
     expect(cmp.hide).toBeCalledTimes(1);
     expect(cmp.show).toBeCalledTimes(1);
   });
+});
+
+describe("Component simple event handling", () => {
+  test("Click is triggered", () => {
+    const handler = jest.fn();
+    const handlerLabeled = jest.fn();
+    cmp.on("click", handler);
+    cmp.on("click:label", handlerLabeled);
+    expect(handler).not.toBeCalled();
+    expect(handlerLabeled).not.toBeCalled();
+    rawCmp._trigger("click");
+    expect(handler).toBeCalled();
+    expect(handlerLabeled).toBeCalled();
+  })
 });
 
 describe("Component events on sub component", () => {
