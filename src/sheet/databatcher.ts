@@ -80,7 +80,7 @@ export class DataBatcher extends EventHolder<DataBatcherEventType> {
     const hasMoreToSend = this.#pending[this.#currentMode].length > 0;
 
     if (hasMoreToSend) {
-      for (let k in this.#indexes) {
+      for (let k in this.#indexes[this.#currentMode]) {
         if (this.#indexes[this.#currentMode][k] >= analyzed) {
           this.#indexes[this.#currentMode][k] -= analyzed;
         }
