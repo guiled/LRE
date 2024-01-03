@@ -144,12 +144,13 @@ export class DataBatcher extends EventHolder<DataBatcherEventType> {
         this.#pending.virtual.forEach((p) => (result[p.k] = p.v));
       }
       return result;
-    } else if (
-      this.#currentMode === "virtual" &&
-      this.#indexes.virtual.hasOwnProperty(id)
-    ) {
-      // this would never happens as virtual mode immediately sends pendingData
-      return this.#pending.virtual[this.#indexes.virtual[id]].v;
+    // The following case should never happens as virtual mode immediately sends pendingData.
+    // This code is saved ni order to restore it if we change the virtual way to work of wait()
+    //} else if (
+    //  this.#currentMode === "virtual" &&
+    //  this.#indexes.virtual.hasOwnProperty(id)
+    //) {
+    //  return this.#pending.virtual[this.#indexes.virtual[id]].v;
     } else if (this.#indexes.real.hasOwnProperty(id)) {
       return this.#pending.real[this.#indexes.real[id]].v;
     }
