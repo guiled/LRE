@@ -110,13 +110,13 @@ export class Component<
           operation: "on" | "off",
           rawDest?: LetsRole.Component
         ) => {
-          if (RAW_EVENTS.includes(event.event)) {
-            const raw = rawDest ?? this.raw();
+          if (RAW_EVENTS.includes(event.eventId)) {
+            const currentRaw = rawDest ?? this.raw();
             if (
-              raw &&
-              operation in raw &&
-              !!raw[operation] &&
-              typeof raw[operation] === "function"
+              currentRaw &&
+              operation in currentRaw &&
+              !!currentRaw[operation] &&
+              typeof currentRaw[operation] === "function"
             ) {
               const args: any[] = [event.eventId];
               if (event.delegated && !!event.subComponent) {
@@ -125,7 +125,7 @@ export class Component<
               if (operation === "on") {
                 args.push(event.rawHandler);
               }
-              raw[operation].apply(raw, args as any);
+              currentRaw[operation].apply(currentRaw, args as any);
             }
           }
         },
