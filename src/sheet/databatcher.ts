@@ -27,7 +27,7 @@ export class DataBatcher extends EventHolder<DataBatcherEventType> {
   #isSendPending: boolean = false;
 
   constructor(modeHandler: ProxyModeHandler, sheet: LetsRole.Sheet) {
-    super(sheet.getSheetId());
+    super(`Bather-${sheet.id()}-${sheet.getSheetId()}`);
     this.#modeHandler = modeHandler;
     this.#currentMode = modeHandler.getMode();
     this.#sheet = sheet;
@@ -43,11 +43,7 @@ export class DataBatcher extends EventHolder<DataBatcherEventType> {
   }
 
   #runEvent(eventName: DataBatcherEventType) {
-    try {
-      this.trigger(eventName);
-    } catch (e) {
-      lre.error(`[Batcher:event:${eventName}] ` + e);
-    }
+    this.trigger(eventName);
   }
 
   #runSendBatch(withEvent: boolean = true) {
