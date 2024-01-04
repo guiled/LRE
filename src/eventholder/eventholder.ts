@@ -1,10 +1,5 @@
 import { Error } from "../error";
 
-export type EventHandler<Holder = any> = (
-  cmp: Holder,
-  ...rest: Array<any>
-) => void;
-
 export type EventDef<EventType extends string = LetsRole.EventType> = {
   name: EventType;
   eventId: EventType;
@@ -181,7 +176,7 @@ export class EventHolder<
 
   on(
     event: EventType<AdditionalEvents>,
-    subComponent: LetsRole.ComponentID | EventHandler | undefined,
+    subComponent: EventSubComponent,
     handler?: EventHandler
   ): void {
     const { eventId, rest } = this.#getEventIdAndRest(event);
@@ -260,7 +255,7 @@ export class EventHolder<
 
   once(
     event: EventType<AdditionalEvents>,
-    handlerOrId: LetsRole.ComponentID | EventHandler,
+    handlerOrId: EventSubComponent,
     handler?: EventHandler
   ): void {
     const eventName = (event + EVENT_SEP + "once") as AdditionalEvents;
