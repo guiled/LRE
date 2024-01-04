@@ -96,6 +96,15 @@ declare type EventHolderEvents =
   | "eventhandler-created"
   | "eventhandler-destroyed";
 
+declare type EventHandler<Holder = any> = (
+  cmp: Holder,
+  ...rest: Array<any>
+) => void;
+
+declare type EventSubComponent =
+  | LetsRole.ComponentID
+  | EventHandler
+  | undefined;
 
 declare type EventHolderDefaultEvents = EventHolderEvents;
 declare type EventType<T extends string> =
@@ -185,10 +194,8 @@ declare interface IComponent extends ComponentContainer {
   hasClass(className: LetsRole.ClassName): boolean;
   getClasses(): LetsRole.ClassName[];
   toggleClass(className: LetsRole.ClassName): this;
-  value(newValue?: unknown): void | LetsRole.ComponentValue
-  virtualValue(
-    newValue?: TypeValue
-  ): void | TypeValue
+  value(newValue?: unknown): void | LetsRole.ComponentValue;
+  virtualValue(newValue?: TypeValue): void | TypeValue;
   rawValue(): TypeValue;
   text(replacement?: string): string | void;
   visible(newValue?: boolean | ((...args: any[]) => any)): boolean;
