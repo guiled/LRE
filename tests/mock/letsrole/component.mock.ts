@@ -1,5 +1,5 @@
 export type MockedComponent = LetsRole.Component & {
-  _trigger: (event: string, target?: MockedComponent) => void;
+  _trigger: (event: LetsRole.EventType, target?: MockedComponent) => void;
 };
 
 type Params = {
@@ -87,7 +87,7 @@ export const MockComponent = ({
     }) as LetsRole.Component["text"],
     visible: jest.fn(() => visible),
     setChoices: jest.fn(),
-    _trigger: jest.fn((event: string, target?: MockedComponent) => {
+    _trigger: jest.fn((event: LetsRole.EventType, target?: MockedComponent) => {
       if (!target) {
         handlers[event]?.(cmp);
         if (cntr) {
