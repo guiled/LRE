@@ -362,7 +362,7 @@ export class EventHolder<
     this.#runHandlers(eventId, handlers, this, ...args);
   }
 
-  transferEvents(rawCmp: LetsRole.Component) {
+  transferEvents(rawCmp: LetsRole.Component): void {
     for (let eventName in this.#events) {
       const event = this.#events[eventName as EventType<AdditionalEvents>];
       if (event && !event.delegated) {
@@ -376,9 +376,40 @@ export class EventHolder<
     event: EventType<AdditionalEvents>,
     destination: IEventHolder<any>,
     triggeredEvent: string = event
-  ) {
+  ): void {
     this.on(`${event}${EVENT_SEP}linkedTo`, (...args) => {
       destination.trigger.apply(destination, [triggeredEvent, ...args]);
     });
+  }
+
+  #operateAllEventsOn(
+    operation: "on" | "off",
+    dest: IEventHolder<any>,
+    suffix: string = ""
+  ): void {
+    const eventNameParts: Array<string> = ["", EVENT_SEP, "", suffix];
+    for (let eventBase in this.#events) {
+      if (!excludedEventId.includes(eventBase)) {
+        eventNameParts[0] = eventBase;
+        const event = this.#events[eventBase as EventType<AdditionalEvents>]!;
+        for (let eventLabel in event.handlers) {
+          eventNameParts[2] = eventLabel;
+          const handler = event.handlers[eventLabel];
+          if (operation === "on") {
+            dest.on(eventNameParts.join(""), handler);
+          } else {
+            dest.off(eventNameParts.join(""));
+          }
+        }
+      }
+    }
+  }
+
+  copyAllEventsTo(dest: IEventHolder<any>, suffix: string): void {
+    this.#operateAllEventsOn("on", dest, suffix);
+  }
+
+  uncopyAllEventsFrom(dest: IEventHolder<any>, suffix: string): void {
+    this.#operateAllEventsOn("off", dest, suffix);
   }
 }

@@ -873,3 +873,48 @@ describe("Event holder triggers events", () => {
     });
   });
 });
+
+describe("Copy events from a component to an other", () => {
+  let source: Dummy;
+  let dest: Dummy;
+  let rawSource: MockedComponent;
+  let rawDest: MockedComponent;
+
+  
+    beforeEach(() => {
+      const sheet = MockSheet({ id: "main" });
+      rawSource = MockComponent({
+        id: "123",
+        sheet,
+      });
+      source = new Dummy(rawSource, undefined);
+      rawDest = MockComponent({
+        id: "123",
+        sheet,
+      });
+      dest = new Dummy(rawDest, undefined);
+    });
+
+  test("Copy / remove", () => {
+    const click1 = jest.fn();
+    const click2 = jest.fn();
+    source.on("click", click1);
+    source.on("click:second", click2);
+    rawSource._trigger("click");
+    expect(click1).toBeCalledTimes(1);
+    expect(click2).toBeCalledTimes(1);
+    rawDest._trigger("click");
+    expect(click1).toBeCalledTimes(1);
+    expect(click2).toBeCalledTimes(1);
+
+    source.copyAllEventsTo(dest, ":copied");
+    rawDest._trigger("click");
+    expect(click1).toBeCalledTimes(2);
+    expect(click2).toBeCalledTimes(2);
+
+    source.uncopyAllEventsFrom(dest, ":copied");
+    rawDest._trigger("click");
+    expect(click1).toBeCalledTimes(2);
+    expect(click2).toBeCalledTimes(2);
+  })
+});
