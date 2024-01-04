@@ -37,6 +37,8 @@ const excludedEventId: Array<EventType<any>> = [
   "eventhandler-updated",
   "eventhandler-enabled",
   "eventhandler-disabled",
+  "eventhandler-created",
+  "eventhandler-destroyed",
 ];
 
 export class EventHolder<
@@ -75,7 +77,6 @@ export class EventHolder<
       rest,
     };
   }
-
 
   #runHandlers(
     eventId: EventType<AdditionalEvents>,
@@ -166,7 +167,7 @@ export class EventHolder<
     };
   }
 
-  #triggerEventHandlerEvent(
+  #triggerThisEvent(
     eventHandlerEvent: EventHolderDefaultEvents,
     event: EventType<AdditionalEvents>,
     subComponent?: LetsRole.ComponentID | EventHandler | undefined,
@@ -224,15 +225,24 @@ export class EventHolder<
     const cnt = Object.keys(this.#events[eventName]!.handlers).length;
 
     let logText = "Handler added ";
+    if (Object.keys(this.#events[eventName]!.handlers).length === 1) {
+      this.#triggerThisEvent(
+        "eventhandler-created",
+        event,
+        subComponent,
+        handler
+      );
+    }
+
     if (!handlerAlreadyExists) {
-      this.#triggerEventHandlerEvent(
+      this.#triggerThisEvent(
         "eventhandler-added",
         event,
         subComponent,
         handler
       );
     } else {
-      this.#triggerEventHandlerEvent(
+      this.#triggerThisEvent(
         "eventhandler-updated",
         event,
         subComponent,
@@ -242,7 +252,7 @@ export class EventHolder<
     }
     lre.trace(
       logText +
-        `for event ${event} on ${
+        `for event ${eventName} on ${
           this.#holderId + (subComponent ? ">" + subComponent : "")
         }. Count : ${cnt}`
     );
@@ -287,14 +297,14 @@ export class EventHolder<
 
   disableEvent(event: EventType<AdditionalEvents>) {
     if (this.#isEventExists(event) && this.isEventEnabled(event)) {
-      this.#triggerEventHandlerEvent("eventhandler-disabled", event);
+      this.#triggerThisEvent("eventhandler-disabled", event);
       this.#events[event]!.state = false;
     }
   }
 
   enableEvent(event: EventType<AdditionalEvents>) {
     if (this.#isEventExists(event) && !this.isEventEnabled(event)) {
-      this.#triggerEventHandlerEvent("eventhandler-enabled", event);
+      this.#triggerThisEvent("eventhandler-enabled", event);
       this.#events[event]!.state = true;
     }
   }
@@ -335,13 +345,19 @@ export class EventHolder<
       }`
     );
 
+    const prevCount = Object.keys(eventDef.handlers).length;
     delete eventDef.handlers[handlerId];
+    const newCount = Object.keys(eventDef.handlers).length;
 
-    if (Object.keys(eventDef.handlers).length === 0) {
+    if (prevCount > newCount) {
+      this.#triggerThisEvent("eventhandler-removed", event, delegateId);
+    }
+
+    if (newCount === 0) {
       this.#attachToRaw?.(eventDef, "off");
 
       delete this.#events[eventName];
-      this.#triggerEventHandlerEvent("eventhandler-removed", event, delegateId);
+      this.#triggerThisEvent("eventhandler-destroyed", event, delegateId);
     }
   }
 
@@ -366,7 +382,7 @@ export class EventHolder<
     destination: IEventHolder<any>,
     triggeredEvent: string = event
   ) {
-    this.on(`${event}${EVENT_SEP}linkedTo`, function (...args) {
+    this.on(`${event}${EVENT_SEP}linkedTo`, (...args) => {
       destination.trigger.apply(destination, [triggeredEvent, ...args]);
     });
   }
