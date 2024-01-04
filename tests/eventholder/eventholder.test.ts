@@ -161,6 +161,37 @@ describe("Test simple events", () => {
     expect(eventFirstArg.raw()).toBe(rawCmp);
     expect(receivedCmp).toBe(subject);
     expect(receivedCmp === subject).toBeTruthy;
+
+    const raw = MockComponent({
+      id: "456",
+      sheet: MockSheet({ id: "main" }),
+    });
+    const eventholder = new EventHolder<"click">(
+      "123",
+      undefined,
+      (event: EventDef<EventType<"click">>, operation: "on" | "off") => {
+        if (event.delegated) {
+          raw[operation]?.(
+            event.eventId as any,
+            event.subComponent!,
+            event.rawHandler
+          );
+        } else {
+          raw[operation]?.(event.eventId as any, event.rawHandler);
+        }
+      }
+    );
+    const cb = jest.fn();
+    eventholder.on("click", cb);
+    expect(cb).not.toBeCalled();
+    eventholder.trigger("click");
+    expect(cb).toBeCalled();
+    expect(cb.mock.calls[0][0]).toBe(eventholder);
+
+    cb.mockClear();
+    raw._trigger("click");
+    expect(cb).toBeCalled();
+    expect(cb.mock.calls[0][0]).toBe(eventholder);
   });
 
   test("Simple trigger with additional parameters", () => {
@@ -711,12 +742,12 @@ describe("Event holder triggers events", () => {
     expect(added.mock.calls[0][1]).toEqual("click");
     expect(added.mock.calls[0][2]).toBeUndefined();
     expect(added.mock.calls[0][3]).toStrictEqual(fcn1);
-    
+
     subject.on("click:2nd", jest.fn());
     expect(added).toBeCalledTimes(2);
     expect(added2).toBeCalledTimes(2);
     expect(created).toBeCalledTimes(1);
-    
+
     expect(updated).toBeCalledTimes(0);
     const fcn2 = () => {};
     subject.on("click", fcn2);
@@ -728,7 +759,7 @@ describe("Event holder triggers events", () => {
     expect(updated.mock.calls[0][1]).toEqual("click");
     expect(updated.mock.calls[0][2]).toBeUndefined();
     expect(updated.mock.calls[0][3]).toEqual(fcn2);
-    
+
     subject.on("click:2nd", fcn2);
     expect(updated).toBeCalledTimes(2);
 
@@ -747,7 +778,7 @@ describe("Event holder triggers events", () => {
     subject.off("click:2nd");
     expect(removed).toBeCalledTimes(2);
     expect(destroyed).toBeCalledTimes(1);
-    
+
     (added as jest.Mock).mockClear();
     (created as jest.Mock).mockClear();
     (updated as jest.Mock).mockClear();
