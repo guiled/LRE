@@ -24,12 +24,23 @@ class Dummy extends EventHolder<TestedEvents> {
           return this as EventHolder;
         }
       },
-      (event: EventDef<EventType<TestedEvents>>, operation: "on" | "off", rawDest?: LetsRole.Component) => {
+      (
+        event: EventDef<EventType<TestedEvents>>,
+        operation: "on" | "off",
+        rawDest?: LetsRole.Component
+      ) => {
         if (event.eventId === "click" || event.eventId === "update") {
           if (event.delegated) {
-            (rawDest ?? _raw)[operation]?.(event.eventId as any, event.subComponent!, event.rawHandler);
+            (rawDest ?? _raw)[operation]?.(
+              event.eventId as any,
+              event.subComponent!,
+              event.rawHandler
+            );
           } else {
-            (rawDest ?? _raw)[operation]?.(event.eventId as any, event.rawHandler);
+            (rawDest ?? _raw)[operation]?.(
+              event.eventId as any,
+              event.rawHandler
+            );
           }
         }
       }
@@ -103,7 +114,7 @@ describe("Test simple events", () => {
     expect(eventHandler).toBeCalled();
     expect(eventHandler2).toBeCalled();
     expect(eventHandler3).toBeCalled();
-    
+
     eventHandler.mockClear();
     eventHandler2.mockClear();
     eventHandler3.mockClear();
@@ -113,7 +124,7 @@ describe("Test simple events", () => {
     expect(eventHandler).toBeCalled();
     expect(eventHandler2).toBeCalled();
     expect(eventHandler3).not.toBeCalled();
-    
+
     eventHandler.mockClear();
     eventHandler2.mockClear();
     eventHandler3.mockClear();
@@ -123,7 +134,7 @@ describe("Test simple events", () => {
     expect(eventHandler).toBeCalled();
     expect(eventHandler2).not.toBeCalled();
     expect(eventHandler3).not.toBeCalled();
-    
+
     eventHandler.mockClear();
     eventHandler2.mockClear();
     eventHandler3.mockClear();
@@ -133,7 +144,6 @@ describe("Test simple events", () => {
     expect(eventHandler).not.toBeCalled();
     expect(eventHandler2).not.toBeCalled();
     expect(eventHandler3).not.toBeCalled();
-
   });
 
   test("Simple trigger", () => {
@@ -200,11 +210,15 @@ describe("Test simple events", () => {
 
   test("Disable events", () => {
     const eventHandler = jest.fn();
+    const disableEvent = jest.fn();
     subject.on("test", eventHandler);
+    subject.on("eventhandler-disabled", disableEvent);
     subject.trigger("test");
     expect(eventHandler).toBeCalledTimes(1);
     eventHandler.mockClear();
+    expect(disableEvent).not.toBeCalled();
     subject.disableEvent("test");
+    expect(disableEvent).toBeCalledTimes(1);
     subject.trigger("test");
     expect(eventHandler).toBeCalledTimes(0);
   });
@@ -441,22 +455,52 @@ describe("Disabling event", () => {
       cmp.disableEvent("test");
     });
     const eventHandler3 = jest.fn();
+    const disableEventCb = jest.fn();
+    const enableEventCb = jest.fn();
+
     subject.on("test", eventHandler);
     subject.on("test:shit", eventHandler2);
     subject.on("test:glue", eventHandler3);
+    subject.on("eventhandler-enabled", enableEventCb);
+    subject.on("eventhandler-disabled", disableEventCb);
+    expect(disableEventCb).not.toBeCalled();
     subject.trigger("test");
     expect(eventHandler).toBeCalledTimes(1);
     expect(eventHandler2).toBeCalledTimes(1);
+    expect(disableEventCb).toBeCalledTimes(1);
     expect(eventHandler3).toBeCalledTimes(0);
+
     subject.trigger("test");
     expect(eventHandler).toBeCalledTimes(1);
     expect(eventHandler2).toBeCalledTimes(1);
+    expect(disableEventCb).toBeCalledTimes(1);
     expect(eventHandler3).toBeCalledTimes(0);
+
+    expect(enableEventCb).not.toBeCalled();
     subject.enableEvent("test");
+    expect(enableEventCb).toBeCalledTimes(1);
     subject.trigger("test");
     expect(eventHandler).toBeCalledTimes(2);
     expect(eventHandler2).toBeCalledTimes(2);
     expect(eventHandler3).toBeCalledTimes(0);
+  });
+
+  test("Event enabled checks", () => {
+    expect(subject.isEventEnabled("click")).toBeFalsy();
+    subject.on("click", jest.fn());
+    expect(subject.isEventEnabled("click")).toBeTruthy();
+    subject.cancelEvent("click");
+    expect(subject.isEventEnabled("click")).toBeFalsy();
+    subject.trigger("click");
+    expect(subject.isEventEnabled("click")).toBeTruthy();
+    subject.disableEvent("click");
+    expect(subject.isEventEnabled("click")).toBeFalsy();
+    subject.trigger("click");
+    expect(subject.isEventEnabled("click")).toBeFalsy();
+    subject.enableEvent("click");
+    expect(subject.isEventEnabled("click")).toBeTruthy();
+    subject.off("click");
+    expect(subject.isEventEnabled("click")).toBeFalsy();
   });
 });
 

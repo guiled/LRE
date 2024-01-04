@@ -31,6 +31,14 @@ type AttachToRawCallback<AdditionalEvents extends string> = (
   rawDest?: LetsRole.Component
 ) => void;
 
+const excludedEventId: Array<EventType<any>> = [
+  "eventhandler-added",
+  "eventhandler-removed",
+  "eventhandler-updated",
+  "eventhandler-enabled",
+  "eventhandler-disabled",
+];
+
 export class EventHolder<
   AdditionalEvents extends string = EventHolderDefaultEvents
 > implements IEventHolder<AdditionalEvents>
@@ -68,14 +76,6 @@ export class EventHolder<
     };
   }
 
-  #eventIsEnabled(eventName: EventType<AdditionalEvents>) {
-    return (
-      eventName in this.#events &&
-      this.#events[eventName]!.state &&
-      !this.#canceledEvents.includes(eventName) &&
-      Object.keys(this.#events[eventName]!.handlers).length > 0
-    );
-  }
 
   #runHandlers(
     eventId: EventType<AdditionalEvents>,
@@ -86,7 +86,7 @@ export class EventHolder<
     Object.keys(handlers).some((hId) => {
       const fcn = handlers[hId];
 
-      if (!this.#eventIsEnabled(eventId)) {
+      if (!this.isEventEnabled(eventId)) {
         return true;
       }
 
@@ -144,7 +144,7 @@ export class EventHolder<
       const { eventId, handlers } =
         this.#getEventIdAndHandlersFromEventName(eventName);
 
-      if (!this.#eventIsEnabled(eventId)) return;
+      if (!this.isEventEnabled(eventId)) return;
 
       const cmp = this.#getTarget?.(rawTarget, this.#events[eventId]!) || this;
 
@@ -169,14 +169,9 @@ export class EventHolder<
   #triggerEventHandlerEvent(
     eventHandlerEvent: EventHolderDefaultEvents,
     event: EventType<AdditionalEvents>,
-    subComponent: LetsRole.ComponentID | EventHandler | undefined,
+    subComponent?: LetsRole.ComponentID | EventHandler | undefined,
     handler?: EventHandler
   ) {
-    const excludedEventId: Array<EventType<AdditionalEvents>> = [
-      "eventhandler-added",
-      "eventhandler-removed",
-      "eventhandler-updated",
-    ];
     const { eventId } = this.#getEventIdAndRest(event);
     if (!excludedEventId.includes(eventId)) {
       this.trigger(eventHandlerEvent, event, subComponent, handler);
@@ -291,15 +286,30 @@ export class EventHolder<
   }
 
   disableEvent(event: EventType<AdditionalEvents>) {
-    if (event in this.#events && this.#events[event] !== void 0) {
+    if (this.#isEventExists(event) && this.isEventEnabled(event)) {
+      this.#triggerEventHandlerEvent("eventhandler-disabled", event);
       this.#events[event]!.state = false;
     }
   }
 
   enableEvent(event: EventType<AdditionalEvents>) {
-    if (event in this.#events && this.#events[event] !== void 0) {
+    if (this.#isEventExists(event) && !this.isEventEnabled(event)) {
+      this.#triggerEventHandlerEvent("eventhandler-enabled", event);
       this.#events[event]!.state = true;
     }
+  }
+
+  #isEventExists(event: EventType<AdditionalEvents>): boolean {
+    return event in this.#events && this.#events[event] !== void 0;
+  }
+
+  isEventEnabled(event: EventType<AdditionalEvents>): boolean {
+    return (
+      this.#isEventExists(event) &&
+      this.#events[event]!.state &&
+      !this.#canceledEvents.includes(event) &&
+      Object.keys(this.#events[event]!.handlers).length > 0
+    );
   }
 
   off(event: EventType<AdditionalEvents>, delegateId?: LetsRole.ComponentID) {
