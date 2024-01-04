@@ -680,6 +680,10 @@ describe("Event holder triggers events", () => {
     const added2 = jest.fn();
     const updated = jest.fn();
     const removed = jest.fn();
+    const enabled = jest.fn();
+    const disabled = jest.fn();
+    const created = jest.fn();
+    const destroyed = jest.fn();
 
     subject.on("eventhandler-added", added);
     expect(added).toBeCalledTimes(0);
@@ -689,48 +693,86 @@ describe("Event holder triggers events", () => {
     expect(added).toBeCalledTimes(0);
     subject.on("eventhandler-removed", removed);
     expect(added).toBeCalledTimes(0);
+    subject.on("eventhandler-enabled", enabled);
+    expect(added).toBeCalledTimes(0);
+    subject.on("eventhandler-disabled", disabled);
+    expect(added).toBeCalledTimes(0);
+    subject.on("eventhandler-created", created);
+    expect(added).toBeCalledTimes(0);
+    subject.on("eventhandler-destroyed", destroyed);
+    expect(added).toBeCalledTimes(0);
 
     const fcn1 = () => {};
     subject.on("click", fcn1);
     expect(added).toBeCalledTimes(1);
+    expect(added2).toBeCalledTimes(1);
+    expect(created).toBeCalledTimes(1);
     expect(added.mock.calls[0][0]).toStrictEqual(subject);
     expect(added.mock.calls[0][1]).toEqual("click");
     expect(added.mock.calls[0][2]).toBeUndefined();
     expect(added.mock.calls[0][3]).toStrictEqual(fcn1);
+    
+    subject.on("click:2nd", jest.fn());
+    expect(added).toBeCalledTimes(2);
+    expect(added2).toBeCalledTimes(2);
+    expect(created).toBeCalledTimes(1);
+    
     expect(updated).toBeCalledTimes(0);
     const fcn2 = () => {};
     subject.on("click", fcn2);
+    expect(added).toBeCalledTimes(2);
+    expect(added2).toBeCalledTimes(2);
+    expect(created).toBeCalledTimes(1);
     expect(updated).toBeCalledTimes(1);
     expect(updated.mock.calls[0][0]).toStrictEqual(subject);
     expect(updated.mock.calls[0][1]).toEqual("click");
     expect(updated.mock.calls[0][2]).toBeUndefined();
     expect(updated.mock.calls[0][3]).toEqual(fcn2);
+    
+    subject.on("click:2nd", fcn2);
+    expect(updated).toBeCalledTimes(2);
 
     expect(removed).toBeCalledTimes(0);
     subject.off("click");
     expect(removed).toBeCalledTimes(1);
+    expect(destroyed).toBeCalledTimes(0);
     expect(removed.mock.calls[0][0]).toStrictEqual(subject);
     expect(removed.mock.calls[0][1]).toEqual("click");
     expect(removed.mock.calls[0][2]).toBeUndefined();
 
+    subject.off("click");
+    expect(removed).toBeCalledTimes(1);
+    expect(destroyed).toBeCalledTimes(0);
+
+    subject.off("click:2nd");
+    expect(removed).toBeCalledTimes(2);
+    expect(destroyed).toBeCalledTimes(1);
+    
+    (added as jest.Mock).mockClear();
+    (created as jest.Mock).mockClear();
+    (updated as jest.Mock).mockClear();
+    (removed as jest.Mock).mockClear();
+    (destroyed as jest.Mock).mockClear();
     subject.on("click", "bla", fcn1);
-    expect(added).toBeCalledTimes(2);
-    expect(added.mock.calls[1][0]).toStrictEqual(subject);
-    expect(added.mock.calls[1][1]).toEqual("click");
-    expect(added.mock.calls[1][2]).toEqual("bla");
-    expect(added.mock.calls[1][3]).toStrictEqual(fcn1);
+    expect(added).toBeCalledTimes(1);
+    expect(created).toBeCalledTimes(1);
+    expect(added.mock.calls[0][0]).toStrictEqual(subject);
+    expect(added.mock.calls[0][1]).toEqual("click");
+    expect(added.mock.calls[0][2]).toEqual("bla");
+    expect(added.mock.calls[0][3]).toStrictEqual(fcn1);
     subject.on("click", "bla", fcn2);
-    expect(updated).toBeCalledTimes(2);
-    expect(updated.mock.calls[1][0]).toStrictEqual(subject);
-    expect(updated.mock.calls[1][1]).toEqual("click");
-    expect(updated.mock.calls[1][2]).toEqual("bla");
-    expect(updated.mock.calls[1][3]).toEqual(fcn2);
+    expect(updated).toBeCalledTimes(1);
+    expect(updated.mock.calls[0][0]).toStrictEqual(subject);
+    expect(updated.mock.calls[0][1]).toEqual("click");
+    expect(updated.mock.calls[0][2]).toEqual("bla");
+    expect(updated.mock.calls[0][3]).toEqual(fcn2);
 
     subject.off("click", "bla");
-    expect(removed).toBeCalledTimes(2);
-    expect(removed.mock.calls[1][0]).toStrictEqual(subject);
-    expect(removed.mock.calls[1][1]).toEqual("click");
-    expect(removed.mock.calls[1][2]).toEqual("bla");
+    expect(removed).toBeCalledTimes(1);
+    expect(destroyed).toBeCalledTimes(1);
+    expect(removed.mock.calls[0][0]).toStrictEqual(subject);
+    expect(removed.mock.calls[0][1]).toEqual("click");
+    expect(removed.mock.calls[0][2]).toEqual("bla");
   });
 
   describe("Link events between holders", () => {

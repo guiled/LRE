@@ -90,7 +90,12 @@ declare const EVENT_SEP = ":";
 declare type EventHolderEvents =
   | "eventhandler-added"
   | "eventhandler-updated"
-  | "eventhandler-removed";
+  | "eventhandler-removed"
+  | "eventhandler-disabled"
+  | "eventhandler-enabled"
+  | "eventhandler-created"
+  | "eventhandler-destroyed";
+
 
 declare type EventHolderDefaultEvents = EventHolderEvents;
 declare type EventType<T extends string> =
@@ -127,6 +132,8 @@ declare interface IEventHolder<
 
   enableEvent(event: EventType<AdditionalEvents>): void;
 
+  isEventEnabled(event: EventType<AdditionalEvents>): boolean;
+
   off(
     event: EventType<AdditionalEvents>,
     delegateId?: LetsRole.ComponentID
@@ -147,7 +154,7 @@ declare interface ComponentBase {
   lreType(): ComponentType;
   realId(): string;
   sheet(): Sheet;
-  raw(): LetsRole.Component | LetsRole.Sheet
+  raw(): LetsRole.Component | LetsRole.Sheet;
 }
 
 declare type ComponentFinder = (id: string) => ComponentSearchResult;
