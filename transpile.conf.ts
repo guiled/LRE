@@ -14,6 +14,7 @@ import { noRestElement } from "./src/swc/NoRestElement";
 import noInstanceOf from "./src/swc/NoInstanceOf";
 import noObjectSpreading from "./src/swc/NoObjectSpread";
 import { noSpreadArgument } from "./src/swc/NoSpreadArgument";
+import fixArrayFromArguments from "./src/swc/FixArrayFromArguments";
 
 const transformForLR: Options = {
   jsc: {
@@ -30,6 +31,7 @@ const transformForLR: Options = {
     type: "es6",
   },
   plugin: plugins([
+    fixArrayFromArguments(),
     noThrowStatement(),
     noInstanceOf(),
     noDoWhile(),
