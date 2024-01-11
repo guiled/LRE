@@ -56,13 +56,13 @@ type PublicMethodToFunctionStatement = ExpressionStatement & {
   expression: AssignmentExpression & {
     operator: "=";
     left: MemberExpression;
-    right: FunctionExpression;
+    right: FunctionExpression | CallExpression;
   };
 };
 
 type PrivateMethodToFunctionStatement = VariableDeclaration & {
   declarations: (Declaration & {
-    init: FunctionExpression;
+    init: FunctionExpression | CallExpression;
   })[];
 };
 
@@ -170,6 +170,17 @@ class ClassToFunction extends Visitor {
         init: f,
       }) as PrivateMethodToFunctionStatement;
     }
+    let assignmentRight: CallExpression | FunctionExpression = f;
+    if (n.function.decorators) {
+      n.function.decorators.reverse().forEach(decorator => {
+        assignmentRight = call({
+          callee: decorator.expression,
+          args: [{
+            expression: assignmentRight
+          }]
+        }) as CallExpression;
+      });
+    }
     return {
       type: "ExpressionStatement",
       span: n.span,
@@ -183,15 +194,7 @@ class ClassToFunction extends Visitor {
           object: thisexpression({ span: n.span }),
           property: n.key as Identifier,
         },
-        right: {
-          type: "FunctionExpression",
-          params: n.function.params,
-          decorators: [],
-          span: n.function.span,
-          body: n.function.body,
-          generator: false,
-          async: false,
-        },
+        right: assignmentRight,
       },
     };
   }
