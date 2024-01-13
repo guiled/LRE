@@ -271,9 +271,16 @@ class DefaultParameter extends Visitor {
       n.params.some((p) => this.#isDefaultParameter(p.pat))
     ) {
       const statementsToAdd: BlockStatement["stmts"] = [];
+      const hasThisArgs =
+        n.params[0].pat.type === "Identifier" &&
+        n.params[0].pat.value === "this";
       n.params = n.params
         .map((p: Param, index: number) => {
-          const [newPat, newStmts] = this.#parsePattern(p.pat, index, p.span);
+          const [newPat, newStmts] = this.#parsePattern(
+            p.pat,
+            index - (hasThisArgs ? 1 : 0),
+            p.span
+          );
           p.pat = newPat!;
           statementsToAdd.push.apply(statementsToAdd, newStmts);
           return p;
