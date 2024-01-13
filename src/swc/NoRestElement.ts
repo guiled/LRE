@@ -9,7 +9,11 @@ class NoRestElement extends Visitor {
   visitFunction<T extends Fn>(n: T): T {
     if (typeof n.body !== "undefined" && n.body && n.params.length > 0) {
       const statementsToAdd: BlockStatement["stmts"] = [];
+      const hasThisArgs =
+        n.params[0].pat.type === "Identifier" &&
+        n.params[0].pat.value === "this";
       const lastParam: Param = n.params[n.params.length - 1];
+
       if (lastParam.pat.type === "RestElement") {
         n.params.pop();
         statementsToAdd.push({
@@ -59,7 +63,7 @@ class NoRestElement extends Visitor {
                     spread: undefined,
                     expression: numericliteral({
                       span: lastParam.span,
-                      value: n.params.length,
+                      value: n.params.length - (hasThisArgs ? 1 : 0),
                     }),
                   },
                 ],
@@ -69,6 +73,7 @@ class NoRestElement extends Visitor {
           ],
         });
       }
+
       n.body.stmts = [...statementsToAdd, ...n.body?.stmts];
     }
     return super.visitFunction(n);
