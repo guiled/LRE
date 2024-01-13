@@ -51,6 +51,8 @@ import { arrayexpression } from "./node/expression/arrayexpression";
 import numericliteral from "./node/literal/numericliteral";
 import { objectassign } from "./node/expression/objectassign";
 import expression from "./node/expression";
+import stringliteral from "./node/literal/stringliteral";
+import { objectexpression } from "./node/expression/objectexpression";
 
 type PublicMethodToFunctionStatement = ExpressionStatement & {
   expression: AssignmentExpression & {
@@ -177,6 +179,14 @@ class ClassToFunction extends Visitor {
           callee: decorator.expression,
           args: [{
             expression: assignmentRight
+          }, {
+            expression: objectexpression({
+              name: n.key.type === "Computed" ? n.key.expression as ExpressionWithSpan : 
+              (n.key.type === "Identifier" ? stringliteral({
+                span: n.key.span,
+                value: n.key.value,
+              }) : n.key)
+            })
           }]
         }) as CallExpression;
       });
