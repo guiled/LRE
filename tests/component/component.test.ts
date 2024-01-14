@@ -3,7 +3,10 @@ import { Container } from "../../src/component/container";
 import { Entry } from "../../src/component/entry";
 import { Repeater } from "../../src/component/repeater";
 import { Sheet } from "../../src/sheet";
-import { MockComponent, MockedComponent } from "../mock/letsrole/component.mock";
+import {
+  MockComponent,
+  MockedComponent,
+} from "../mock/letsrole/component.mock";
 import { MockSheet } from "../mock/letsrole/sheet.mock";
 import { LRE } from "../../src/lre";
 import { MockServer } from "../mock/letsrole/server.mock";
@@ -374,7 +377,7 @@ describe("Component simple event handling", () => {
     rawCmp._trigger("click");
     expect(handler).toBeCalled();
     expect(handlerLabeled).toBeCalled();
-  })
+  });
 });
 
 describe("Component events on sub component", () => {
