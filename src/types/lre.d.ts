@@ -9,6 +9,37 @@ declare interface ILRE {
   __debug: boolean = false;
 }
 
+declare interface ISheet extends LetsRole.Sheet {
+  cleanCmpData(): void;
+  lreType(): ComponentType;
+  sheet(): ISheet;
+  raw(): LetsRole.Sheet,
+  getSheetAlphaId(): string;
+  realId(): string;
+  get(id: string, silent = false): ComponentSearchResult;
+  find(id: string): ComponentSearchResult;
+  componentExists(realId: string): boolean;
+  persistingData<T extends StoredState>(
+    dataName: T,
+    value?: any
+  ): SheetStoredState[T];
+  deletePersistingData(dataName: Exclude<string, ProtectedStoredState>): void;
+  isInitialized(): boolean;
+  getPendingData(id: LetsRole.ComponentID): LetsRole.ComponentValue;
+  persistingCmpData(
+    componentId: LetsRole.ComponentID,
+    newData?: LetsRole.ViewData
+  ): LetsRole.ViewData;
+  persistingCmpClasses(
+    componentId: LetsRole.ComponentID,
+    classChanges?: ClassChanges
+  ): ClassChanges;
+  forget(realId: LetsRole.ComponentID): void;
+  remember(realId: LetsRole.ComponentID): void;
+  knownChildren(cmp: IComponent): Array<IComponent>;
+  group(groupId: string, componentIds: Array<LetsRole.ComponentID> = []): Group;
+}
+
 declare type ProxyModeHandlerLogType =
   | "value"
   | "rawValue"
@@ -63,7 +94,7 @@ declare interface Logger {
 type cb = (thisArg: any, argArray?: any) => (rawSheet: LetsRole.Sheet) => void;
 
 declare var lre: ILRE & Logger & cb;
-declare var firstInit: undefined | ((sheet: Sheet) => boolean);
+declare var firstInit: undefined | ((sheet: ISheet) => boolean);
 declare var errExclFirstLine: number, errExclLastLine: number;
 
 declare type ComponentType =
@@ -80,7 +111,7 @@ declare type ComponentType =
 
 declare interface ComponentCommon {
   lreType: (newType?: ComponentType) => ComponentType;
-  sheet: () => Sheet;
+  sheet: () => ISheet;
   realId: () => string;
   //entry: (entry?: Entry) => Entry | undefined;
   //repeater: (repeater?: Repeater) => Repeater | undefined;
@@ -106,7 +137,7 @@ declare type EventSubComponent =
   | undefined;
 
 declare type EventHolderDefaultEvents = EventHolderEvents;
-declare type EventType<T extends string> =
+declare type EventType<T extends string = string> =
   | EventHolderDefaultEvents
   | T
   | `${EventHolderDefaultEvents | T}${typeof EVENT_SEP}${string}`;
@@ -158,29 +189,36 @@ declare interface IEventHolder<
   ): void;
 }
 
+declare interface IDataHolder {
+  hasData(name: DataId): boolean;
+  data(name: DataId, value: any = "", persistent = false): this;
+  deleteData(name: DataId, persistent: boolean = false): this;
+  loadPersistent(): LetsRole.ViewData;
+}
+
 declare interface ComponentBase {
-  lreType(): ComponentType;
+  lreType(newValue?: ComponentType): ComponentType;
   realId(): string;
-  sheet(): Sheet;
+  sheet(): ISheet;
   raw(): LetsRole.Component | LetsRole.Sheet;
 }
 
 declare type ComponentFinder = (id: string) => ComponentSearchResult;
-declare type ComponentSearchResult = Component | null;
+declare type ComponentSearchResult = IComponent | null;
 
 declare interface ComponentContainer extends ComponentBase {
   get: ComponentFinder;
   find: ComponentFinder;
 }
 
-declare interface IComponent extends ComponentContainer {
+declare interface IComponent extends ComponentContainer, IEventHolder<any>, IDataHolder {
   init(): this;
   repeater(repeater?: Repeater): Repeater | undefined;
   entry(entry?: Entry): Entry | undefined;
   autoLoadSaveClasses(): this;
   toggle(): void;
   exists(): boolean;
-  knownChildren(): Array<Component>;
+  knownChildren(): Array<IComponent>;
   id(): LetsRole.ComponentID;
   index(): string | null;
   name(): string;

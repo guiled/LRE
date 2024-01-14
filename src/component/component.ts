@@ -1,11 +1,11 @@
 import { EventDef, EventHolder } from "../eventholder";
 import { HasRaw } from "../hasraw";
-import { ClassChanges, Sheet } from "../sheet";
+import { ClassChanges } from "../sheet";
 import { Mixin } from "../mixin";
 import { Repeater } from "./repeater";
 import { Entry } from "./entry";
 import { DataHolder } from "../dataholder";
-import { dynamicSetter } from "../globals/virtualcall";
+import { dynamicSetter } from "../globals/decorators/dynamicSetter";
 
 export const REP_ID_SEP = ".";
 
@@ -62,7 +62,7 @@ export class Component<
     ComponentCommon
 {
   #realId: string;
-  #sheet: Sheet;
+  #sheet: ISheet;
   #lreType: ComponentType = "component";
   #parent: ComponentContainer | undefined;
   #repeater: Repeater | undefined;
@@ -71,7 +71,7 @@ export class Component<
   #classChanges: ClassChanges = {};
   #classChangesApply: ClassChangeApply | undefined = undefined;
 
-  constructor(raw: LetsRole.Component, sheet: Sheet, realId: string) {
+  constructor(raw: LetsRole.Component, sheet: ISheet, realId: string) {
     super([
       [
         /* eventHolder */ realId,
@@ -85,7 +85,7 @@ export class Component<
           }
 
           if (idToFind !== "") {
-            return this.find(idToFind) as EventHolder;
+            return this.find(idToFind) as unknown as EventHolder;
           }
           return this as EventHolder;
         },
@@ -159,7 +159,7 @@ export class Component<
     }
     return this.raw().setTooltip(text);
   }
-  sheet(): Sheet {
+  sheet(): ISheet {
     return this.#sheet;
   }
   parent(newParent?: ComponentContainer): ComponentContainer | undefined {
@@ -315,8 +315,8 @@ export class Component<
     return this.#sheet.componentExists(this.realId());
   }
 
-  knownChildren(): Array<Component> {
-    return this.#sheet.knownChildren(this as Component);
+  knownChildren(): Array<IComponent> {
+    return this.#sheet.knownChildren(this as IComponent);
   }
 
   #saveClassChanges() {
