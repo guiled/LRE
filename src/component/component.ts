@@ -1,10 +1,11 @@
-import { EVENT_SEP, EventDef, EventHolder } from "../eventholder";
+import { EventDef, EventHolder } from "../eventholder";
 import { HasRaw } from "../hasraw";
 import { ClassChanges, Sheet } from "../sheet";
 import { Mixin } from "../mixin";
 import { Repeater } from "./repeater";
 import { Entry } from "./entry";
 import { DataHolder } from "../dataholder";
+import { dynamicSetter } from "../globals/virtualcall";
 
 export const REP_ID_SEP = ".";
 
@@ -34,22 +35,6 @@ type ClassChangeApply = {
   removed: (...args: any[]) => any;
 };
 
-type MethodWithLoggedCallback = "value" | "visible";
-
-type ComponentEventLog = Partial<Record<MethodWithLoggedCallback, ContextLog>>;
-
-const logEvent: Array<{
-  logType: ProxyModeHandlerLogType;
-  event: ThisComponentEventTypes<LetsRole.EventType | ComponentLREEventTypes>;
-}> = [
-  { logType: "value", event: "update" },
-  { logType: "rawValue", event: "update" },
-  { logType: "text", event: "update" },
-  { logType: "text", event: "update" },
-  { logType: "class", event: "class-updated" },
-  { logType: "data", event: "data-updated" },
-  { logType: "visible", event: "class-updated" },
-];
 
 export class Component<
     TypeValue extends LetsRole.ComponentValue = LetsRole.ComponentValue,
@@ -85,7 +70,6 @@ export class Component<
   #mustSaveClasses: boolean = false;
   #classChanges: ClassChanges = {};
   #classChangesApply: ClassChangeApply | undefined = undefined;
-  #eventLogs: ComponentEventLog = {};
 
   constructor(raw: LetsRole.Component, sheet: Sheet, realId: string) {
     super([
@@ -256,16 +240,12 @@ export class Component<
     return this;
   }
 
+  @dynamicSetter
   value(newValue?: unknown): void | TypeValue {
     if (arguments.length > 0) {
-      let valueToSet = newValue;
-      if (typeof newValue === "function") {
-        valueToSet = loggedCall(newValue as () => any);
-        this.#handleAccessLog("value", newValue as () => any);
-      }
       const oldValue = this.value();
       let data: LetsRole.ViewData = {
-        [this.realId()]: valueToSet as LetsRole.ComponentValue,
+        [this.realId()]: newValue as LetsRole.ComponentValue,
       };
       this.#sheet.setData(data);
       if (oldValue !== newValue) {
@@ -307,14 +287,11 @@ export class Component<
     }
     return this.raw().text();
   }
+
+  @dynamicSetter
   visible(newValue?: boolean | ((...args: any[]) => any)): boolean {
     if (arguments.length > 0) {
-      let valueToSet = newValue;
-      if (typeof newValue === "function") {
-        valueToSet = loggedCall(newValue as () => any);
-        this.#handleAccessLog("visible", newValue as () => any);
-      }
-      if (!!valueToSet) {
+      if (!!newValue) {
         this.show();
       } else {
         this.hide();
@@ -369,71 +346,4 @@ export class Component<
     this.#classChangesApply[action](className);
   }
 
-  #handleAccessLog(method: MethodWithLoggedCallback, cb: () => any) {
-    if (!this.#eventLogs[method]) {
-      this.#eventLogs[method] = {};
-    }
-    logEvent.forEach((t) => {
-      const oldAccessLog: LetsRole.ComponentID[] =
-        this.#eventLogs[method]![t.logType] || [];
-      const newAccessLog: LetsRole.ComponentID[] = context
-        .getPreviousAccessLog(t.logType)
-        .filter((l) => !oldAccessLog.includes(l));
-
-      newAccessLog.forEach((id) => {
-        const eventIdParts = [t.event, t.logType, this.realId()];
-        this.#sheet
-          .get(id)!
-          .on(eventIdParts.join(EVENT_SEP) as EventType<"update">, () => {
-            const valueToSet = loggedCall(cb as () => any);
-            this.#handleAccessLog(method, cb as () => any);
-            this[method](valueToSet);
-          });
-      });
-      this.#eventLogs[method]![t.logType] = [...oldAccessLog, ...newAccessLog];
-    });
-    this.#eventLogs;
-  }
-
-  // actionOnRawEvent({
-  //   action,
-  //   delegated,
-  //   event,
-  //   handler,
-  //   subComponent,
-  // }: {
-  //   action: "on" | "off";
-  //   delegated: boolean;
-  //   event: LetsRole.EventType;
-  //   handler?: LetsRole.EventCallback;
-  //   subComponent?: LetsRole.ComponentID | null;
-  // }): void {
-  //   if (action !== "on" && action !== "off") return;
-  //   const logAction = action === "on" ? "added to" : "removed from";
-  //   let rawCmp: LetsRole.Component | undefined = void 0;
-  //   let args: [
-  //     LetsRole.EventType,
-  //     (LetsRole.ComponentID | LetsRole.EventCallback)?,
-  //     LetsRole.EventCallback?
-  //   ] = [event];
-  //   let logComplement: string = "";
-
-  //   if (delegated && !!subComponent) {
-  //     rawCmp = this.sheet().raw().get(this.realId());
-  //     args.push(subComponent);
-  //     logComplement = ">" + subComponent;
-  //   } else if (!delegated) {
-  //     rawCmp = this.raw() as LetsRole.Component;
-  //   }
-
-  //   if (!!rawCmp) {
-  //     if (action === "on") args.push(handler);
-  //     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  //     // @ts-ignore impossible to match args with argument of 'on' and 'off'
-  //     rawCmp[action].apply(rawCmp, args);
-  //     lre.trace(
-  //       `Native event ${event} ${logAction} ${this.realId()}${logComplement}`
-  //     );
-  //   }
-  // }
 }
