@@ -2,7 +2,7 @@ import { Sheet } from "../sheet";
 
 type DataId = string;
 
-export class DataHolder {
+export class DataHolder implements IDataHolder {
   #data: Record<DataId, any> = {};
   #realId: string;
   #sheet: Sheet;

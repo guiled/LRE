@@ -77,11 +77,11 @@ describe("Component group is like a component", () => {
 
   test("Group has LRE component methods", () => {
     const group: Group = new Group("group1", sheet);
-    const cmp1 = sheet.get("cmp1");
-    const cmp2 = sheet.get("cmp2");
+    const cmp1 = sheet.get("cmp1")!;
+    const cmp2 = sheet.get("cmp2")!;
 
-    group.add(cmp1);
-    group.add(cmp2);
+    group.add(cmp1!);
+    group.add(cmp2!);
 
     (
       ["autoLoadSaveClasses", "toggle", "hide", "show"] as Array<
@@ -117,9 +117,9 @@ describe("Component group is like a component", () => {
     expect((cmp1.setTooltip as jest.Mock).mock.calls[1][0]).toBe("test");
     expect((cmp1.setTooltip as jest.Mock).mock.calls[1][1]).toBe("right");
 
-    sheet.get("a").lreType("repeater");
-    sheet.get("a.b").lreType("entry");
-    const subCmp = sheet.get("a.b.c");
+    sheet.get("a")!.lreType("repeater");
+    sheet.get("a.b")!.lreType("entry");
+    const subCmp = sheet.get("a.b.c")!;
     group.add(subCmp);
     expect(group.find("cmp1")).toBe(cmp1);
     expect(group.get("cmp2")).toBe(cmp2);
@@ -175,7 +175,7 @@ describe("Component group basics", () => {
     expect(group.count()).toBe(2);
     expect(addCb).toBeCalledTimes(1);
 
-    const cmp3 = sheet.get("cmp3");
+    const cmp3 = sheet.get("cmp3")!;
     (sheet.get as jest.Mock).mockClear();
     expect(group.includes("cmp3")).toBeFalsy();
     expect(group.contains("cmp3")).toBeFalsy();
@@ -213,7 +213,7 @@ describe("Component group basics", () => {
     group.add(MockServer.UNKNOWN_CMP_ID);
     expect(group.count()).toBe(1);
 
-    group.add(sheet.get(MockServer.UNKNOWN_CMP_ID));
+    group.add(sheet.get(MockServer.UNKNOWN_CMP_ID)!);
     expect(group.count()).toBe(1);
     expect(group.includes(MockServer.NON_EXISTING_CMP_ID)).toBeFalsy();
   });
@@ -277,7 +277,7 @@ describe("Event attached to group are attached to all items", () => {
     expect(clickFn2).not.toBeCalled();
 
     clickFn.mockClear();
-    group.once("click:essai", clickFn);
+    group.once("click:try", clickFn);
     cmp1._trigger("click");
     cmp1._trigger("click");
     expect(clickFn).toBeCalledTimes(1);
@@ -323,8 +323,8 @@ describe("Group get values", () => {
     group.value({
       cmp1: "val11",
     });
-    expect(sheet.get("cmp1").value()).toBe("val11");
-    const cmp4 = sheet.get("cmp4");
+    expect(sheet.get("cmp1")!.value()).toBe("val11");
+    const cmp4 = sheet.get("cmp4")!;
     group.value({
       cmp4: "val4",
     });
@@ -336,10 +336,10 @@ describe("Group get values", () => {
     expect(cmp4.value()).toBe("val4");
 
     group.value('Hello');
-    expect(sheet.get("cmp1").value()).toBe("Hello");
-    expect(sheet.get("cmp2").value()).toBe("Hello");
-    expect(sheet.get("cmp3").value()).toBe("Hello");
-    expect(sheet.get("cmp4").value()).toBe("Hello");
+    expect(sheet.get("cmp1")!.value()).toBe("Hello");
+    expect(sheet.get("cmp2")!.value()).toBe("Hello");
+    expect(sheet.get("cmp3")!.value()).toBe("Hello");
+    expect(sheet.get("cmp4")!.value()).toBe("Hello");
   });
 
   test("Get/Set virtual values and rawValue", () => {
@@ -357,8 +357,8 @@ describe("Group get values", () => {
     group.virtualValue({
       cmp1: "val11",
     });
-    expect(sheet.get("cmp1").virtualValue()).toBe("val11");
-    const cmp4 = sheet.get("cmp4");
+    expect(sheet.get("cmp1")!.virtualValue()).toBe("val11");
+    const cmp4 = sheet.get("cmp4")!;
     group.virtualValue({
       cmp4: "val4",
     });
@@ -380,8 +380,8 @@ describe("Group get values", () => {
     group.text({
       cmp1: "txt11",
     });
-    expect(sheet.get("cmp1").text()).toBe("txt11");
-    const cmp4 = sheet.get("cmp4");
+    expect(sheet.get("cmp1")!.text()).toBe("txt11");
+    const cmp4 = sheet.get("cmp4")!;
     group.text({
       cmp4: "txt4",
     });
@@ -396,49 +396,49 @@ describe("Group get values", () => {
   test("getClasses gives classes that are on ALL components", () => {
     const group = new Group("group2", sheet, ["cmp1", "cmp2", "cmp3"]);
     expect(group.getClasses().sort()).toEqual(["a", "b"].sort());
-    sheet.get("cmp1").addClass("d");
+    sheet.get("cmp1")!.addClass("d");
     expect(group.getClasses().sort()).toEqual(["a", "b", "d"].sort());
   });
 
   test("visible get / set", () => {
     const group = new Group("group2", sheet, ["cmp1", "cmp2", "cmp3"]);
     expect(group.visible()).toBeTruthy();
-    sheet.get("cmp1").hide();
+    sheet.get("cmp1")!.hide();
     expect(group.visible()).toBeFalsy();
-    sheet.get("cmp2").hide();
-    sheet.get("cmp1").show();
+    sheet.get("cmp2")!.hide();
+    sheet.get("cmp1")!.show();
     expect(group.visible()).toBeFalsy();
-    sheet.get("cmp2").show();
+    sheet.get("cmp2")!.show();
     expect(group.visible()).toBeTruthy();
 
     group.visible({
       cmp1: false,
     });
-    expect(sheet.get("cmp1").visible()).toBeFalsy();
+    expect(sheet.get("cmp1")!.visible()).toBeFalsy();
     expect(group.visible()).toBeFalsy();
 
     group.visible(true);
-    expect(sheet.get("cmp1").visible()).toBeTruthy();
+    expect(sheet.get("cmp1")!.visible()).toBeTruthy();
     expect(group.visible()).toBeTruthy();
 
-    const chk = sheet.get('checkbox');
+    const chk = sheet.get('checkbox')!;
     chk.value(false);
     group.visible(function () {
       return chk.value();
     });
     expect(group.visible()).toBeFalsy();
-    expect(sheet.get("cmp1").visible()).toBeFalsy();
+    expect(sheet.get("cmp1")!.visible()).toBeFalsy();
     chk.value(true);
     expect(group.visible()).toBeTruthy();
-    expect(sheet.get("cmp1").visible()).toBeTruthy();
-    expect(sheet.get("cmp2").visible()).toBeTruthy();
-    expect(sheet.get("cmp3").visible()).toBeTruthy();
+    expect(sheet.get("cmp1")!.visible()).toBeTruthy();
+    expect(sheet.get("cmp2")!.visible()).toBeTruthy();
+    expect(sheet.get("cmp3")!.visible()).toBeTruthy();
     group.remove("cmp1");
     chk.value(false);
     expect(group.visible()).toBeFalsy();
-    expect(sheet.get("cmp1").visible()).toBeTruthy();
-    expect(sheet.get("cmp2").visible()).toBeFalsy();
-    expect(sheet.get("cmp3").visible()).toBeFalsy();
+    expect(sheet.get("cmp1")!.visible()).toBeTruthy();
+    expect(sheet.get("cmp2")!.visible()).toBeFalsy();
+    expect(sheet.get("cmp3")!.visible()).toBeFalsy();
     
   });
 });

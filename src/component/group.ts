@@ -1,7 +1,6 @@
 import { EventHolder } from "../eventholder";
-import { dynamicSetter } from "../globals/virtualcall";
+import { dynamicSetter } from "../globals/decorators/dynamicSetter";
 import { Sheet } from "../sheet";
-import { Component } from "./component";
 
 const groupEventsForComponent = ["update", "click"] as const;
 type GroupEventsForComponent = (typeof groupEventsForComponent)[number];
@@ -18,7 +17,7 @@ export class Group
   #id: string;
   #eventSuffix: string;
   #sheet: Sheet;
-  #components: Array<Component> = [];
+  #components: Array<IComponent> = [];
 
   constructor(
     id: string,
@@ -82,9 +81,9 @@ export class Group
     return this as unknown as LetsRole.Component;
   }
 
-  add(cmp: LetsRole.ComponentID | Component): this {
+  add(cmp: LetsRole.ComponentID | IComponent): this {
     let cmpIndex: number;
-    let component: Component | null = null;
+    let component: IComponent | null = null;
 
     try {
       cmpIndex = this.#getCmpIndex(cmp);
@@ -108,9 +107,9 @@ export class Group
     return this;
   }
 
-  remove(cmp: LetsRole.ComponentID | Component): this {
+  remove(cmp: LetsRole.ComponentID | IComponent): this {
     let cmpIndex: number = -1;
-    let component: Component | null = null;
+    let component: IComponent | null = null;
 
     try {
       cmpIndex = this.#getCmpIndex(cmp);
@@ -137,7 +136,7 @@ export class Group
     return this.#components.length;
   }
 
-  includes(cmp: LetsRole.ComponentID | Component): boolean {
+  includes(cmp: LetsRole.ComponentID | IComponent): boolean {
     let result: number = -1;
     try {
       result = this.#getCmpIndex(cmp);
@@ -147,11 +146,11 @@ export class Group
     return result !== -1;
   }
 
-  contains(cmp: LetsRole.ComponentID | Component): boolean {
+  contains(cmp: LetsRole.ComponentID | IComponent): boolean {
     return this.includes(cmp);
   }
 
-  has(cmp: LetsRole.ComponentID | Component): boolean {
+  has(cmp: LetsRole.ComponentID | IComponent): boolean {
     return this.includes(cmp);
   }
 
@@ -171,7 +170,7 @@ export class Group
   exists(): boolean {
     return true;
   }
-  knownChildren(): Array<Component> {
+  knownChildren(): Array<IComponent> {
     return this.#components;
   }
 
@@ -186,11 +185,11 @@ export class Group
     }
   }
 
-  find(completeId: string) {
-    return this.#components.find((cmp) => cmp.realId() === completeId);
+  find(completeId: string): ComponentSearchResult {
+    return this.#components.find((cmp) => cmp.realId() === completeId) || null;
   }
 
-  get(completeId: string) {
+  get(completeId: string): ComponentSearchResult {
     return this.find(completeId);
   }
 
@@ -303,8 +302,8 @@ export class Group
     }
   }
 
-  #getComponent(cmp: LetsRole.ComponentID | Component): Component {
-    let component: Component;
+  #getComponent(cmp: LetsRole.ComponentID | IComponent): IComponent | null {
+    let component: IComponent | null;
 
     if (typeof cmp === "string") {
       component = this.#sheet.get(cmp);
@@ -317,7 +316,7 @@ export class Group
     return component;
   }
 
-  #getCmpIndex(cmp: LetsRole.ComponentID | Component): number {
+  #getCmpIndex(cmp: LetsRole.ComponentID | IComponent): number {
     let id: string;
     if (typeof cmp === "string") {
       id = cmp;

@@ -1,8 +1,7 @@
 import { Component } from "./component";
-import { Sheet } from "../sheet";
 
 export class Entry extends Component<LetsRole.ViewData> {
-  constructor(raw: LetsRole.Component, sheet: Sheet, realId: string) {
+  constructor(raw: LetsRole.Component, sheet: ISheet, realId: string) {
     super(raw, sheet, realId);
     this.lreType("entry");
   }

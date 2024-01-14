@@ -363,6 +363,29 @@ describe("Component visible setter", () => {
     expect(cmp.visible()).toBeTruthy();
     expect(cmp.hide).toBeCalledTimes(1);
     expect(cmp.show).toBeCalledTimes(1);
+    cmp.visible(() => {
+      return chk.value();
+    });
+    expect(cmp.visible()).toBeTruthy();
+    jest.spyOn(cmp, "hide");
+    jest.spyOn(cmp, "show");
+    (cmp.hide as jest.Mock).mockClear();
+    (cmp.show as jest.Mock).mockClear();
+    chk.value(false);
+    expect(cmp.hide).toBeCalledTimes(1);
+    cmp.visible(true);
+    expect(cmp.show).toBeCalledTimes(1);
+    (cmp.hide as jest.Mock).mockClear();
+    (cmp.show as jest.Mock).mockClear();
+    chk.value(false);
+    expect(cmp.hide).toBeCalledTimes(0);
+    expect(cmp.show).toBeCalledTimes(0);
+    chk.value(true);
+    expect(cmp.hide).toBeCalledTimes(0);
+    expect(cmp.show).toBeCalledTimes(0);
+    chk.value(false);
+    expect(cmp.hide).toBeCalledTimes(0);
+    expect(cmp.show).toBeCalledTimes(0);
   });
 });
 

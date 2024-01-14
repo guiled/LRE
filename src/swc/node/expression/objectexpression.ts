@@ -1,4 +1,4 @@
-import { Expression, ObjectExpression, Property, Span } from "@swc/core";
+import { Expression, Property, Span } from "@swc/core";
 import identifier from "../identifier";
 import { ExpressionWithSpan } from "../../types";
 
