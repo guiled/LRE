@@ -20,6 +20,7 @@ const transformForLR: Options = {
   jsc: {
     parser: {
       syntax: "typescript",
+      decorators: true,
       tsx: false,
     },
     target: "es5",
