@@ -26,6 +26,7 @@ export class Sheet
   extends Mixin(EventHolder, HasRaw)<SheetEvents, LetsRole.Sheet>
   implements
     Omit<LetsRole.Sheet, "get" | "find">,
+    ISheet,
     ComponentContainer,
     ComponentCommon
 {
@@ -75,7 +76,7 @@ export class Sheet
 
   #componentGetter(id: string, silent = false): ComponentSearchResult {
     let rawCmp: LetsRole.Component | LetsRole.Sheet,
-      container: Component | Sheet | null,
+      container: IComponent | Sheet | null,
       tabId = id.split(REP_ID_SEP);
 
     if (tabId.length === 1) {
@@ -160,8 +161,8 @@ export class Sheet
   #getCmpWithChanges(
     newData: SheetProtectedStoredState["cmpData"],
     oldData: SheetProtectedStoredState["cmpData"]
-  ): Array<Component> {
-    const cmps: Array<Component> = [];
+  ): Array<IComponent> {
+    const cmps: Array<IComponent> = [];
     Object.keys(newData || {}).forEach((cmpId) => {
       const cmpFromCache = this.#componentCache.inCache(cmpId);
       if (!!cmpFromCache && !lre.deepEqual(newData[cmpId], oldData[cmpId])) {
@@ -405,14 +406,14 @@ export class Sheet
     this.#componentCache.remember(realId);
   }
 
-  knownChildren(cmp: Component): Array<Component> {
+  knownChildren(cmp: IComponent): Array<IComponent> {
     return this.#componentCache
       .children(cmp.realId())
       .map((id) => this.get(id))
-      .filter((c) => !!c) as Array<Component>;
+      .filter((c) => !!c) as Array<IComponent>;
   }
 
-  group(groupId: string, componentIds: Array<LetsRole.ComponentID> = []): any {
+  group(groupId: string, componentIds: Array<LetsRole.ComponentID> = []): Group {
     return new Group(groupId, this, componentIds);
   }
 }

@@ -1,4 +1,4 @@
-import { Component, REP_ID_SEP } from "./component";
+import { REP_ID_SEP } from "./component";
 
 type ComponentGetter = (
   realId: LetsRole.ComponentID,
@@ -7,7 +7,7 @@ type ComponentGetter = (
 
 export class ComponentCache {
   readonly #DEFERRED_DELAY = 20;
-  #components: Record<LetsRole.ComponentID, Component> = {};
+  #components: Record<LetsRole.ComponentID, IComponent> = {};
   #getter: ComponentGetter;
   #toDelete: Array<LetsRole.ComponentID> = [];
   #toAdd: Array<LetsRole.ComponentID> = [];
@@ -72,7 +72,7 @@ export class ComponentCache {
     }
   }
 
-  inCache(realId: LetsRole.ComponentID): Component | false {
+  inCache(realId: LetsRole.ComponentID): IComponent | false {
     // Why * at 0 ? Because it is quite slow to test realId[strlen(realId)] as realId.length doesn't work
     if (realId.charAt(0) === "*") {
       for (let k in this.#components) {
@@ -86,7 +86,7 @@ export class ComponentCache {
       : false;
   }
 
-  set(realId: LetsRole.ComponentID, cmp: Component): this {
+  set(realId: LetsRole.ComponentID, cmp: IComponent): this {
     if (this.#components.hasOwnProperty(realId)) {
       lre.trace(`Component overwritten in cache ${realId}`);
     } else {
