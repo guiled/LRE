@@ -94,10 +94,16 @@ class ComponentProxy
       },
     };
     return cmpProxy;
-  };
+  }
 
   id() {
-    return this.getDest().id();
+    let id;
+    try {
+      id = this.getDest().id();
+    } catch (e) {
+      id = "";
+    }
+    return id;
   }
 
   name(): string {
