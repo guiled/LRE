@@ -27,7 +27,7 @@ export class DataBatcher extends EventHolder<DataBatcherEventType> {
   #isSendPending: boolean = false;
 
   constructor(modeHandler: ProxyModeHandler, sheet: LetsRole.Sheet) {
-    super(`Bather-${sheet.id()}-${sheet.getSheetId()}`);
+    super(`batcher-${sheet.id()}-${sheet.getSheetId()}`);
     this.#modeHandler = modeHandler;
     this.#currentMode = modeHandler.getMode();
     this.#sheet = sheet;
