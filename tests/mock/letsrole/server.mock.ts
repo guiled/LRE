@@ -6,6 +6,7 @@ type ComponentStructure = {
   name: string;
   classes: Array<string>;
   children?: ComponentStructureList;
+  text?: string;
 };
 
 type ComponentStructureList = Array<ComponentStructure>;
@@ -19,8 +20,10 @@ export class MockServer {
   static NULL_CMP_ID = "_null_";
   static NON_EXISTING_CMP_ID = "_nonexisting_";
   static NonExistingCmpDummy: LetsRole.Component = {
-    id: jest.fn(),
-    getClasses: jest.fn(() => []),
+    id: jest.fn(() => null),
+    getClasses: jest.fn(() => {
+      throw new TypeError("h() is null");
+    }),
   } as unknown as LetsRole.Component;
   sheets: Record<LetsRole.SheetID, Array<MockedSheet>> = {};
   sheetData: Record<LetsRole.SheetID, LetsRole.ViewData> = {};
@@ -118,9 +121,10 @@ export class MockServer {
             : undefined,
           classes: [
             ...(cmpStructure?.classes || []),
-            cmpId.indexOf("rep") !== -1 ? "repeater" : "",
+            ...(cmpId.indexOf("rep") !== -1 ? ["repeater"] : []),
           ],
           value: this.sheetData[sheet.getSheetId()][cmpId],
+          text: cmpStructure?.text,
         })
       );
       cmp.value = jest.fn((newValue?: LetsRole.ComponentValue) => {

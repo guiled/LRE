@@ -12,6 +12,7 @@ type Params = {
   text?: string;
   parent?: MockedComponent;
   value?: LetsRole.ComponentValue;
+  virtualValue?: LetsRole.ComponentValue | null;
 };
 
 export const MockComponent = ({
@@ -24,6 +25,7 @@ export const MockComponent = ({
   text = "text",
   parent,
   value = "",
+  virtualValue = null,
 }: Params): MockedComponent => {
   const handlers: Record<string, (cmp: LetsRole.Component) => void> = {};
   let visible: boolean = true;
@@ -70,14 +72,22 @@ export const MockComponent = ({
         sheet.setData({
           [cmp.id()]: newValue,
         });
+      } else if (virtualValue !== null) {
+        return virtualValue;
       } else if (value !== void 0) {
         return value;
       }
       const d = sheet.getData();
       return d[cmp.id()];
     }),
-    virtualValue: jest.fn(() => null),
-    rawValue: jest.fn(() => 0),
+    virtualValue: jest.fn((newValue?: LetsRole.ComponentValue) => {
+      if (newValue !== void 0) {
+        virtualValue = newValue;
+        return;
+      }
+      return virtualValue;
+    }),
+    rawValue: jest.fn(() => value),
     text: jest.fn((t?: string): string | void => {
       if (t) {
         text = t;
