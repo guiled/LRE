@@ -75,7 +75,8 @@ declare type ComponentType =
   | "choice"
   | "multichoice"
   | "entry"
-  | "icon";
+  | "icon"
+  | "group";
 
 declare interface ComponentCommon {
   lreType: (newType?: ComponentType) => ComponentType;
@@ -84,8 +85,6 @@ declare interface ComponentCommon {
   //entry: (entry?: Entry) => Entry | undefined;
   //repeater: (repeater?: Repeater) => Repeater | undefined;
 }
-
-declare const EVENT_SEP = ":";
 
 declare type EventHolderEvents =
   | "eventhandler-added"

@@ -5,6 +5,7 @@ import { ComponentCache } from "../component/cache";
 import { DataBatcher } from "./databatcher";
 import { ComponentFactory } from "../component/factory";
 import { Mixin } from "../mixin";
+import { Group } from "../component/group";
 
 export type ClassChanges = Record<LetsRole.ClassName, 1 | -1>;
 
@@ -411,7 +412,7 @@ export class Sheet
       .filter((c) => !!c) as Array<Component>;
   }
 
-  // group(): any {
-  //   // todo
-  // }
+  group(groupId: string, componentIds: Array<LetsRole.ComponentID> = []): any {
+    return new Group(groupId, this, componentIds);
+  }
 }
