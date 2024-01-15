@@ -185,7 +185,7 @@ export class Component<
     const id = tabId.pop();
     const sRealId =
       tabId.join(REP_ID_SEP) + (tabId.length > 0 ? REP_ID_SEP : "") + id;
-    return this.sheet().get(sRealId);
+    return this.sheet().get(sRealId) as ComponentSearchResult;
   }
   get(completeId: string): ComponentSearchResult {
     return this.find(completeId);

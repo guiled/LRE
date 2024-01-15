@@ -27,7 +27,11 @@ describe("Sheet basics", () => {
       id: sheetId,
       realId: "4242",
     });
-    sheet = new Sheet(raw, new DataBatcher(modeHandlerMock, raw), modeHandlerMock);
+    sheet = new Sheet(
+      raw,
+      new DataBatcher(modeHandlerMock, raw),
+      modeHandlerMock
+    );
   });
   test("Create from raw", () => {
     expect(sheet.lreType()).toEqual("sheet");
@@ -102,7 +106,11 @@ describe("Sheet data handling", () => {
     raw = MockSheet(rawSheetData);
     server = new MockServer();
     server.registerMockedSheet(raw);
-    sheet = new Sheet(raw, new DataBatcher(modeHandlerMock, raw), modeHandlerMock);
+    sheet = new Sheet(
+      raw,
+      new DataBatcher(modeHandlerMock, raw),
+      modeHandlerMock
+    );
   });
 
   test("Test sheet mock", () => {
@@ -196,7 +204,11 @@ describe("Sheet persisting data", () => {
       realId: realId,
     });
     server.registerMockedSheet(raw);
-    return new Sheet(raw, new DataBatcher(modeHandlerMock, raw), modeHandlerMock);
+    return new Sheet(
+      raw,
+      new DataBatcher(modeHandlerMock, raw),
+      modeHandlerMock
+    );
   };
 
   beforeEach(() => {
@@ -387,7 +399,11 @@ describe("Sheet clean data", () => {
     raw.getData = jest.fn(() => data);
     raw.setData = jest.fn((d) => (data = { ...data, ...d }));
     let save = structuredClone(data);
-    let sheet = new Sheet(raw, new DataBatcher(modeHandlerMock, raw), modeHandlerMock);
+    let sheet = new Sheet(
+      raw,
+      new DataBatcher(modeHandlerMock, raw),
+      modeHandlerMock
+    );
     sheet.cleanCmpData();
     expect(sheet.getData()).toEqual(save);
     mockedWaitDefs.itHasWaitedEverything();
@@ -402,7 +418,11 @@ describe("Sheet clean data", () => {
       },
     };
     save = structuredClone(data);
-    sheet = new Sheet(raw, new DataBatcher(modeHandlerMock, raw), modeHandlerMock);
+    sheet = new Sheet(
+      raw,
+      new DataBatcher(modeHandlerMock, raw),
+      modeHandlerMock
+    );
     sheet.cleanCmpData();
     expect(sheet.getData()).toEqual(save);
     mockedWaitDefs.itHasWaitedEverything();
@@ -431,7 +451,11 @@ describe("Sheet clean data", () => {
     };
     save = structuredClone(data);
     let save2 = structuredClone(data);
-    sheet = new Sheet(raw, new DataBatcher(modeHandlerMock, raw), modeHandlerMock);
+    sheet = new Sheet(
+      raw,
+      new DataBatcher(modeHandlerMock, raw),
+      modeHandlerMock
+    );
     sheet.cleanCmpData();
     expect(sheet.getData()).toEqual(save);
     mockedWaitDefs.itHasWaitedEverything();
@@ -470,7 +494,11 @@ describe("Sheet get component", () => {
       realId: realId,
     });
     server.registerMockedSheet(raw);
-    return new Sheet(raw, new DataBatcher(modeHandlerMock, raw), modeHandlerMock);
+    return new Sheet(
+      raw,
+      new DataBatcher(modeHandlerMock, raw),
+      modeHandlerMock
+    );
   };
 
   beforeEach(() => {
@@ -603,7 +631,7 @@ describe("Sheet get component", () => {
   });
 
   test("Sheet get children of a component", () => {
-    const rep = sheet1.get("a")!;
+    const rep = sheet1.get("a")! as IComponent;
     const searchedIds = ["a.b.c1", "a.b.c2", "a.b.c3", "a.b.c4"];
 
     const foundCmp = searchedIds.map((id) => sheet1.get(id));
@@ -617,5 +645,20 @@ describe("Sheet get component", () => {
         foundCmp.some((cmp) => children === cmp)
       )
     );
+  });
+
+  test("Sheet get group", () => {
+    const grp = sheet1.group(`grp${MockServer.UNKNOWN_CMP_ID}`);
+    expect(grp.lreType()).toBe("group");
+    sheet1.get("cmp1");
+    let grp2;
+    expect(() => (grp2 = sheet1.group("cmp1"))).toThrowError();
+    expect(grp2).toBeUndefined();
+
+    const grp3 = sheet1.group(`grp${MockServer.UNKNOWN_CMP_ID}`);
+    expect(grp3).toBe(grp);
+
+    const grp4 = sheet1.get(`grp${MockServer.UNKNOWN_CMP_ID}`);
+    expect(grp4).toBe(grp);
   });
 });

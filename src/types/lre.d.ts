@@ -9,15 +9,15 @@ declare interface ILRE {
   __debug: boolean = false;
 }
 
-declare interface ISheet extends LetsRole.Sheet {
+declare interface ISheet extends LetsRole.Sheet, ComponentContainer<IGroup> {
   cleanCmpData(): void;
   lreType(): ComponentType;
   sheet(): ISheet;
-  raw(): LetsRole.Sheet,
+  raw(): LetsRole.Sheet;
   getSheetAlphaId(): string;
   realId(): string;
-  get(id: string, silent = false): ComponentSearchResult;
-  find(id: string): ComponentSearchResult;
+  get(id: string, silent = false): ComponentSearchResult | IGroup;
+  find(id: string): ComponentSearchResult | IGroup;
   componentExists(realId: string): boolean;
   persistingData<T extends StoredState>(
     dataName: T,
@@ -203,15 +203,21 @@ declare interface ComponentBase {
   raw(): LetsRole.Component | LetsRole.Sheet;
 }
 
-declare type ComponentFinder = (id: string) => ComponentSearchResult;
+declare type ComponentFinder<T = ComponentSearchResult> = (
+  id: string
+) => ComponentSearchResult | T;
 declare type ComponentSearchResult = IComponent | null;
 
-declare interface ComponentContainer extends ComponentBase {
-  get: ComponentFinder;
-  find: ComponentFinder;
+declare interface ComponentContainer<T = ComponentSearchResult>
+  extends ComponentBase {
+  get: ComponentFinder<T>;
+  find: ComponentFinder<T>;
 }
 
-declare interface IComponent extends ComponentContainer, IEventHolder<any>, IDataHolder {
+declare interface IComponent
+  extends ComponentContainer,
+    IEventHolder<any>,
+    IDataHolder {
   init(): this;
   repeater(repeater?: Repeater): Repeater | undefined;
   entry(entry?: Entry): Entry | undefined;
@@ -237,4 +243,8 @@ declare interface IComponent extends ComponentContainer, IEventHolder<any>, IDat
   text(replacement?: string): string | void;
   visible(newValue?: boolean | ((...args: any[]) => any)): boolean;
   setChoices(choices: LetsRole.Choices): void;
+}
+
+declare interface IGroup extends IComponent {
+  text(_replacement?: LetsRole.ViewData | undefined): void | LetsRole.ViewData;
 }

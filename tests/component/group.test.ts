@@ -77,8 +77,8 @@ describe("Component group is like a component", () => {
 
   test("Group has LRE component methods", () => {
     const group: Group = new Group("group1", sheet);
-    const cmp1 = sheet.get("cmp1")!;
-    const cmp2 = sheet.get("cmp2")!;
+    const cmp1 = sheet.get("cmp1")! as IComponent;
+    const cmp2 = sheet.get("cmp2")! as IComponent;
 
     group.add(cmp1!);
     group.add(cmp2!);
@@ -119,7 +119,7 @@ describe("Component group is like a component", () => {
 
     sheet.get("a")!.lreType("repeater");
     sheet.get("a.b")!.lreType("entry");
-    const subCmp = sheet.get("a.b.c")!;
+    const subCmp = sheet.get("a.b.c")! as IComponent;
     group.add(subCmp);
     expect(group.find("cmp1")).toBe(cmp1);
     expect(group.get("cmp2")).toBe(cmp2);
@@ -175,7 +175,7 @@ describe("Component group basics", () => {
     expect(group.count()).toBe(2);
     expect(addCb).toBeCalledTimes(1);
 
-    const cmp3 = sheet.get("cmp3")!;
+    const cmp3 = sheet.get("cmp3")! as IComponent;
     (sheet.get as jest.Mock).mockClear();
     expect(group.includes("cmp3")).toBeFalsy();
     expect(group.contains("cmp3")).toBeFalsy();
@@ -213,7 +213,7 @@ describe("Component group basics", () => {
     group.add(MockServer.UNKNOWN_CMP_ID);
     expect(group.count()).toBe(1);
 
-    group.add(sheet.get(MockServer.UNKNOWN_CMP_ID)!);
+    group.add(sheet.get(MockServer.UNKNOWN_CMP_ID)! as IComponent);
     expect(group.count()).toBe(1);
     expect(group.includes(MockServer.NON_EXISTING_CMP_ID)).toBeFalsy();
   });
@@ -335,7 +335,7 @@ describe("Group get values", () => {
     });
     expect(cmp4.value()).toBe("val4");
 
-    group.value('Hello');
+    group.value("Hello");
     expect(sheet.get("cmp1")!.value()).toBe("Hello");
     expect(sheet.get("cmp2")!.value()).toBe("Hello");
     expect(sheet.get("cmp3")!.value()).toBe("Hello");
@@ -421,7 +421,7 @@ describe("Group get values", () => {
     expect(sheet.get("cmp1")!.visible()).toBeTruthy();
     expect(group.visible()).toBeTruthy();
 
-    const chk = sheet.get('checkbox')!;
+    const chk = sheet.get("checkbox")!;
     chk.value(false);
     group.visible(function () {
       return chk.value();
@@ -439,6 +439,5 @@ describe("Group get values", () => {
     expect(sheet.get("cmp1")!.visible()).toBeTruthy();
     expect(sheet.get("cmp2")!.visible()).toBeFalsy();
     expect(sheet.get("cmp3")!.visible()).toBeFalsy();
-    
   });
 });

@@ -27,7 +27,7 @@ export class Sheet
   implements
     Omit<LetsRole.Sheet, "get" | "find">,
     ISheet,
-    ComponentContainer,
+    ComponentContainer<IGroup>,
     ComponentCommon
 {
   #silentFind: LetsRole.Component["find"];
@@ -76,7 +76,7 @@ export class Sheet
 
   #componentGetter(id: string, silent = false): ComponentSearchResult {
     let rawCmp: LetsRole.Component | LetsRole.Sheet,
-      container: IComponent | Sheet | null,
+      container: IGroup | ComponentSearchResult | ISheet,
       tabId = id.split(REP_ID_SEP);
 
     if (tabId.length === 1) {
@@ -102,7 +102,7 @@ export class Sheet
       return null;
     }
 
-    const cmp = ComponentFactory.create(rawCmp, container);
+    const cmp = ComponentFactory.create(rawCmp, container as ComponentContainer);
 
     return cmp;
   }
@@ -164,7 +164,7 @@ export class Sheet
   ): Array<IComponent> {
     const cmps: Array<IComponent> = [];
     Object.keys(newData || {}).forEach((cmpId) => {
-      const cmpFromCache = this.#componentCache.inCache(cmpId);
+      const cmpFromCache = this.#componentCache.inCache(cmpId) as IComponent;
       if (!!cmpFromCache && !lre.deepEqual(newData[cmpId], oldData[cmpId])) {
         cmps.push(cmpFromCache);
       }
@@ -245,7 +245,7 @@ export class Sheet
     return "sheet";
   }
 
-  sheet(): Sheet {
+  sheet(): ISheet {
     return this;
   }
 
@@ -280,7 +280,7 @@ export class Sheet
     return this.raw().properName();
   }
 
-  get(id: string, silent = false): ComponentSearchResult {
+  get(id: string, silent = false): ComponentSearchResult | IGroup {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore "id instanceof" on purpose for live checks
     if (!((typeof id === "string" || id instanceof String) && isNaN(id))) {
@@ -293,7 +293,7 @@ export class Sheet
   }
 
   find(id: string): ComponentSearchResult {
-    return this.get(id);
+    return this.get(id) as IComponent;
   }
 
   componentExists(realId: string): boolean {
@@ -413,7 +413,27 @@ export class Sheet
       .filter((c) => !!c) as Array<IComponent>;
   }
 
-  group(groupId: string, componentIds: Array<LetsRole.ComponentID> = []): Group {
-    return new Group(groupId, this, componentIds);
+  group(
+    groupId: string,
+    componentIds: Array<LetsRole.ComponentID> = []
+  ): IGroup {
+    if (this.#componentCache.inCache(groupId)) {
+      const found = this.#componentCache.get(groupId)!;
+      if (found.lreType() !== "group") {
+        throw new Error(
+          `Unable to get group ${groupId}, a component already exists with this id as a ${found.lreType()}.`
+        );
+      }
+      return found as IGroup;
+    }
+    if (this.componentExists(groupId)) {
+      throw new Error(
+        `Unable to create group ${groupId}, a component already exists with this id.`
+      );
+    }
+    const grp = new Group(groupId, this, componentIds);
+    this.#componentCache.set(groupId, grp);
+
+    return grp;
   }
 }
