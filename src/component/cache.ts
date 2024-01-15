@@ -5,9 +5,11 @@ type ComponentGetter = (
   silent?: boolean
 ) => ComponentSearchResult;
 
+type CacheableTypes = IComponent | IGroup;
+
 export class ComponentCache {
   readonly #DEFERRED_DELAY = 20;
-  #components: Record<LetsRole.ComponentID, IComponent> = {};
+  #components: Record<LetsRole.ComponentID, CacheableTypes> = {};
   #getter: ComponentGetter;
   #toDelete: Array<LetsRole.ComponentID> = [];
   #toAdd: Array<LetsRole.ComponentID> = [];
@@ -72,7 +74,7 @@ export class ComponentCache {
     }
   }
 
-  inCache(realId: LetsRole.ComponentID): IComponent | false {
+  inCache(realId: LetsRole.ComponentID): CacheableTypes | false {
     // Why * at 0 ? Because it is quite slow to test realId[strlen(realId)] as realId.length doesn't work
     if (realId.charAt(0) === "*") {
       for (let k in this.#components) {
@@ -86,7 +88,7 @@ export class ComponentCache {
       : false;
   }
 
-  set(realId: LetsRole.ComponentID, cmp: IComponent): this {
+  set(realId: LetsRole.ComponentID, cmp: CacheableTypes): this {
     if (this.#components.hasOwnProperty(realId)) {
       lre.trace(`Component overwritten in cache ${realId}`);
     } else {
@@ -104,7 +106,7 @@ export class ComponentCache {
   get(
     realId: LetsRole.ComponentID,
     silent: boolean = false
-  ): ComponentSearchResult {
+  ): CacheableTypes | null {
     if (this.inCache(realId)) {
       return this.#components[realId];
     }
