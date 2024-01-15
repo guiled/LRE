@@ -1,6 +1,7 @@
+import { DataHolder } from "../dataholder";
 import { EventHolder } from "../eventholder";
 import { dynamicSetter } from "../globals/decorators/dynamicSetter";
-import { Sheet } from "../sheet";
+import { Mixin } from "../mixin";
 
 const groupEventsForComponent = ["update", "click"] as const;
 type GroupEventsForComponent = (typeof groupEventsForComponent)[number];
@@ -11,20 +12,20 @@ type GroupSpecificEvent = (typeof groupSpecificEvent)[number];
 type GroupEvents = GroupEventsForComponent | GroupSpecificEvent;
 
 export class Group
-  extends EventHolder<GroupEvents>
-  implements IComponent, IEventHolder
+  extends Mixin(EventHolder, DataHolder)<GroupEvents>
+  implements IGroup, IComponent, IEventHolder, IDataHolder
 {
   #id: string;
   #eventSuffix: string;
-  #sheet: Sheet;
+  #sheet: ISheet;
   #components: Array<IComponent> = [];
 
   constructor(
     id: string,
-    sheet: Sheet,
+    sheet: ISheet,
     componentIds: Array<LetsRole.ComponentID> = []
   ) {
-    super(id);
+    super([[id], [sheet, id]]);
     this.#id = id;
     this.#eventSuffix = `:${id}`;
     this.#sheet = sheet;
@@ -58,7 +59,7 @@ export class Group
   }
 
   parent(_newParent?: any) {
-    return this.#sheet;
+    return this.#sheet as ComponentContainer;
   }
 
   realId() {
@@ -83,12 +84,15 @@ export class Group
 
   add(cmp: LetsRole.ComponentID | IComponent): this {
     let cmpIndex: number;
-    let component: IComponent | null = null;
+    let component: ComponentSearchResult | IGroup = null;
 
     try {
       cmpIndex = this.#getCmpIndex(cmp);
       if (cmpIndex === -1) {
         component = this.#getComponent(cmp);
+        if (component?.lreType() === "group") {
+          throw new Error(`A group cannot be added to a group`);
+        }
       }
     } catch (e) {
       lre.error(e);
@@ -97,7 +101,7 @@ export class Group
     if (component?.exists?.()) {
       component.linkEventTo("update", this);
       this.copyAllEventsTo(component, this.#eventSuffix);
-      this.#components.push(component);
+      this.#components.push(component as IComponent);
       lre.trace(`Add a component to group ${this.#id}`);
       this.trigger("add", component);
     } else {
@@ -109,7 +113,7 @@ export class Group
 
   remove(cmp: LetsRole.ComponentID | IComponent): this {
     let cmpIndex: number = -1;
-    let component: IComponent | null = null;
+    let component: ComponentSearchResult | IGroup = null;
 
     try {
       cmpIndex = this.#getCmpIndex(cmp);
@@ -302,8 +306,10 @@ export class Group
     }
   }
 
-  #getComponent(cmp: LetsRole.ComponentID | IComponent): IComponent | null {
-    let component: IComponent | null;
+  #getComponent(
+    cmp: LetsRole.ComponentID | IComponent
+  ): ComponentSearchResult | IGroup {
+    let component: ComponentSearchResult | IGroup;
 
     if (typeof cmp === "string") {
       component = this.#sheet.get(cmp);

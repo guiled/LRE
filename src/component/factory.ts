@@ -10,7 +10,7 @@ import { MultiChoice } from "./multichoice";
 export class ComponentFactory {
   static create(
     rawComponent: LetsRole.Component,
-    container: ComponentContainer
+    container: ComponentContainer<any>
   ): IComponent {
     let realId = "";
     if (container.lreType() === "entry" || container.lreType() === "repeater") {
