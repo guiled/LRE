@@ -174,20 +174,27 @@ class ClassToFunction extends Visitor {
     }
     let assignmentRight: CallExpression | FunctionExpression = f;
     if (n.function.decorators) {
-      n.function.decorators.reverse().forEach(decorator => {
+      n.function.decorators.reverse().forEach((decorator) => {
         assignmentRight = call({
           callee: decorator.expression,
-          args: [{
-            expression: assignmentRight
-          }, {
-            expression: objectexpression({
-              name: n.key.type === "Computed" ? n.key.expression as ExpressionWithSpan : 
-              (n.key.type === "Identifier" ? stringliteral({
-                span: n.key.span,
-                value: n.key.value,
-              }) : n.key)
-            })
-          }]
+          args: [
+            {
+              expression: assignmentRight,
+            },
+            {
+              expression: objectexpression({
+                name:
+                  n.key.type === "Computed"
+                    ? (n.key.expression as ExpressionWithSpan)
+                    : n.key.type === "Identifier"
+                    ? stringliteral({
+                        span: n.key.span,
+                        value: n.key.value,
+                      })
+                    : n.key,
+              }),
+            },
+          ],
         }) as CallExpression;
       });
     }
@@ -658,12 +665,38 @@ class ClassToFunction extends Visitor {
         init: newexpr,
       })
     );
+    stmts.push(
+      onevariable({
+        span,
+        id: identifier({
+          span,
+          value: "prev",
+        }),
+        init: objectassign(span, [
+          { expression: objectexpression({}, span) },
+          { expression: thisexpression({ span }) },
+        ]),
+      })
+    );
     stmts.push({
       type: "ExpressionStatement",
       span,
       expression: objectassign(span, [
         expression(thisexpression({ span })),
         expression(id),
+      ]),
+    });
+    stmts.push({
+      type: "ExpressionStatement",
+      span,
+      expression: objectassign(span, [
+        { expression: thisexpression({ span }) },
+        {
+          expression: identifier({
+            span,
+            value: "prev",
+          }),
+        },
       ]),
     });
   }
