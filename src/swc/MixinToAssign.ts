@@ -28,6 +28,7 @@ import nullliteral from "./node/literal/nullliteral";
 import onevariable from "./node/declaration/onevariable";
 import returnstmt from "./node/statement/returnstmt";
 import expression from "./node/expression";
+import { objectexpression } from "./node/expression/objectexpression";
 
 class MixinToAssign extends Visitor {
   #mixinClasses: Argument[] | undefined;
@@ -97,9 +98,24 @@ class MixinToAssign extends Visitor {
                 ...callExpression.arguments,
               ],
               stmts: [
-                returnstmt({
+                onevariable({
                   span,
-                  argument: call({
+                  id: identifier({
+                    span,
+                    value: "prev",
+                  }),
+                  init: objectassign(span, [
+                    { expression: objectexpression({}, span) },
+                    { expression: thisexpression({ span }) },
+                  ]),
+                }),
+                onevariable({
+                  span,
+                  id: identifier({
+                    span,
+                    value: "resParent",
+                  }),
+                  init: call({
                     callee: member({
                       object: _mixins,
                       property: identifier({ span, value: "map" }),
@@ -175,6 +191,26 @@ class MixinToAssign extends Visitor {
                         })
                       ),
                     ],
+                  }),
+                }),
+                {
+                  type: "ExpressionStatement",
+                  span,
+                  expression: objectassign(span, [
+                    { expression: thisexpression({ span }) },
+                    {
+                      expression: identifier({
+                        span,
+                        value: "prev",
+                      }),
+                    },
+                  ]),
+                },
+                returnstmt({
+                  span,
+                  argument: identifier({
+                    span,
+                    value: "resParent",
                   }),
                 }),
               ],
