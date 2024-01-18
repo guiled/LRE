@@ -181,6 +181,7 @@ describe("Test simple events", () => {
         }
       }
     );
+    expect(eventholder.id()).toBe("123");
     const cb = jest.fn();
     eventholder.on("click", cb);
     expect(cb).not.toBeCalled();
@@ -835,6 +836,10 @@ describe("Event holder triggers events", () => {
       subject1.trigger("click");
       expect(subject1Cb).toBeCalledTimes(1);
       expect(subject2Cb).toBeCalledTimes(1);
+      subject1.unlinkEventTo("click", subject2, "test");
+      subject1.trigger("click");
+      expect(subject1Cb).toBeCalledTimes(2);
+      expect(subject2Cb).toBeCalledTimes(1);
     });
 
     test("Link event by default", () => {
@@ -850,6 +855,11 @@ describe("Event holder triggers events", () => {
       expect(subject2Cb2).toBeCalledTimes(0);
       subject1.trigger("click");
       expect(subject1Cb).toBeCalledTimes(1);
+      expect(subject2Cb).toBeCalledTimes(0);
+      expect(subject2Cb2).toBeCalledTimes(1);
+      subject1.unlinkEventTo("click", subject2);
+      subject1.trigger("click");
+      expect(subject1Cb).toBeCalledTimes(2);
       expect(subject2Cb).toBeCalledTimes(0);
       expect(subject2Cb2).toBeCalledTimes(1);
     });
