@@ -60,6 +60,10 @@ export class EventHolder<
     this.#attachToRaw = attachToRaw;
   }
 
+  id(): string {
+    return this.#holderId;
+  }
+
   #getEventIdAndRest(event: EventType<AdditionalEvents>): {
     eventId: EventType<AdditionalEvents>;
     rest: Array<EventType<AdditionalEvents>>;
@@ -246,10 +250,9 @@ export class EventHolder<
       logText = "Handler updated ";
     }
     lre.trace(
-      logText +
-        `for event ${eventName} on ${
-          this.#holderId + (subComponent ? ">" + subComponent : "")
-        }. Count : ${cnt}`
+      `${logText} for event ${eventName} ${handlerId} on ${
+        this.#holderId + (subComponent ? ">" + subComponent : "")
+      }. Count : ${cnt}`
     );
   }
 
@@ -377,9 +380,30 @@ export class EventHolder<
     destination: IEventHolder<any>,
     triggeredEvent: string = event
   ): void {
-    this.on(`${event}${EVENT_SEP}linkedTo`, (...args) => {
-      destination.trigger.apply(destination, [triggeredEvent, ...args]);
-    });
+    this.on(
+      this.#getLinkedEventName(event, destination, triggeredEvent),
+      (...args) => {
+        destination.trigger.apply(destination, [triggeredEvent, ...args]);
+      }
+    );
+  }
+
+  unlinkEventTo(
+    event: EventType<AdditionalEvents>,
+    destination: IEventHolder<any>,
+    triggeredEvent: string = event
+  ): void {
+    this.off(this.#getLinkedEventName(event, destination, triggeredEvent));
+  }
+
+  #getLinkedEventName(
+    event: EventType<AdditionalEvents>,
+    destination: IEventHolder<any>,
+    triggeredEvent: string = event
+  ): EventType<AdditionalEvents> {
+    return [event, "linkedTo", destination.id(), triggeredEvent].join(
+      EVENT_SEP
+    ) as EventType<AdditionalEvents>;
   }
 
   #operateAllEventsOn(

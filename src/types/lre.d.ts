@@ -151,6 +151,8 @@ declare type LREEventTarget = Object &
 declare interface IEventHolder<
   AdditionalEvents extends string = EventHolderDefaultEvents
 > {
+  id(): string;
+
   on(
     event: EventType<AdditionalEvents>,
     subComponent: LetsRole.ComponentID | EventHandler | undefined,
@@ -187,6 +189,11 @@ declare interface IEventHolder<
     destination: EventHolder<any, any>,
     triggeredEvent: string = event
   ): void;
+  unlinkEventTo(
+    event: EventType<AdditionalEvents>,
+    destination: EventHolder<any, any>,
+    triggeredEvent: string = event
+  ): void;
 }
 
 declare interface IDataHolder {
@@ -194,6 +201,11 @@ declare interface IDataHolder {
   data(name: DataId, value: any = "", persistent = false): this;
   deleteData(name: DataId, persistent: boolean = false): this;
   loadPersistent(): LetsRole.ViewData;
+}
+
+declare interface IDataProvider {
+  provider: boolean;
+  sort(): IDataProvider;
 }
 
 declare interface ComponentBase {
@@ -245,6 +257,6 @@ declare interface IComponent
   setChoices(choices: LetsRole.Choices): void;
 }
 
-declare interface IGroup extends IComponent {
+declare interface IGroup extends IComponent, IDataProvider, IEventHolder {
   text(_replacement?: LetsRole.ViewData | undefined): void | LetsRole.ViewData;
 }
