@@ -195,8 +195,11 @@ declare interface IEventHolder<
     triggeredEvent: string = event
   ): void;
 
-  propagateEventTo(destination: IEventHolder<any>, events: Array<EventType<any>>);
-  unpropagateEventTo(destination: IEventHolder<any>)
+  propagateEventTo(
+    destination: IEventHolder<any>,
+    events: Array<EventType<any>>
+  );
+  unpropagateEventTo(destination: IEventHolder<any>);
 }
 
 declare interface IDataHolder {
@@ -208,6 +211,7 @@ declare interface IDataHolder {
 
 declare interface IDataProvider {
   provider: boolean;
+  value(): LetsRole.ComponentValue | void;
   sort(): IDataProvider;
 }
 
