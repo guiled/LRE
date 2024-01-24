@@ -36,6 +36,8 @@ const excludedEventId: Array<EventType<any>> = [
   "eventhandler-destroyed",
 ];
 
+const EMPTY_CB = () => {}
+
 export class EventHolder<
   AdditionalEvents extends string = EventHolderDefaultEvents
 > implements IEventHolder<AdditionalEvents>
@@ -48,6 +50,7 @@ export class EventHolder<
   #canceledEvents: Array<EventType<AdditionalEvents>> = [];
   #lastUpdateEventValue: LetsRole.ComponentValue = null;
   #attachToRaw: AttachToRawCallback<AdditionalEvents> | undefined;
+  #links: Array<IEventHolder<any>> = [];
 
   constructor(
     holderId: string,
@@ -163,6 +166,7 @@ export class EventHolder<
       }
 
       this.#runHandlers(eventId, handlers, cmp, ...args);
+      this.#propagateToLinks(eventName, ...args);
     };
   }
 
@@ -223,7 +227,7 @@ export class EventHolder<
     this.#events[eventName]!.handlers[handlerId] = handler!;
     const cnt = Object.keys(this.#events[eventName]!.handlers).length;
 
-    let logText = "Handler added ";
+    let logText = "Handler added";
     if (Object.keys(this.#events[eventName]!.handlers).length === 1) {
       this.#triggerThisEvent(
         "eventhandler-created",
@@ -363,6 +367,7 @@ export class EventHolder<
     const { eventId, handlers } =
       this.#getEventIdAndHandlersFromEventName(eventName);
     this.#runHandlers(eventId, handlers, this, ...args);
+    this.#propagateToLinks(eventName, ...args);
   }
 
   transferEvents(rawCmp: LetsRole.Component): void {
@@ -396,6 +401,37 @@ export class EventHolder<
     this.off(this.#getLinkedEventName(event, destination, triggeredEvent));
   }
 
+  propagateEventTo(destination: IEventHolder<any>, events: any[] = []) {
+    if (this.#getLinkIndex(destination) === -1) {
+      this.#links.push(destination);
+      events.forEach((eventBase) => {
+        if (!this.#events[eventBase]) {
+          this.on(eventBase, EMPTY_CB);
+        }
+      });
+    }
+  }
+
+  unpropagateEventTo(destination: IEventHolder<any>) {
+    const idx = this.#getLinkIndex(destination);
+    if (idx !== -1) {
+      this.#links.splice(idx, 1);
+    }
+  }
+
+  #getLinkIndex(destination: IEventHolder<any>) {
+    return this.#links.findIndex((d) => d.id() === destination.id());
+  }
+
+  #propagateToLinks(
+    eventName: EventType<AdditionalEvents>,
+    ...args: unknown[]
+  ): void {
+    this.#links.forEach((eventHolder) => {
+      eventHolder.trigger(eventName, ...args);
+    });
+  }
+
   #getLinkedEventName(
     event: EventType<AdditionalEvents>,
     destination: IEventHolder<any>,
@@ -404,36 +440,5 @@ export class EventHolder<
     return [event, "linkedTo", destination.id(), triggeredEvent].join(
       EVENT_SEP
     ) as EventType<AdditionalEvents>;
-  }
-
-  #operateAllEventsOn(
-    operation: "on" | "off",
-    dest: IEventHolder<any>,
-    suffix: string = ""
-  ): void {
-    const eventNameParts: Array<string> = ["", EVENT_SEP, "", suffix];
-    for (let eventBase in this.#events) {
-      if (!excludedEventId.includes(eventBase)) {
-        eventNameParts[0] = eventBase;
-        const event = this.#events[eventBase as EventType<AdditionalEvents>]!;
-        for (let eventLabel in event.handlers) {
-          eventNameParts[2] = eventLabel;
-          const handler = event.handlers[eventLabel];
-          if (operation === "on") {
-            dest.on(eventNameParts.join(""), handler);
-          } else {
-            dest.off(eventNameParts.join(""));
-          }
-        }
-      }
-    }
-  }
-
-  copyAllEventsTo(dest: IEventHolder<any>, suffix: string): void {
-    this.#operateAllEventsOn("on", dest, suffix);
-  }
-
-  uncopyAllEventsFrom(dest: IEventHolder<any>, suffix: string): void {
-    this.#operateAllEventsOn("off", dest, suffix);
   }
 }

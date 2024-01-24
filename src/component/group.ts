@@ -16,7 +16,6 @@ export class Group
   implements IGroup, IComponent, IEventHolder, IDataHolder
 {
   #id: string;
-  #eventSuffix: string;
   #sheet: ISheet;
   #components: Array<IComponent> = [];
 
@@ -27,23 +26,8 @@ export class Group
   ) {
     super([[id], [sheet, id]]);
     this.#id = id;
-    this.#eventSuffix = `:${id}`;
     this.#sheet = sheet;
     componentIds.forEach(this.add.bind(this));
-    this.on("eventhandler-added:__lre", this.#addEventToEveryMember.bind(this));
-    this.on(
-      "eventhandler-updated:__lre",
-      this.#addEventToEveryMember.bind(this)
-    );
-    this.on(
-      "eventhandler-removed:__lre",
-      this.#removeEventToEveryMember.bind(this)
-    );
-    this.on(
-      "eventhandler-disabled",
-      this.#disableEventToEveryMember.bind(this)
-    );
-    this.on("eventhandler-enabled", this.#enableEventToEveryMember.bind(this));
   }
 
   init(): this {
@@ -99,11 +83,11 @@ export class Group
     }
 
     if (component?.exists?.()) {
-      component.linkEventTo("update", this);
-      this.copyAllEventsTo(component, this.#eventSuffix);
+      component.propagateEventTo(this, ['update', 'click']);
       this.#components.push(component as IComponent);
       lre.trace(`Add a component to group ${this.#id}`);
       this.trigger("add", component);
+      this.trigger("update");
     } else {
       lre.warn(`Unable to add component to group ${this.#id}`);
     }
@@ -113,22 +97,19 @@ export class Group
 
   remove(cmp: LetsRole.ComponentID | IComponent): this {
     let cmpIndex: number = -1;
-    let component: ComponentSearchResult | IGroup = null;
 
     try {
       cmpIndex = this.#getCmpIndex(cmp);
-      if (cmpIndex !== -1) {
-        component = this.#getComponent(cmp);
-      }
     } catch (e) {
       lre.error(e);
     }
 
     if (cmpIndex !== -1) {
-      this.uncopyAllEventsFrom(component!, this.#eventSuffix);
       const removed = this.#components.splice(cmpIndex, 1);
+      removed[0].unpropagateEventTo(this);
       lre.trace(`Remove a component from group ${this.#id}`);
       this.trigger("remove", removed[0]);
+      this.trigger("update");
     } else {
       lre.warn(`Unable to remove component from group ${this.#id}`);
     }
@@ -335,33 +316,5 @@ export class Group
     }
 
     return this.#components.findIndex((c) => c.realId() === id);
-  }
-
-  #addEventToEveryMember(
-    _thisGroup: Group,
-    ...onArgs: [EventType<GroupEventsForComponent>, any, any?]
-  ) {
-    onArgs[0] += this.#eventSuffix;
-    this.#components.forEach((cmp) => cmp.on.apply(cmp, onArgs));
-  }
-  #removeEventToEveryMember(
-    _thisGroup: Group,
-    ...offArgs: [EventType<GroupEventsForComponent>, any?]
-  ) {
-    offArgs[0] += this.#eventSuffix;
-    this.#components.forEach((cmp) => cmp.off.apply(cmp, offArgs));
-  }
-
-  #disableEventToEveryMember(
-    _thisGroup: Group,
-    eventId: EventType<GroupEventsForComponent>
-  ) {
-    this.#components.forEach((cmp) => cmp.disableEvent(eventId));
-  }
-  #enableEventToEveryMember(
-    _thisGroup: Group,
-    eventId: EventType<GroupEventsForComponent>
-  ) {
-    this.#components.forEach((cmp) => cmp.enableEvent(eventId));
   }
 }
