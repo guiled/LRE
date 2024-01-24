@@ -26,6 +26,11 @@ type AttachToRawCallback<AdditionalEvents extends string> = (
   rawDest?: LetsRole.Component
 ) => void;
 
+type EventPropagationLink = {
+  link: IEventHolder<any>;
+  events: Array<EventType<any>>;
+};
+
 const excludedEventId: Array<EventType<any>> = [
   "eventhandler-added",
   "eventhandler-removed",
@@ -36,7 +41,7 @@ const excludedEventId: Array<EventType<any>> = [
   "eventhandler-destroyed",
 ];
 
-const EMPTY_CB = () => {}
+const EMPTY_CB = () => {};
 
 export class EventHolder<
   AdditionalEvents extends string = EventHolderDefaultEvents
@@ -50,7 +55,7 @@ export class EventHolder<
   #canceledEvents: Array<EventType<AdditionalEvents>> = [];
   #lastUpdateEventValue: LetsRole.ComponentValue = null;
   #attachToRaw: AttachToRawCallback<AdditionalEvents> | undefined;
-  #links: Array<IEventHolder<any>> = [];
+  #links: Array<EventPropagationLink> = [];
 
   constructor(
     holderId: string,
@@ -360,6 +365,7 @@ export class EventHolder<
 
       delete this.#events[eventName];
       this.#triggerThisEvent("eventhandler-destroyed", event, delegateId);
+      this.#links.map(this.#createDummyEventForPropagation.bind(this))
     }
   }
 
@@ -402,13 +408,13 @@ export class EventHolder<
   }
 
   propagateEventTo(destination: IEventHolder<any>, events: any[] = []) {
+    const propagationLink = {
+        link: destination,
+        events,
+      }
     if (this.#getLinkIndex(destination) === -1) {
-      this.#links.push(destination);
-      events.forEach((eventBase) => {
-        if (!this.#events[eventBase]) {
-          this.on(eventBase, EMPTY_CB);
-        }
-      });
+      this.#links.push(propagationLink);
+      this.#createDummyEventForPropagation(propagationLink);
     }
   }
 
@@ -419,8 +425,16 @@ export class EventHolder<
     }
   }
 
+  #createDummyEventForPropagation(link: EventPropagationLink) {
+    link.events.forEach((eventBase) => {
+      if (!this.#events[eventBase]) {
+        this.on(eventBase, EMPTY_CB);
+      }
+    });
+  }
+
   #getLinkIndex(destination: IEventHolder<any>) {
-    return this.#links.findIndex((d) => d.id() === destination.id());
+    return this.#links.findIndex((d) => d.link.id() === destination.id());
   }
 
   #propagateToLinks(
@@ -428,7 +442,7 @@ export class EventHolder<
     ...args: unknown[]
   ): void {
     this.#links.forEach((eventHolder) => {
-      eventHolder.trigger(eventName, ...args);
+      eventHolder.link.trigger(eventName, ...args);
     });
   }
 
