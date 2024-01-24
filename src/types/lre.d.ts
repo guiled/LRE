@@ -194,6 +194,9 @@ declare interface IEventHolder<
     destination: EventHolder<any, any>,
     triggeredEvent: string = event
   ): void;
+
+  propagateEventTo(destination: IEventHolder<any>, events: Array<EventType<any>>);
+  unpropagateEventTo(destination: IEventHolder<any>)
 }
 
 declare interface IDataHolder {
