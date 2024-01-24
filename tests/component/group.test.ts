@@ -159,6 +159,8 @@ describe("Component group basics", () => {
   });
   test("Add / remove components", () => {
     const group: Group = new Group("group1", sheet, ["cmp1"]);
+
+    const updateCb = jest.fn();
     expect(sheet.get).toBeCalledTimes(1);
     expect(group.count()).toBe(1);
     expect(group.includes("cmp1")).toBeTruthy();
@@ -169,10 +171,13 @@ describe("Component group basics", () => {
     const removeCb = jest.fn();
     group.on("add", addCb);
     group.on("remove", removeCb);
-    group.add("cmp2");
+    group.on("update", updateCb);
+    expect(updateCb).toBeCalledTimes(0);
 
+    group.add("cmp2");
     expect(sheet.get).toBeCalledTimes(2);
     expect(group.count()).toBe(2);
+    expect(updateCb).toBeCalledTimes(1);
     expect(addCb).toBeCalledTimes(1);
 
     const cmp3 = sheet.get("cmp3")! as IComponent;
@@ -184,6 +189,7 @@ describe("Component group basics", () => {
     expect(group.contains(cmp3)).toBeFalsy();
     expect(group.has(cmp3)).toBeFalsy();
     group.add(cmp3);
+    expect(updateCb).toBeCalledTimes(2);
     expect(sheet.get).toBeCalledTimes(0);
     expect(group.count()).toBe(3);
     expect(addCb).toBeCalledTimes(2);
@@ -193,15 +199,18 @@ describe("Component group basics", () => {
     expect(group.includes(cmp3)).toBeTruthy();
     expect(group.contains(cmp3)).toBeTruthy();
     expect(group.has(cmp3)).toBeTruthy();
-
+    
     (sheet.get as jest.Mock).mockClear();
+    updateCb.mockClear();
     group.add("cmp3");
     expect(group.count()).toBe(3);
+    expect(updateCb).toBeCalledTimes(0);
     expect(addCb).toBeCalledTimes(2);
 
     expect(removeCb).toBeCalledTimes(0);
     group.remove(cmp3);
     expect(group.count()).toBe(2);
+    expect(updateCb).toBeCalledTimes(1);
     expect(removeCb).toBeCalledTimes(1);
     group.remove(cmp3);
     expect(removeCb).toBeCalledTimes(1);
@@ -209,17 +218,25 @@ describe("Component group basics", () => {
     group.remove("cmp2");
     expect(group.count()).toBe(1);
     expect(removeCb).toBeCalledTimes(2);
+    expect(updateCb).toBeCalledTimes(2);
 
+    updateCb.mockClear();
     group.add(MockServer.UNKNOWN_CMP_ID);
     expect(group.count()).toBe(1);
+    expect(updateCb).toBeCalledTimes(0);
 
     group.add(sheet.get(MockServer.UNKNOWN_CMP_ID)! as IComponent);
     expect(group.count()).toBe(1);
+    expect(updateCb).toBeCalledTimes(0);
     expect(group.includes(MockServer.NON_EXISTING_CMP_ID)).toBeFalsy();
   });
 
   test("Large group", () => {
-    const group: Group = new Group("group1", sheet, ["cmp1", "cmp2", "cmp3"]);
+    const group: Group = new Group(context, "group1", sheet, [
+      "cmp1",
+      "cmp2",
+      "cmp3",
+    ]);
     expect(group.count()).toBe(3);
     expect(sheet.get).toBeCalledTimes(3);
   });
@@ -252,8 +269,37 @@ describe("Component group basics", () => {
 });
 
 describe("Event attached to group are attached to all items", () => {
+  test("Update events are linked between component and group", () => {
+    const group: Group = new Group("group1", sheet, ["cmp1", "cmp2"]);
+    const updateFn = jest.fn();
+    group.on("update", updateFn);
+    const cmp1: MockedComponent = sheet.raw().get("cmp1") as MockedComponent;
+    const cmp2: MockedComponent = sheet.raw().get("cmp2") as MockedComponent;
+    expect(updateFn).not.toBeCalled();
+
+    cmp1._trigger("update");
+    expect(updateFn).toBeCalledTimes(1);
+    cmp2._trigger("update");
+    expect(updateFn).toBeCalledTimes(2);
+
+    const cmp3: MockedComponent = sheet.raw().get("cmp3") as MockedComponent;
+    group.add("cmp3");
+    updateFn.mockClear();
+    cmp3._trigger("update");
+    expect(updateFn).toBeCalledTimes(1);
+
+    group.remove("cmp2");
+    updateFn.mockClear();
+    cmp2.value(4242);
+    expect(updateFn).toBeCalledTimes(0);
+  });
+
   test("Add and remove event", () => {
-    const group: Group = new Group("group1", sheet, ["cmp1", "cmp2", "cmp3"]);
+    const group: Group = new Group("group1", sheet, [
+      "cmp1",
+      "cmp2",
+      "cmp3",
+    ]);
     const clickFn = jest.fn();
     group.on("click:label", clickFn);
     const cmp1: MockedComponent = sheet.raw().get("cmp1") as MockedComponent;
@@ -439,5 +485,20 @@ describe("Group get values", () => {
     expect(sheet.get("cmp1")!.visible()).toBeTruthy();
     expect(sheet.get("cmp2")!.visible()).toBeFalsy();
     expect(sheet.get("cmp3")!.visible()).toBeFalsy();
+  });
+});
+
+describe("Group and context", () => {
+  test("Group value is logged, not components", () => {
+    const grp = new Group("grp", sheet, ["a", "b", "c"]);
+    context.setMode("virtual");
+    grp.value();
+    context.setMode("real");
+    context.resetAccessLog();
+    const accessLog = context.getPreviousAccessLog("value");
+    expect(accessLog).toContain("grp");
+    expect(accessLog).not.toContain("a");
+    expect(accessLog).not.toContain("b");
+    expect(accessLog).not.toContain("c");
   });
 });

@@ -14,6 +14,7 @@ global.lre = new LRE(modeHandlerMock);
 type TestedEvents = "test" | "unused" | "click" | "update";
 
 class Dummy extends EventHolder<TestedEvents> {
+  __id: string;
   constructor(protected _raw: LetsRole.Component, subRaw?: LetsRole.Component) {
     super(
       _raw.id(),
@@ -45,6 +46,7 @@ class Dummy extends EventHolder<TestedEvents> {
         }
       }
     );
+    this.__id = _raw.id();
   }
 
   raw(): LetsRole.Component {
@@ -887,44 +889,171 @@ describe("Event holder triggers events", () => {
 describe("Copy events from a component to an other", () => {
   let source: Dummy;
   let dest: Dummy;
+  let dest2: Dummy;
   let rawSource: MockedComponent;
   let rawDest: MockedComponent;
+  let rawDest2: MockedComponent;
+  let clickCbs: Array<jest.Mock> = [];
 
-  
-    beforeEach(() => {
-      const sheet = MockSheet({ id: "main" });
-      rawSource = MockComponent({
-        id: "123",
-        sheet,
-      });
-      source = new Dummy(rawSource, undefined);
-      rawDest = MockComponent({
-        id: "123",
-        sheet,
-      });
-      dest = new Dummy(rawDest, undefined);
+  beforeEach(() => {
+    const sheet = MockSheet({ id: "main" });
+    rawSource = MockComponent({
+      id: "123",
+      sheet,
     });
+    source = new Dummy(rawSource, undefined);
+    rawDest = MockComponent({
+      id: "456",
+      sheet,
+    });
+    dest = new Dummy(rawDest, undefined);
+    rawDest2 = MockComponent({
+      id: "789",
+      sheet,
+    });
+    dest2 = new Dummy(rawDest2, undefined);
+    for (let i = 0; i < 6; i++) {
+      clickCbs[i] = jest.fn();
+    }
+  });
 
-  test("Copy / remove", () => {
+  test("Link / unlink", () => {
     const click1 = jest.fn();
     const click2 = jest.fn();
-    source.on("click", click1);
-    source.on("click:second", click2);
+    dest.on("click", click1);
+    dest.on("click:second", click2);
+
+    rawDest._trigger("click");
+    expect(click1).toBeCalledWith(dest);
+    expect(click2).toBeCalledWith(dest);
+
+    click1.mockClear();
+    click2.mockClear();
     rawSource._trigger("click");
-    expect(click1).toBeCalledTimes(1);
-    expect(click2).toBeCalledTimes(1);
-    rawDest._trigger("click");
-    expect(click1).toBeCalledTimes(1);
-    expect(click2).toBeCalledTimes(1);
+    expect(click1).not.toBeCalled();
+    expect(click2).not.toBeCalled();
 
-    source.copyAllEventsTo(dest, ":copied");
-    rawDest._trigger("click");
-    expect(click1).toBeCalledTimes(2);
-    expect(click2).toBeCalledTimes(2);
+    source.propagateEventTo(dest, ["click"]);
 
-    source.uncopyAllEventsFrom(dest, ":copied");
-    rawDest._trigger("click");
-    expect(click1).toBeCalledTimes(2);
-    expect(click2).toBeCalledTimes(2);
+    click1.mockClear();
+    click2.mockClear();
+    rawSource._trigger("click");
+    expect(click1).toBeCalledWith(dest);
+    expect(click2).toBeCalledWith(dest);
+    
+    const customCb = jest.fn();
+    const customCb2 = jest.fn();
+    dest.on("test", customCb);
+    dest.on("test:hop", customCb2);
+    source.trigger("test");
+    expect(customCb).toBeCalledTimes(1);
+    expect(customCb2).toBeCalledTimes(1);
+    
+    source.trigger("test:hop");
+    expect(customCb).toBeCalledTimes(1);
+    expect(customCb2).toBeCalledTimes(2);
+    
+    source.unpropagateEventTo(dest);
+
+    const click3 = jest.fn();
+    source.on("click", click3);
+    
+    click1.mockClear();
+    click2.mockClear();
+    rawSource._trigger("click");
+    expect(click1).toBeCalledTimes(0);
+    expect(click2).toBeCalledTimes(0);
+    expect(click3).toBeCalledWith(source);
+    
+    source.propagateEventTo(dest, ['click']);
+    
+    click3.mockClear();
+    rawSource._trigger("click");
+    expect(click1).toBeCalledWith(dest);
+    expect(click2).toBeCalledWith(dest);
+    expect(click3).toBeCalledWith(source);
+    
+    const click4 = jest.fn();
+    source.on("click:test", click4);
+    click1.mockClear();
+    click2.mockClear();
+    click3.mockClear();
+    rawSource._trigger("click");
+    expect(click1).toBeCalledWith(dest);
+    expect(click2).toBeCalledWith(dest);
+    expect(click3).toBeCalledWith(source);
+    expect(click4).toBeCalledWith(source);
+    
+    const click5 = jest.fn();
+    dest2.on("click", click5);
+    
+    source.propagateEventTo(dest, ['click']);
+    source.propagateEventTo(dest2, ['click']);
+    
+    
+    click1.mockClear();
+    click2.mockClear();
+    click3.mockClear();
+    click4.mockClear();
+    rawSource._trigger("click");
+    expect(click1).toBeCalledWith(dest);
+    expect(click2).toBeCalledWith(dest);
+    expect(click3).toBeCalledWith(source);
+    expect(click4).toBeCalledWith(source);
+  });
+
+
+  test('Propagate raw event to multiple dest', () => {
+    dest.on("click", clickCbs[0]);
+    dest.on("click:second", clickCbs[1]);
+    dest2.on('click', clickCbs[2]);
+    dest2.on('click:third', clickCbs[3]);
+    source.on("click", clickCbs[4]);
+    source.on("click:second", clickCbs[5]);
+
+    source.propagateEventTo(dest);
+    source.propagateEventTo(dest);
+    source.propagateEventTo(dest2);
+
+    rawSource._trigger("click");
+    expect(clickCbs[0]).toBeCalledTimes(1);
+    expect(clickCbs[1]).toBeCalledTimes(1);
+    expect(clickCbs[1]).toBeCalledWith(dest);
+    expect(clickCbs[2]).toBeCalledWith(dest2);
+    expect(clickCbs[3]).toBeCalledWith(dest2);
+    expect(clickCbs[4]).toBeCalledWith(source);
+    expect(clickCbs[5]).toBeCalledWith(source);
+  })
+
+  test('Propagate custom event to multiple dest', () => {
+    dest.on("test", clickCbs[0]);
+    dest.on("test:second", clickCbs[1]);
+    dest2.on('test', clickCbs[2]);
+    dest2.on('test:third', clickCbs[3]);
+    source.on("test", clickCbs[4]);
+    source.on("test:second", clickCbs[5]);
+
+    source.propagateEventTo(dest);
+    source.propagateEventTo(dest);
+    source.propagateEventTo(dest2);
+
+    source.trigger("test");
+    expect(clickCbs[0]).toBeCalledTimes(1);
+    expect(clickCbs[1]).toBeCalledTimes(1);
+    expect(clickCbs[1]).toBeCalledWith(dest);
+    expect(clickCbs[2]).toBeCalledWith(dest2);
+    expect(clickCbs[3]).toBeCalledWith(dest2);
+    expect(clickCbs[4]).toBeCalledWith(source);
+    expect(clickCbs[5]).toBeCalledWith(source);
+
+    jest.clearAllMocks();
+    source.trigger("test:second");
+    expect(clickCbs[0]).not.toBeCalled();
+    expect(clickCbs[1]).toBeCalledTimes(1);
+    expect(clickCbs[1]).toBeCalledWith(dest);
+    expect(clickCbs[2]).not.toBeCalled();
+    expect(clickCbs[3]).not.toBeCalled();
+    expect(clickCbs[4]).not.toBeCalled();
+    expect(clickCbs[5]).toBeCalledWith(source);
   })
 });
