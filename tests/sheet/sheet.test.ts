@@ -660,5 +660,7 @@ describe("Sheet get component", () => {
 
     const grp4 = sheet1.get(`grp${MockServer.UNKNOWN_CMP_ID}`);
     expect(grp4).toBe(grp);
+
+    expect(() => sheet1.group("cmp2")).toThrowError();
   });
 });
