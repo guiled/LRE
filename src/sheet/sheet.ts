@@ -431,7 +431,7 @@ export class Sheet
         `Unable to create group ${groupId}, a component already exists with this id.`
       );
     }
-    const grp = new Group(groupId, this, componentIds);
+    const grp = new Group(this.#context, groupId, this, componentIds);
     this.#componentCache.set(groupId, grp);
 
     return grp;

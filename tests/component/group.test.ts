@@ -10,9 +10,9 @@ import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 let sheet: Sheet;
 global.lre = new LRE(modeHandlerMock);
-initLetsRole();
 
 beforeEach(() => {
+  initLetsRole();
   const server = new MockServer();
   const rawSheet = MockSheet({
     id: "main",
@@ -58,7 +58,7 @@ beforeEach(() => {
 
 describe("Component group is like a component", () => {
   test("Group construction", () => {
-    const group: Group = new Group("group1", sheet);
+    const group: Group = new Group(context, "group1", sheet);
     expect(sheet.get).not.toBeCalled();
     expect(group.count()).toBe(0);
     expect(group.id()).toBe("group1");
@@ -76,7 +76,7 @@ describe("Component group is like a component", () => {
   });
 
   test("Group has LRE component methods", () => {
-    const group: Group = new Group("group1", sheet);
+    const group: Group = new Group(context, "group1", sheet);
     const cmp1 = sheet.get("cmp1")! as IComponent;
     const cmp2 = sheet.get("cmp2")! as IComponent;
 
@@ -154,11 +154,11 @@ describe("Component group is like a component", () => {
 
 describe("Component group basics", () => {
   test("New group is empty", () => {
-    const group: Group = new Group("group1", sheet);
+    const group: Group = new Group(context, "group1", sheet);
     expect(group.count()).toBe(0);
   });
   test("Add / remove components", () => {
-    const group: Group = new Group("group1", sheet, ["cmp1"]);
+    const group: Group = new Group(context, "group1", sheet, ["cmp1"]);
 
     const updateCb = jest.fn();
     expect(sheet.get).toBeCalledTimes(1);
@@ -249,7 +249,7 @@ describe("Component group basics", () => {
   ])(
     "Group add / remove throws error with $desc",
     ({ val: invalidAddedElement }) => {
-      const group: Group = new Group("group1", sheet);
+      const group: Group = new Group(context, "group1", sheet);
       (lre.error as jest.Mock).mockClear();
       /* @ts-expect-error */
       group.add(invalidAddedElement);
@@ -270,7 +270,7 @@ describe("Component group basics", () => {
 
 describe("Event attached to group are attached to all items", () => {
   test("Update events are linked between component and group", () => {
-    const group: Group = new Group("group1", sheet, ["cmp1", "cmp2"]);
+    const group: Group = new Group(context, "group1", sheet, ["cmp1", "cmp2"]);
     const updateFn = jest.fn();
     group.on("update", updateFn);
     const cmp1: MockedComponent = sheet.raw().get("cmp1") as MockedComponent;
@@ -295,7 +295,7 @@ describe("Event attached to group are attached to all items", () => {
   });
 
   test("Add and remove event", () => {
-    const group: Group = new Group("group1", sheet, [
+    const group: Group = new Group(context, "group1", sheet, [
       "cmp1",
       "cmp2",
       "cmp3",
@@ -342,7 +342,7 @@ describe("Event attached to group are attached to all items", () => {
   });
 
   test("Events are added to newly added components", () => {
-    const group: Group = new Group("group1", sheet);
+    const group: Group = new Group(context, "group1", sheet);
     const clickFn = jest.fn();
     group.on("click:label", clickFn);
 
@@ -360,7 +360,7 @@ describe("Event attached to group are attached to all items", () => {
 
 describe("Group get values", () => {
   test("Get/Set Values", () => {
-    const group = new Group("group2", sheet, ["cmp1", "cmp2", "cmp3"]);
+    const group = new Group(context, "group2", sheet, ["cmp1", "cmp2", "cmp3"]);
     expect(group.value()).toMatchObject({
       cmp1: "val1",
       cmp2: "val2",
@@ -389,7 +389,7 @@ describe("Group get values", () => {
   });
 
   test("Get/Set virtual values and rawValue", () => {
-    const group = new Group("group2", sheet, ["cmp1", "cmp2", "cmp3"]);
+    const group = new Group(context, "group2", sheet, ["cmp1", "cmp2", "cmp3"]);
     expect(group.virtualValue()).toMatchObject({
       cmp1: null,
       cmp2: null,
@@ -417,7 +417,7 @@ describe("Group get values", () => {
   });
 
   test("Get/Set Texts", () => {
-    const group = new Group("group2", sheet, ["cmp1", "cmp2", "cmp3"]);
+    const group = new Group(context, "group2", sheet, ["cmp1", "cmp2", "cmp3"]);
     expect(group.text()).toMatchObject({
       cmp1: "txt1",
       cmp2: "txt2",
@@ -440,14 +440,14 @@ describe("Group get values", () => {
   });
 
   test("getClasses gives classes that are on ALL components", () => {
-    const group = new Group("group2", sheet, ["cmp1", "cmp2", "cmp3"]);
+    const group = new Group(context, "group2", sheet, ["cmp1", "cmp2", "cmp3"]);
     expect(group.getClasses().sort()).toEqual(["a", "b"].sort());
     sheet.get("cmp1")!.addClass("d");
     expect(group.getClasses().sort()).toEqual(["a", "b", "d"].sort());
   });
 
   test("visible get / set", () => {
-    const group = new Group("group2", sheet, ["cmp1", "cmp2", "cmp3"]);
+    const group = new Group(context, "group2", sheet, ["cmp1", "cmp2", "cmp3"]);
     expect(group.visible()).toBeTruthy();
     sheet.get("cmp1")!.hide();
     expect(group.visible()).toBeFalsy();
@@ -490,7 +490,7 @@ describe("Group get values", () => {
 
 describe("Group and context", () => {
   test("Group value is logged, not components", () => {
-    const grp = new Group("grp", sheet, ["a", "b", "c"]);
+    const grp = new Group(context, "grp", sheet, ["a", "b", "c"]);
     context.setMode("virtual");
     grp.value();
     context.setMode("real");

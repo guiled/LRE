@@ -13,13 +13,15 @@ type GroupEvents = GroupEventsForComponent | GroupSpecificEvent;
 
 export class Group
   extends Mixin(EventHolder, DataHolder)<GroupEvents>
-  implements IGroup, IComponent, IEventHolder, IDataHolder
+  implements IGroup
 {
   #id: string;
   #sheet: ISheet;
   #components: Array<IComponent> = [];
+  #context: ProxyModeHandler;
 
   constructor(
+    context: ProxyModeHandler,
     id: string,
     sheet: ISheet,
     componentIds: Array<LetsRole.ComponentID> = []
@@ -27,6 +29,7 @@ export class Group
     super([[id], [sheet, id]]);
     this.#id = id;
     this.#sheet = sheet;
+    this.#context = context;
     componentIds.forEach(this.add.bind(this));
   }
 
@@ -221,10 +224,15 @@ export class Group
   }
 
   value(_newValue?: LetsRole.ComponentValue): void | LetsRole.ViewData {
-    return this.#getSet.apply(
+    this.#context.logAccess("value", this.#id);
+    this.#context.disableAccessLog();
+    const result = this.#getSet.apply(
       this,
       ["value"].concat(Array.from(arguments)) as any
     );
+    this.#context.enableAccessLog();
+
+    return result;
   }
 
   virtualValue(_newValue?: any): void | LetsRole.ViewData {
