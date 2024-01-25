@@ -1,4 +1,5 @@
 import { DataHolder } from "../dataholder";
+import { DataProvider } from "../dataprovider";
 import { EventHolder } from "../eventholder";
 import { dynamicSetter } from "../globals/decorators/dynamicSetter";
 import { Mixin } from "../mixin";
@@ -12,7 +13,7 @@ type GroupSpecificEvent = (typeof groupSpecificEvent)[number];
 type GroupEvents = GroupEventsForComponent | GroupSpecificEvent;
 
 export class Group
-  extends Mixin(EventHolder, DataHolder)<GroupEvents>
+  extends Mixin(EventHolder, DataHolder, DataProvider)<GroupEvents>
   implements IGroup
 {
   #id: string;
@@ -26,7 +27,7 @@ export class Group
     sheet: ISheet,
     componentIds: Array<LetsRole.ComponentID> = []
   ) {
-    super([[id], [sheet, id]]);
+    super([[id], [sheet, id], [(...args: any[]) => this.#value(...args)]]);
     this.#id = id;
     this.#sheet = sheet;
     this.#context = context;
@@ -86,7 +87,7 @@ export class Group
     }
 
     if (component?.exists?.()) {
-      component.propagateEventTo(this, ['update', 'click']);
+      component.propagateEventTo(this, ["update", "click"]);
       this.#components.push(component as IComponent);
       lre.trace(`Add a component to group ${this.#id}`);
       this.trigger("add", component);
@@ -223,7 +224,7 @@ export class Group
     return this;
   }
 
-  value(_newValue?: LetsRole.ComponentValue): void | LetsRole.ViewData {
+  #value(_newValue?: LetsRole.ComponentValue): void | LetsRole.ViewData {
     this.#context.logAccess("value", this.#id);
     this.#context.disableAccessLog();
     const result = this.#getSet.apply(
@@ -288,9 +289,6 @@ export class Group
         cmp?.[type](newValue![cmpId] as any);
       });
     } else {
-      if (typeof newValue === "function") {
-        //valueToSet = loggedCall(newValue as () => any);
-      }
       this.#components.forEach((cmp) => cmp?.[type](newValue as any));
     }
   }
