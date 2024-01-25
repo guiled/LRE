@@ -211,7 +211,7 @@ declare interface IDataHolder {
 
 declare interface IDataProvider {
   provider: boolean;
-  value(): LetsRole.ComponentValue | void;
+  value(newValue?: LetsRole.ComponentValue): LetsRole.ViewData | void;
   sort(): IDataProvider;
 }
 
