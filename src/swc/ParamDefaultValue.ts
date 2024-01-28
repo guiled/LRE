@@ -22,6 +22,7 @@ import identifier from "./node/identifier";
 import numericliteral from "./node/literal/numericliteral";
 import undefinedidentifier from "./node/undefinedidentifier";
 import returnstmt from "./node/statement/returnstmt";
+import onevariable from "./node/declaration/onevariable";
 
 const ARGS = "_arg";
 export function hasPropWithValue(o: ObjectPattern): boolean {
@@ -178,41 +179,32 @@ class DefaultParameter extends Visitor {
     span: Span,
     init: Expression
   ): VariableDeclaration {
-    return {
-      type: "VariableDeclaration",
+    return onevariable({
       span,
       kind: "const",
-      declare: false,
-      declarations: [
-        {
-          type: "VariableDeclarator",
-          span,
-          definite: false,
-          id: {
-            type: "ArrayPattern",
-            span,
-            elements: params.map((p) => {
-              if (p.type === "Identifier" && p.optional) {
-                return {
-                  type: "AssignmentPattern",
-                  span,
-                  left: {
-                    ...p,
-                    optional: false,
-                  },
-                  right: undefinedidentifier({
-                    span,
-                  }),
-                };
-              }
-              return p;
-            }),
-            optional: false,
-          },
-          init,
-        },
-      ],
-    };
+      init,
+      id: {
+        type: "ArrayPattern",
+        span,
+        elements: params.map((p) => {
+          if (p.type === "Identifier" && p.optional) {
+            return {
+              type: "AssignmentPattern",
+              span,
+              left: {
+                ...p,
+                optional: false,
+              },
+              right: undefinedidentifier({
+                span,
+              }),
+            };
+          }
+          return p;
+        }),
+        optional: false,
+      },
+    });
   }
 
   visitArrowFunctionExpression(e: ArrowFunctionExpression): Expression {
