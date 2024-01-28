@@ -1,4 +1,4 @@
-//region LRE 6.12
+//region LRE 6.13
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -1445,6 +1445,43 @@ function lre(_arg) {
                 result[entryId] = cb(entryData, entryId);
             });
             return result;
+        };
+
+        this.setSorter = function (cmp, column) {
+          if (typeof cmp === "string") {
+            cmp = this.sheet().get(cmp);
+          }
+          cmp.on("click", function (cmp) {
+            const order = (cmp.data("order") || "desc") === "desc" ? "asc" : "desc";
+            cmp.data("order", order, true);
+            let inf = -1, sup = 1;
+            if (order === "desc") {
+              inf = 1;
+              sup = -1;
+            }
+            const vals = this.value();
+            const keys = Object.keys(vals);
+            if (keys.length === 0) {
+              return;
+            }
+            let sorter = function (key1, key2) {
+              return vals[key1][column] < vals[key2][column] ? inf : (vals[key1][column] > vals[key2][column] ? sup : 0);
+            };
+            if (!vals[keys[0]].hasOwnProperty(column)) {
+              if (this.find(keys[0].find(column).exists())) {
+                sorter = function (key1, key2) {
+                  return vals[key1][column] < vals[key2][column] ? inf : (vals[key1][column] > vals[key2][column] ? sup : 0);
+                };
+              } else {
+                return;
+              }
+            }
+            const newVals = {};
+            keys.sort(sorter).forEach(function (k) {
+              newVals[k] = vals[k];
+            });
+            this.value(newVals);
+          }.bind(this))
         };
     };
 
