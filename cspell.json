@@ -8,13 +8,20 @@
     "build/**",
     "jest.config.ts",
     "src/swc/**",
+    "lre.js",
+    "lre_mig.js",
+    "lremodulaire.js",
+    "lre_test.js",
+    "todo"
   ],
   "words": [
     "autonum",
+    "Cacheable",
     "cmps",
     "cntr",
     "databatcher",
     "dataholder",
+    "dataprovider",
     "endregion",
     "eventhandler",
     "eventholder",
@@ -33,6 +40,11 @@
     "reml",
     "rerolln",
     "uncancel",
+    "uncopy",
+    "unpropagate",
+    "valclick",
+    "valselect",
+    "valunselect",
     "virtualcall"
   ],
   "flagWords": []

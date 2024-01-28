@@ -21,7 +21,7 @@ type ComponentAttachedToComponent = Partial<
 
 export const dynamicSetter = function <
   This extends ComponentCommon,
-  TValue extends LetsRole.ComponentValue | (() => LetsRole.ComponentValue),
+  TValue extends LetsRole.ComponentValue | IDataProvider | LetsRole.Choices | (() => LetsRole.ComponentValue | LetsRole.Choices),
   Return
 >(
   target: (this: This, newValue?: TValue) => Return,
@@ -38,7 +38,18 @@ export const dynamicSetter = function <
         eventLogs,
         context as ClassMethodDecoratorContext
       );
-      if (typeof newValue === "function") {
+      if ((newValue as IDataProvider).provider) {
+        lre.trace(
+          `Add dynamic setter for ${this.realId()} on ${context.name as string}`
+        );
+        const newSetter = (): any => {
+          const valueToSet = loggedCall((newValue as IDataProvider).value as () => TValue);
+          const newEventLogs = handleAccessLog.call(this, eventLogs, newSetter);
+          Object.assign(eventLogs, newEventLogs);
+          return target.call(this, valueToSet);
+        };
+        return newSetter();
+      } else if (typeof newValue === "function") {
         lre.trace(
           `Add dynamic setter for ${this.realId()} on ${context.name as string}`
         );
