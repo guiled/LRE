@@ -10,6 +10,7 @@
     "@types/jest": "^29.5.2",
     "@types/node": "^18.7.14",
     "colors": "^1.4.0",
+    "cspell": "^8.3.0",
     "diff": "^5.1.0",
     "esbuild": "^0.15.3",
     "eslint": "^8.23.0",
