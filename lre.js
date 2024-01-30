@@ -1451,6 +1451,7 @@ function lre(_arg) {
           if (typeof cmp === "string") {
             cmp = this.sheet().get(cmp);
           }
+          cmp.addClass("clickable");
           cmp.on("click", function (cmp) {
             const order = (cmp.data("order") || "desc") === "desc" ? "asc" : "desc";
             cmp.data("order", order, true);
