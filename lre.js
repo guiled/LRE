@@ -1448,42 +1448,50 @@ function lre(_arg) {
         };
 
         this.setSorter = function (cmp, column) {
-          if (typeof cmp === "string") {
-            cmp = this.sheet().get(cmp);
-          }
-          cmp.addClass("clickable");
-          cmp.on("click", function (cmp) {
-            const order = (cmp.data("order") || "desc") === "desc" ? "asc" : "desc";
-            cmp.data("order", order, true);
-            let inf = -1, sup = 1;
-            if (order === "desc") {
-              inf = 1;
-              sup = -1;
+            if (typeof cmp === "string") {
+              cmp = this.sheet().get(cmp);
             }
-            const vals = this.value();
-            const keys = Object.keys(vals);
-            if (keys.length === 0) {
-              return;
-            }
-            let sorter = function (key1, key2) {
-              return vals[key1][column] < vals[key2][column] ? inf : (vals[key1][column] > vals[key2][column] ? sup : 0);
-            };
-            if (!vals[keys[0]].hasOwnProperty(column)) {
-              if (this.find(keys[0].find(column).exists())) {
-                sorter = function (key1, key2) {
-                  return vals[key1][column] < vals[key2][column] ? inf : (vals[key1][column] > vals[key2][column] ? sup : 0);
-                };
-              } else {
+            cmp.addClass("clickable");
+            cmp.on("click", function (cmp) {
+              const order = (cmp.data("order") || "desc") === "desc" ? "asc" : "desc";
+              cmp.data("order", order, true);
+              let inf = -1, sup = 1;
+              if (order === "desc") {
+                inf = 1;
+                sup = -1;
+              }
+              const vals = this.value();
+              const keys = Object.keys(vals);
+              if (keys.length === 0) {
                 return;
               }
-            }
-            const newVals = {};
-            keys.sort(sorter).forEach(function (k) {
-              newVals[k] = vals[k];
-            });
-            this.value(newVals);
-          }.bind(this))
-        };
+              const getVal = (function (key) {
+                let value = vals[key][column];
+                if (typeof value === "undefined") {
+                    value = false;
+                    const entry1 = this.find(key);
+                    if (entry1) {
+                      const col1 = entry1.find(column);
+                      if (col1.exists()) {
+                        value = col1.value();
+                      }
+                    }
+                }
+                return value;
+              }).bind(this);
+              let sorter = function (key1, key2) {
+                let val1 = getVal(key1);
+                let val2 = getVal(key2);
+                
+                return val1 < val2 ? inf : (val1 > val2 ? sup : 0);
+              };
+              const newVals = {};
+              keys.sort(sorter).forEach(function (k) {
+                newVals[k] = vals[k];
+              });
+              this.value(newVals);
+            }.bind(this))
+          };
     };
 
     /** * * * * * * * * * * * * * * * * * * * * * *
