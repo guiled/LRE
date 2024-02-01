@@ -1466,23 +1466,20 @@ function lre(_arg) {
                 return;
               }
               const getVal = (function (key) {
-                let value = vals[key][column];
-                if (typeof value === "undefined") {
-                    value = false;
-                    const entry1 = this.find(key);
-                    if (entry1) {
-                      const col1 = entry1.find(column);
-                      if (col1.exists()) {
-                        value = col1.value();
-                      }
-                    }
+                if (vals[key] && vals[key].hasOwnProperty(column)) {
+                  return vals[key][column];
+                } else {
+                  const col = this.find(key + '.' + column, true);
+                  if (col && col.id() &&col.exists()) {
+                    return col.value();
+                  }
                 }
-                return value;
+                return '';
               }).bind(this);
               let sorter = function (key1, key2) {
                 let val1 = getVal(key1);
                 let val2 = getVal(key2);
-                
+
                 return val1 < val2 ? inf : (val1 > val2 ? sup : 0);
               };
               const newVals = {};
