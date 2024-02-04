@@ -8,10 +8,9 @@ import { overloadTables } from "./tables";
 
 export const bootstrap = (): ProxyModeHandler => {
   const ctx = new Context();
-  // @ts-ignore Define isNaN because it is missing in Let's Role
+  // @ts-expect-error Define isNaN because it is missing in Let's Role
   isNaN = globals.isNaN;
 
-  // @ts-ignore Define structuredClone because it is missing in Let's Role
   structuredClone = globals.structuredClone;
 
   lastException = null;
@@ -25,10 +24,9 @@ export const bootstrap = (): ProxyModeHandler => {
   lre = new LRE(ctx);
   wait = registerLreWait(ctx, wait);
   Bindings = registerLreBindings(ctx, Bindings);
-  /* @ts-ignore-error */
   RollBuilder = registerLreRollBuilder(ctx, RollBuilder);
 
-  // @ts-ignore Overload console for some edge cases like throw new Error changed into console.error
+  // @ts-expect-error Overload console for some edge cases like throw new Error changed into console.error
   console = {
     log: lre.log,
     error: lre.error,
