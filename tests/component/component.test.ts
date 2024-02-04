@@ -311,7 +311,7 @@ describe("Component get and set value", () => {
     const newVal = "44";
     expect(updateEvent).not.toBeCalled();
     cmp.value(newVal);
-    expect(updateEvent).toBeCalled();
+    expect(updateEvent).toBeCalledWith(cmp);
     expect(cmp.value()).toBe(newVal);
     expect(sheet.getPendingData(cmp.id())).toBe(newVal);
     itHasWaitedEverything();

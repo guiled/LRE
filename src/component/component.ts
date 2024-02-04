@@ -35,14 +35,18 @@ type ClassChangeApply = {
   removed: (...args: any[]) => any;
 };
 
-
 export class Component<
     TypeValue extends LetsRole.ComponentValue = LetsRole.ComponentValue,
     AdditionalEvents extends string = LetsRole.EventType
   >
-  extends Mixin(EventHolder, HasRaw, DataHolder)<
-    ThisComponentEventTypes<AdditionalEvents>,
-    LetsRole.Component
+  extends (Mixin(EventHolder, HasRaw<LetsRole.Component>, DataHolder) as new <
+    SubTypeEventHolder extends string
+  >(
+    ...args: any
+  ) => IEventHolder<SubTypeEventHolder> &
+    InstanceType<ReturnType<typeof HasRaw<LetsRole.Component>>> &
+    InstanceType<ReturnType<typeof DataHolder>>)<
+    ThisComponentEventTypes<AdditionalEvents>
   >
   implements
     Omit<
@@ -75,7 +79,7 @@ export class Component<
     super([
       [
         /* eventHolder */ realId,
-        (rawCmp: LetsRole.Component, event: EventDef): EventHolder => {
+        (rawCmp: LetsRole.Component, event: EventDef): IEventHolder => {
           let idToFind: string = "";
 
           if (event.delegated && rawCmp.index()) {
@@ -85,9 +89,9 @@ export class Component<
           }
 
           if (idToFind !== "") {
-            return this.find(idToFind) as unknown as EventHolder;
+            return this.find(idToFind) as unknown as IEventHolder;
           }
-          return this as EventHolder;
+          return this as IEventHolder;
         },
         (
           event: EventDef,
@@ -345,5 +349,4 @@ export class Component<
     };
     this.#classChangesApply[action](className);
   }
-
 }

@@ -35,6 +35,7 @@
       "node",
       "./src/types/types",
       "./src/types/lre",
+      "./src/types/mixin",
       "jest",
     ], /* Specify type package names to be included without being referenced in a source file. */
     // "allowUmdGlobalAccess": true,                     /* Allow accessing UMD globals from modules. */

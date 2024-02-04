@@ -23,7 +23,7 @@ export class Choice extends Component<LetsRole.ComponentValue, ChoiceEvents> {
     } catch (e) {
       lre.error(`[Choice] Unable to get ${realId} value. ${e}`);
     }
-    this.on("update:checkChanges", this.#checkChanges);
+    this.on("update:checkChanges", this.#checkChanges.bind(this));
   }
 
   #checkChanges(choice: Component) {
@@ -40,6 +40,9 @@ export class Choice extends Component<LetsRole.ComponentValue, ChoiceEvents> {
 
   @dynamicSetter
   setChoices(_choices?: LetsRole.Choices): void {
-    super.setChoices.apply(this, Array.from(arguments) as [choices: LetsRole.Choices]);
+    super.setChoices.apply(
+      this,
+      Array.from(arguments) as [choices: LetsRole.Choices]
+    );
   }
 }

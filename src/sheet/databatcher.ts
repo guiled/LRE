@@ -1,4 +1,5 @@
 import { EventHolder } from "../eventholder";
+import { Mixin } from "../mixin";
 
 type PendingData = {
   v: LetsRole.ComponentValue;
@@ -10,7 +11,7 @@ type DataBatcherEventType = "processed" | "pending";
 const ASYNC_DATA_SET_DELAY = 50;
 const MAX_DATA_BATCH_SIZE = 20;
 
-export class DataBatcher extends EventHolder<DataBatcherEventType> {
+export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
   #modeHandler: ProxyModeHandler;
   #currentMode: ProxyMode;
   #sheet: LetsRole.Sheet;
@@ -27,7 +28,7 @@ export class DataBatcher extends EventHolder<DataBatcherEventType> {
   #isSendPending: boolean = false;
 
   constructor(modeHandler: ProxyModeHandler, sheet: LetsRole.Sheet) {
-    super(`batcher-${sheet.id()}-${sheet.getSheetId()}`);
+    super([[`batcher-${sheet.id()}-${sheet.getSheetId()}`]]);
     this.#modeHandler = modeHandler;
     this.#currentMode = modeHandler.getMode();
     this.#sheet = sheet;
@@ -144,13 +145,13 @@ export class DataBatcher extends EventHolder<DataBatcherEventType> {
         this.#pending.virtual.forEach((p) => (result[p.k] = p.v));
       }
       return result;
-    // The following case should never happens as virtual mode immediately sends pendingData.
-    // This code is saved ni order to restore it if we change the virtual way to work of wait()
-    //} else if (
-    //  this.#currentMode === "virtual" &&
-    //  this.#indexes.virtual.hasOwnProperty(id)
-    //) {
-    //  return this.#pending.virtual[this.#indexes.virtual[id]].v;
+      // The following case should never happens as virtual mode immediately sends pendingData.
+      // This code is saved ni order to restore it if we change the virtual way to work of wait()
+      //} else if (
+      //  this.#currentMode === "virtual" &&
+      //  this.#indexes.virtual.hasOwnProperty(id)
+      //) {
+      //  return this.#pending.virtual[this.#indexes.virtual[id]].v;
     } else if (this.#indexes.real.hasOwnProperty(id)) {
       return this.#pending.real[this.#indexes.real[id]].v;
     }
