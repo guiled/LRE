@@ -23,7 +23,12 @@ type StoredState = ProtectedStoredState | string;
 type SheetEvents = "data-pending" | "data-processed" | "data-updated";
 
 export class Sheet
-  extends Mixin(EventHolder, HasRaw)<SheetEvents, LetsRole.Sheet>
+  extends (Mixin(EventHolder, HasRaw<LetsRole.Sheet>) as new <
+  SubTypeEventHolder extends string
+>(
+  ...args: any
+) => IEventHolder<SubTypeEventHolder> &
+  InstanceType<ReturnType<typeof HasRaw<LetsRole.Sheet>>>)<SheetEvents>
   implements
     Omit<LetsRole.Sheet, "get" | "find">,
     ISheet,
@@ -282,7 +287,7 @@ export class Sheet
 
   get(id: string, silent = false): ComponentSearchResult | IGroup {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore "id instanceof" on purpose for live checks
+    // @ts-ignore "id instanceof" on purpose for live checks in LR
     if (!((typeof id === "string" || id instanceof String) && isNaN(id))) {
       lre.error(`Invalid component id for sheet.get, ${id} given`);
       return null;

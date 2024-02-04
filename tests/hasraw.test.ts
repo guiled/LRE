@@ -7,7 +7,7 @@ describe("Hasraw", () => {
         let raw = {};
         const getRaw = jest.fn(() => raw);
         const onRefresh = jest.fn();
-        const subject = new HasRaw<any>({
+        const subject = new (HasRaw<any>())({
             getRaw,
             onRefresh,
         });

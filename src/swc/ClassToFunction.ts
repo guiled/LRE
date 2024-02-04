@@ -217,19 +217,16 @@ class ClassToFunction extends Visitor {
   }
 
   #ConstructorToFunction(n: Constructor): Statement[] {
-    let args: Argument[] =
-      n.params.length > 0
-        ? [
-            {
-              expression: {
-                type: "Identifier",
-                span: n.span,
-                value: CONSTRUCTOR_ARG_NAME,
-                optional: false,
-              },
-            },
-          ]
-        : [];
+    let args: Argument[] = [
+      {
+        expression: {
+          type: "Identifier",
+          span: n.span,
+          value: CONSTRUCTOR_ARG_NAME,
+          optional: false,
+        },
+      },
+    ];
 
     const propertyDeclarations: Statement[] = [];
     const params: Param[] = n.params.map<Param>((p) => {

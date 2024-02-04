@@ -13,16 +13,16 @@ global.lre = new LRE(modeHandlerMock);
 
 type TestedEvents = "test" | "unused" | "click" | "update";
 
-class Dummy extends EventHolder<TestedEvents> {
+class Dummy extends EventHolder<TestedEvents>() {
   __id: string;
   constructor(protected _raw: LetsRole.Component, subRaw?: LetsRole.Component) {
     super(
       _raw.id(),
-      (target: any): EventHolder => {
+      (target: any): IEventHolder => {
         if (subRaw && target === subRaw) {
-          return new Dummy(subRaw) as EventHolder;
+          return new Dummy(subRaw) as IEventHolder;
         } else {
-          return this as EventHolder;
+          return this as IEventHolder;
         }
       },
       (
@@ -168,7 +168,7 @@ describe("Test simple events", () => {
       id: "456",
       sheet: MockSheet({ id: "main" }),
     });
-    const eventholder = new EventHolder<"click">(
+    const eventholder = new (class extends EventHolder<"click">() {})(
       "123",
       undefined,
       (event: EventDef<EventType<"click">>, operation: "on" | "off") => {
@@ -676,7 +676,7 @@ describe("Component has not targeting", () => {
       sheet,
     });
     rawCmp.value(1);
-    subject = new (class extends EventHolder<TestedEvents> {
+    subject = new (class extends (EventHolder<TestedEvents>()) {
       constructor(protected _raw: LetsRole.Component) {
         super(_raw.id());
       }

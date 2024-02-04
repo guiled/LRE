@@ -13,7 +13,13 @@ type GroupSpecificEvent = (typeof groupSpecificEvent)[number];
 type GroupEvents = GroupEventsForComponent | GroupSpecificEvent;
 
 export class Group
-  extends Mixin(EventHolder, DataHolder, DataProvider)<GroupEvents>
+  extends (Mixin(EventHolder, DataHolder, DataProvider) as new <
+    SubTypeEventHolder extends string
+  >(
+    ...args: any
+  ) => IEventHolder<SubTypeEventHolder> &
+    InstanceType<ReturnType<typeof DataHolder>> &
+    InstanceType<ReturnType<typeof DataProvider>>)<GroupEvents>
   implements IGroup
 {
   #id: string;
@@ -247,7 +253,6 @@ export class Group
     return this.#getSet("rawValue");
   }
 
-  /* @ts-ignore */
   text(_replacement?: LetsRole.ViewData | undefined): void | LetsRole.ViewData {
     return this.#getSet.apply(
       this,

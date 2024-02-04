@@ -1,6 +1,10 @@
 import { HasRaw } from "../hasraw";
+import { Mixin } from "../mixin";
 
-export class Table extends HasRaw<LetsRole.Table> implements LetsRole.Table {
+export class Table
+  extends Mixin(HasRaw<LetsRole.Table>)
+  implements LetsRole.Table
+{
   get(id: LetsRole.ColumnId): LetsRole.TableRow {
     return this.raw().get(id);
   }
@@ -11,7 +15,7 @@ export class Table extends HasRaw<LetsRole.Table> implements LetsRole.Table {
     let callback: (row: LetsRole.TableRow) => void, count: number;
     if (args.length === 2) {
       [count, callback] = args;
-      /* @ts-ignore */
+      /* @ts-ignore the second parameter is optional but raise an error */
       this.raw().random(count, callback);
     } else {
       [callback] = args;
@@ -20,8 +24,12 @@ export class Table extends HasRaw<LetsRole.Table> implements LetsRole.Table {
   }
 
   constructor(raw: LetsRole.Table) {
-    super({
-      getRaw: () => raw,
-    });
+    super([
+      [
+        {
+          getRaw: () => raw,
+        },
+      ],
+    ]);
   }
 }

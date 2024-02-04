@@ -197,7 +197,7 @@ declare interface IEventHolder<
 
   propagateEventTo(
     destination: IEventHolder<any>,
-    events: Array<EventType<any>>
+    events?: Array<EventType<any>>
   );
   unpropagateEventTo(destination: IEventHolder<any>);
 }

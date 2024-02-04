@@ -14,7 +14,8 @@ global.lre = new LRE(modeHandlerMock);
 describe("Dataholder", () => {
   let sheet1: Sheet;
   let server: MockServer;
-  let subject: DataHolder;
+  let subject: IDataHolder;
+  let C: Newable;
 
   const initSheet = function (sheetId: string, realId: string) {
     const raw = MockSheet({
@@ -22,13 +23,18 @@ describe("Dataholder", () => {
       realId: realId,
     });
     server.registerMockedSheet(raw);
-    return new Sheet(raw, new DataBatcher(modeHandlerMock, raw), modeHandlerMock);
+    return new Sheet(
+      raw,
+      new DataBatcher(modeHandlerMock, raw),
+      modeHandlerMock
+    );
   };
 
   beforeEach(() => {
     server = new MockServer();
     sheet1 = initSheet("main", "4242");
-    subject = new DataHolder(sheet1, "a.b.c");
+    C = class extends DataHolder() {};
+    subject = new C(sheet1, "a.b.c");
   });
 
   test("Volatile data", () => {
@@ -48,7 +54,7 @@ describe("Dataholder", () => {
     expect(subject.data("d1", val + 1)).toBe(subject);
     expect(subject.hasData("d1")).toBeTruthy();
 
-    const subject2 = new DataHolder(sheet1, "a.b.c");
+    const subject2 = new C(sheet1, "a.b.c");
     expect(subject2.hasData("d1")).toBeFalsy();
   });
 
@@ -68,7 +74,7 @@ describe("Dataholder", () => {
     expect(subject.data("d1", val + 1)).toBe(subject);
     expect(subject.hasData("d1")).toBeTruthy();
 
-    const subject2 = new DataHolder(sheet1, "a.b.c");
+    const subject2 = new C(sheet1, "a.b.c");
     expect(subject2.hasData("d1")).toBeFalsy();
     itHasWaitedEverything();
     subject2.loadPersistent();

@@ -1,21 +1,25 @@
 import { Mixin } from "../src/mixin";
 
-export type Newable = { new (...args: any[]): any };
-
 describe("Mixin tests", () => {
-  const createDummyClass = function (
+  const createDummyMixableClass = function (
     ctorMock: jest.Mock | null,
     methods: Record<string, jest.Mock> = {}
-  ): Newable {
-    const c: Newable = class {
-      constructor() {
-        ctorMock?.apply(this, Array.from(arguments));
+  ): Mixable<any[], any> {
+    const c: Mixable<any[], any> = (superclass: Newable = class {}) => {
+      const tmpClass = class extends superclass {
+        constructor() {
+          super();
+          ctorMock?.apply(this, Array.from(arguments));
+        }
+      };
+      const methodNames = Object.keys(methods);
+      if (methodNames.length > 0) {
+        methodNames.forEach(
+          (n) => ((tmpClass as any).prototype[n] = methods[n])
+        );
       }
+      return tmpClass;
     };
-    const methodNames = Object.keys(methods);
-    if (methodNames.length > 0) {
-      methodNames.forEach((n) => (c.prototype[n] = methods[n]));
-    }
 
     return c;
   };
@@ -26,7 +30,7 @@ describe("Mixin tests", () => {
       getA: jest.fn(),
       getB: jest.fn(),
     };
-    const Dummy = createDummyClass(ctor, methods);
+    const Dummy = createDummyMixableClass(ctor, methods)(class {}) as Newable;
     expect(ctor).toBeCalledTimes(0);
     expect(methods.getA).toBeCalledTimes(0);
     expect(methods.getB).toBeCalledTimes(0);
@@ -45,32 +49,36 @@ describe("Mixin tests", () => {
 
   test("Single Class Mixin calls constructor", () => {
     const ctor = jest.fn();
-    const Subject = Mixin(createDummyClass(ctor));
+    const Subject = Mixin(createDummyMixableClass(ctor));
     expect(ctor).toBeCalledTimes(0);
     new Subject();
     expect(ctor).toBeCalledTimes(1);
   });
 
   test("Many Class Mixin calls all constructors", () => {
-    const classes = [];
+    const classes: Array<Mixable<any[], any>> = [];
     const mocks = [];
     const nbClasses = 5;
     for (let i = 0; i < nbClasses; i++) {
       const mock = jest.fn();
       mocks.push(mock);
-      classes.push(createDummyClass(mock));
+      classes.push(createDummyMixableClass(mock));
     }
     const Subject = Mixin.apply(null, classes);
     mocks.forEach((m) => expect(m).toBeCalledTimes(0));
     new Subject();
     mocks.forEach((m) => expect(m).toBeCalledTimes(1));
   });
+
   test("Mixin calls all constructors with args", () => {
     const ctor1 = jest.fn();
     const ctor2 = jest.fn();
     const args1 = [42, "tooth"];
     const args2 = [{ a: 13 }];
-    const Subject = Mixin(createDummyClass(ctor1), createDummyClass(ctor2));
+    const Subject = Mixin(
+      createDummyMixableClass(ctor1),
+      createDummyMixableClass(ctor2)
+    );
     new Subject([args1, args2]);
     expect(ctor1).toBeCalledTimes(1);
     expect(ctor1.mock.calls[0]).toHaveLength(args1.length);
@@ -83,12 +91,14 @@ describe("Mixin tests", () => {
   test("Mixin have all public attributes", () => {
     const valueA = 42,
       valueB = "B";
-    const A = class {
-      a: number = valueA;
-    };
-    const B = class {
-      b: string = valueB;
-    };
+    const A = (superclass: Newable = class {}) =>
+      class A extends superclass {
+        a: number = valueA;
+      };
+    const B = (superclass: Newable = class {}) =>
+      class B extends superclass {
+        b: string = valueB;
+      };
     const Dummy = Mixin(A, B);
     const subject = new Dummy();
     expect(subject).toHaveProperty("a");
@@ -106,8 +116,8 @@ describe("Mixin tests", () => {
     const methods2 = {
       getC: jest.fn(),
     };
-    const class1 = createDummyClass(null, methods1);
-    const class2 = createDummyClass(null, methods2);
+    const class1 = createDummyMixableClass(null, methods1);
+    const class2 = createDummyMixableClass(null, methods2);
     const Subject = Mixin(class1, class2);
     const obj = new Subject();
     expect(obj).toHaveProperty("getA");
@@ -126,29 +136,50 @@ describe("Mixin tests", () => {
     expect(methods2.getC).toBeCalledTimes(1);
   });
 
-  test("Mixin cross access to methods", () => {
-    const A = class {
-      #id: number;
-      constructor(id: number) {
-        this.#id = id;
-      }
-      getId(): number {
-        return this.#id;
-      }
-    };
-    abstract class B {
-      #name: string;
-      constructor(name: string) {
-        this.#name = name;
-      }
-      abstract getId(): number;
-      getThroughB(): string {
-        //return this.#name;
-        return "" + this.getId() + this.#name;
-      }
-    }
+  test("mixin pass this", () => {
+    const cb = jest.fn();
+    const A = (superclass: Newable = class {}) =>
+      class A extends superclass {
+        callIt() {
+          cb(this);
+        }
+      };
+    const TestClass = Mixin(A);
+    const test = new TestClass();
+    test.callIt();
+    expect(cb).toBeCalledWith(test);
+  });
 
-    const C = class extends Mixin(A, B) {
+  test("Mixin cross access to methods", () => {
+    const A = (superclass: Newable = class {}) => {
+      return class A extends superclass {
+        #id: number;
+        constructor(id: number) {
+          super();
+          this.#id = id;
+        }
+        getId(): number {
+          return this.#id;
+        }
+      };
+    }
+    const Bmixable = (superclass: Newable = class {}) => {
+      abstract class B extends superclass {
+        #name: string;
+        constructor(name: string) {
+          super();
+          this.#name = name;
+        }
+        abstract getId(): number;
+        getThroughB(): string {
+          //return this.#name;
+          return "" + this.getId() + this.#name;
+        }
+      }
+      return B;
+    };
+
+    const C = class extends Mixin(A, Bmixable) {
       constructor(id: number, name: string) {
         super([[id], [name]]);
       }
@@ -160,23 +191,23 @@ describe("Mixin tests", () => {
   });
 
   test("Getter and setter inheritance and override", () => {
-    class A {
-      #val: number;
-      constructor(val : number) {
-        this.#val = val;
-      }
-      get a(): number {
-        return this.#val;
-      }
+    const A = (superclass: Newable = class {}) =>
+      class A extends superclass {
+        #val: number;
+        constructor(val: number) {
+          super();
+          this.#val = val;
+        }
+        get a(): number {
+          return this.#val;
+        }
 
-      set a(v: number) {
-        this.#val = v;
-      }
-    }
+        set a(v: number) {
+          this.#val = v;
+        }
+      };
 
-    class B {
-
-    }
+    const B = (superclass: Newable = class {}) => class B extends superclass {};
 
     class C extends Mixin(A, B) {
       constructor(id: number) {
@@ -191,7 +222,7 @@ describe("Mixin tests", () => {
 
     class D extends Mixin(A, B) {
       constructor(v: number) {
-        super([[v]])
+        super([[v]]);
       }
       get a() {
         return 13;
@@ -205,19 +236,21 @@ describe("Mixin tests", () => {
     const d = new D(12);
     expect(d.a).toStrictEqual(13);
     expect(d.getSuper()).toStrictEqual(12);
-  })
+  });
 
   test("Override a method", () => {
-    class A {
-      #id: number;
+    const A = (superclass: Newable = class {}) =>
+      class extends superclass {
+        #id: number;
 
-      constructor(id: number) {
-        this.#id = id;
-      }
-      id() {
-        return this.#id;
-      }
-    }
+        constructor(id: number) {
+          super();
+          this.#id = id;
+        }
+        id() {
+          return this.#id;
+        }
+      };
 
     class C extends Mixin(A) {
       constructor(val: number) {
@@ -229,13 +262,14 @@ describe("Mixin tests", () => {
     }
 
     const c = new C(42);
-    expect(c.id()).toStrictEqual(13+42);
-  })
+    expect(c.id()).toStrictEqual(13 + 42);
+  });
 
   test("Super overridden public property is undefined", () => {
-    class A {
-      a: number = 42;
-    }
+    const A = (superclass: Newable = class {}) =>
+      class A extends superclass {
+        a: number = 42;
+      };
 
     class C extends Mixin(A) {
       a: number = 43;
@@ -250,9 +284,53 @@ describe("Mixin tests", () => {
       }
     }
 
-    const c = new C;
+    const c = new C();
     expect(c.getA()).toStrictEqual(43);
     expect(c.a).toStrictEqual(43);
     expect(c.getSuperA()).toBeUndefined();
-  })
+  });
+
+  test("Mixin instantiation into mixin instantiation", () => {
+    const ctorCbA = jest.fn();
+    const ctorCbB = jest.fn();
+    const A = (superclass: Newable = class {}) =>
+      class A extends superclass {
+        a: number = 42;
+
+        constructor(n: string) {
+          super();
+          ctorCbA(n);
+        }
+      };
+
+    const B = (superclass: Newable = class {}) =>
+      class B extends superclass {
+        constructor(n: string) {
+          if (n === "firstfirst") {
+            new D(true);
+          }
+          super();
+          ctorCbB(n);
+        }
+      };
+
+    const C = (superclass: Newable = class {}) => class C extends superclass {};
+
+    class D extends Mixin(A, B, C) {
+      a: number = 43;
+
+      constructor(a: boolean = false) {
+        let val = "second";
+        if (!a) {
+          val = "first";
+        }
+        super([[val], [val + val]]);
+      }
+    }
+
+    new D();
+    expect(ctorCbA).toBeCalledTimes(2);
+    expect(ctorCbA.mock.calls[0][0]).toBe("second");
+    expect(ctorCbA.mock.calls[1][0]).toBe("first");
+  });
 });
