@@ -20,6 +20,7 @@ import numericliteral from "./node/literal/numericliteral";
 import { ExpressionWithSpan } from "./types";
 import returnstmt from "./node/statement/returnstmt";
 import thisexpression from "./node/expression/thisexpression";
+import { arrayfromarguments } from "./node/expression/arrayfromarguments";
 
 class NoRestElement extends Visitor {
   #hasThis: boolean = false;
@@ -41,27 +42,7 @@ class NoRestElement extends Visitor {
           id: pat.argument,
           init: call({
             callee: member({
-              object: call({
-                callee: member({
-                  object: identifier({
-                    span,
-                    value: "Array",
-                  }),
-                  property: identifier({
-                    span,
-                    value: "from",
-                  }),
-                }),
-                args: [
-                  {
-                    spread: undefined,
-                    expression: identifier({
-                      span,
-                      value: "arguments",
-                    }),
-                  },
-                ],
-              }),
+              object: arrayfromarguments(span),
               property: identifier({
                 span,
                 value: "slice",
