@@ -40,12 +40,16 @@ class NoSpreadArgument extends Visitor {
             unspreadArgs.push(arg);
           } else {
             if (unspreadArgs.length > 0) {
-              concatArgs.push({
-                expression: arrayexpression({
-                  span: n.span,
-                  elements: unspreadArgs,
-                })
-              });
+              if (obj.elements.length === 0) {
+                obj.elements.push(...unspreadArgs);
+              } else {
+                concatArgs.push({
+                  expression: arrayexpression({
+                    span: n.span,
+                    elements: unspreadArgs,
+                  })
+                });
+              }
               unspreadArgs = [];
             }
             concatArgs.push({
