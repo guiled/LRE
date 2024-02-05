@@ -33,6 +33,7 @@ import onevariable from "./node/declaration/onevariable";
 import returnstmt from "./node/statement/returnstmt";
 import expression from "./node/expression";
 import { objectexpression } from "./node/expression/objectexpression";
+import { arrayfromarguments } from "./node/expression/arrayfromarguments";
 
 class MixinToAssign extends Visitor {
   #mixinClasses: Argument[] | undefined;
@@ -51,27 +52,7 @@ class MixinToAssign extends Visitor {
             arguments: [
               {
                 spread: span,
-                expression: call({
-                  callee: member({
-                    object: identifier({
-                      span,
-                      value: "Array",
-                    }),
-                    property: identifier({
-                      span,
-                      value: "from",
-                    }),
-                  }),
-                  args: [
-                    {
-                      spread: undefined,
-                      expression: identifier({
-                        span,
-                        value: "arguments",
-                      }),
-                    },
-                  ],
-                }),
+                expression: arrayfromarguments(span),
               },
             ],
           }),
