@@ -1,5 +1,6 @@
 import {
   Argument,
+  ArrayExpression,
   CallExpression,
   Expression,
   Program,
@@ -27,7 +28,7 @@ class NoSpreadArgument extends Visitor {
           expression: n.arguments[0].expression,
         };
       } else {
-        let obj: Expression = arrayexpression({
+        let obj: ArrayExpression = arrayexpression({
           span: n.span,
           elements: [],
         });
