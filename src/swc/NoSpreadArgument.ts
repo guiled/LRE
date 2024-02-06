@@ -13,6 +13,7 @@ import { ExpressionWithSpan } from "./types";
 import call from "./node/expression/call";
 import member from "./node/expression/member";
 import identifier from "./node/identifier";
+import { spreadToConcat } from "./utils/spreadToConcat";
 
 class NoSpreadArgument extends Visitor {
 
@@ -28,45 +29,16 @@ class NoSpreadArgument extends Visitor {
           expression: n.arguments[0].expression,
         };
       } else {
+        
+        const {
+          concatArgs,
+          arrayInit,
+        } = spreadToConcat(n.span, n.arguments);
+
         let obj: ArrayExpression = arrayexpression({
           span: n.span,
-          elements: [],
+          elements: arrayInit,
         });
-  
-        let unspreadArgs: Argument[] = [];
-        const concatArgs: Argument[] = [];
-  
-        n.arguments.forEach((arg) => {
-          if (!arg.spread) {
-            unspreadArgs.push(arg);
-          } else {
-            if (unspreadArgs.length > 0) {
-              if (obj.elements.length === 0) {
-                obj.elements.push(...unspreadArgs);
-              } else {
-                concatArgs.push({
-                  expression: arrayexpression({
-                    span: n.span,
-                    elements: unspreadArgs,
-                  })
-                });
-              }
-              unspreadArgs = [];
-            }
-            concatArgs.push({
-              expression: arg.expression
-            });
-          }
-        });
-  
-        if (unspreadArgs.length > 0) {
-          concatArgs.push({
-            expression: arrayexpression({
-              span: n.span,
-              elements: unspreadArgs,
-            })
-          });
-        }
         callArg = {
           expression: call({
             callee: member({

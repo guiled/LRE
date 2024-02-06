@@ -1,15 +1,18 @@
-import {
-  ArrayExpression,
-} from "@swc/core";
+import { ArrayExpression, Span } from "@swc/core";
+
+type ArrayExpressionProps = {
+  span: Span;
+  elements?: ArrayExpression["elements"];
+};
 
 const arrayexpression = ({
   span,
-  elements,
-}: Omit<ArrayExpression, "type">): ArrayExpression => {
+  elements = [],
+}: ArrayExpressionProps): ArrayExpression => {
   return {
     type: "ArrayExpression",
     span,
-    elements,
+    elements: elements?.filter(Boolean),
   };
 };
 
