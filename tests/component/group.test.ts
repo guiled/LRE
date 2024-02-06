@@ -225,7 +225,7 @@ describe("Component group basics", () => {
     expect(group.count()).toBe(1);
     expect(updateCb).toBeCalledTimes(0);
 
-    group.add(sheet.get(MockServer.UNKNOWN_CMP_ID)! as IComponent);
+    expect(() => group.add(sheet.get(MockServer.UNKNOWN_CMP_ID)! as IComponent)).toThrowError();
     expect(group.count()).toBe(1);
     expect(updateCb).toBeCalledTimes(0);
     expect(group.includes(MockServer.NON_EXISTING_CMP_ID)).toBeFalsy();
@@ -241,6 +241,14 @@ describe("Component group basics", () => {
     expect(sheet.get).toBeCalledTimes(3);
   });
 
+  test("Group added to group is forbidden", () => {
+    const group1: Group = new Group(context, "group1", sheet);
+    const group2: Group = new Group(context, "group2", sheet);
+    
+    /* @ts-expect-error */
+    expect(() => group2.add(group1)).toThrowError();
+  });
+
   test.each([
     { val: [], desc: "array" },
     { val: {}, desc: "object" },
@@ -252,8 +260,7 @@ describe("Component group basics", () => {
       const group: Group = new Group(context, "group1", sheet);
       (lre.error as jest.Mock).mockClear();
       /* @ts-expect-error */
-      group.add(invalidAddedElement);
-      expect(lre.error).toBeCalled();
+      expect(() => group.add(invalidAddedElement)).toThrowError();
 
       (lre.error as jest.Mock).mockClear();
       /* @ts-expect-error */
