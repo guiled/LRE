@@ -80,16 +80,12 @@ export class Group
     let cmpIndex: number;
     let component: ComponentSearchResult | IGroup = null;
 
-    try {
-      cmpIndex = this.#getCmpIndex(cmp);
-      if (cmpIndex === -1) {
-        component = this.#getComponent(cmp);
-        if (component?.lreType() === "group") {
-          throw new Error(`A group cannot be added to a group`);
-        }
+    cmpIndex = this.#getCmpIndex(cmp);
+    if (cmpIndex === -1) {
+      component = this.#getComponent(cmp);
+      if (component?.lreType() === "group") {
+        throw new Error(`A group cannot be added to a group`);
       }
-    } catch (e) {
-      lre.error(e);
     }
 
     if (component?.exists?.()) {
