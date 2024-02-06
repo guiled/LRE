@@ -32,7 +32,6 @@ const transformForLR: Options = {
     type: "es6",
   },
   plugin: plugins([
-    fixArrayFromArguments(),
     noThrowStatement(),
     noInstanceOf(),
     noDoWhile(),
@@ -45,6 +44,7 @@ const transformForLR: Options = {
     replaceInOperator(),
     computedObjectProps(),
     classToFunction(),
+    fixArrayFromArguments(),
     defaultParameter(),
   ]),
   sourceMaps: false,
