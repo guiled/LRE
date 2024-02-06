@@ -44,7 +44,6 @@ import thisexpression from "./node/expression/thisexpression";
 import identifier from "./node/identifier";
 import returnstmt from "./node/statement/returnstmt";
 import undefinedidentifier from "./node/undefinedidentifier";
-import { CONSTRUCTOR_ARG_NAME } from "./utils/paramToVariableDeclarator";
 import { ExpressionWithSpan } from "./types";
 import { newexpression } from "./node/expression/newexpression";
 import { arrayexpression } from "./node/expression/arrayexpression";
@@ -53,6 +52,9 @@ import { objectassign } from "./node/expression/objectassign";
 import expression from "./node/expression";
 import stringliteral from "./node/literal/stringliteral";
 import { objectexpression } from "./node/expression/objectexpression";
+import { arrayfromarguments } from "./node/expression/arrayfromarguments";
+import { spannewctxt } from "./utils/spannewctxt";
+import { spreadToConcat } from "./utils/spreadToConcat";
 
 type PublicMethodToFunctionStatement = ExpressionStatement & {
   expression: AssignmentExpression & {
@@ -92,6 +94,7 @@ type ClassConstructorStates = {
   superUsed: boolean;
 };
 
+const CONSTRUCTOR_ARG_NAME = "__lrargs__";
 const PARENT = "Parent";
 const PARENT_IN_CTOR = "_super";
 
@@ -166,7 +169,7 @@ class ClassToFunction extends Visitor {
     };
     if (n.key.type === "PrivateName") {
       return onevariable({
-        span: n.span,
+        span: { ...n.span, ctxt: n.span.ctxt + 1 },
         id: this.#transformPrivateIdentifier(n.key.id),
         kind: "const",
         init: f,
@@ -221,7 +224,7 @@ class ClassToFunction extends Visitor {
       {
         expression: {
           type: "Identifier",
-          span: n.span,
+          span: spannewctxt(n.span, 1),
           value: CONSTRUCTOR_ARG_NAME,
           optional: false,
         },
@@ -325,7 +328,7 @@ class ClassToFunction extends Visitor {
             body: {
               type: "BlockStatement",
               span: n.body?.span || n.span,
-              stmts: stmts,
+              stmts,
             },
             generator: false,
             async: false,
@@ -480,7 +483,6 @@ class ClassToFunction extends Visitor {
       constructorFunctionStatement = this.#ConstructorToFunction(ctor);
       body.unshift(...this.#privateProps);
       this.#privateProps = savePrivateProps;
-    } else {
     }
 
     body.forEach((n: ClassMember) => {
@@ -511,6 +513,7 @@ class ClassToFunction extends Visitor {
       ...methods,
       ...constructorFunctionStatement,
     ];
+
     let classFunction: FunctionExpression = {
       type: "FunctionExpression",
       params: [
@@ -520,7 +523,7 @@ class ClassToFunction extends Visitor {
           decorators: [],
           pat: {
             type: "Identifier",
-            span,
+            span: spannewctxt(span),
             value: CONSTRUCTOR_ARG_NAME,
             optional: false,
           },
@@ -536,10 +539,8 @@ class ClassToFunction extends Visitor {
       async: false,
     };
 
-    if (
-      staticMethods.length + staticProperties.length + staticStmts.length >
-      0
-    ) {
+    const _: any[] = [];
+    if (_.concat(staticMethods, staticProperties, staticStmts).length > 0) {
       const tmpClassFunctionId = identifier({
         span: classFunction.span,
         value: "__lreClass" + classFunction.identifier?.value,
@@ -602,6 +603,7 @@ class ClassToFunction extends Visitor {
   #transformPrivateIdentifier(i: Identifier): Identifier {
     return {
       ...i,
+      span: spannewctxt(i.span),
       value: "__priv" + i.value,
     };
   }
@@ -786,13 +788,39 @@ class ClassToFunction extends Visitor {
             span: stmt.span,
             value: PARENT_IN_CTOR,
           });
+          let newexpr: NewExpression;
+          if (stmt.expression.arguments.some((a) => !!a.spread)) {
+            const { arrayInit, concatArgs } = spreadToConcat(
+              stmt.span,
+              stmt.expression.arguments
+            );
+            newexpr = this.#createNewBindApplyArgs({
+              span: stmt.span,
+              classToNew: this.currentSuperClass,
+              args: call({
+                callee: member({
+                  object: arrayexpression({
+                    span: stmt.span,
+                    elements: arrayInit,
+                  }),
+                  property: identifier({
+                    span: stmt.span,
+                    value: "concat",
+                  }),
+                }),
+                args: concatArgs,
+              }),
+            });
+          } else {
+            newexpr = newexpression({
+              callee: this.currentSuperClass,
+              arguments: stmt.expression.arguments,
+            });
+          }
           this.#createInstantiateParentAndAssign(newStmts, {
             span: stmt.span,
             id: this.superIdentifierInCtor,
-            newexpr: newexpression({
-              callee: this.currentSuperClass,
-              arguments: stmt.expression.arguments,
-            }),
+            newexpr,
           });
         } else {
           newStmts.push(stmt);
@@ -934,56 +962,14 @@ class ClassToFunction extends Visitor {
     let prevInConstructor = this.inConstructor;
     this.inConstructor = false;
     this.isInClass = true;
+
     members.forEach((m) => {
       if (m.type === "PrivateMethod") {
         this.#privateMethods.push(m.key.id.value);
       }
     });
+
     members = super.visitClassBody(members);
-
-    if (this.currentSuperClass && !this.#ctorStates.exists) {
-      const span: Span = this.currentSuperClass.span || {};
-
-      const stmts: Statement[] = [];
-
-      const id = identifier({
-        span,
-        value: PARENT_IN_CTOR,
-      });
-
-      this.#createInstantiateParentAndAssign(stmts, {
-        span,
-        id,
-        newexpr: newexpression({
-          callee: this.currentSuperClass,
-        }),
-      });
-
-      const returnStmt = this.#createConstructorReturnStatement(
-        span,
-        undefined,
-        id
-      );
-
-      if (returnStmt) {
-        stmts.push(returnStmt);
-        members.push({
-          type: "Constructor",
-          params: [],
-          span,
-          key: identifier({
-            span,
-            value: "constructor",
-          }),
-          body: {
-            type: "BlockStatement",
-            span,
-            stmts: stmts,
-          },
-          isOptional: false,
-        });
-      }
-    }
     this.isInClass = false;
     this.inConstructor = prevInConstructor;
     return members;
@@ -994,11 +980,106 @@ class ClassToFunction extends Visitor {
     this.currentSuperClass = undefined;
     if (n.superClass) {
       this.currentSuperClass = n.superClass as ExpressionWithSpan;
-      //n.superClass = undefined;
+
+      if (!n.body.some((m) => m.type === "Constructor")) {
+        n.body.push(
+          this.#createEmptyConstructorWithSuper(this.currentSuperClass, n.span)
+        );
+      }
     }
     const res = super.visitClass(n);
     this.currentSuperClass = prevSuperClass;
     return res;
+  }
+
+  #createEmptyConstructorWithSuper(
+    superClass: ExpressionWithSpan,
+    wholeSpan: Span
+  ): ClassMember {
+    const stmts: Statement[] = [];
+    const span: Span = {
+      start: wholeSpan.start + 1,
+      end: wholeSpan.start + 2,
+      ctxt: wholeSpan.ctxt,
+    };
+
+    const id = identifier({
+      span,
+      value: PARENT_IN_CTOR,
+    });
+
+    this.#createInstantiateParentAndAssign(stmts, {
+      span,
+      id,
+      newexpr: this.#createNewBindApplyArgs({
+        span,
+        classToNew: superClass,
+        args: arrayfromarguments(span),
+      }),
+    });
+
+    stmts.push(this.#createConstructorReturnStatement(span, undefined, id)!);
+    return {
+      type: "Constructor",
+      params: [],
+      span,
+      key: identifier({
+        span,
+        value: "constructor",
+      }),
+      body: {
+        type: "BlockStatement",
+        span,
+        stmts: stmts,
+      },
+      isOptional: false,
+    };
+  }
+
+  #createNewBindApplyArgs({
+    span,
+    classToNew,
+    args,
+  }: {
+    span: Span;
+    classToNew: ExpressionWithSpan;
+    args?: Expression;
+  }): NewExpression {
+    return newexpression({
+      callee: {
+        type: "ParenthesisExpression",
+        span,
+        expression: call({
+          callee: member({
+            object: member({
+              object: classToNew,
+              property: identifier({
+                span,
+                value: "bind",
+              }),
+            }),
+            property: identifier({
+              span,
+              value: "apply",
+            }),
+          }),
+          args: [
+            {
+              expression: classToNew,
+            },
+            {
+              expression: arrayexpression({
+                span,
+                elements: [
+                  { expression: classToNew },
+                  ...[args ? { expression: args } : undefined],
+                ],
+              }),
+            },
+          ],
+        }),
+      },
+    });
   }
 
   visitDeclaration(decl: Declaration): Declaration {
@@ -1018,6 +1099,20 @@ class ClassToFunction extends Visitor {
       return result;
     }
     return super.visitDeclaration(decl);
+  }
+
+  visitNewExpression(n: NewExpression): Expression {
+    if (n.arguments?.some((a) => !!a.spread)) {
+      return this.#createNewBindApplyArgs({
+        span: n.span,
+        classToNew: n.callee as ExpressionWithSpan,
+        args: arrayexpression({
+          span: n.span,
+          elements: n.arguments,
+        }),
+      });
+    }
+    return super.visitNewExpression(n);
   }
 
   visitProgram(n: Program): Program {
