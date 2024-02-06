@@ -1,4 +1,5 @@
 import { Context } from "./context";
+import { Error as LreError } from "./error";
 import { globals } from "./globals";
 import { LRE } from "./lre";
 import { registerLreBindings } from "./proxy/bindings";
@@ -19,6 +20,8 @@ export const bootstrap = (): ProxyModeHandler => {
   stringify = globals.stringify;
   virtualCall = globals.virtualCall;
   loggedCall = globals.loggedCall;
+  /* @ts-expect-error Overwrite Error because it is missing in LR */
+  Error = LreError;
 
   overloadTables(Tables);
   lre = new LRE(ctx);
