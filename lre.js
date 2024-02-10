@@ -1,4 +1,4 @@
-//region LRE 6.13
+//region LRE 6.14
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
