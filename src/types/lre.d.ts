@@ -24,6 +24,7 @@ declare interface ISheet extends LetsRole.Sheet, ComponentContainer<IGroup> {
     value?: any
   ): SheetStoredState[T];
   deletePersistingData(dataName: Exclude<string, ProtectedStoredState>): void;
+  sendPendingDataFor(id: LetsRole.ComponentID): void;
   isInitialized(): boolean;
   getPendingData(id: LetsRole.ComponentID): LetsRole.ComponentValue;
   persistingCmpData(

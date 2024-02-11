@@ -2,38 +2,51 @@ import { Choice } from "../../src/component/choice";
 import { LRE } from "../../src/lre";
 import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
-import { MockComponent } from "../mock/letsrole/component.mock";
-import { initLetsRole } from "../mock/letsrole/letsrole.mock";
+import { initLetsRole, itHasWaitedEverything } from "../mock/letsrole/letsrole.mock";
 import { MockServer } from "../mock/letsrole/server.mock";
 import { MockSheet } from "../mock/letsrole/sheet.mock";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 let raw: LetsRole.Component;
+let rawSheet: LetsRole.Sheet;
 let sheet: ISheet;
 
 beforeEach(() => {
   initLetsRole();
   global.lre = new LRE(modeHandlerMock);
 
-  let rawSheet = MockSheet({
+  rawSheet = MockSheet({
     id: "main",
     realId: "12345",
   });
   const server = new MockServer();
-  server.registerMockedSheet(rawSheet);
+  server.registerMockedSheet(rawSheet, [{
+    id: "ch",
+    name: "choice",
+    classes: ["choice"],
+    text: "theChoice",
+  },
+  {
+    id: "chA",
+    name: "choice",
+    classes: ["choice"],
+    text: "theChoice",
+    value: "a",
+  }]);
   sheet = new Sheet(
     rawSheet,
     new DataBatcher(modeHandlerMock, rawSheet),
     modeHandlerMock
   );
-  raw = MockComponent({
-    id: "ch",
-    sheet: rawSheet,
-    classes: ["choice"],
-  });
+  raw = rawSheet.get('ch');
 });
 
 describe("Choice basic", () => {
+  test("label", () => {
+    const choice = new Choice(raw, sheet, "ch");
+    expect(choice.label()).toBe("theChoice");
+  });
+
   test("setChoices", () => {
     const choice = new Choice(raw, sheet, "ch");
     expect(choice.value()).toBe("");
@@ -67,4 +80,29 @@ describe("Choice basic", () => {
     choice.value(1);
     expect(select).toBeCalledWith(choice, 1);
   });
+});
+
+describe("Choice get and set choices", () => {
+  test("empty getChoices gives a message", () => {
+    const ch = new Choice(raw, sheet, "ch");
+    jest.spyOn(lre, "warn");
+    expect(ch.getChoices()).toStrictEqual({});
+    expect(lre.warn).toBeCalled();
+  });
+
+  test("set choice is error protected", () => {
+    const ch = new Choice(rawSheet.get('chA'), sheet, "chA");
+    expect(ch.getChoices()).toStrictEqual({});
+    expect(() => ch.setChoices({
+      a: "1",
+      b: "2",
+    })).not.toThrowError();
+    ch.value("a");
+    itHasWaitedEverything();
+    expect(ch.value()).toBe("a");
+    expect(() => ch.setChoices({
+      c: "2",
+      d: "3",
+    })).not.toThrowError();
+  })
 });
