@@ -24,11 +24,11 @@ type SheetEvents = "data-pending" | "data-processed" | "data-updated";
 
 export class Sheet
   extends (Mixin(EventHolder, HasRaw<LetsRole.Sheet>) as new <
-  SubTypeEventHolder extends string
->(
-  ...args: any
-) => IEventHolder<SubTypeEventHolder> &
-  InstanceType<ReturnType<typeof HasRaw<LetsRole.Sheet>>>)<SheetEvents>
+    SubTypeEventHolder extends string
+  >(
+    ...args: any
+  ) => IEventHolder<SubTypeEventHolder> &
+    InstanceType<ReturnType<typeof HasRaw<LetsRole.Sheet>>>)<SheetEvents>
   implements
     Omit<LetsRole.Sheet, "get" | "find">,
     ISheet,
@@ -107,7 +107,10 @@ export class Sheet
       return null;
     }
 
-    const cmp = ComponentFactory.create(rawCmp, container as ComponentContainer);
+    const cmp = ComponentFactory.create(
+      rawCmp,
+      container as ComponentContainer
+    );
 
     return cmp;
   }
@@ -342,6 +345,10 @@ export class Sheet
       ...this.raw().getData(),
       ...(this.#batcher.getPendingData() as LetsRole.ViewData),
     };
+  }
+
+  sendPendingDataFor(id: LetsRole.ComponentID) {
+    this.#batcher.sendPendingDataFor(id);
   }
 
   persistingData<T extends StoredState>(
