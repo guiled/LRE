@@ -13,6 +13,7 @@ type Params = {
   parent?: MockedComponent;
   value?: LetsRole.ComponentValue;
   virtualValue?: LetsRole.ComponentValue | null;
+  choices?: LetsRole.Choices;
 };
 
 export const MockComponent = ({
@@ -26,9 +27,11 @@ export const MockComponent = ({
   parent,
   value = "",
   virtualValue = null,
+  choices = {},
 }: Params): MockedComponent => {
   const handlers: Record<string, (cmp: LetsRole.Component) => void> = {};
   let visible: boolean = true;
+  let privChoices = choices;
   const cmp: MockedComponent = {
     id: jest.fn(() => id),
     sheet: jest.fn(() => sheet),
@@ -96,7 +99,16 @@ export const MockComponent = ({
       return text;
     }) as LetsRole.Component["text"],
     visible: jest.fn(() => visible),
-    setChoices: jest.fn(),
+    setChoices: jest.fn((newChoices: LetsRole.Choices) => {
+      const val: string = cmp.value()?.toString() || "";
+      if (
+        privChoices?.hasOwnProperty(val) &&
+        !newChoices?.hasOwnProperty(val)
+      ) {
+        throw new Error("This error can happen in Let's Role");
+      }
+      privChoices = newChoices;
+    }),
     _trigger: jest.fn((event: LetsRole.EventType, target?: MockedComponent) => {
       if (!target) {
         handlers[event]?.(cmp);

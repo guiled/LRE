@@ -7,6 +7,8 @@ type ComponentStructure = {
   classes: Array<string>;
   children?: ComponentStructureList;
   text?: string;
+  choices?: LetsRole.Choices;
+  value?: LetsRole.ComponentValue;
 };
 
 type ComponentStructureList = Array<ComponentStructure>;
@@ -123,11 +125,21 @@ export class MockServer {
             ...(cmpStructure?.classes || []),
             ...(cmpId.indexOf("rep") !== -1 ? ["repeater"] : []),
           ],
-          value: this.sheetData[sheet.getSheetId()][cmpId],
+          value: cmpStructure?.value || this.sheetData[sheet.getSheetId()][cmpId],
           text: cmpStructure?.text,
+          choices: {
+            ...(cmpStructure?.choices || {}),
+          },
         })
       );
+      cmp.value = jest.fn((function (this: MockServer, v?:LetsRole.ComponentValue) {
+        if (arguments.length > 0) {
+          this.sheetData[sheet.getSheetId()][cmpId] = v;
+        }
+        return this.sheetData[sheet.getSheetId()][cmpId] || "";
+      }).bind(this))
       this.cmp[sheetId][cmpId].set(sheet, cmp);
+      
       return cmp;
     });
   }
@@ -138,53 +150,50 @@ export class MockServer {
   ): ExtendedMockedComponent {
     const prevCmpFind = cmp.find;
 
-    const newCmp: ExtendedMockedComponent = Object.assign(
-      cmp,
-      {
-        _realId: jest.fn(
-          () => (container ? container._realId() + "." : "") + cmp.id()
-        ),
-        value: jest.fn((newValue?: LetsRole.ComponentValue) => {
-          if (newValue !== void 0) {
-            this.sheetData[cmp.sheet().getSheetId()][cmp.id()] = newValue;
-            newCmp._trigger("update");
-            return;
-          }
-          return this.sheetData[cmp.sheet().getSheetId()][cmp.id()] || "";
-        }),
-        find: jest.fn((id: LetsRole.ComponentID) => {
-          const searchedComponentId =
-            (container ? container._realId() + "." : "") + id;
-          if (
-            this.unknownComponents.includes(searchedComponentId) ||
-            id.indexOf(MockServer.UNKNOWN_CMP_ID) !== -1
-          ) {
-            return { ...MockServer.NonExistingCmpDummy };
-          } else if (
-            this.nullComponents.includes(searchedComponentId) ||
-            id.indexOf(MockServer.NULL_CMP_ID) !== -1
-          ) {
-            return null as unknown as LetsRole.Component;
-          } else if (
-            this.nonExistingComponents.includes(searchedComponentId) ||
-            id.indexOf(MockServer.NON_EXISTING_CMP_ID) !== -1
-          ) {
-            return {
-              ...MockServer.NonExistingCmpDummy,
-              id: jest.fn(() => id),
-              addClass: () => {
-                throw Error("non");
-              },
-              removeClass: () => {
-                throw Error("non");
-              },
-            };
-          }
-          const foundCmp = prevCmpFind(id) as MockedComponent;
-          return this.registerMockedComponent(foundCmp, newCmp);
-        })
-      },
-    );
+    const newCmp: ExtendedMockedComponent = Object.assign(cmp, {
+      _realId: jest.fn(
+        () => (container ? container._realId() + "." : "") + cmp.id()
+      ),
+      value: jest.fn((newValue?: LetsRole.ComponentValue) => {
+        if (newValue !== void 0) {
+          this.sheetData[cmp.sheet().getSheetId()][cmp.id()] = newValue;
+          newCmp._trigger("update");
+          return;
+        }
+        return this.sheetData[cmp.sheet().getSheetId()][cmp.id()] || "";
+      }),
+      find: jest.fn((id: LetsRole.ComponentID) => {
+        const searchedComponentId =
+          (container ? container._realId() + "." : "") + id;
+        if (
+          this.unknownComponents.includes(searchedComponentId) ||
+          id.indexOf(MockServer.UNKNOWN_CMP_ID) !== -1
+        ) {
+          return { ...MockServer.NonExistingCmpDummy };
+        } else if (
+          this.nullComponents.includes(searchedComponentId) ||
+          id.indexOf(MockServer.NULL_CMP_ID) !== -1
+        ) {
+          return null as unknown as LetsRole.Component;
+        } else if (
+          this.nonExistingComponents.includes(searchedComponentId) ||
+          id.indexOf(MockServer.NON_EXISTING_CMP_ID) !== -1
+        ) {
+          return {
+            ...MockServer.NonExistingCmpDummy,
+            id: jest.fn(() => id),
+            addClass: () => {
+              throw Error("non");
+            },
+            removeClass: () => {
+              throw Error("non");
+            },
+          };
+        }
+        const foundCmp = prevCmpFind(id) as MockedComponent;
+        return this.registerMockedComponent(foundCmp, newCmp);
+      }),
+    });
 
     return newCmp;
   }

@@ -24,13 +24,16 @@ declare namespace LetsRole {
   export type RepeaterValue = {
     [key: Index]: LetsRole.ViewData;
   };
+  export type ChoiceValue = string
+  export type ChoiceValues = Array<string>
   export type MultiChoiceValue = Array<string>;
   export type ComponentValue =
     | LetsRole.BaseComponentValue
     | LetsRole.RepeaterValue
+    | LetsRole.ChoiceValue
     | LetsRole.MultiChoiceValue
     | LetsRole.ViewData;
-  export type Choices = Record<string, string>;
+  export type Choices = Record<ChoiceValue, string>;
 
   export type Selector = LetsRole.ComponentID | LetsRole.ClassSelector;
 
