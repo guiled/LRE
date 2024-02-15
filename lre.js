@@ -1,4 +1,4 @@
-//region LRE 6.14
+//region LRE 6.15
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -126,10 +126,10 @@ function intToAlpha(n) {
     while (n >= K * 2) {
         const m = ~~(n / (K * 2));
         const r = n - m * K * 2;
-        s = String.fromCharCode(charBase[~~(r / K)] + r%K) + s;
+        s = String.fromCharCode(charBase[~~(r / K)] + r % K) + s;
         n = m;
     }
-    s = String.fromCharCode(charBase[~~(n / K)] + n%K) + s;
+    s = String.fromCharCode(charBase[~~(n / K)] + n % K) + s;
     return s;
 };
 
@@ -141,7 +141,7 @@ function alphaToNum(s) {
     let length = s.split('').length;
     for (let i = 0; i < length; i++) {
         c = s.charCodeAt(length - 1 - i);
-        n += (c - ((c & 96) === 96 ? 97-26 : 65)) * K; 
+        n += (c - ((c & 96) === 96 ? 97 - 26 : 65)) * K;
         K = K * 52;
     }
     return n;
@@ -158,7 +158,7 @@ let LRE_AUTONUM = false;
 let lreInitiated = false;
 function lre(_arg) {
     let errExclFirstLine, errExclLastLine;
-    try {let a=null;a()} catch (e) {errExclFirstLine = e.trace[0].loc.start.line};
+    try { let a = null; a() } catch (e) { errExclFirstLine = e.trace[0].loc.start.line };
 
     const initLre = function () {
         overloadLog(log);
@@ -293,7 +293,7 @@ function lre(_arg) {
         let lastUpdateEventValue;
 
         const eventIsEnabled = function (eventName) {
-            return !events.hasOwnProperty(eventName) || events[eventName].state || !canceledEvents.includes(eventName);
+            return events.hasOwnProperty(eventName) && events[eventName].state && !canceledEvents.includes(eventName);
         };
 
         const containingRepeater = function (rawCmp) {
@@ -425,10 +425,16 @@ function lre(_arg) {
         }
 
         this.disableEvent = function (event) {
+            if (!events[event]) {
+                this.on(event, function () {});
+            }
             events[event].state = false;
         };
 
         this.enableEvent = function (event) {
+            if (!events[event]) {
+                this.on(event, function () {});
+            }
             events[event].state = true;
         }
 
@@ -1470,7 +1476,7 @@ function lre(_arg) {
                   return vals[key][column];
                 } else {
                   const col = this.find(key + '.' + column, true);
-                  if (col && col.id() &&col.exists()) {
+                  if (col && col.id() && col.exists()) {
                     return col.value();
                   }
                 }
@@ -1673,6 +1679,46 @@ function lre(_arg) {
             Object.assign(this, new lreToggling(this));
             this.setInitiated(true);
         };
+    };
+
+    /** * * * * * * * * * * * * * * * * * * * * * *
+     *                  LreCheckbox               *
+     ** * * * * * * * * * * * * * * * * * * * * * */
+    const lreCheckbox = function () {
+        let valueWhenDisabled = null;
+        let disabled = false;
+        this.initiate = function () {
+            this.lreType('checkbox');
+            this.setInitiated(true);
+        };
+
+        const disableMethod = function (cmp) {
+            cmp.value(valueWhenDisabled);
+        }
+
+        this.disable = function () {
+            this.addClass("opacity-25");
+            disabled = true;
+            valueWhenDisabled = this.value();
+            this.on("click", disableMethod);
+            this.disableEvent('update');
+        };
+
+        this.enable = function () {
+            this.removeClass("opacity-25");
+            disabled = false;
+            valueWhenDisabled = null;
+            this.off("click", disableMethod);
+            this.enableEvent('update');
+        }
+
+        this.isDisabled = function () {
+            return disabled;
+        }
+
+        this.isEnabled = function () {
+            return !disabled;
+        }
     };
 
 
@@ -2241,7 +2287,7 @@ function lre(_arg) {
 
             try {
                 classes = rawComponent.getClasses();
-            } catch (e) {}
+            } catch (e) { }
 
             let cmp = new lreComponent(lreContainer.sheet(), rawComponent, realId);
             if (classes.includes('repeater')) {
@@ -2256,6 +2302,8 @@ function lre(_arg) {
                 Object.assign(cmp, new lreIcon);
             } else if (classes.includes('label')) {
                 Object.assign(cmp, new lreLabel);
+            } else if (classes.includes('checkbox')) {
+                Object.assign(cmp, new lreCheckbox);
             }
             cmp.parent(lreContainer);
             if (lreContainer.lreType() === 'entry') {
@@ -2532,7 +2580,7 @@ function lre(_arg) {
         lreInitiated = true;
     }
 
-    try {let a=null;a()} catch (e) {errExclLastLine = e.trace[0].loc.start.line};
+    try { let a = null; a() } catch (e) { errExclLastLine = e.trace[0].loc.start.line };
     if (typeof _arg === 'function') {
         return function (_sheet) {
             const id = _sheet.id();
