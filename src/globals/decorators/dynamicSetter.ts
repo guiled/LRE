@@ -19,34 +19,38 @@ type ComponentAttachedToComponent = Partial<
   Record<ProxyModeHandlerLogType, Array<LetsRole.ComponentID>>
 >;
 
+const isDataProvider = (input: any):input is IDataProvider => {
+  return input.provider;
+}
+
 export const dynamicSetter = function <
   This extends ComponentCommon,
-  TValue extends LetsRole.ComponentValue | IDataProvider | LetsRole.Choices | (() => LetsRole.ComponentValue | LetsRole.Choices),
+  TValue extends LetsRole.ComponentValue | IDataProvider | LetsRole.Choices,
   Return
 >(
-  target: (this: This, newValue?: TValue) => Return,
+  target: (this: This, newValue?: DynamicSetValue<TValue>, data?: IDataProvider) => Return,
   context: ClassMethodDecoratorContext<
     This,
-    (this: This, value?: TValue) => Return
+    (this: This, value?: DynamicSetValue<TValue>, data?: IDataProvider) => Return
   >
 ) {
   const eventLogs: ComponentAttachedToComponent = {};
-  function replacementMethod(this: This, newValue?: TValue): Return {
+  function replacementMethod(this: This, newValue?: DynamicSetValue<TValue>): Return {
     if (arguments.length > 0) {
       removeOldEventLogHandlers.call(
         this,
         eventLogs,
         context as ClassMethodDecoratorContext
       );
-      if ((newValue as IDataProvider).provider) {
+      if (isDataProvider(newValue)) {
         lre.trace(
           `Add dynamic setter for ${this.realId()} on ${context.name as string}`
         );
         const newSetter = (): any => {
-          const valueToSet = loggedCall((newValue as IDataProvider).value as () => TValue);
+          const valueToSet = loggedCall(newValue.providedValue.bind(newValue));
           const newEventLogs = handleAccessLog.call(this, eventLogs, newSetter);
           Object.assign(eventLogs, newEventLogs);
-          return target.call(this, valueToSet);
+          return target.call(this, valueToSet, newValue);
         };
         return newSetter();
       } else if (typeof newValue === "function") {
@@ -54,7 +58,7 @@ export const dynamicSetter = function <
           `Add dynamic setter for ${this.realId()} on ${context.name as string}`
         );
         const newSetter = (): any => {
-          const valueToSet = loggedCall(newValue as () => TValue);
+          const valueToSet = loggedCall(newValue);
           const newEventLogs = handleAccessLog.call(this, eventLogs, newSetter);
           Object.assign(eventLogs, newEventLogs);
           return target.call(this, valueToSet);

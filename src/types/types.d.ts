@@ -24,15 +24,17 @@ declare namespace LetsRole {
   export type RepeaterValue = {
     [key: Index]: LetsRole.ViewData;
   };
-  export type ChoiceValue = string
-  export type ChoiceValues = Array<string>
+  export type ChoiceValue = string;
+  export type ChoiceValues = Array<string>;
   export type MultiChoiceValue = Array<string>;
-  export type ComponentValue =
-    | LetsRole.BaseComponentValue
+  export type ComposedComponentValue =
     | LetsRole.RepeaterValue
-    | LetsRole.ChoiceValue
     | LetsRole.MultiChoiceValue
     | LetsRole.ViewData;
+  export type ComponentValue =
+    | LetsRole.BaseComponentValue
+    | LetsRole.ChoiceValue
+    | LetsRole.ComposedComponentValue;
   export type Choices = Record<ChoiceValue, string>;
 
   export type Selector = LetsRole.ComponentID | LetsRole.ClassSelector;
@@ -256,9 +258,9 @@ declare namespace LetsRole {
     addAction(title: string, callback: (...args: any[]) => void);
     removeAction(title: string);
     onRoll(callback: (...args: any[]) => void);
-  }
+  };
 
-  export type RollBuilder = new (...args: any[]) => RollBuilderInstance
+  export type RollBuilder = new (...args: any[]) => RollBuilderInstance;
 }
 declare function log(input: any): void;
 declare var wait: (delay: number, callback: (...args: any[]) => void) => void;

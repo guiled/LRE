@@ -368,27 +368,27 @@ describe("Event attached to group are attached to all items", () => {
 describe("Group get values", () => {
   test("Get/Set Values", () => {
     const group = new Group(context, "group2", sheet, ["cmp1", "cmp2", "cmp3"]);
-    expect(group.value()).toMatchObject({
+    expect(group.providedValue()).toMatchObject({
       cmp1: "val1",
       cmp2: "val2",
       cmp3: "val3",
     });
-    group.value({
+    group.providedValue({
       cmp1: "val11",
     });
     expect(sheet.get("cmp1")!.value()).toBe("val11");
     const cmp4 = sheet.get("cmp4")!;
-    group.value({
+    group.providedValue({
       cmp4: "val4",
     });
     expect(cmp4.value()).not.toBe("val4");
     group.add("cmp4");
-    group.value({
+    group.providedValue({
       cmp4: "val4",
     });
     expect(cmp4.value()).toBe("val4");
 
-    group.value("Hello");
+    group.providedValue("Hello");
     expect(sheet.get("cmp1")!.value()).toBe("Hello");
     expect(sheet.get("cmp2")!.value()).toBe("Hello");
     expect(sheet.get("cmp3")!.value()).toBe("Hello");
@@ -477,7 +477,7 @@ describe("Group get values", () => {
     const chk = sheet.get("checkbox")!;
     chk.value(false);
     group.visible(function () {
-      return chk.value();
+      return !!chk.value();
     });
     expect(group.visible()).toBeFalsy();
     expect(sheet.get("cmp1")!.visible()).toBeFalsy();
@@ -499,7 +499,7 @@ describe("Group and context", () => {
   test("Group value is logged, not components", () => {
     const grp = new Group(context, "grp", sheet, ["a", "b", "c"]);
     context.setMode("virtual");
-    grp.value();
+    grp.providedValue();
     context.setMode("real");
     context.resetAccessLog();
     const accessLog = context.getPreviousAccessLog("value");

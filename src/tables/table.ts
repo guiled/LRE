@@ -1,8 +1,9 @@
+import { DataProvider } from "../dataprovider";
 import { HasRaw } from "../hasraw";
 import { Mixin } from "../mixin";
 
 export class Table
-  extends Mixin(HasRaw<LetsRole.Table>)
+  extends Mixin(HasRaw<LetsRole.Table>, DataProvider)
   implements LetsRole.Table
 {
   get(id: LetsRole.ColumnId): LetsRole.TableRow {
@@ -28,6 +29,15 @@ export class Table
       [
         {
           getRaw: () => raw,
+        },
+      ],
+      [
+        () => {
+          const result: { [key: LetsRole.TableValue]: LetsRole.TableRow } = {};
+          this.each((row: LetsRole.TableRow) => {
+            result[row.id] = row;
+          });
+          return result;
         },
       ],
     ]);

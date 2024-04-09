@@ -33,7 +33,7 @@ export class Group
     sheet: ISheet,
     componentIds: Array<LetsRole.ComponentID> = []
   ) {
-    super([[id], [sheet, id], [(...args: any[]) => this.#value(...args)]]);
+    super([[id], [sheet, id], [(...args: any[]) => this.value(...args)]]);
     this.#id = id;
     this.#sheet = sheet;
     this.#context = context;
@@ -226,7 +226,7 @@ export class Group
     return this;
   }
 
-  #value(_newValue?: LetsRole.ComponentValue): void | LetsRole.ViewData {
+  value(_newValue?: LetsRole.ComponentValue): void | LetsRole.ViewData {
     this.#context.logAccess("value", this.#id);
     this.#context.disableAccessLog();
     const result = this.#getSet.apply(
@@ -258,11 +258,10 @@ export class Group
 
   @dynamicSetter
   visible(
-    _newValue?:
+    _newValue?: DynamicSetValue<
       | Record<LetsRole.ComponentID, boolean>
       | boolean
-      | ((...args: any[]) => any)
-      | undefined
+      | undefined>
   ): boolean {
     if (arguments.length > 0) {
       this.#getSet.apply(

@@ -355,7 +355,7 @@ describe("Component visible setter", () => {
     expect(cmp.visible()).toBeTruthy();
     const chk = sheet.get("chk")!;
     chk.value(false);
-    cmp.visible(chk.value.bind(chk));
+    cmp.visible(chk.value.bind(chk) as () => boolean);
     expect(cmp.visible()).toBeFalsy();
     expect(cmp.hide).toBeCalledTimes(1);
     expect(cmp.show).toBeCalledTimes(0);
@@ -364,7 +364,7 @@ describe("Component visible setter", () => {
     expect(cmp.hide).toBeCalledTimes(1);
     expect(cmp.show).toBeCalledTimes(1);
     cmp.visible(() => {
-      return chk.value();
+      return !!chk.value();
     });
     expect(cmp.visible()).toBeTruthy();
     jest.spyOn(cmp, "hide");

@@ -8,6 +8,8 @@ firstInit = undefined;
 
 type cb = (thisArg: any, argArray?: any) => (rawSheet: LetsRole.Sheet) => void;
 
+type BasicObject<T = any> = { [key: string]: T };
+
 export interface LRE extends ILRE, Logger, cb {}
 
 export class LRE extends Logger implements ILRE {
@@ -101,9 +103,16 @@ export class LRE extends Logger implements ILRE {
     return this.numToAlpha(rnd);
   }
 
-  isObject(object: any): boolean {
+  isObject<T extends BasicObject = BasicObject>(object: any): object is T {
     return (
       object != null && typeof object === "object" && !Array.isArray(object)
+    );
+  }
+
+  isUseableAsIndex(value: any): value is number | string {
+    return (
+      typeof value === "number" ||
+      typeof value === "string" 
     );
   }
 
