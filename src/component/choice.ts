@@ -1,6 +1,16 @@
 import { Component } from ".";
 import { dynamicSetter } from "../globals/decorators/dynamicSetter";
 
+type ChoiceValueWithData = ComponentValueWithData<string>;
+export type ChoicesWithData = Record<
+  LetsRole.ChoiceValue,
+  ChoiceValueWithData | string
+>;
+type ChoiceData = Record<
+  LetsRole.ChoiceValue,
+  LetsRole.TableRow | LetsRole.ComponentValue
+>;
+
 type ChoiceEvents =
   | "select"
   | "valselect"
@@ -9,6 +19,8 @@ type ChoiceEvents =
   | "valclick";
 export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
   #choices: LetsRole.Choices = {};
+  #choiceData: ChoiceData = {};
+  #choiceDataProvider: IDataProvider | undefined;
   #currentValue: LetsRole.ComponentValue | void;
 
   constructor(
@@ -39,12 +51,32 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
   }
 
   @dynamicSetter
-  setChoices(choices?: LetsRole.Choices): void {
+  setChoices(
+    choices?: DynamicSetValue<ChoicesWithData>,
+    choiceDataProvider?: IDataProvider
+  ): void {
     const currentValue: LetsRole.ChoiceValue = this.value()!;
 
-    if (choices && !choices.hasOwnProperty(currentValue)) {
+    const newChoices: LetsRole.Choices = {};
+    let newValues: LetsRole.ChoiceValues = [];
+    const newChoiceData: ChoiceData = {};
+
+    if (lre.isObject<LetsRole.Choices>(choices)) {
+      newValues = Object.keys(choices);
+      newValues.forEach((chVal: LetsRole.ChoiceValue) => {
+        const v = choices[chVal];
+        if (lre.isObject<ChoiceValueWithData>(v)) {
+          newChoices[chVal] = v.value;
+          newChoiceData[chVal] = v.data;
+        } else {
+          newChoices[chVal] = v;
+          newChoiceData[chVal] = null;
+        }
+      });
+    }
+
+    if (!newChoices.hasOwnProperty(currentValue)) {
       const availableValues: LetsRole.ChoiceValues = Object.keys(this.#choices);
-      const newValues: LetsRole.ChoiceValues = Object.keys(choices);
       if (
         availableValues.length &&
         newValues.length &&
@@ -52,13 +84,15 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
       ) {
         const tmpChoices: LetsRole.Choices = {};
         tmpChoices[currentValue] = this.#choices[currentValue];
-        tmpChoices[newValues[0]] = choices[newValues[0]];
+        tmpChoices[newValues[0]] = newChoices[newValues[0]];
         this.raw().setChoices(tmpChoices);
         this.value(newValues[0]);
         this.sheet().sendPendingDataFor(this.realId());
       }
     }
-    this.#choices = choices!;
+    this.#choices = newChoices;
+    this.#choiceData = newChoiceData;
+    this.#choiceDataProvider = choiceDataProvider;
     super.setChoices.apply(this, Array.from(arguments) as [LetsRole.Choices]);
     this.trigger("update", this);
   }
@@ -74,5 +108,28 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
 
   label(): string {
     return this.text()!;
+  }
+
+  getChoiceData(
+    value?: LetsRole.ChoiceValue
+  ): LetsRole.TableRow | LetsRole.ComponentValue {
+    if (this.#choiceDataProvider) {
+      if (arguments.length <= 0) {
+        return this.#choiceDataProvider?.providedValue() || null;
+      }
+      return this.#choiceDataProvider?.getData(value) || null;
+    }
+    if (arguments.length <= 0 || typeof value === "undefined") {
+      return this.#choiceData || null;
+    }
+    return this.#choiceData[value!] || null;
+  }
+
+  valueData(): LetsRole.TableRow | LetsRole.ComponentValue {
+    return this.getChoiceData(this.value()!);
+  }
+
+  row(): LetsRole.TableRow | LetsRole.ComponentValue {
+    return this.valueData();
   }
 }

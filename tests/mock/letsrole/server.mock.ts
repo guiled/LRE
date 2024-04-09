@@ -89,7 +89,7 @@ export class MockServer {
       ) {
         return {
           ...MockServer.NonExistingCmpDummy,
-          id: jest.fn(() => "42"),
+          id: jest.fn(() => null as unknown as string),
           addClass: () => {
             throw Error("non");
           },
@@ -181,7 +181,7 @@ export class MockServer {
         ) {
           return {
             ...MockServer.NonExistingCmpDummy,
-            id: jest.fn(() => id),
+            id: jest.fn(() => null as unknown as string),
             addClass: () => {
               throw Error("non");
             },

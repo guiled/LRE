@@ -1,3 +1,5 @@
+declare type BasicObject<T = any> = { [key: string]: T };
+
 declare interface ILRE {
   deepMerge(target: any, ...sources: any[]): any;
   deepEqual(x: any, y: any): boolean;
@@ -6,6 +8,8 @@ declare interface ILRE {
   wait(delay: number, cb: () => void, name: string = "");
   autoNum(v: boolean = true): void;
   value<T = any>(n: T): number | T;
+  isObject<T extends BasicObject = BasicObject>(object: any): object is T;
+  isUseableAsIndex(value: any): value is number | string | bigint;
   __debug: boolean = false;
 }
 
@@ -212,8 +216,13 @@ declare interface IDataHolder {
 
 declare interface IDataProvider {
   provider: boolean;
-  value(newValue?: LetsRole.ComponentValue): LetsRole.ViewData | void;
+  providedValue<T extends LetsRole.ComponentValue = LetsRole.ComponentValue> (_newValue?: T): T extends undefined ? LetsRole.ComponentValue : void;
   sort(): IDataProvider;
+  each(mapper: (val: LetsRole.ComponentValue) => void): void;
+  select(column: LetsRole.ComponentID): IDataProvider;
+  getData(
+    id: LetsRole.ComponentID | LetsRole.ColumnId | LetsRole.ComponentValue
+  ): LetsRole.TableRow | LetsRole.ComponentValue;
 }
 
 declare interface ComponentBase {
@@ -268,3 +277,10 @@ declare interface IComponent
 declare interface IGroup extends IComponent, IDataProvider, IEventHolder {
   text(_replacement?: LetsRole.ViewData | undefined): void | LetsRole.ViewData;
 }
+
+declare type ComponentValueWithData<T = LetsRole.ComponentValue> = {
+  value: T;
+  data: LetsRole.ViewData;
+};
+
+declare type DynamicSetValue<T> = T | IDataProvider | (() => T)

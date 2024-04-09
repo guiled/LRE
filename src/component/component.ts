@@ -245,7 +245,7 @@ export class Component<
   }
 
   @dynamicSetter
-  value(newValue?: unknown): void | TypeValue {
+  value(newValue?: DynamicSetValue<unknown>): void | TypeValue {
     if (arguments.length > 0) {
       const oldValue = this.value();
       let data: LetsRole.ViewData = {
@@ -293,7 +293,7 @@ export class Component<
   }
 
   @dynamicSetter
-  visible(newValue?: boolean | ((...args: any[]) => any)): boolean {
+  visible(newValue?: DynamicSetValue<boolean>): boolean {
     if (arguments.length > 0) {
       if (!!newValue) {
         this.show();
