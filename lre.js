@@ -5,7 +5,7 @@ function isObject(object) {
 }
 
 function strlen(str) {
-    return str.split('').length;
+    return str ? str.split('').length : 0;
 };
 
 function time(fcn) {
