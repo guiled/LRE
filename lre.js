@@ -1,4 +1,4 @@
-//region LRE 6.15
+//region LRE 6.16
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -6,6 +6,12 @@ function isObject(object) {
 
 function strlen(str) {
     return str ? str.split('').length : 0;
+};
+
+function mt_rand(min, max) {
+    const rnd = Math.random();
+
+    return min + Math.floor(rnd * (max - min + 1));
 };
 
 function time(fcn) {
