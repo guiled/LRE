@@ -88,6 +88,32 @@ function deepClone(val) {
     }
 };
 
+function deepMerge(target) {
+    var sources = Array.from.call(null, arguments).slice(1);
+    if (!sources.length) return target;
+    var source = sources.shift();
+    if (isObject(target) && isObject(source)) {
+        var _loop = function _loop(key2) {
+            if (isObject(source[key2])) {
+                if (!target[key2]) target = Object.assign({}, target, (function () {
+                    var o = {};
+                    o[key2] = {};
+                    return o;
+                })());
+                target[key2] = deepMerge(target[key2], source[key2]);
+            } else {
+                target = Object.assign({}, target, (function () {
+                    var o = {};
+                    o[key2] = source[key2];
+                    return o;
+                })());
+            }
+        };
+        for (var key in source) _loop(key);
+    }
+    return deepMerge.apply(null, [target].concat(sources));
+};
+
 // Can be remove when JSON.stringify() is available
 function stringify(obj, indent) {
     if (arguments.length === 1) {
@@ -1031,9 +1057,9 @@ function lre(_arg) {
             });
             let maxValue = typeof nbMax === 'function' ? nbMax() : nbMax;
             let minValue = typeof nbMin === 'function' ? nbMin() : nbMin;
-            
+
             if (testExceeded(maxValue, resultMax, newValue, valuesForMinMax, OVER)
-            || testExceeded(minValue, resultMin, newValue, valuesForMinMax, UNDER)) {
+                || testExceeded(minValue, resultMin, newValue, valuesForMinMax, UNDER)) {
                 this.trigger('limit');
                 this.disableEvent('update');
                 this.value(valuesForMinMax.slice());
