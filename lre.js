@@ -1,4 +1,4 @@
-//region LRE 6.16
+//region LRE 6.17
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -363,7 +363,10 @@ function lre(_arg) {
                 } else {
                     cmp = component;
                 }
-                if (eventName === 'update' && !manuallyTriggered && rawTarget.value && rawTarget.value() === lastUpdateEventValue) {
+                if (eventName === 'update' && !manuallyTriggered && rawTarget.value &&
+                    (rawTarget.value() === lastUpdateEventValue
+                    || (isObject(lastUpdateEventValue) && deepEqual(lastUpdateEventValue, rawTarget.value())))
+                    ) {
                     return false;
                 }
                 lastUpdateEventValue = rawTarget.value && deepClone(rawTarget.value());
@@ -2221,8 +2224,28 @@ function lre(_arg) {
                 let data = pendingDataToSet.shift();
                 delete pendingDataToSetIndex[data.k];
                 if (typeof data.v !== 'undefined' && !Number.isNaN(data.v)) {
-                    dataToSend[data.k] = data.v;
-                    added++;
+                    const ids = data.k.split(repeaterIdSeparator);
+                    if (ids.length === 1) {
+                        dataToSend[ids[0]] = data.v;
+                        added++;
+                    } else {
+                        let revValue;
+                        if (!dataToSend.hasOwnProperty(ids[0])) {
+                            added++;
+                            repValue = sheet.getData()[ids[0]] || {};
+                        } else {
+                            repValue = dataToSend[ids[0]];
+                        }
+                        if (!repValue.hasOwnProperty(ids[1])) {
+                            repValue[ids[1]] = {};
+                        }
+                        if (ids.length === 3) {
+                            repValue[ids[1]][ids[2]] = data.v;
+                        } else {
+                            repValue[ids[1]] = data.v
+                        }
+                        dataToSend[ids[0]] = repValue;
+                    }
                 }
                 analysed++;
             }
