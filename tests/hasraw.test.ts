@@ -11,15 +11,15 @@ describe("Hasraw", () => {
             getRaw,
             onRefresh,
         });
-        expect(getRaw).toBeCalledTimes(0);
+        expect(getRaw).toHaveBeenCalledTimes(0);
         expect(subject.raw()).toBe(raw);
-        expect(getRaw).toBeCalledTimes(1);
-        expect(onRefresh).toBeCalledTimes(0);
+        expect(getRaw).toHaveBeenCalledTimes(1);
+        expect(onRefresh).toHaveBeenCalledTimes(0);
         raw = {};
         expect(subject.raw()).not.toBe(raw);
         subject.refreshRaw();
-        expect(getRaw).toBeCalledTimes(2);
-        expect(onRefresh).toBeCalledTimes(1);
+        expect(getRaw).toHaveBeenCalledTimes(2);
+        expect(onRefresh).toHaveBeenCalledTimes(1);
         expect(subject.raw()).toBe(raw);
     })
 })

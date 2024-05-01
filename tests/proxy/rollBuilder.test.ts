@@ -22,13 +22,13 @@ describe("RollBuilder proxy", () => {
     expect(rb.removeAction("action1")).toBe(rb);
     expect(rb.onRoll(() => {})).toBe(rb);
     expect(rb.roll()).toBeUndefined();
-    expect(rollBuilderMock.title).toBeCalled();
-    expect(rollBuilderMock.visibility).toBeCalled();
-    expect(rollBuilderMock.expression).toBeCalled();
-    expect(rollBuilderMock.addAction).toBeCalled();
-    expect(rollBuilderMock.removeAction).toBeCalled();
-    expect(rollBuilderMock.onRoll).toBeCalled();
-    expect(rollBuilderMock.roll).toBeCalled();
+    expect(rollBuilderMock.title).toHaveBeenCalled();
+    expect(rollBuilderMock.visibility).toHaveBeenCalled();
+    expect(rollBuilderMock.expression).toHaveBeenCalled();
+    expect(rollBuilderMock.addAction).toHaveBeenCalled();
+    expect(rollBuilderMock.removeAction).toHaveBeenCalled();
+    expect(rollBuilderMock.onRoll).toHaveBeenCalled();
+    expect(rollBuilderMock.roll).toHaveBeenCalled();
   });
   test("works in virtual", () => {
     modeHandlerMock.setMode("virtual")
@@ -41,12 +41,12 @@ describe("RollBuilder proxy", () => {
     expect(rb.removeAction("action1")).toBe(rb);
     expect(rb.onRoll(() => {})).toBe(rb);
     expect(rb.roll()).toBeUndefined();
-    expect(rollBuilderMock.title).toBeCalled();
-    expect(rollBuilderMock.visibility).toBeCalled();
-    expect(rollBuilderMock.expression).toBeCalled();
-    expect(rollBuilderMock.addAction).toBeCalled();
-    expect(rollBuilderMock.removeAction).toBeCalled();
-    expect(rollBuilderMock.onRoll).toBeCalled();
-    expect(rollBuilderMock.roll).not.toBeCalled();
+    expect(rollBuilderMock.title).toHaveBeenCalled();
+    expect(rollBuilderMock.visibility).toHaveBeenCalled();
+    expect(rollBuilderMock.expression).toHaveBeenCalled();
+    expect(rollBuilderMock.addAction).toHaveBeenCalled();
+    expect(rollBuilderMock.removeAction).toHaveBeenCalled();
+    expect(rollBuilderMock.onRoll).toHaveBeenCalled();
+    expect(rollBuilderMock.roll).not.toHaveBeenCalled();
   });
 });

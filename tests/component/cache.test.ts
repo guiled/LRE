@@ -57,24 +57,24 @@ beforeAll(() => {
 describe("Component cache set/get/unset/inCache", () => {
   test("Set / Get / In cache", () => {
     expect(cache.get(UNKNOWN_CMP_ID)).toBeNull();
-    expect(newCmp).toBeCalledTimes(1);
+    expect(newCmp).toHaveBeenCalledTimes(1);
     expect(cache.inCache(UNKNOWN_CMP_ID)).toBeFalsy();
     expect(cache.inCache("123")).toBeFalsy();
-    expect(newCmp).toBeCalledTimes(1);
+    expect(newCmp).toHaveBeenCalledTimes(1);
     newCmp.mockClear();
     expect(cache.get("123")).not.toBeNull();
-    expect(newCmp).toBeCalledTimes(1);
+    expect(newCmp).toHaveBeenCalledTimes(1);
     expect(cache.inCache("123")).toBeTruthy();
     const cmp = newCmp("123")!;
     cache.set("123", cmp);
     newCmp.mockClear();
-    expect(newCmp).not.toBeCalled();
+    expect(newCmp).not.toHaveBeenCalled();
     expect(cache.get("123")).toStrictEqual(cmp);
-    expect(newCmp).not.toBeCalled();
+    expect(newCmp).not.toHaveBeenCalled();
     cache.unset("123");
-    expect(newCmp).not.toBeCalled();
+    expect(newCmp).not.toHaveBeenCalled();
     expect(cache.get("123")).not.toStrictEqual(cmp);
-    expect(newCmp).toBeCalledTimes(1);
+    expect(newCmp).toHaveBeenCalledTimes(1);
   });
 
   test("Set / Get / In cache for repeaters", () => {
@@ -115,12 +115,12 @@ describe("Component cache forget/remember", () => {
     expect(cache.inCache("123")).toBeFalsy();
     cache.remember("123");
     cache.remember("abc");
-    expect(newCmp).not.toBeCalled();
+    expect(newCmp).not.toHaveBeenCalled();
     cache.get("123.b.c");
     expect(cache.inCache("123")).toBeFalsy();
     mockedWaitDefs.itHasWaitedEverything();
     expect(cache.inCache("123")).not.toBeFalsy();
-    expect(newCmp).toBeCalled();
+    expect(newCmp).toHaveBeenCalled();
     expect(cache.inCache("123.b.c")).not.toBeFalsy();
     cache.forget("123");
     expect(cache.inCache("123.b.c")).not.toBeFalsy();

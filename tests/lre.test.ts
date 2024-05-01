@@ -87,20 +87,20 @@ describe("LRE tests", () => {
 
     let init = subject.apply(subject, [cb]);
 
-    expect(cb).toBeCalledTimes(0);
+    expect(cb).toHaveBeenCalledTimes(0);
     init(sheet1);
-    expect(cb).toBeCalledTimes(0);
-    expect(global.firstInit).toBeCalledTimes(0);
+    expect(cb).toHaveBeenCalledTimes(0);
+    expect(global.firstInit).toHaveBeenCalledTimes(0);
     itHasWaitedEverything();
-    expect(cb).toBeCalledTimes(1);
+    expect(cb).toHaveBeenCalledTimes(1);
     expect(cb.mock.calls[0][0]).toBeInstanceOf(Sheet);
-    expect(global.firstInit).toBeCalledTimes(1);
+    expect(global.firstInit).toHaveBeenCalledTimes(1);
     expect((global.firstInit as jest.Mock).mock.calls[0][0]).toBeInstanceOf(
       Sheet
     );
     init(sheet2);
     itHasWaitedEverything();
-    expect(cb).toBeCalledTimes(2);
+    expect(cb).toHaveBeenCalledTimes(2);
     expect(cb.mock.calls[1][0]).toBeInstanceOf(Sheet);
 
     const cbErr: jest.Mock = jest.fn(() => {
@@ -111,8 +111,8 @@ describe("LRE tests", () => {
     });
     let initErr = subject.apply(subject, [cbErr]);
     initErr(sheet1);
-    expect(cbErr).toBeCalledTimes(0);
-    expect(global.firstInit).toBeCalledTimes(0);
+    expect(cbErr).toHaveBeenCalledTimes(0);
+    expect(global.firstInit).toHaveBeenCalledTimes(0);
     itHasWaitedEverything();
     expect(cbErr).toThrowError();
     expect(global.firstInit).toThrowError();
@@ -154,9 +154,9 @@ describe("LRE wait", () => {
     (wait as jest.Mock).mockClear();
     const cb = jest.fn();
     subject.wait(100, cb, "hop");
-    expect(wait).toBeCalledTimes(1);
+    expect(wait).toHaveBeenCalledTimes(1);
     itHasWaitedEverything();
-    expect(cb).toBeCalledTimes(1);
+    expect(cb).toHaveBeenCalledTimes(1);
   });
 
   test("handles errors", () => {
@@ -165,7 +165,7 @@ describe("LRE wait", () => {
     subject.wait(100, cb, "hop");
     (lre.error as jest.Mock).mockClear();
     expect(itHasWaitedEverything).not.toThrowError();
-    expect(lre.error).toBeCalled();
+    expect(lre.error).toHaveBeenCalled();
   });
 });
 

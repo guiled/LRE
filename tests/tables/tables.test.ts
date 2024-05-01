@@ -9,9 +9,9 @@ describe("Tables overload", () => {
         global.Tables = {
             get,
         } as LetsRole.Tables
-        expect(get).toBeCalledTimes(0);
+        expect(get).toHaveBeenCalledTimes(0);
         overloadTables(global.Tables);
         Tables.get("123");
-        expect(get).toBeCalledTimes(1);
+        expect(get).toHaveBeenCalledTimes(1);
     })
 });

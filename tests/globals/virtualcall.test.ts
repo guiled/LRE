@@ -8,11 +8,11 @@ jest.mock("../../src/lre");
 describe("Logged call", () => {
   test("logged call runs the callback with clean logs", () => {
     const cb = jest.fn();
-    expect(context.resetAccessLog).not.toBeCalled();
-    expect(cb).not.toBeCalled();
+    expect(context.resetAccessLog).not.toHaveBeenCalled();
+    expect(cb).not.toHaveBeenCalled();
     loggedCall(cb);
-    expect(context.resetAccessLog).toBeCalled();
-    expect(cb).toBeCalled();
+    expect(context.resetAccessLog).toHaveBeenCalled();
+    expect(cb).toHaveBeenCalled();
   });
 
   test("logged call runs the callback with clean logs", () => {
@@ -52,7 +52,7 @@ describe("Virtual call", () => {
       return result;
     });
     expect(virtualCall(cb)).toBe(result);
-    expect(global.Dice.roll).not.toBeCalled();
+    expect(global.Dice.roll).not.toHaveBeenCalled();
     expect(global.init).toBe(env.init);
     expect(global.initRoll).toBe(env.initRoll);
     expect(global.getReferences).toBe(env.getReferences);
@@ -72,9 +72,9 @@ describe("Virtual call", () => {
       null();
     });
     expect(modeHandlerMock.getMode()).toBe("real");
-    expect(lre.error).not.toBeCalled();
+    expect(lre.error).not.toHaveBeenCalled();
     expect(() => virtualCall(cb)).not.toThrowError();
-    expect(lre.error).toBeCalled();
+    expect(lre.error).toHaveBeenCalled();
     expect(modeHandlerMock.getMode()).toBe("real");
     expect(modeDuringVirtualCall).not.toBe("real");
   });

@@ -45,12 +45,12 @@ describe("DataBatcher async send data", () => {
       fortyThree: 43,
     };
     dataBatcher.setData(data);
-    expect(sheet.setData).not.toBeCalled();
+    expect(sheet.setData).not.toHaveBeenCalled();
     expect(dataBatcher.getPendingData("fortyTwo")).toStrictEqual(42);
     expect(dataBatcher.getPendingData("fortyTour")).toBeUndefined();
     expect(dataBatcher.getPendingData()).toEqual(data);
     itHasWaitedEnough();
-    expect(sheet.setData).toBeCalled();
+    expect(sheet.setData).toHaveBeenCalled();
     expect((sheet.setData as jest.Mock).mock.calls[0][0]).toEqual(data);
   });
 
@@ -63,25 +63,25 @@ describe("DataBatcher async send data", () => {
     const processedCallback = jest.fn();
     dataBatcher.on("pending", pendingCallback);
     dataBatcher.on("processed", processedCallback);
-    expect(pendingCallback).not.toBeCalled();
+    expect(pendingCallback).not.toHaveBeenCalled();
     dataBatcher.setData(data);
-    expect(pendingCallback).toBeCalledTimes(1);
-    expect(processedCallback).not.toBeCalled();
+    expect(pendingCallback).toHaveBeenCalledTimes(1);
+    expect(processedCallback).not.toHaveBeenCalled();
     itHasWaitedEnough();
-    expect(processedCallback).toBeCalledTimes(1);
+    expect(processedCallback).toHaveBeenCalledTimes(1);
   });
 
   it("batch multiple setData in one send", () => {
     dataBatcher.setData({
       fortyTwo: 42,
     });
-    expect(sheet.setData).not.toBeCalled();
+    expect(sheet.setData).not.toHaveBeenCalled();
     dataBatcher.setData({
       fortyThree: 43,
     });
-    expect(sheet.setData).not.toBeCalled();
+    expect(sheet.setData).not.toHaveBeenCalled();
     itHasWaitedEnough();
-    expect(sheet.setData).toBeCalled();
+    expect(sheet.setData).toHaveBeenCalled();
     expect((sheet.setData as jest.Mock).mock.calls[0][0]).toEqual({
       fortyTwo: 42,
       fortyThree: 43,
@@ -100,11 +100,11 @@ describe("DataBatcher async send data", () => {
     }
     const data = { ...data1, ...data2 };
     dataBatcher.setData(data);
-    expect(sheet.setData).toBeCalledTimes(0);
+    expect(sheet.setData).toHaveBeenCalledTimes(0);
     itHasWaitedEnough();
-    expect(sheet.setData).toBeCalledTimes(1);
+    expect(sheet.setData).toHaveBeenCalledTimes(1);
     itHasWaitedEnough();
-    expect(sheet.setData).toBeCalledTimes(2);
+    expect(sheet.setData).toHaveBeenCalledTimes(2);
     expect(
       Object.keys((sheet.setData as jest.Mock).mock.calls[0][0])
     ).toHaveLength(max);
@@ -119,13 +119,13 @@ describe("DataBatcher async send data", () => {
       fortyThree: 43,
     };
     dataBatcher.setData(data);
-    expect(sheet.setData).not.toBeCalled();
+    expect(sheet.setData).not.toHaveBeenCalled();
     dataBatcher.sendPendingDataFor("fortyFour");
-    expect(sheet.setData).toBeCalledTimes(0);
+    expect(sheet.setData).toHaveBeenCalledTimes(0);
     dataBatcher.sendPendingDataFor("fortyTwo");
-    expect(sheet.setData).toBeCalledTimes(1);
+    expect(sheet.setData).toHaveBeenCalledTimes(1);
     itHasWaitedEnough();
-    expect(sheet.setData).toBeCalledTimes(1);
+    expect(sheet.setData).toHaveBeenCalledTimes(1);
     expect((sheet.setData as jest.Mock).mock.calls[0][0]).toEqual(data);
   });
 
@@ -135,13 +135,13 @@ describe("DataBatcher async send data", () => {
       fortyThree: 43,
     };
     dataBatcher.setData(data);
-    expect(sheet.setData).not.toBeCalled();
-    expect(sheet.setData).toBeCalledTimes(0);
+    expect(sheet.setData).not.toHaveBeenCalled();
+    expect(sheet.setData).toHaveBeenCalledTimes(0);
     dataBatcher.setData({
       fortyTwo: 44,
     });
     itHasWaitedEnough();
-    expect(sheet.setData).toBeCalledTimes(1);
+    expect(sheet.setData).toHaveBeenCalledTimes(1);
     expect((sheet.setData as jest.Mock).mock.calls[0][0]).toEqual({
       fortyTwo: 44,
       fortyThree: 43,
@@ -156,7 +156,7 @@ describe("DataBatcher async send data", () => {
     dataBatcher.setData({
       a: "any",
     });
-    expect(lre.error).toBeCalled();
+    expect(lre.error).toHaveBeenCalled();
   });
 
   test("Databatcher raise and log an error when data processed failed", () => {
@@ -167,9 +167,9 @@ describe("DataBatcher async send data", () => {
     dataBatcher.setData({
       a: "any",
     });
-    expect(lre.error).not.toBeCalled();
+    expect(lre.error).not.toHaveBeenCalled();
     itHasWaitedEnough();
-    expect(lre.error).toBeCalled();
+    expect(lre.error).toHaveBeenCalled();
   });
 });
 
@@ -197,10 +197,10 @@ describe("Handle virtual and real modes", () => {
       cmp2: 43,
     };
     dataBatcher.setData(data);
-    expect(pendingCallback).toBeCalled();
-    expect(processedCallback).toBeCalled();
-    expect(sheetProxy.setData).toBeCalled();
-    expect(sheet.setData).not.toBeCalled();
+    expect(pendingCallback).toHaveBeenCalled();
+    expect(processedCallback).toHaveBeenCalled();
+    expect(sheetProxy.setData).toHaveBeenCalled();
+    expect(sheet.setData).not.toHaveBeenCalled();
     expect(dataBatcher.getPendingData()).toMatchObject({});
     expect(dataBatcher.getPendingData("cmp1")).toBeUndefined();
   });
