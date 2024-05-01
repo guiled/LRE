@@ -56,13 +56,13 @@ describe("Choice basic", () => {
   test("setChoices", () => {
     const choice = new Choice(raw, sheet, "ch");
     expect(choice.value()).toBe("");
-    expect(raw.setChoices).not.toBeCalled();
+    expect(raw.setChoices).not.toHaveBeenCalled();
     const newChoices = {
       a: "1",
       b: "2",
     };
     choice.setChoices(newChoices);
-    expect(raw.setChoices).toBeCalledWith(newChoices);
+    expect(raw.setChoices).toHaveBeenCalledWith(newChoices);
   });
 
   test("Events", () => {
@@ -84,7 +84,7 @@ describe("Choice basic", () => {
     expect(choice.value()).toBe("");
 
     choice.value(1);
-    expect(select).toBeCalledWith(choice, 1);
+    expect(select).toHaveBeenCalledWith(choice, 1);
   });
 });
 
@@ -93,7 +93,7 @@ describe("Choice get and set choices", () => {
     const ch = new Choice(raw, sheet, "ch");
     jest.spyOn(lre, "warn");
     expect(ch.getChoices()).toStrictEqual({});
-    expect(lre.warn).toBeCalled();
+    expect(lre.warn).toHaveBeenCalled();
   });
 
   test("set choice is error protected", () => {

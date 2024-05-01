@@ -14,7 +14,7 @@ describe("Data provider basics", () => {
     const dataGetter = jest.fn((_a: any) => data as any);
     const dp = new DirectDataProvider(dataGetter);
     expect(dp.providedValue()).toBe(data);
-    expect(dataGetter).toBeCalled();
+    expect(dataGetter).toHaveBeenCalled();
   });
 });
 
@@ -106,7 +106,7 @@ describe("DataProvider each", () => {
     const fn = jest.fn();
 
     dp.each(fn);
-    expect(fn).not.toBeCalled();
+    expect(fn).not.toHaveBeenCalled();
   });
 
   test("each single value", () => {
@@ -119,7 +119,7 @@ describe("DataProvider each", () => {
     const fn = jest.fn();
 
     dp.each(fn);
-    expect(fn).toBeCalledTimes(1);
+    expect(fn).toHaveBeenCalledTimes(1);
     expect(fn.mock.calls[0][0]).toStrictEqual("42");
   });
 
@@ -133,7 +133,7 @@ describe("DataProvider each", () => {
     const fn = jest.fn();
 
     dp.each(fn);
-    expect(fn).toBeCalledTimes(data.length);
+    expect(fn).toHaveBeenCalledTimes(data.length);
     expect(fn.mock.calls[0][0]).toStrictEqual("42");
     expect(fn.mock.calls[1][0]).toStrictEqual("13");
     expect(fn.mock.calls[2][0]).toStrictEqual("24");
@@ -152,7 +152,7 @@ describe("DataProvider each", () => {
     const fn = jest.fn();
 
     dp.each(fn);
-    expect(fn).toBeCalledTimes(Object.keys(data).length);
+    expect(fn).toHaveBeenCalledTimes(Object.keys(data).length);
     expect(fn.mock.calls[0][0]).toStrictEqual("42");
     expect(fn.mock.calls[1][0]).toStrictEqual("13");
     expect(fn.mock.calls[2][0]).toStrictEqual("24");

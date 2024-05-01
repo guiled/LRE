@@ -27,12 +27,12 @@ describe("Table test", () => {
     const rawTable = mockRawTable("a");
     const table = new Table(rawTable);
     table.get("123");
-    expect(rawTable.get).toBeCalledTimes(1);
+    expect(rawTable.get).toHaveBeenCalledTimes(1);
     table.each(() => {});
-    expect(rawTable.each).toBeCalledTimes(1);
+    expect(rawTable.each).toHaveBeenCalledTimes(1);
     table.random(() => {});
-    expect(rawTable.random).toBeCalledTimes(1);
+    expect(rawTable.random).toHaveBeenCalledTimes(1);
     table.random(3, () => {});
-    expect(rawTable.random).toBeCalledTimes(2);
+    expect(rawTable.random).toHaveBeenCalledTimes(2);
   });
 });

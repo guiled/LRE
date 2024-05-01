@@ -38,8 +38,8 @@ describe("Sheet collection", () => {
     subject.add(sheet2);
     expect(subject.get("4243")).toEqual(sheet2);
     const cb = jest.fn();
-    expect(cb).toBeCalledTimes(0);
+    expect(cb).toHaveBeenCalledTimes(0);
     subject.each(cb);
-    expect(cb).toBeCalledTimes(2);
+    expect(cb).toHaveBeenCalledTimes(2);
   });
 });

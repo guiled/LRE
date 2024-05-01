@@ -31,28 +31,28 @@ describe("Mixin tests", () => {
       getB: jest.fn(),
     };
     const Dummy = createDummyMixableClass(ctor, methods)(class {}) as Newable;
-    expect(ctor).toBeCalledTimes(0);
-    expect(methods.getA).toBeCalledTimes(0);
-    expect(methods.getB).toBeCalledTimes(0);
+    expect(ctor).toHaveBeenCalledTimes(0);
+    expect(methods.getA).toHaveBeenCalledTimes(0);
+    expect(methods.getB).toHaveBeenCalledTimes(0);
     const a = new Dummy(42);
-    expect(ctor).toBeCalledTimes(1);
+    expect(ctor).toHaveBeenCalledTimes(1);
     expect(ctor.mock.calls[0]).toEqual([42]);
-    expect(methods.getA).toBeCalledTimes(0);
-    expect(methods.getB).toBeCalledTimes(0);
+    expect(methods.getA).toHaveBeenCalledTimes(0);
+    expect(methods.getB).toHaveBeenCalledTimes(0);
     a.getA(13, 1313);
-    expect(methods.getA).toBeCalledTimes(1);
+    expect(methods.getA).toHaveBeenCalledTimes(1);
     expect(methods.getA.mock.calls[0]).toEqual([13, 1313]);
     a.getB("go");
-    expect(methods.getB).toBeCalledTimes(1);
+    expect(methods.getB).toHaveBeenCalledTimes(1);
     expect(methods.getB.mock.calls[0]).toEqual(["go"]);
   });
 
   test("Single Class Mixin calls constructor", () => {
     const ctor = jest.fn();
     const Subject = Mixin(createDummyMixableClass(ctor));
-    expect(ctor).toBeCalledTimes(0);
+    expect(ctor).toHaveBeenCalledTimes(0);
     new Subject();
-    expect(ctor).toBeCalledTimes(1);
+    expect(ctor).toHaveBeenCalledTimes(1);
   });
 
   test("Many Class Mixin calls all constructors", () => {
@@ -65,9 +65,9 @@ describe("Mixin tests", () => {
       classes.push(createDummyMixableClass(mock));
     }
     const Subject = Mixin.apply(null, classes);
-    mocks.forEach((m) => expect(m).toBeCalledTimes(0));
+    mocks.forEach((m) => expect(m).toHaveBeenCalledTimes(0));
     new Subject();
-    mocks.forEach((m) => expect(m).toBeCalledTimes(1));
+    mocks.forEach((m) => expect(m).toHaveBeenCalledTimes(1));
   });
 
   test("Mixin calls all constructors with args", () => {
@@ -80,10 +80,10 @@ describe("Mixin tests", () => {
       createDummyMixableClass(ctor2)
     );
     new Subject([args1, args2]);
-    expect(ctor1).toBeCalledTimes(1);
+    expect(ctor1).toHaveBeenCalledTimes(1);
     expect(ctor1.mock.calls[0]).toHaveLength(args1.length);
     expect(ctor1.mock.calls[0]).toEqual(args1);
-    expect(ctor2).toBeCalledTimes(1);
+    expect(ctor2).toHaveBeenCalledTimes(1);
     expect(ctor2.mock.calls[0]).toHaveLength(args2.length);
     expect(ctor2.mock.calls[0]).toEqual(args2);
   });
@@ -123,17 +123,17 @@ describe("Mixin tests", () => {
     expect(obj).toHaveProperty("getA");
     expect(obj).toHaveProperty("getB");
     expect(obj).toHaveProperty("getC");
-    expect(methods1.getA).toBeCalledTimes(0);
-    expect(methods1.getB).toBeCalledTimes(0);
-    expect(methods1.getC).toBeCalledTimes(0);
-    expect(methods2.getC).toBeCalledTimes(0);
+    expect(methods1.getA).toHaveBeenCalledTimes(0);
+    expect(methods1.getB).toHaveBeenCalledTimes(0);
+    expect(methods1.getC).toHaveBeenCalledTimes(0);
+    expect(methods2.getC).toHaveBeenCalledTimes(0);
     obj.getA();
-    expect(methods1.getA).toBeCalledTimes(1);
+    expect(methods1.getA).toHaveBeenCalledTimes(1);
     obj.getB();
-    expect(methods1.getB).toBeCalledTimes(1);
+    expect(methods1.getB).toHaveBeenCalledTimes(1);
     obj.getC();
-    expect(methods1.getC).toBeCalledTimes(0);
-    expect(methods2.getC).toBeCalledTimes(1);
+    expect(methods1.getC).toHaveBeenCalledTimes(0);
+    expect(methods2.getC).toHaveBeenCalledTimes(1);
   });
 
   test("mixin pass this", () => {
@@ -147,7 +147,7 @@ describe("Mixin tests", () => {
     const TestClass = Mixin(A);
     const test = new TestClass();
     test.callIt();
-    expect(cb).toBeCalledWith(test);
+    expect(cb).toHaveBeenCalledWith(test);
   });
 
   test("Mixin cross access to methods", () => {
@@ -329,7 +329,7 @@ describe("Mixin tests", () => {
     }
 
     new D();
-    expect(ctorCbA).toBeCalledTimes(2);
+    expect(ctorCbA).toHaveBeenCalledTimes(2);
     expect(ctorCbA.mock.calls[0][0]).toBe("second");
     expect(ctorCbA.mock.calls[1][0]).toBe("first");
   });

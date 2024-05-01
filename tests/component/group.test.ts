@@ -59,7 +59,7 @@ beforeEach(() => {
 describe("Component group is like a component", () => {
   test("Group construction", () => {
     const group: Group = new Group(context, "group1", sheet);
-    expect(sheet.get).not.toBeCalled();
+    expect(sheet.get).not.toHaveBeenCalled();
     expect(group.count()).toBe(0);
     expect(group.id()).toBe("group1");
     expect(group.name()).toBe("group1");
@@ -92,8 +92,8 @@ describe("Component group is like a component", () => {
       jest.spyOn(cmp2, method);
       /* @ts-ignore */
       group[method]();
-      expect(cmp1[method]).toBeCalled();
-      expect(cmp2[method]).toBeCalled();
+      expect(cmp1[method]).toHaveBeenCalled();
+      expect(cmp2[method]).toHaveBeenCalled();
     });
 
     expect(
@@ -106,13 +106,13 @@ describe("Component group is like a component", () => {
     jest.spyOn(cmp1, "setTooltip");
     jest.spyOn(cmp2, "setTooltip");
     group.setTooltip("test");
-    expect(cmp1.setTooltip).toBeCalledTimes(1);
-    expect(cmp2.setTooltip).toBeCalledTimes(1);
+    expect(cmp1.setTooltip).toHaveBeenCalledTimes(1);
+    expect(cmp2.setTooltip).toHaveBeenCalledTimes(1);
     expect((cmp1.setTooltip as jest.Mock).mock.calls[0].length).toBe(1);
     expect((cmp1.setTooltip as jest.Mock).mock.calls[0][0]).toBe("test");
     group.setTooltip("test", "right");
-    expect(cmp1.setTooltip).toBeCalledTimes(2);
-    expect(cmp2.setTooltip).toBeCalledTimes(2);
+    expect(cmp1.setTooltip).toHaveBeenCalledTimes(2);
+    expect(cmp2.setTooltip).toHaveBeenCalledTimes(2);
     expect((cmp1.setTooltip as jest.Mock).mock.calls[1].length).toBe(2);
     expect((cmp1.setTooltip as jest.Mock).mock.calls[1][0]).toBe("test");
     expect((cmp1.setTooltip as jest.Mock).mock.calls[1][1]).toBe("right");
@@ -138,17 +138,17 @@ describe("Component group is like a component", () => {
     expect(group.addClass("test")).toBe(group);
     expect(group.hasClass("test")).toBeTruthy();
     expect(group.hasClass("unique")).toBeFalsy();
-    expect(cmp1.addClass).toBeCalled();
-    expect(cmp2.addClass).toBeCalled();
-    expect(subCmp.addClass).toBeCalled();
+    expect(cmp1.addClass).toHaveBeenCalled();
+    expect(cmp2.addClass).toHaveBeenCalled();
+    expect(subCmp.addClass).toHaveBeenCalled();
     expect(group.removeClass("test")).toBe(group);
-    expect(cmp1.removeClass).toBeCalled();
-    expect(cmp2.removeClass).toBeCalled();
-    expect(subCmp.removeClass).toBeCalled();
+    expect(cmp1.removeClass).toHaveBeenCalled();
+    expect(cmp2.removeClass).toHaveBeenCalled();
+    expect(subCmp.removeClass).toHaveBeenCalled();
     expect(group.toggleClass("test")).toBe(group);
-    expect(cmp1.toggleClass).toBeCalled();
-    expect(cmp2.toggleClass).toBeCalled();
-    expect(subCmp.toggleClass).toBeCalled();
+    expect(cmp1.toggleClass).toHaveBeenCalled();
+    expect(cmp2.toggleClass).toHaveBeenCalled();
+    expect(subCmp.toggleClass).toHaveBeenCalled();
   });
 });
 
@@ -161,7 +161,7 @@ describe("Component group basics", () => {
     const group: Group = new Group(context, "group1", sheet, ["cmp1"]);
 
     const updateCb = jest.fn();
-    expect(sheet.get).toBeCalledTimes(1);
+    expect(sheet.get).toHaveBeenCalledTimes(1);
     expect(group.count()).toBe(1);
     expect(group.includes("cmp1")).toBeTruthy();
     expect(group.contains("cmp1")).toBeTruthy();
@@ -172,13 +172,13 @@ describe("Component group basics", () => {
     group.on("add", addCb);
     group.on("remove", removeCb);
     group.on("update", updateCb);
-    expect(updateCb).toBeCalledTimes(0);
+    expect(updateCb).toHaveBeenCalledTimes(0);
 
     group.add("cmp2");
-    expect(sheet.get).toBeCalledTimes(2);
+    expect(sheet.get).toHaveBeenCalledTimes(2);
     expect(group.count()).toBe(2);
-    expect(updateCb).toBeCalledTimes(1);
-    expect(addCb).toBeCalledTimes(1);
+    expect(updateCb).toHaveBeenCalledTimes(1);
+    expect(addCb).toHaveBeenCalledTimes(1);
 
     const cmp3 = sheet.get("cmp3")! as IComponent;
     (sheet.get as jest.Mock).mockClear();
@@ -189,10 +189,10 @@ describe("Component group basics", () => {
     expect(group.contains(cmp3)).toBeFalsy();
     expect(group.has(cmp3)).toBeFalsy();
     group.add(cmp3);
-    expect(updateCb).toBeCalledTimes(2);
-    expect(sheet.get).toBeCalledTimes(0);
+    expect(updateCb).toHaveBeenCalledTimes(2);
+    expect(sheet.get).toHaveBeenCalledTimes(0);
     expect(group.count()).toBe(3);
-    expect(addCb).toBeCalledTimes(2);
+    expect(addCb).toHaveBeenCalledTimes(2);
     expect(group.includes("cmp3")).toBeTruthy();
     expect(group.contains("cmp3")).toBeTruthy();
     expect(group.has("cmp3")).toBeTruthy();
@@ -204,30 +204,30 @@ describe("Component group basics", () => {
     updateCb.mockClear();
     group.add("cmp3");
     expect(group.count()).toBe(3);
-    expect(updateCb).toBeCalledTimes(0);
-    expect(addCb).toBeCalledTimes(2);
+    expect(updateCb).toHaveBeenCalledTimes(0);
+    expect(addCb).toHaveBeenCalledTimes(2);
 
-    expect(removeCb).toBeCalledTimes(0);
+    expect(removeCb).toHaveBeenCalledTimes(0);
     group.remove(cmp3);
     expect(group.count()).toBe(2);
-    expect(updateCb).toBeCalledTimes(1);
-    expect(removeCb).toBeCalledTimes(1);
+    expect(updateCb).toHaveBeenCalledTimes(1);
+    expect(removeCb).toHaveBeenCalledTimes(1);
     group.remove(cmp3);
-    expect(removeCb).toBeCalledTimes(1);
+    expect(removeCb).toHaveBeenCalledTimes(1);
 
     group.remove("cmp2");
     expect(group.count()).toBe(1);
-    expect(removeCb).toBeCalledTimes(2);
-    expect(updateCb).toBeCalledTimes(2);
+    expect(removeCb).toHaveBeenCalledTimes(2);
+    expect(updateCb).toHaveBeenCalledTimes(2);
 
     updateCb.mockClear();
     group.add(MockServer.UNKNOWN_CMP_ID);
     expect(group.count()).toBe(1);
-    expect(updateCb).toBeCalledTimes(0);
+    expect(updateCb).toHaveBeenCalledTimes(0);
 
     expect(() => group.add(sheet.get(MockServer.UNKNOWN_CMP_ID)! as IComponent)).toThrowError();
     expect(group.count()).toBe(1);
-    expect(updateCb).toBeCalledTimes(0);
+    expect(updateCb).toHaveBeenCalledTimes(0);
     expect(group.includes(MockServer.NON_EXISTING_CMP_ID)).toBeFalsy();
   });
 
@@ -238,7 +238,7 @@ describe("Component group basics", () => {
       "cmp3",
     ]);
     expect(group.count()).toBe(3);
-    expect(sheet.get).toBeCalledTimes(3);
+    expect(sheet.get).toHaveBeenCalledTimes(3);
   });
 
   test("Group added to group is forbidden", () => {
@@ -265,12 +265,12 @@ describe("Component group basics", () => {
       (lre.error as jest.Mock).mockClear();
       /* @ts-expect-error */
       expect(group.includes(invalidAddedElement)).toBeFalsy();
-      expect(lre.error).toBeCalled();
+      expect(lre.error).toHaveBeenCalled();
 
       (lre.error as jest.Mock).mockClear();
       /* @ts-expect-error */
       group.remove(invalidAddedElement);
-      expect(lre.error).toBeCalled();
+      expect(lre.error).toHaveBeenCalled();
     }
   );
 });
@@ -282,23 +282,23 @@ describe("Event attached to group are attached to all items", () => {
     group.on("update", updateFn);
     const cmp1: MockedComponent = sheet.raw().get("cmp1") as MockedComponent;
     const cmp2: MockedComponent = sheet.raw().get("cmp2") as MockedComponent;
-    expect(updateFn).not.toBeCalled();
+    expect(updateFn).not.toHaveBeenCalled();
 
     cmp1._trigger("update");
-    expect(updateFn).toBeCalledTimes(1);
+    expect(updateFn).toHaveBeenCalledTimes(1);
     cmp2._trigger("update");
-    expect(updateFn).toBeCalledTimes(2);
+    expect(updateFn).toHaveBeenCalledTimes(2);
 
     const cmp3: MockedComponent = sheet.raw().get("cmp3") as MockedComponent;
     group.add("cmp3");
     updateFn.mockClear();
     cmp3._trigger("update");
-    expect(updateFn).toBeCalledTimes(1);
+    expect(updateFn).toHaveBeenCalledTimes(1);
 
     group.remove("cmp2");
     updateFn.mockClear();
     cmp2.value(4242);
-    expect(updateFn).toBeCalledTimes(0);
+    expect(updateFn).toHaveBeenCalledTimes(0);
   });
 
   test("Add and remove event", () => {
@@ -311,41 +311,41 @@ describe("Event attached to group are attached to all items", () => {
     group.on("click:label", clickFn);
     const cmp1: MockedComponent = sheet.raw().get("cmp1") as MockedComponent;
 
-    expect(clickFn).not.toBeCalled();
+    expect(clickFn).not.toHaveBeenCalled();
     cmp1._trigger("click");
-    expect(clickFn).toBeCalled();
+    expect(clickFn).toHaveBeenCalled();
 
     clickFn.mockClear();
     const clickFn2 = jest.fn();
     group.on("click:label", clickFn2);
     cmp1._trigger("click");
-    expect(clickFn).not.toBeCalled();
-    expect(clickFn2).toBeCalled();
+    expect(clickFn).not.toHaveBeenCalled();
+    expect(clickFn2).toHaveBeenCalled();
 
     clickFn.mockClear();
     clickFn2.mockClear();
     group.off("click:label");
     cmp1._trigger("click");
-    expect(clickFn).not.toBeCalled();
-    expect(clickFn2).not.toBeCalled();
+    expect(clickFn).not.toHaveBeenCalled();
+    expect(clickFn2).not.toHaveBeenCalled();
 
     clickFn.mockClear();
     group.once("click:try", clickFn);
     cmp1._trigger("click");
     cmp1._trigger("click");
-    expect(clickFn).toBeCalledTimes(1);
+    expect(clickFn).toHaveBeenCalledTimes(1);
 
     clickFn.mockClear();
     group.on("click", clickFn);
     cmp1._trigger("click");
-    expect(clickFn).toBeCalledTimes(1);
+    expect(clickFn).toHaveBeenCalledTimes(1);
     group.disableEvent("click");
     cmp1._trigger("click");
     cmp1._trigger("click");
-    expect(clickFn).toBeCalledTimes(1);
+    expect(clickFn).toHaveBeenCalledTimes(1);
     group.enableEvent("click");
     cmp1._trigger("click");
-    expect(clickFn).toBeCalledTimes(2);
+    expect(clickFn).toHaveBeenCalledTimes(2);
   });
 
   test("Events are added to newly added components", () => {
@@ -356,12 +356,12 @@ describe("Event attached to group are attached to all items", () => {
     group.add("cmp1");
     const cmp1: MockedComponent = sheet.raw().get("cmp1") as MockedComponent;
     cmp1._trigger("click");
-    expect(clickFn).toBeCalled();
+    expect(clickFn).toHaveBeenCalled();
 
     clickFn.mockClear();
     group.remove("cmp1");
     cmp1._trigger("click");
-    expect(clickFn).not.toBeCalled();
+    expect(clickFn).not.toHaveBeenCalled();
   });
 });
 

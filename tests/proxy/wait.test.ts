@@ -16,22 +16,22 @@ describe("Wait proxy", () => {
   test("runs normally in real mode", () => {
     modeHandlerMock.setMode("real");
     const subject = registerLreWait(modeHandlerMock, wait);
-    expect(wait).not.toBeCalled();
+    expect(wait).not.toHaveBeenCalled();
     subject(100, cb);
-    expect(cb).not.toBeCalled();
-    expect(wait).toBeCalled();
+    expect(cb).not.toHaveBeenCalled();
+    expect(wait).toHaveBeenCalled();
     mockedWaitDefs.itHasWaitedEverything();
-    expect(cb).toBeCalled();
+    expect(cb).toHaveBeenCalled();
   });
 
   test("wait is not called in real mode", () => {
     modeHandlerMock.setMode("virtual");
     const subject = registerLreWait(modeHandlerMock, wait);
-    expect(wait).not.toBeCalled();
+    expect(wait).not.toHaveBeenCalled();
     subject(100, cb);
-    expect(cb).not.toBeCalled();
-    expect(wait).not.toBeCalled();
+    expect(cb).not.toHaveBeenCalled();
+    expect(wait).not.toHaveBeenCalled();
     mockedWaitDefs.itHasWaitedEverything();
-    expect(cb).not.toBeCalled();
+    expect(cb).not.toHaveBeenCalled();
   });
 });

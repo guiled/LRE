@@ -19,24 +19,24 @@ describe("Bindings proxy", () => {
       Object.keys(Bindings).sort()
     );
     subject.add("bindingName", "componentId", "viewId", () => ({}));
-    expect(Bindings.add).toBeCalled();
+    expect(Bindings.add).toHaveBeenCalled();
     subject.clear("componentId");
-    expect(Bindings.clear).toBeCalled();
+    expect(Bindings.clear).toHaveBeenCalled();
     subject.remove("bindingName");
-    expect(Bindings.remove).toBeCalled();
+    expect(Bindings.remove).toHaveBeenCalled();
     subject.send(MockSheet({ id: "123" }), "bindingName");
-    expect(Bindings.send).toBeCalled();
+    expect(Bindings.send).toHaveBeenCalled();
   });
 
   test("does nothing in virtual mode", () => {
     modeHandlerMock.setMode("virtual");
     subject.add("bindingName", "componentId", "viewId", () => ({}));
-    expect(Bindings.add).not.toBeCalled();
+    expect(Bindings.add).not.toHaveBeenCalled();
     subject.clear("componentId");
-    expect(Bindings.clear).not.toBeCalled();
+    expect(Bindings.clear).not.toHaveBeenCalled();
     subject.remove("bindingName");
-    expect(Bindings.remove).not.toBeCalled();
+    expect(Bindings.remove).not.toHaveBeenCalled();
     subject.send(MockSheet({ id: "123" }), "bindingName");
-    expect(Bindings.send).not.toBeCalled();
+    expect(Bindings.send).not.toHaveBeenCalled();
   });
 });
