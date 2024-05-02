@@ -1,4 +1,4 @@
-//region LRE 6.17
+//region LRE 6.18
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -364,9 +364,7 @@ function lre(_arg) {
                     cmp = component;
                 }
                 if (eventName === 'update' && !manuallyTriggered && rawTarget.value &&
-                    (rawTarget.value() === lastUpdateEventValue
-                    || (isObject(lastUpdateEventValue) && deepEqual(lastUpdateEventValue, rawTarget.value())))
-                    ) {
+                    (rawTarget.value() === lastUpdateEventValue)) {
                     return false;
                 }
                 lastUpdateEventValue = rawTarget.value && deepClone(rawTarget.value());
@@ -465,7 +463,7 @@ function lre(_arg) {
             }
             events[event].state = false;
         };
-
+ 
         this.enableEvent = function (event) {
             if (!events[event]) {
                 this.on(event, function () {});
@@ -858,7 +856,7 @@ function lre(_arg) {
 
         this.setChoices = function (newChoices) {
             if (newChoices.hasOwnProperty(undefined)) {
-                lreLog('Try to set an undefined value')
+                lreLog('Try to set an undefined value to choice ' + this.id());
             }
             const currentValue = this.value();
             if (newChoices && !newChoices.hasOwnProperty(currentValue)) {
@@ -1604,7 +1602,7 @@ function lre(_arg) {
             } else {
                 // update event is triggered by changing icon value, but is not triggered if only style change, etc.
                 // So we trigger update event manually if icon value is not changed but the toggle value changed
-                this.trigger('update');
+                this.trigger('update', this);
             }
         };
 
@@ -2229,22 +2227,20 @@ function lre(_arg) {
                         dataToSend[ids[0]] = data.v;
                         added++;
                     } else {
-                        let revValue;
-                        if (!dataToSend.hasOwnProperty(ids[0])) {
-                            added++;
-                            repValue = sheet.getData()[ids[0]] || {};
-                        } else {
-                            repValue = dataToSend[ids[0]];
-                        }
-                        if (!repValue.hasOwnProperty(ids[1])) {
-                            repValue[ids[1]] = {};
+                        const currentData = sheet.getData()[ids[0]] || {};
+                        const newData = dataToSend[ids[0]] || currentData;
+                        if (!newData.hasOwnProperty(ids[1])) {
+                            newData[ids[1]] = {};
                         }
                         if (ids.length === 3) {
-                            repValue[ids[1]][ids[2]] = data.v;
+                            newData[ids[1]][ids[2]] = data.v;
                         } else {
-                            repValue[ids[1]] = data.v
+                            newData[ids[1]] = data.v
                         }
-                        dataToSend[ids[0]] = repValue;
+                        if (!deepEqual(newData, currentData)) {
+                            added++;
+                            dataToSend[ids[0]] = newData;
+                        }
                     }
                 }
                 analysed++;
