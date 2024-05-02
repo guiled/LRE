@@ -1,4 +1,4 @@
-//region LRE 6.18
+//region LRE 6.19
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -188,6 +188,7 @@ function initChoicesWithEmpty(defaultLabel) {
 let LRE_AUTONUM = false;
 // Main container
 let lreInitiated = false;
+let LRE_GROUPED_VALUE_CHANGE = true;
 function lre(_arg) {
     let errExclFirstLine, errExclLastLine;
     try { let a = null; a() } catch (e) { errExclFirstLine = e.trace[0].loc.start.line };
@@ -657,9 +658,13 @@ function lre(_arg) {
         this.value = function () {
             if (arguments.length > 0) {
                 const oldValue = this.value();
-                let data = {};
-                data[this.realId()] = arguments[0];
-                sheet.setData(data);
+                if (LRE_GROUPED_VALUE_CHANGE) {
+                    let data = {};
+                    data[this.realId()] = arguments[0];
+                    sheet.setData(data);
+                } else {
+                    component.value(arguments[0]);
+                }
                 if (oldValue !== arguments[0]) {
                     // This line doesn't work with repeater, choice…
                     //if (typeof arguments[0] !== "object"
@@ -2267,17 +2272,21 @@ function lre(_arg) {
         };
 
         this.setData = function (data) {
-            each(data, function (v, k) {
-                if (pendingDataToSetIndex.hasOwnProperty(k) && typeof pendingDataToSet[pendingDataToSetIndex[k]] !== 'undefined') {
-                    pendingDataToSet[pendingDataToSetIndex[k]].v = v;
-                } else {
-                    pendingDataToSetIndex[k] = pendingDataToSet.length;
-                    pendingDataToSet.push({ k: k, v: v });
+            if (LRE_GROUPED_VALUE_CHANGE) {
+                each(data, function (v, k) {
+                    if (pendingDataToSetIndex.hasOwnProperty(k) && typeof pendingDataToSet[pendingDataToSetIndex[k]] !== 'undefined') {
+                        pendingDataToSet[pendingDataToSetIndex[k]].v = v;
+                    } else {
+                        pendingDataToSetIndex[k] = pendingDataToSet.length;
+                        pendingDataToSet.push({ k: k, v: v });
+                    }
+                });
+                if (!isDataSetPending && pendingDataToSet.length > 0) {
+                    isDataSetPending = true;
+                    wait(asyncDataSetDelay, groupedDataSet);
                 }
-            });
-            if (!isDataSetPending && pendingDataToSet.length > 0) {
-                isDataSetPending = true;
-                wait(asyncDataSetDelay, groupedDataSet);
+            } else {
+                sheet.setData(data);
             }
         };
 
