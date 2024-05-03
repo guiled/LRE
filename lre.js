@@ -1,4 +1,4 @@
-//region LRE 6.19
+//region LRE 6.20
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -316,7 +316,7 @@ function lre(_arg) {
     /** * * * * * * * * * * * * * * * * * * * * * *
      *                  EventOwner                *
      ** * * * * * * * * * * * * * * * * * * * * * */
-    const existingRawEvents = ['click', 'update', 'mouseenter', 'mouseleave', 'keyup'];
+    const existingRawEvents = ['click', 'update', 'mouseenter', 'mouseleave', 'keyup', 'change'];
     const EventOwner = function (args) {
         const events = {};
         const synonyms = {
