@@ -366,11 +366,17 @@ function lre(_arg) {
                 } else {
                     cmp = component;
                 }
-                if (eventName === 'update' && !manuallyTriggered && rawTarget.value &&
-                    (rawTarget.value() === lastUpdateEventValue)) {
+                let currentValue = undefined;
+                try {
+                    if (rawTarget.value) {
+                        currentValue = rawTarget.value();
+                    }
+                } catch (e) {
+                }
+                if (eventName === 'update' && !manuallyTriggered && (currentValue === lastUpdateEventValue)) {
                     return false;
                 }
-                lastUpdateEventValue = rawTarget.value && deepClone(rawTarget.value());
+                lastUpdateEventValue = deepClone(currentValue);
                 argsWithComponent.push(cmp);
                 argsWithComponent = argsWithComponent.concat(args);
                 let results = [];
@@ -879,7 +885,11 @@ function lre(_arg) {
                 }
             }
             setChoices(newChoices);
-            this.raw().setChoices(newChoices);
+            try {
+                this.raw().setChoices(newChoices);
+            } catch (e) {
+
+            }
             this.trigger('update', this);
         };
 
