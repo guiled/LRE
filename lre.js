@@ -1,4 +1,4 @@
-//region LRE 6.20
+//region LRE 6.21
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -58,16 +58,18 @@ function deepEqual(x, y) {
         return true;
     }
     else if ((typeof x == "object" && x != null) && (typeof y == "object" && y != null)) {
-        if (Object.keys(x).length != Object.keys(y).length)
+        if (Object.keys(x).length != Object.keys(y).length) {
             return false;
+        }
 
         for (var prop in x) {
             if (y.hasOwnProperty(prop)) {
-                if (!deepEqual(x[prop], y[prop]))
+                if (!deepEqual(x[prop], y[prop])) {
                     return false;
-            }
-            else
+                }
+            } else {
                 return false;
+            }
         }
 
         return true;
@@ -123,7 +125,7 @@ function stringify(obj, indent) {
     let recursive = function (obj) {
         return stringify(obj, indent_);
     }
-    if (typeof obj !== 'object' || obj === null || obj instanceof Array) {
+    if (typeof obj !== 'object' || obj === null || obj instanceof Array || Array.isArray(obj)) {
         switch (typeof obj) {
             case 'function':
                 return '"function(){}"';
@@ -138,7 +140,7 @@ function stringify(obj, indent) {
                 return 'undefined';
             case 'object':
                 if (obj instanceof Date) return '"' + obj.toISOString() + '"';
-                if (obj instanceof Array) return "[\n" + obj.map(recursive).join(",\n") + "\n" + indent + "]";
+                if (obj instanceof Array || Array.isArray(obj)) return "[\n" + indent_ + obj.map(recursive).join(",\n" + indent_) + "\n" + indent + "]";
                 if (obj === null) return 'null';
             default:
                 return recursive(obj);
