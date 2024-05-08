@@ -2245,7 +2245,7 @@ function lre(_arg) {
                         added++;
                     } else {
                         const currentData = sheet.getData()[ids[0]] || {};
-                        const newData = dataToSend[ids[0]] || currentData;
+                        const newData = dataToSend[ids[0]] || deepClone(currentData);
                         if (!newData.hasOwnProperty(ids[1])) {
                             newData[ids[1]] = {};
                         }
