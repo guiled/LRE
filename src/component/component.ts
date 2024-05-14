@@ -15,6 +15,7 @@ const RAW_EVENTS = [
   "mouseenter",
   "mouseleave",
   "keyup",
+  "change",
 ] as const;
 
 // abstract class ComponentEventHolder<T extends string> extends EventHolder<
@@ -36,9 +37,9 @@ type ClassChangeApply = {
 };
 
 export class Component<
-    TypeValue extends LetsRole.ComponentValue = LetsRole.ComponentValue,
-    AdditionalEvents extends string = LetsRole.EventType
-  >
+  TypeValue extends LetsRole.ComponentValue = LetsRole.ComponentValue,
+  AdditionalEvents extends string = LetsRole.EventType
+>
   extends (Mixin(EventHolder, HasRaw<LetsRole.Component>, DataHolder) as new <
     SubTypeEventHolder extends string
   >(
@@ -46,25 +47,24 @@ export class Component<
   ) => IEventHolder<SubTypeEventHolder> &
     InstanceType<ReturnType<typeof HasRaw<LetsRole.Component>>> &
     InstanceType<ReturnType<typeof DataHolder>>)<
-    ThisComponentEventTypes<AdditionalEvents>
-  >
+      ThisComponentEventTypes<AdditionalEvents>
+    >
   implements
-    Omit<
-      LetsRole.Component<TypeValue>,
-      | "on"
-      | "off"
-      | "find"
-      | "value"
-      | "sheet"
-      | "parent"
-      | "virtualValue"
-      | "rawValue"
-      | "text"
-    >,
-    IComponent,
-    ComponentContainer,
-    ComponentCommon
-{
+  Omit<
+    LetsRole.Component<TypeValue>,
+    | "on"
+    | "off"
+    | "find"
+    | "value"
+    | "sheet"
+    | "parent"
+    | "virtualValue"
+    | "rawValue"
+    | "text"
+  >,
+  IComponent,
+  ComponentContainer,
+  ComponentCommon {
   #realId: string;
   #sheet: ISheet;
   #lreType: ComponentType = "component";
@@ -157,11 +157,11 @@ export class Component<
   name(): string {
     return this.raw().name();
   }
-  setTooltip(text: string, placement?: LetsRole.TooltipPlacement): void {
+  setToolTip(text: string, placement?: LetsRole.TooltipPlacement): void {
     if (arguments.length > 1) {
-      return this.raw().setTooltip(text, placement);
+      return this.raw().setToolTip(text, placement);
     }
-    return this.raw().setTooltip(text);
+    return this.raw().setToolTip(text);
   }
   sheet(): ISheet {
     return this.#sheet;
@@ -248,10 +248,16 @@ export class Component<
   value(newValue?: DynamicSetValue<unknown>): void | TypeValue {
     if (arguments.length > 0) {
       const oldValue = this.value();
-      let data: LetsRole.ViewData = {
-        [this.realId()]: newValue as LetsRole.ComponentValue,
-      };
-      this.#sheet.setData(data);
+
+      if (lre.__enableGroupedSetValue) {
+        let data: LetsRole.ViewData = {
+          [this.realId()]: newValue as LetsRole.ComponentValue,
+        };
+        this.#sheet.setData(data);
+      } else {
+        this.raw().value(newValue as LetsRole.ComponentValue);
+      }
+
       if (oldValue !== newValue) {
         this.trigger("update");
       }

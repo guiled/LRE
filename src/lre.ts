@@ -10,13 +10,14 @@ type cb = (thisArg: any, argArray?: any) => (rawSheet: LetsRole.Sheet) => void;
 
 type BasicObject<T = any> = { [key: string]: T };
 
-export interface LRE extends ILRE, Logger, cb {}
+export interface LRE extends ILRE, Logger, cb { }
 
 export class LRE extends Logger implements ILRE {
   #context: ProxyModeHandler;
   #autoNum: boolean = false;
   sheets: SheetCollection;
   public __debug: boolean = false;
+  public __enableGroupedSetValue: boolean = true;
 
   apply(_thisArg: any, argArray?: any) {
     this.log("prepare init");
@@ -45,8 +46,7 @@ export class LRE extends Logger implements ILRE {
             }
           }
           this.log(
-            `init sheet ${rawSheet.id()} (${rawSheet.name()} ${
-              rawSheet.properName() || ""
+            `init sheet ${rawSheet.id()} (${rawSheet.name()} ${rawSheet.properName() || ""
             } ${sheetId ? "#" + sheetId : ""})`
           );
           try {
@@ -112,7 +112,7 @@ export class LRE extends Logger implements ILRE {
   isUseableAsIndex(value: any): value is number | string {
     return (
       typeof value === "number" ||
-      typeof value === "string" 
+      typeof value === "string"
     );
   }
 
@@ -138,10 +138,8 @@ export class LRE extends Logger implements ILRE {
     if (x === y) {
       return true;
     } else if (
-      typeof x == "object" &&
-      x != null &&
-      typeof y == "object" &&
-      y != null
+      typeof x == "object" && x != null &&
+      typeof y == "object" && y != null
     ) {
       if (Object.keys(x).length != Object.keys(y).length) return false;
 

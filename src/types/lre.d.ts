@@ -11,6 +11,7 @@ declare interface ILRE {
   isObject<T extends BasicObject = BasicObject>(object: any): object is T;
   isUseableAsIndex(value: any): value is number | string | bigint;
   __debug: boolean = false;
+  __enableGroupedSetValue: boolean = true;
 }
 
 declare interface ISheet extends LetsRole.Sheet, ComponentContainer<IGroup> {
@@ -112,7 +113,8 @@ declare type ComponentType =
   | "multichoice"
   | "entry"
   | "icon"
-  | "group";
+  | "group"
+  | "checkbox";
 
 declare interface ComponentCommon {
   lreType: (newType?: ComponentType) => ComponentType;
@@ -257,7 +259,7 @@ declare interface IComponent
   id(): LetsRole.ComponentID;
   index(): string | null;
   name(): string;
-  setTooltip(text: string, placement?: LetsRole.TooltipPlacement): void;
+  setToolTip(text: string, placement?: LetsRole.TooltipPlacement): void;
   parent(newParent?: ComponentContainer): ComponentContainer | undefined;
   hide(): void;
   show(): void;

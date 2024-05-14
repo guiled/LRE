@@ -119,7 +119,7 @@ export const MockComponent = ({
         handlers[event + target.id()]?.(target);
       }
     }),
-    setTooltip: jest.fn((t) => t),
+    setToolTip: jest.fn((t) => t),
   };
   return cmp;
 };

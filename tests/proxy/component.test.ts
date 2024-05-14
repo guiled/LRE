@@ -76,7 +76,7 @@ const methodsWithParams: Array<[keyof LetsRole.Component, any]> = [
   ["toggleClass", ["text-danger"]],
   ["getClasses", []],
   ["setChoices", [{ a: 1, b: 2 }]],
-  ["setTooltip", ["this is a tooltip", "top"]],
+  ["setToolTip", ["this is a tooltip", "top"]],
 ];
 
 describe("Real mode", () => {

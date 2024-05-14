@@ -85,7 +85,7 @@ class ComponentProxy
       visible: (): boolean =>
         hidden === void 0 ? this._realDest.visible() : !hidden,
       setChoices: disabledMethod,
-      setTooltip: disabledMethod,
+      setToolTip: disabledMethod,
       value: (newValue?: any) => {
         if (newValue !== void 0) {
           context.sheetData[id] = newValue;
@@ -194,8 +194,8 @@ class ComponentProxy
     this.getDest().setChoices(newChoices);
   }
 
-  setTooltip(text: string, placement?: LetsRole.TooltipPlacement) {
-    this.getDest().setTooltip(text, placement);
+  setToolTip(text: string, placement?: LetsRole.TooltipPlacement) {
+    this.getDest().setToolTip(text, placement);
   }
   value(newValue?: any) {
     if (arguments.length > 0) {

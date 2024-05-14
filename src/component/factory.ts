@@ -6,6 +6,7 @@ import { Icon } from "./icon";
 import { Label } from "./label";
 import { Repeater } from "./repeater";
 import { MultiChoice } from "./multichoice";
+import { Checkbox } from "./checkbox";
 
 export class ComponentFactory {
   static create(
@@ -38,7 +39,11 @@ export class ComponentFactory {
     container: ComponentContainer,
     realId: string
   ): IComponent {
-    const classes = raw.getClasses();
+    let classes: LetsRole.ClassName[] = [];
+
+    try {
+        classes = raw.getClasses();
+    } catch (e) { }
 
     const flags = {
       isRepeater: false,
@@ -47,6 +52,7 @@ export class ComponentFactory {
       isIcon: false,
       isLabel: false,
       isContainer: false,
+      isCheckbox: false,
     };
 
     classes.forEach((c) => {
@@ -60,6 +66,8 @@ export class ComponentFactory {
         flags.isIcon = true;
       } else if (c === "label") {
         flags.isLabel = true;
+      } else if (c === 'checkbox') {
+        flags.isCheckbox = true;
       } else if (
         c === "widget-container" ||
         c === "view" ||
@@ -80,6 +88,8 @@ export class ComponentFactory {
       return new Icon(raw, container.sheet(), realId);
     } else if (flags.isLabel) {
       return new Label(raw, container.sheet(), realId);
+    } else if (flags.isCheckbox) {
+      return new Checkbox(raw, container.sheet(), realId);
     } else if (flags.isContainer) {
       return new Container(raw, container.sheet(), realId);
     } else if (container.lreType() === "repeater") {

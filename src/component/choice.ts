@@ -93,7 +93,11 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
     this.#choices = newChoices;
     this.#choiceData = newChoiceData;
     this.#choiceDataProvider = choiceDataProvider;
-    super.setChoices.apply(this, Array.from(arguments) as [LetsRole.Choices]);
+    try {
+      super.setChoices.apply(this, Array.from(arguments) as [LetsRole.Choices]);
+    } catch (e) {
+
+    }
     this.trigger("update", this);
   }
 

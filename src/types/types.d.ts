@@ -11,6 +11,7 @@ declare namespace LetsRole {
     "mouseenter",
     "mouseleave",
     "keyup",
+    "change",
   ] as const;
   export type EventType = (typeof RAW_EVENTS)[number];
   export type EventCallback<T = Component> = (
@@ -113,7 +114,7 @@ declare namespace LetsRole {
 
     setChoices(choices: LetsRole.Choices): void;
 
-    setTooltip(text: string, placement?: TooltipPlacement): void;
+    setToolTip(text: string, placement?: TooltipPlacement): void;
   }
 
   export type Variable = {};

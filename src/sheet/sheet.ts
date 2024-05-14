@@ -337,7 +337,11 @@ export class Sheet
   }
 
   setData(data: LetsRole.ViewData): void {
-    this.#batcher.setData(data);
+    if (lre.__enableGroupedSetValue) {
+      this.#batcher.setData(data);
+    } else {
+      this.raw().setData(data);
+    }
   }
 
   getData(): LetsRole.ViewData {
