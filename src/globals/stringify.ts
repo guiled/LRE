@@ -17,7 +17,7 @@ export const stringify = function (
     Array.isArray(obj) ||
     obj instanceof Date
   ) {
-    if (typeof obj === "function") {  
+    if (typeof obj === "function") {
       return '"function(){}"';
     } else if (typeof obj === "string") {
       return (

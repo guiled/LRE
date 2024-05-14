@@ -103,19 +103,19 @@ describe("Component group is like a component", () => {
         .sort()
     ).toEqual([cmp1.realId(), cmp2.realId()].sort());
 
-    jest.spyOn(cmp1, "setTooltip");
-    jest.spyOn(cmp2, "setTooltip");
-    group.setTooltip("test");
-    expect(cmp1.setTooltip).toHaveBeenCalledTimes(1);
-    expect(cmp2.setTooltip).toHaveBeenCalledTimes(1);
-    expect((cmp1.setTooltip as jest.Mock).mock.calls[0].length).toBe(1);
-    expect((cmp1.setTooltip as jest.Mock).mock.calls[0][0]).toBe("test");
-    group.setTooltip("test", "right");
-    expect(cmp1.setTooltip).toHaveBeenCalledTimes(2);
-    expect(cmp2.setTooltip).toHaveBeenCalledTimes(2);
-    expect((cmp1.setTooltip as jest.Mock).mock.calls[1].length).toBe(2);
-    expect((cmp1.setTooltip as jest.Mock).mock.calls[1][0]).toBe("test");
-    expect((cmp1.setTooltip as jest.Mock).mock.calls[1][1]).toBe("right");
+    jest.spyOn(cmp1, "setToolTip");
+    jest.spyOn(cmp2, "setToolTip");
+    group.setToolTip("test");
+    expect(cmp1.setToolTip).toHaveBeenCalledTimes(1);
+    expect(cmp2.setToolTip).toHaveBeenCalledTimes(1);
+    expect((cmp1.setToolTip as jest.Mock).mock.calls[0].length).toBe(1);
+    expect((cmp1.setToolTip as jest.Mock).mock.calls[0][0]).toBe("test");
+    group.setToolTip("test", "right");
+    expect(cmp1.setToolTip).toHaveBeenCalledTimes(2);
+    expect(cmp2.setToolTip).toHaveBeenCalledTimes(2);
+    expect((cmp1.setToolTip as jest.Mock).mock.calls[1].length).toBe(2);
+    expect((cmp1.setToolTip as jest.Mock).mock.calls[1][0]).toBe("test");
+    expect((cmp1.setToolTip as jest.Mock).mock.calls[1][1]).toBe("right");
 
     sheet.get("a")!.lreType("repeater");
     sheet.get("a.b")!.lreType("entry");

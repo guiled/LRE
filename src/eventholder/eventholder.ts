@@ -167,18 +167,23 @@ export const EventHolder = <
         const cmp =
           this.#getTarget?.(rawTarget, this.#events[eventId]!) || this;
 
+        let currentValue = undefined;
+        try {
+          if (rawTarget.value) {
+            currentValue = rawTarget.value();
+          }
+        } catch (e) {
+        }
         if (rawTarget && "value" in rawTarget) {
           if (
             eventId === "update" &&
             !manuallyTriggered &&
-            rawTarget.value!() === this.#lastUpdateEventValue
+            currentValue === this.#lastUpdateEventValue
           ) {
             return;
           }
 
-          this.#lastUpdateEventValue = structuredClone(
-            rawTarget.value!()
-          ) as LetsRole.ComponentValue;
+          this.#lastUpdateEventValue = structuredClone(currentValue) as LetsRole.ComponentValue;
         }
 
         this.#runHandlers(eventId, handlers, cmp, ...args);

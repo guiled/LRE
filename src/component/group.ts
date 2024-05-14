@@ -165,14 +165,14 @@ export class Group
     return this.#components;
   }
 
-  setTooltip(
+  setToolTip(
     text: string,
     placement?: LetsRole.TooltipPlacement | undefined
   ): void {
     if (arguments.length < 2) {
-      this.#components.forEach((cmp) => cmp.setTooltip(text));
+      this.#components.forEach((cmp) => cmp.setToolTip(text));
     } else {
-      this.#components.forEach((cmp) => cmp.setTooltip(text, placement));
+      this.#components.forEach((cmp) => cmp.setToolTip(text, placement));
     }
   }
 

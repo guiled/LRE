@@ -133,17 +133,17 @@ describe("Component construction", () => {
     cmp.rawValue();
     expect(rawCmp.rawValue).toHaveBeenCalledTimes(1);
 
-    (rawCmp.setTooltip as jest.Mock).mockClear();
-    cmp.setTooltip("the tool tip");
-    expect(rawCmp.setTooltip).toHaveBeenCalledTimes(1);
-    expect((rawCmp.setTooltip as jest.Mock).mock.calls[0].length).toBe(1);
-    expect((rawCmp.setTooltip as jest.Mock).mock.calls[0][0]).toBe(
+    (rawCmp.setToolTip as jest.Mock).mockClear();
+    cmp.setToolTip("the tool tip");
+    expect(rawCmp.setToolTip).toHaveBeenCalledTimes(1);
+    expect((rawCmp.setToolTip as jest.Mock).mock.calls[0].length).toBe(1);
+    expect((rawCmp.setToolTip as jest.Mock).mock.calls[0][0]).toBe(
       "the tool tip"
     );
-    cmp.setTooltip("the tool tip", "top");
-    expect(rawCmp.setTooltip).toHaveBeenCalledTimes(2);
-    expect((rawCmp.setTooltip as jest.Mock).mock.calls[1].length).toBe(2);
-    expect((rawCmp.setTooltip as jest.Mock).mock.calls[1][1]).toBe("top");
+    cmp.setToolTip("the tool tip", "top");
+    expect(rawCmp.setToolTip).toHaveBeenCalledTimes(2);
+    expect((rawCmp.setToolTip as jest.Mock).mock.calls[1].length).toBe(2);
+    expect((rawCmp.setToolTip as jest.Mock).mock.calls[1][1]).toBe("top");
 
     expect(cmp.visible()).toBeTruthy();
     cmp.toggle();
