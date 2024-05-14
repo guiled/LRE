@@ -1,4 +1,6 @@
+import { REP_ID_SEP } from "../component";
 import { EventHolder } from "../eventholder";
+import { structuredClone } from "../globals/structuredClone";
 import { Mixin } from "../mixin";
 
 type PendingData = {
@@ -62,6 +64,7 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
     this.#isSendPending = false;
     let added = Object.keys(dataToSend).length;
     let analyzed = 0;
+    const currentSheetData = this.#sheet.getData();
     while (
       added < MAX_DATA_BATCH_SIZE &&
       this.#pending[this.#currentMode].length > 0
@@ -69,8 +72,26 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
       let data = this.#pending[this.#currentMode].shift()!;
       delete this.#indexes[this.#currentMode][data.k];
       if (typeof data.v !== "undefined" && !Number.isNaN(data.v)) {
-        dataToSend[data.k] = data.v;
-        added++;
+        const ids = data.k.split(REP_ID_SEP);
+        if (ids.length === 1) {
+          dataToSend[ids[0]] = data.v;
+          added++;
+        } else {
+          const currentData = currentSheetData[ids[0]] || {};
+          const newData = dataToSend[ids[0]] || structuredClone(currentData);
+          if (!newData.hasOwnProperty(ids[1])) {
+            newData[ids[1]] = {};
+          }
+          if (ids.length === 3) {
+            newData[ids[1]][ids[2]] = data.v;
+          } else {
+            newData[ids[1]] = data.v
+          }
+          if (!lre.deepEqual(newData, currentData)) {
+            added++;
+            dataToSend[ids[0]] = newData;
+          }
+        }
       }
       analyzed++;
     }

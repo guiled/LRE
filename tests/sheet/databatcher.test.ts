@@ -10,6 +10,10 @@ initLetsRole();
 global.lre = new LRE(modeHandlerMock);
 lre.wait = global.wait;
 
+beforeEach(() => {
+  modeHandlerMock.setMode("real");
+});
+
 describe("DataBatcher instantiation", () => {
   let dataBatcher: DataBatcher;
   let sheet: MockedSheet;
@@ -198,4 +202,40 @@ describe("Handle virtual and real modes", () => {
     expect(dataBatcher.getPendingData()).toMatchObject({});
     expect(dataBatcher.getPendingData("cmp1")).toBeUndefined();
   });
+});
+
+describe("Data sent for repeaters", () => {
+  let dataBatcher: DataBatcher;
+  let sheet: LetsRole.Sheet;
+
+  beforeEach(() => {
+    sheet = MockSheet({
+      id: "123"
+    });
+    dataBatcher = new DataBatcher(modeHandlerMock, sheet);
+    (sheet.setData as jest.Mock).mockClear();
+  });
+
+  test("Component value in repeater are sent as repeater data", () => {
+    dataBatcher.setData({'rep.a.test': 42});
+    itHasWaitedEverything();
+    expect(sheet.getData().rep).toEqual({ a: { test: 42 } });
+    dataBatcher.setData({ 'rep.a.input': "Input" });
+    itHasWaitedEverything();
+    expect(sheet.getData().rep).toEqual({ a: { test: 42, input: "Input" } });
+    dataBatcher.setData({ 'rep.b.input': "InputB" });
+    itHasWaitedEverything();
+    expect(sheet.getData().rep).toEqual({
+      a: { test: 42, input: "Input" },
+      b: { input: "InputB" }
+    });
+    dataBatcher.setData({ 'rep.c': { input: "InputC" } });
+    itHasWaitedEverything();
+    expect(sheet.getData().rep).toEqual({
+      a: { test: 42, input: "Input" },
+      b: { input: "InputB" },
+      c: { input: "InputC" }
+    });
+  });
+
 });
