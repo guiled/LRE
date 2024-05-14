@@ -41,17 +41,16 @@ const excludedEventId: Array<EventType<any>> = [
   "eventhandler-destroyed",
 ];
 
-const EMPTY_CB = () => {};
+const EMPTY_CB = () => { };
 
 export const EventHolder = <
   AdditionalEvents extends string = EventHolderDefaultEvents
 >(
-  superclass: Newable = class {}
+  superclass: Newable = class { }
 ) =>
   class EventHolder
     extends superclass
-    implements IEventHolder<AdditionalEvents>
-  {
+    implements IEventHolder<AdditionalEvents> {
     #holderId: string;
     #getTarget: EventTargetGetter<AdditionalEvents> | undefined;
     #events: Partial<{
@@ -277,8 +276,7 @@ export const EventHolder = <
         logText = "Handler updated ";
       }
       lre.trace(
-        `${logText} for event ${eventName} ${handlerId} on ${
-          this.#holderId + (subComponent ? ">" + subComponent : "")
+        `${logText} for event ${eventName} ${handlerId} on ${this.#holderId + (subComponent ? ">" + subComponent : "")
         }. Count : ${cnt}`
       );
     }
@@ -365,8 +363,7 @@ export const EventHolder = <
       }
 
       lre.trace(
-        `Handlers for ${event} removed on ${
-          this.#holderId + (delegateId ? ">" + delegateId : "")
+        `Handlers for ${event} removed on ${this.#holderId + (delegateId ? ">" + delegateId : "")
         }`
       );
 
