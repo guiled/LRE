@@ -604,7 +604,7 @@ class ClassToFunction extends Visitor {
     return {
       ...i,
       span: spannewctxt(i.span),
-      value: "__priv" + i.value,
+      value: "__" + i.value,
     };
   }
 
