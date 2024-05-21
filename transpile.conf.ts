@@ -25,6 +25,17 @@ const transformForLR: Options = {
     },
     target: "es5",
     loose: true,
+    minify: {
+      compress: false,
+      mangle: {
+        toplevel: false,
+        keep_classnames: false,
+        keep_fnames: false,
+        keep_private_props: false,
+        ie8: false,
+        safari10: false
+      },
+    },
   },
   minify: false,
   isModule: true,
