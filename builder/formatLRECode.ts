@@ -1,4 +1,4 @@
-import { FontCharSpace, FontCharUnderlineHeight, FontCharWidth, FontHeight, FontLineSpace, TextLineDefs, ascii, asciiWidth } from "./characters";
+import { FontCharSpace, FontCharUnderlineHeight, FontCharWidth, FontHeight, FontLineSpace, TextLineDefs, ascii, asciiWidth, logoLR, logoWidth } from "./characters";
 
 function getPaddedCodeWithUselessCode(codeParts: Array<string>, length: number, previousWith = " ", semicolonFillerOk = true) {
   const tmpResult = [...codeParts];
@@ -67,7 +67,7 @@ export const formatLRECode = (code: string): string => {
     text.split("").forEach((char: string) => {
       textWith += asciiWidth[char] || FontCharWidth;
     })
-    const wordLeftMargin = (MAX_LINE_LENGTH - textWith - (text.length - 1) * FontCharSpace) / 2;
+    const wordLeftMargin = Math.floor((MAX_LINE_LENGTH - textWith - (text.length - 1) * FontCharSpace) / 2);
     for (let i = 0; i < FontHeight + FontCharUnderlineHeight; i++) {
       compiledTextLines.push([wordLeftMargin]);
     }
@@ -88,6 +88,16 @@ export const formatLRECode = (code: string): string => {
         }
       }
     });
+  });
+
+  for (let i = 0; i < 100; i++) {
+    compiledTextLines.push([]);
+  }
+
+  const logoLeftMargin = Math.floor(MAX_LINE_LENGTH - logoWidth) / 2;
+
+  logoLR.forEach((line: Array<number | string>) => {
+    compiledTextLines.push([logoLeftMargin].concat(line));
   });
 
   const codeParts: Array<string> = code.match(/(?:return[\t \[\(\{;!\-])?(?:\/(?:\\\/|[^\/\n])+\/[gimuy]*|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'|`[^`\\]*(?:\\.[^`\\]*)*`|\/\/.*|\/\*[\s\S]*?\*\/|(?:\+=|-=|\*=|\/=|%=|===?|!==?|>=|<=|>|<|&&|\|\||\?\:|\&|\||\^|~|<<|>>|>>>|\?)|[\])](?:\-\-|\+\+)?|[\[{}(;,.:*+\-/%<>=!&|^~?]|[\w\$]+(?:\+\+|\-\-|\s*))/gm) || [];
