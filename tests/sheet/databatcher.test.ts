@@ -5,7 +5,6 @@ import { SheetProxy } from "../../src/proxy/sheet";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 import { initLetsRole, itHasWaitedEnough, itHasWaitedEverything } from "../mock/letsrole/letsrole.mock";
 
-jest.mock("../../src/lre");
 initLetsRole();
 global.lre = new LRE(modeHandlerMock);
 lre.wait = global.wait;
@@ -147,6 +146,7 @@ describe("DataBatcher async send data", () => {
   });
 
   test("Databatcher raise and log an error when data pending failed", () => {
+    jest.spyOn(lre, "error");
     dataBatcher.on("pending", () => {
       /* @ts-expect-error */
       no();
@@ -158,6 +158,7 @@ describe("DataBatcher async send data", () => {
   });
 
   test("Databatcher raise and log an error when data processed failed", () => {
+    jest.spyOn(lre, "error");
     dataBatcher.on("processed", () => {
       /* @ts-expect-error */
       no();
@@ -217,7 +218,7 @@ describe("Data sent for repeaters", () => {
   });
 
   test("Component value in repeater are sent as repeater data", () => {
-    dataBatcher.setData({'rep.a.test': 42});
+    dataBatcher.setData({ 'rep.a.test': 42 });
     itHasWaitedEverything();
     expect(sheet.getData().rep).toEqual({ a: { test: 42 } });
     dataBatcher.setData({ 'rep.a.input': "Input" });
@@ -238,4 +239,28 @@ describe("Data sent for repeaters", () => {
     });
   });
 
+  test("Optimize data send for repeaters", () => {
+    dataBatcher.setData({ 'rep.a.test': 42 });
+    itHasWaitedEverything();
+    dataBatcher.setData({ 'rep.a.input': 43 });
+    const data: Record<string, LetsRole.ComponentValue> = {};
+    for (let i = 0; i < 30; i++) {
+      data['d' + i] = i;
+    }
+    data['rep.b.input'] = 44;
+    for (let i = 0; i < 30; i++) {
+      data['d' + (50 + i)] = i;
+    }
+    data['rep.b.input2'] = 46;
+    data['rep.b'] = {
+      input2: 48,
+      input3: 49,
+    };
+    dataBatcher.setData(data);
+    itHasWaitedEnough();
+    expect(sheet.getData().rep).toEqual({
+      a: { test: 42, input: 43 },
+      b: { input: 44, input2: 48, input3: 49 }
+    });
+  });
 });

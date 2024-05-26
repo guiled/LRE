@@ -1,6 +1,5 @@
 import { REP_ID_SEP } from "../component";
 import { EventHolder } from "../eventholder";
-import { structuredClone } from "../globals/structuredClone";
 import { Mixin } from "../mixin";
 
 type PendingData = {
@@ -8,7 +7,11 @@ type PendingData = {
   k: string;
 };
 
+type AllPendingData = Array<PendingData>;
+
 type DataBatcherEventType = "processed" | "pending";
+
+type PendingIndexes = Record<LetsRole.ComponentID, number>;
 
 const ASYNC_DATA_SET_DELAY = 50;
 const MAX_DATA_BATCH_SIZE = 20;
@@ -18,11 +21,11 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
   #currentMode: ProxyMode;
   #sheet: LetsRole.Sheet;
 
-  #pending: Record<ProxyMode, Array<PendingData>> = {
+  #pending: Record<ProxyMode, AllPendingData> = {
     real: [],
     virtual: [],
   };
-  #indexes: Record<ProxyMode, Record<LetsRole.ComponentID, number>> = {
+  #indexes: Record<ProxyMode, PendingIndexes> = {
     real: {},
     virtual: {},
   };
@@ -49,7 +52,7 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
     this.trigger(eventName);
   }
 
-  #runSendBatch(withEvent: boolean = true) {
+  #deferSendBatch(withEvent: boolean = true) {
     if (this.#currentMode === "virtual") {
       withEvent && this.#runEvent("pending");
       this.#sendBatch();
@@ -64,7 +67,6 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
     this.#isSendPending = false;
     let added = Object.keys(dataToSend).length;
     let analyzed = 0;
-    const currentSheetData = this.#sheet.getData();
     while (
       added < MAX_DATA_BATCH_SIZE &&
       this.#pending[this.#currentMode].length > 0
@@ -72,39 +74,18 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
       let data = this.#pending[this.#currentMode].shift()!;
       delete this.#indexes[this.#currentMode][data.k];
       if (typeof data.v !== "undefined" && !Number.isNaN(data.v)) {
-        const ids = data.k.split(REP_ID_SEP);
-        if (ids.length === 1) {
-          dataToSend[ids[0]] = data.v;
-          added++;
-        } else {
-          const currentData = currentSheetData[ids[0]] || {};
-          const newData = dataToSend[ids[0]] || structuredClone(currentData);
-          if (!newData.hasOwnProperty(ids[1])) {
-            newData[ids[1]] = {};
-          }
-          if (ids.length === 3) {
-            newData[ids[1]][ids[2]] = data.v;
-          } else {
-            newData[ids[1]] = data.v
-          }
-          if (!lre.deepEqual(newData, currentData)) {
-            added++;
-            dataToSend[ids[0]] = newData;
-          }
-        }
+        dataToSend[data.k] = data.v;
+        added++;
       }
       analyzed++;
     }
     const hasMoreToSend = this.#pending[this.#currentMode].length > 0;
 
     if (hasMoreToSend) {
-      for (let k in this.#indexes[this.#currentMode]) {
-        if (this.#indexes[this.#currentMode][k] >= analyzed) {
-          this.#indexes[this.#currentMode][k] -= analyzed;
-        }
-      }
+      this.#shiftIndexes(analyzed, analyzed);
+
       if (arguments.length === 0) {
-        this.#runSendBatch(false);
+        this.#deferSendBatch(false);
       }
     }
     if (added > 0) {
@@ -112,6 +93,14 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
     }
     if (!hasMoreToSend) {
       this.#runEvent("processed");
+    }
+  }
+
+  #shiftIndexes(from: number, by: number) {
+    for (let k in this.#indexes[this.#currentMode]) {
+      if (this.#indexes[this.#currentMode][k] >= from) {
+        this.#indexes[this.#currentMode][k] -= by;
+      }
     }
   }
 
@@ -134,25 +123,77 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
 
   setData(data: LetsRole.ViewData): void {
     this.#checkMode();
+
+    if (this.#addDataToPendingData(data)) {
+      this.#deferSendBatch();
+    }
+  }
+
+  #addDataToPendingData(data: LetsRole.ViewData): boolean {
     const indexes = this.#indexes[this.#currentMode],
       pending = this.#pending[this.#currentMode];
 
     for (let k in data) {
-      const v = data[k];
+      this.#setValueToPendingData(k, data[k], pending, indexes);
+    }
 
-      if (
-        indexes.hasOwnProperty(k) &&
-        typeof pending[indexes[k]] !== "undefined"
-      ) {
-        pending[indexes[k]].v = v;
-      } else {
-        indexes[k] = pending.length;
-        pending.push({ k, v });
+    return pending.length > 0;
+  }
+
+  #setValueToPendingData(key: string, value: LetsRole.ComponentValue, pending: AllPendingData, indexes: PendingIndexes) {
+    const componentId = this.#getComponentIdFromKey(key);
+    if (!indexes.hasOwnProperty(componentId) || typeof pending[indexes[componentId]] === "undefined") {
+      this.#addPendingData(componentId, pending, indexes);
+      if (key !== componentId) {
+        pending[indexes[componentId]].v = this.#sheet.getData()[componentId] || {};
       }
     }
-    if (pending.length > 0) {
-      this.#runSendBatch();
+    if (key === componentId) {
+      pending[indexes[componentId]].v = value;
+    } else {
+      this.#mergeRepeaterValueToPendingData(componentId, key, value, pending, indexes);
     }
+  }
+
+  #getComponentIdFromKey(key: string): LetsRole.ComponentID {
+    return key.split(REP_ID_SEP)[0];
+  }
+
+  #addPendingData(key: string, pending: AllPendingData, indexes: PendingIndexes) {
+    indexes[key] = pending.length;
+    pending.push({ k: key, v: null });
+  }
+
+  #mergeRepeaterValueToPendingData(repeaterId: LetsRole.ComponentID, key: string, value: LetsRole.ComponentValue, pending: AllPendingData, indexes: PendingIndexes) {
+    const repeaterValue = this.#generateRepeaterValueFromKey(key, value);
+
+    pending[indexes[repeaterId]].v = lre.deepMerge(pending[indexes[repeaterId]].v, repeaterValue);
+  }
+
+  #generateRepeaterValueFromKey(key: string, value: LetsRole.ComponentValue): LetsRole.RepeaterValue {
+    const ids = key.split(REP_ID_SEP);
+    if (ids.length === 1) {
+      return value as LetsRole.RepeaterValue;
+    }
+    return this.#generateNestedValueFromKey(ids, value);
+  }
+
+  #generateNestedValueFromKey(ids: string[], value: LetsRole.ComponentValue): LetsRole.RepeaterValue {
+
+    const result: LetsRole.RepeaterValue = {};
+    let nestedResult = result;
+    for (let i = 1; i < ids.length - 1; i++) {
+      nestedResult = this.#createNestedValue(nestedResult, ids[i]);
+    }
+    nestedResult[ids[ids.length - 1]] = value as LetsRole.RepeaterValue;
+    return result;
+  }
+
+  #createNestedValue(target: LetsRole.RepeaterValue, id: string): LetsRole.RepeaterValue {
+    if (typeof target[id] !== "object" || !target.hasOwnProperty(id)) {
+      target[id] = {} as LetsRole.RepeaterValue;
+    }
+    return target[id] as LetsRole.RepeaterValue;
   }
 
   getPendingData(
