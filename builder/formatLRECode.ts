@@ -41,7 +41,7 @@ function getPaddedCodeWithUselessCode(codeParts: Array<string>, length: number, 
   return tmpResult.join('');
 }
 
-export const formatLRECode = (code: string): string => {
+export const formatLRECode = (code: string, insertAsciiArts = false): string => {
   [
     /^\s*(.*)/gm,  // remove spaces from line starts
     /\n+\s*(\n)/g, // remove multiple line breaks
@@ -53,52 +53,54 @@ export const formatLRECode = (code: string): string => {
 
   const MAX_LINE_LENGTH = 127;
   const lines: Array<string> = [""];
-  const insertedAsciiLines: Array<string> = ['LRE', 'by', 'Guile']//, process.env.npm_package_version || '', 'by', 'Guile'];
   const compiledTextLines: TextLineDefs = [];
-  insertedAsciiLines.forEach((text: string, index: number) => {
-    if (text.length === 0) {
-      return;
-    }
-    for (let i = 0; i < FontLineSpace - (index === 0 ? 0 : FontCharUnderlineHeight); i++) {
+  if (insertAsciiArts) {
+    const insertedAsciiLines: Array<string> = ['LRE', 'by', 'Guile']//, process.env.npm_package_version || '', 'by', 'Guile'];
+    insertedAsciiLines.forEach((text: string, index: number) => {
+      if (text.length === 0) {
+        return;
+      }
+      for (let i = 0; i < FontLineSpace - (index === 0 ? 0 : FontCharUnderlineHeight); i++) {
+        compiledTextLines.push([]);
+      }
+      const topTextPosition = compiledTextLines.length;
+      let textWith = 0;
+      text.split("").forEach((char: string) => {
+        textWith += asciiWidth[char] || FontCharWidth;
+      })
+      const wordLeftMargin = Math.floor((MAX_LINE_LENGTH - textWith - (text.length - 1) * FontCharSpace) / 2);
+      for (let i = 0; i < FontHeight + FontCharUnderlineHeight; i++) {
+        compiledTextLines.push([wordLeftMargin]);
+      }
+      text.split("").forEach((char: string, index: number) => {
+        const currentCharDef = ascii[char];
+        for (let i = 0; i < FontHeight + FontCharUnderlineHeight; i++) {
+          const charLineDef = currentCharDef[i] || [];
+          const totalCharLineLength = charLineDef.reduce((acc: number, val: string | number) => {
+            return acc + (typeof val === "string" ? val.length : val);
+          }, 0);
+          const lastCompiledLine = compiledTextLines[topTextPosition + i][compiledTextLines[topTextPosition + i].length - 1];
+          const letterSpaceDef = index < text.length - 1 ? [(asciiWidth[char] || FontCharWidth) - totalCharLineLength + FontCharSpace] : [];
+          if (typeof charLineDef[0] === "number" && typeof lastCompiledLine === "number") {
+            compiledTextLines[topTextPosition + i][compiledTextLines[topTextPosition + i].length - 1] = lastCompiledLine + charLineDef[0] as number;
+            compiledTextLines[topTextPosition + i] = compiledTextLines[topTextPosition + i].concat(charLineDef.slice(1), letterSpaceDef);
+          } else {
+            compiledTextLines[topTextPosition + i] = compiledTextLines[topTextPosition + i].concat(charLineDef, letterSpaceDef);
+          }
+        }
+      });
+    });
+  
+    for (let i = 0; i < 100; i++) {
       compiledTextLines.push([]);
     }
-    const topTextPosition = compiledTextLines.length;
-    let textWith = 0;
-    text.split("").forEach((char: string) => {
-      textWith += asciiWidth[char] || FontCharWidth;
-    })
-    const wordLeftMargin = Math.floor((MAX_LINE_LENGTH - textWith - (text.length - 1) * FontCharSpace) / 2);
-    for (let i = 0; i < FontHeight + FontCharUnderlineHeight; i++) {
-      compiledTextLines.push([wordLeftMargin]);
-    }
-    text.split("").forEach((char: string, index: number) => {
-      const currentCharDef = ascii[char];
-      for (let i = 0; i < FontHeight + FontCharUnderlineHeight; i++) {
-        const charLineDef = currentCharDef[i] || [];
-        const totalCharLineLength = charLineDef.reduce((acc: number, val: string | number) => {
-          return acc + (typeof val === "string" ? val.length : val);
-        }, 0);
-        const lastCompiledLine = compiledTextLines[topTextPosition + i][compiledTextLines[topTextPosition + i].length - 1];
-        const letterSpaceDef = index < text.length - 1 ? [(asciiWidth[char] || FontCharWidth) - totalCharLineLength + FontCharSpace] : [];
-        if (typeof charLineDef[0] === "number" && typeof lastCompiledLine === "number") {
-          compiledTextLines[topTextPosition + i][compiledTextLines[topTextPosition + i].length - 1] = lastCompiledLine + charLineDef[0] as number;
-          compiledTextLines[topTextPosition + i] = compiledTextLines[topTextPosition + i].concat(charLineDef.slice(1), letterSpaceDef);
-        } else {
-          compiledTextLines[topTextPosition + i] = compiledTextLines[topTextPosition + i].concat(charLineDef, letterSpaceDef);
-        }
-      }
+  
+    const logoLeftMargin = Math.floor(MAX_LINE_LENGTH - logoWidth) / 2;
+  
+    logoLR.forEach((line: Array<number | string>) => {
+      compiledTextLines.push([logoLeftMargin].concat(line));
     });
-  });
-
-  for (let i = 0; i < 100; i++) {
-    compiledTextLines.push([]);
   }
-
-  const logoLeftMargin = Math.floor(MAX_LINE_LENGTH - logoWidth) / 2;
-
-  logoLR.forEach((line: Array<number | string>) => {
-    compiledTextLines.push([logoLeftMargin].concat(line));
-  });
 
   const codeParts: Array<string> = code.match(/(?:return[\t \[\(\{;!\-])?(?:\/(?:\\\/|[^\/\n])+\/[gimuy]*|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'|`[^`\\]*(?:\\.[^`\\]*)*`|\/\/.*|\/\*[\s\S]*?\*\/|(?:\+=|-=|\*=|\/=|%=|===?|!==?|>=|<=|>|<|&&|\|\||\?\:|\&|\||\^|~|<<|>>|>>>|\?)|[\])](?:\-\-|\+\+)?|[\[{}(;,.:*+\-/%<>=!&|^~?]|[\w\$]+(?:\+\+|\-\-|\s*))/gm) || [];
 

@@ -43,7 +43,7 @@ esbuild
     return code;
   })
   .then((code) => {
-    code = formatLRECode(code);
+    code = formatLRECode(code, true);
     return fs.writeFileSync(
       "build/lre.js",
       `//region LRE ${process.env.npm_package_version} ${Date.now()}
