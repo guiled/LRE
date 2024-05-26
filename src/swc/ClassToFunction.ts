@@ -904,7 +904,7 @@ class ClassToFunction extends Visitor {
   visitFunction<T extends Fn>(n: T): T {
     const prevCtorState = this.#initCtorStates();
     const res = super.visitFunction(n);
-    prevCtorState.superUsed = this.#ctorStates.superUsed;
+    prevCtorState.superUsed = prevCtorState.superUsed || this.#ctorStates.superUsed;
     this.#ctorStates = prevCtorState;
     return res;
   }
