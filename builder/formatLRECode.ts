@@ -98,7 +98,7 @@ export const formatLRECode = (code: string, insertAsciiArts = false): string => 
     const logoLeftMargin = Math.floor(MAX_LINE_LENGTH - logoWidth) / 2;
   
     logoLR.forEach((line: Array<number | string>) => {
-      compiledTextLines.push([logoLeftMargin].concat(line));
+      compiledTextLines.push(([logoLeftMargin] as Array<number | string>).concat(line));
     });
   }
 
