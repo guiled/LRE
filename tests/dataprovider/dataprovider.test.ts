@@ -99,7 +99,7 @@ describe("Data provider sort", () => {
 describe("DataProvider each", () => {
   test("empty each", () => {
     const dataGetter = jest.fn((_a: any) => {
-      return null as any;
+      return undefined;
     });
     const dp = new DirectDataProvider(dataGetter);
 
@@ -161,7 +161,12 @@ describe("DataProvider each", () => {
 
 describe("DataProvider select a column", () => {
   test("Select", () => {
-    const data = { a: "42", b: "13", c: "24" };
+    let data: any = {
+      "1": { a: "42", b: "13", c: "24" },
+      "2": { a: "1", b: "2", c: "3" },
+      "4": { b: "5", c: "6" },
+      "3": { a: "4", b: "5", c: "6" },
+    };
     const dataGetter = jest.fn((_a: any) => {
       if (_a) {
         Object.assign(data, _a);
@@ -172,6 +177,12 @@ describe("DataProvider select a column", () => {
 
     const result = dp.select("a");
     expect(result.provider).toBeTruthy();
+    expect(result.providedValue()).toStrictEqual({
+      "1": "42",
+      "2": "1",
+      "3": "4",
+      "4": undefined,
+    });
   });
 });
 
@@ -184,15 +195,15 @@ describe("Dataprovider getData", () => {
     const dp = new DirectDataProvider(dataGetter);
 
     expect(dp.getData("1")).toBe(data);
-    
+
     data = [42, "13", 24];
     expect(dp.getData(1)).toStrictEqual("13");
     expect(dp.getData("2")).toStrictEqual(24);
-    expect(dp.getData([0, "2"])).toStrictEqual({0: 42, 2: 24});
-    
-    data = { a: "42", b: "13", c: "24" };;
+    expect(dp.getData([0, "2"])).toStrictEqual({ 0: 42, 2: 24 });
+
+    data = { a: "42", b: "13", c: "24" };
     expect(dp.getData("a")).toStrictEqual("42");
     expect(dp.getData("b")).toStrictEqual("13");
-    expect(dp.getData(["a", "b"])).toStrictEqual({a: "42", b: "13"});
+    expect(dp.getData(["a", "b"])).toStrictEqual({ a: "42", b: "13" });
   });
 });

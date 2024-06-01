@@ -283,7 +283,7 @@ export class Group
       this.#components.forEach((cmp) => (result[cmp.realId()] = cmp[type]()!));
       return result;
     }
-    if (typeof newValue === "object") {
+    if (lre.isObject(newValue)) {
       Object.keys(newValue!).forEach((cmpId) => {
         const cmp = this.find(cmpId);
         cmp?.[type](newValue![cmpId] as any);
