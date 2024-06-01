@@ -1,7 +1,7 @@
 import { Mixin } from "../mixin";
 
 type ValueGetterSetter<
-  T extends LetsRole.ComponentValue | undefined = undefined
+  T extends LetsRole.ComponentValue | undefined = undefined,
 > = (newValue?: T) => T extends undefined ? LetsRole.ComponentValue : void;
 
 type Sorter = (a: any, b: any) => number;
@@ -19,7 +19,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
     providedValue<T extends LetsRole.ComponentValue | undefined = undefined>(
       _newValue?: T
-    ): T extends undefined ? LetsRole.ComponentValue : void {
+    ): ReturnType<ValueGetterSetter<T>> {
       return this.#handleSet(this.#valueCb).apply(
         this,
         Array.from(arguments) as [any]
@@ -62,22 +62,47 @@ export const DataProvider = (superclass: Newable = class {}) =>
       }) as ValueGetterSetter<T>;
     }
 
-    each(mapper: (val: LetsRole.ComponentValue) => void): void {
+    each(
+      mapper: (val: LetsRole.ComponentValue, key: number | string) => void
+    ): void {
       const values = this.#valueCb();
 
-      if (!values) return;
+      if (typeof values === "undefined") return;
 
       if (Array.isArray(values)) {
         values.forEach(mapper);
       } else if (lre.isObject(values)) {
-        Object.keys(values).forEach((k) => mapper(values[k]));
+        Object.keys(values).forEach((k) => mapper(values[k], k));
       } else {
-        mapper(values);
+        mapper(values, "");
       }
     }
 
-    select(_column: LetsRole.ComponentID): IDataProvider {
-      return this as unknown as IDataProvider; // tmp @todo
+    select(column: string): IDataProvider {
+      return new DirectDataProvider(
+        this.#handleSet(() => {
+          let result: Record<
+            string,
+            LetsRole.TableRow | LetsRole.ComponentValue
+          > = {};
+
+          this.each((v, k) => {
+            if (typeof v === "undefined") return;
+            else if (Array.isArray(v)) {
+              result[k] = v.includes(column);
+            } else if (v && lre.isObject(v) && v.hasOwnProperty(column)) {
+              result[k] = v[column] as LetsRole.ComponentValue;
+            } else {
+              result[k] = undefined;
+            }
+          });
+
+          if (result.hasOwnProperty("") && Object.keys(result).length === 1) {
+            return result[""];
+          }
+          return result;
+        })
+      );
     }
 
     getData(
