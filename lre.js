@@ -468,14 +468,14 @@ function lre(_arg) {
 
         this.disableEvent = function (event) {
             if (!events[event]) {
-                this.on(event, function () {});
+                this.on(event, function () { });
             }
             events[event].state = false;
         };
- 
+
         this.enableEvent = function (event) {
             if (!events[event]) {
-                this.on(event, function () {});
+                this.on(event, function () { });
             }
             events[event].state = true;
         }
@@ -1508,46 +1508,46 @@ function lre(_arg) {
 
         this.setSorter = function (cmp, column) {
             if (typeof cmp === "string") {
-              cmp = this.sheet().get(cmp);
+                cmp = this.sheet().get(cmp);
             }
             cmp.addClass("clickable");
             cmp.on("click", function (cmp) {
-              const order = (cmp.data("order") || "desc") === "desc" ? "asc" : "desc";
-              cmp.data("order", order, true);
-              let inf = -1, sup = 1;
-              if (order === "desc") {
-                inf = 1;
-                sup = -1;
-              }
-              const vals = this.value();
-              const keys = Object.keys(vals);
-              if (keys.length === 0) {
-                return;
-              }
-              const getVal = (function (key) {
-                if (vals[key] && vals[key].hasOwnProperty(column)) {
-                  return vals[key][column];
-                } else {
-                  const col = this.find(key + '.' + column, true);
-                  if (col && col.id() && col.exists()) {
-                    return col.value();
-                  }
+                const order = (cmp.data("order") || "desc") === "desc" ? "asc" : "desc";
+                cmp.data("order", order, true);
+                let inf = -1, sup = 1;
+                if (order === "desc") {
+                    inf = 1;
+                    sup = -1;
                 }
-                return '';
-              }).bind(this);
-              let sorter = function (key1, key2) {
-                let val1 = getVal(key1);
-                let val2 = getVal(key2);
+                const vals = this.value();
+                const keys = Object.keys(vals);
+                if (keys.length === 0) {
+                    return;
+                }
+                const getVal = (function (key) {
+                    if (vals[key] && vals[key].hasOwnProperty(column)) {
+                        return vals[key][column];
+                    } else {
+                        const col = this.find(key + '.' + column, true);
+                        if (col && col.id() && col.exists()) {
+                            return col.value();
+                        }
+                    }
+                    return '';
+                }).bind(this);
+                let sorter = function (key1, key2) {
+                    let val1 = getVal(key1);
+                    let val2 = getVal(key2);
 
-                return val1 < val2 ? inf : (val1 > val2 ? sup : 0);
-              };
-              const newVals = {};
-              keys.sort(sorter).forEach(function (k) {
-                newVals[k] = vals[k];
-              });
-              this.value(newVals);
+                    return val1 < val2 ? inf : (val1 > val2 ? sup : 0);
+                };
+                const newVals = {};
+                keys.sort(sorter).forEach(function (k) {
+                    newVals[k] = vals[k];
+                });
+                this.value(newVals);
             }.bind(this))
-          };
+        };
     };
 
     /** * * * * * * * * * * * * * * * * * * * * * *
