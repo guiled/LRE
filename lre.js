@@ -1,4 +1,4 @@
-//region LRE 6.21
+//region LRE 6.22
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -1365,7 +1365,7 @@ function lre(_arg) {
                     let newData = {};
                     if (!objectsEqual(entryData, newValues[entryId])) {
                         let cmp = component.find(entryId);
-                        const results = component.trigger('change', cmp, entryId, newValues[entryId], entryData);
+                        const results = component.trigger('entrychange', cmp, entryId, newValues[entryId], entryData);
                         overloadObject(newData, results);
                         somethingHasChanged = true;
                     }
@@ -1380,8 +1380,11 @@ function lre(_arg) {
                         cmp.data('saved', true);
                         let results = component.trigger('save', cmp, entryId, newValues[entryId], entryData);
                         overloadObject(newData, results);
+                    }
+                    if (!cmp.hasClass('lre_initread') || !deepEqual(newValues, entryData)) {
                         results = component.trigger('initread', cmp, entryId, newValues[entryId], entryData);
                         overloadObject(newData, results);
+                        cmp.addClass('lre_initread');
                     }
                     applyValuesToEntry(component, entryId, newData);
                     if (cmp.hasData('children')) {
