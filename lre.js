@@ -2231,7 +2231,6 @@ function lre(_arg) {
         let pendingDataToSetIndex = {};
         let pendingDataProcessed;
 
-
         const groupedDataSet = function (dataToSend) {
             if (arguments.length === 0) {
                 dataToSend = {};
@@ -2242,26 +2241,8 @@ function lre(_arg) {
                 let data = pendingDataToSet.shift();
                 delete pendingDataToSetIndex[data.k];
                 if (typeof data.v !== 'undefined' && !Number.isNaN(data.v)) {
-                    const ids = data.k.split(repeaterIdSeparator);
-                    if (ids.length === 1) {
-                        dataToSend[ids[0]] = data.v;
-                        added++;
-                    } else {
-                        const currentData = sheet.getData()[ids[0]] || {};
-                        const newData = dataToSend[ids[0]] || deepClone(currentData);
-                        if (!newData.hasOwnProperty(ids[1])) {
-                            newData[ids[1]] = {};
-                        }
-                        if (ids.length === 3) {
-                            newData[ids[1]][ids[2]] = data.v;
-                        } else {
-                            newData[ids[1]] = data.v
-                        }
-                        if (!deepEqual(newData, currentData)) {
-                            added++;
-                            dataToSend[ids[0]] = newData;
-                        }
-                    }
+                    dataToSend[data.k] = data.v;
+                    added++;
                 }
                 analysed++;
             }
