@@ -1,4 +1,4 @@
-//region LRE 6.22
+//region LRE 6.23
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -1442,6 +1442,7 @@ function lre(_arg) {
 
         this.initiate = function () {
             lreLog('Initiate Repeater ' + this.realId());
+            fixRepeaterValues(this.raw());
             this.on('eventhandleradded', runInitReadEvent.bind(this));
             this.lreType('repeater');
             // This following code because saveValues doesn't work well with repeater in tabs
@@ -1455,6 +1456,14 @@ function lre(_arg) {
             this.on('update', updateHandler);
             Object.assign(this, new lreDataCollection(this, DataCollection.getDataMapper(getDataValue.bind(this)).bind(this)));
             this.setInitiated(true);
+        };
+
+        // fix a bug with craft https://github.com/guiled/LRE/issues/14
+        const fixRepeaterValues = function (rawCmp) {
+            const data = rawCmp.sheet().getData().rep || {};
+            Object.keys(rawCmp.value()).forEach(function (entryId) {
+                rawCmp.find(entryId).value(data[entryId])
+            });
         };
 
         const runInitReadEvent = function (cmp, event, subComponent, callback) {
