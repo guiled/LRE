@@ -6,7 +6,7 @@ import {
   Program,
   TsType,
 } from "@swc/core";
-import { Visitor } from "@swc/core/Visitor";
+import { Visitor } from "@swc/core/Visitor.js";
 import { arrayexpression } from "./node/expression/arrayexpression";
 import { fnApply } from "./node/expression/fnApply";
 import { ExpressionWithSpan } from "./types";

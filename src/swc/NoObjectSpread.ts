@@ -7,7 +7,7 @@ import {
   Span,
   TsType,
 } from "@swc/core";
-import { Visitor } from "@swc/core/Visitor";
+import { Visitor } from "@swc/core/Visitor.js";
 import call from "./node/expression/call";
 import { objectassign } from "./node/expression/objectassign";
 
