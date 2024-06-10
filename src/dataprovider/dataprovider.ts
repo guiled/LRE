@@ -1,7 +1,7 @@
 import { Mixin } from "../mixin";
 
 type ValueGetterSetter<
-  T extends LetsRole.ComponentValue | undefined = undefined,
+  T extends LetsRole.ComponentValue | undefined = undefined
 > = (newValue?: T) => T extends undefined ? LetsRole.ComponentValue : void;
 
 type Sorter = (a: any, b: any) => number;
@@ -11,10 +11,15 @@ export const DataProvider = (superclass: Newable = class {}) =>
   class DataProvider extends superclass implements IDataProvider {
     public provider = true;
     #valueCb: ValueGetterSetter;
+    #originalValueCb: ValueGetterSetter;
 
-    constructor(valueCb: ValueGetterSetter) {
+    constructor(
+      valueCb: ValueGetterSetter,
+      originalValueCb: ValueGetterSetter = valueCb
+    ) {
       super();
       this.#valueCb = valueCb;
+      this.#originalValueCb = originalValueCb;
     }
 
     providedValue<T extends LetsRole.ComponentValue | undefined = undefined>(
@@ -47,7 +52,8 @@ export const DataProvider = (superclass: Newable = class {}) =>
               .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
           }
           return data;
-        })
+        }),
+        this.#originalValueCb
       );
     }
 
@@ -101,7 +107,8 @@ export const DataProvider = (superclass: Newable = class {}) =>
             return result[""];
           }
           return result;
-        })
+        }),
+        this.#originalValueCb
       );
     }
 
@@ -112,7 +119,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
         | LetsRole.ComponentValue
         | Array<number | string>
     ): LetsRole.TableRow | LetsRole.ComponentValue {
-      const values = this.providedValue();
+      const values = this.#originalValueCb();
 
       if (Array.isArray(values) || lre.isObject(values)) {
         if (lre.isUseableAsIndex(id)) {
@@ -144,7 +151,14 @@ export const DataProvider = (superclass: Newable = class {}) =>
   };
 
 export class DirectDataProvider extends Mixin(DataProvider) {
-  constructor(valueCb: ValueGetterSetter) {
-    super([[valueCb]]);
+  constructor(
+    valueCb: ValueGetterSetter,
+    originalValueCb: ValueGetterSetter = valueCb
+  ) {
+    const dataProviderArgs = [valueCb];
+    if (arguments.length > 1) {
+      dataProviderArgs.push(originalValueCb);
+    }
+    super([dataProviderArgs]);
   }
 }
