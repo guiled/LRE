@@ -126,11 +126,11 @@ declare namespace LetsRole {
   export type ColumnId = string;
 
   export type Tables = {
-    get: (id: TableID) => Table;
+    get: (id: TableID) => Table | null;
   };
 
   export type Table = {
-    get: (id: ColumnId) => TableRow;
+    get: (id: ColumnId) => TableRow | null;
     each: (callback: (row: TableRow) => void) => void;
     random: (callback: (row: TableRow) => void) => void;
     random: (count: number, callback: (row: TableRow) => void) => void;
