@@ -3,9 +3,11 @@ import { DirectDataProvider } from "../../src/dataprovider";
 import { LRE } from "../../src/lre";
 import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
+import { LreTables } from "../../src/tables";
 import {
   initLetsRole,
   itHasWaitedEverything,
+  defineTable,
 } from "../mock/letsrole/letsrole.mock";
 import { MockServer } from "../mock/letsrole/server.mock";
 import { MockSheet } from "../mock/letsrole/sheet.mock";
@@ -18,6 +20,7 @@ let sheet: ISheet;
 beforeEach(() => {
   initLetsRole();
   global.lre = new LRE(modeHandlerMock);
+  Tables = new LreTables(Tables);
 
   rawSheet = MockSheet({
     id: "main",
@@ -176,5 +179,67 @@ describe("Set choice dynamically", () => {
       cmp1: "42",
       cmp2: 2,
     });
+  });
+});
+
+describe("choice populate", () => {
+  const TABLE_NAME = "theTable";
+  beforeAll(() => {
+    defineTable(TABLE_NAME, [
+      {
+        id: "a",
+        a: "1",
+        b: "2",
+      },
+      {
+        id: "b",
+        a: "2",
+        b: "3",
+      },
+    ]);
+  });
+
+  test("populate with table name", () => {
+    const ch = new Choice(rawSheet.get("chA"), sheet, "chA");
+    ch.populate(TABLE_NAME, "a");
+    expect(ch.getChoices()).toStrictEqual({
+      a: "1",
+      b: "2",
+    });
+    expect(ch.getChoiceData("b")).toStrictEqual({
+      id: "b",
+      a: "2",
+      b: "3",
+    });
+  });
+
+  test("populate with table object", () => {
+    const ch = new Choice(rawSheet.get("chA"), sheet, "chA");
+    const table = (Tables as LreTables).get(TABLE_NAME)!;
+    ch.populate(table, "a");
+    expect(ch.getChoices()).toStrictEqual({
+      a: "1",
+      b: "2",
+    });
+    expect(ch.getChoiceData("b")).toStrictEqual({
+      id: "b",
+      a: "2",
+      b: "3",
+    });
+  });
+
+  test("populate with callback", () => {
+    const ch = new Choice(rawSheet.get("chA"), sheet, "chA");
+    ch.populate(() => {
+      return {
+        a: "1",
+        b: "2",
+      };
+    });
+    expect(ch.getChoices()).toStrictEqual({
+      a: "1",
+      b: "2",
+    });
+    expect(ch.getChoiceData("b")).toBeNull();
   });
 });

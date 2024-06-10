@@ -31,12 +31,41 @@ const RollBuilderClass = class {
   onRoll = rollBuilderMock.onRoll;
 };
 
-const Tables = {
+const tables: Record<string, Array<LetsRole.TableRow>> = {};
+
+const Tables: LetsRole.Tables = {
   get: jest.fn((_id: string) => ({
-    each: jest.fn(),
-    get: jest.fn(),
-    random: jest.fn(),
+    each: jest.fn((cb: (row: LetsRole.TableRow, id: string) => void) => {
+      tables[_id]?.forEach((r) => cb(r, r.id));
+    }),
+    get: jest.fn((id: string) => tables[_id]?.find((r) => r.id === id) || null),
+    random: jest.fn(
+      (
+        countOrCb: number | ((row: LetsRole.TableRow) => void),
+        cb?: (row: LetsRole.TableRow) => void
+      ) => {
+        if (!cb) {
+          cb = countOrCb as (row: LetsRole.TableRow) => void;
+          countOrCb = 1;
+        } else {
+          countOrCb = parseInt(countOrCb as any);
+        }
+        const rows = [];
+        for (let i = 0; i < countOrCb; i++) {
+          rows.push(
+            tables[_id].splice(
+              Math.floor(Math.random() * tables[_id].length),
+              1
+            )
+          );
+        }
+      }
+    ),
   })),
+};
+
+const defineTable = (name: string, defs: Array<LetsRole.TableRow>) => {
+  tables[name] = defs;
 };
 
 const initLetsRole = () => {
@@ -67,4 +96,5 @@ export {
   RollBuilderClass,
   Bindings,
   Tables,
+  defineTable,
 };

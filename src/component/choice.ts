@@ -1,5 +1,9 @@
 import { Component } from ".";
-import { dynamicSetter } from "../globals/decorators/dynamicSetter";
+import {
+  dynamicSetter,
+  getDataProvidersFromArgs,
+} from "../globals/decorators/dynamicSetter";
+import { Table } from "../tables/table";
 
 type ChoiceValueWithData = ComponentValueWithData<string>;
 export type ChoicesWithData = Record<
@@ -22,6 +26,8 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
   #choiceData: ChoiceData = {};
   #choiceDataProvider: IDataProvider | undefined;
   #currentValue: LetsRole.ComponentValue | void;
+  #optional: boolean = false;
+  #defaultLabel: string = "";
 
   constructor(
     raw: LetsRole.Component,
@@ -52,16 +58,19 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
 
   @dynamicSetter
   setChoices(
-    choices?: DynamicSetValue<ChoicesWithData>,
-    choiceDataProvider?: IDataProvider
+    choices: DynamicSetValue<LetsRole.Choices | ChoicesWithData>
   ): void {
+    let choiceDataProvider: IDataProvider | undefined;
+    [[choices], [choiceDataProvider]] =
+      getDataProvidersFromArgs<[LetsRole.Choices | ChoicesWithData]>(arguments);
     const currentValue: LetsRole.ChoiceValue = this.value()!;
-
-    const newChoices: LetsRole.Choices = {};
+    const newChoices: LetsRole.Choices = this.#optional
+      ? this.#initChoicesWithEmpty()
+      : {};
     let newValues: LetsRole.ChoiceValues = [];
     const newChoiceData: ChoiceData = {};
 
-    if (lre.isObject<LetsRole.Choices>(choices)) {
+    if (lre.isObject<LetsRole.Choices | ChoicesWithData>(choices)) {
       newValues = Object.keys(choices);
       newValues.forEach((chVal: LetsRole.ChoiceValue) => {
         const v = choices[chVal];
@@ -74,7 +83,6 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
         }
       });
     }
-
     if (!newChoices.hasOwnProperty(currentValue)) {
       const availableValues: LetsRole.ChoiceValues = Object.keys(this.#choices);
       if (
@@ -95,10 +103,14 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
     this.#choiceDataProvider = choiceDataProvider;
     try {
       super.setChoices.apply(this, Array.from(arguments) as [LetsRole.Choices]);
-    } catch (e) {
-
-    }
+    } catch (e) {}
     this.trigger("update", this);
+  }
+
+  #initChoicesWithEmpty() {
+    const choices: LetsRole.Choices = {};
+    choices[""] = this.#defaultLabel;
+    return choices;
   }
 
   getChoices(): LetsRole.Choices {
@@ -129,11 +141,67 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
     return this.#choiceData[value!] || null;
   }
 
+  optional(isOptional: boolean = true, labelForDefault: string = ""): void {
+    this.#optional = isOptional;
+    this.#defaultLabel = labelForDefault;
+  }
+
   valueData(): LetsRole.TableRow | LetsRole.ComponentValue {
     return this.getChoiceData(this.value()!);
   }
 
   row(): LetsRole.TableRow | LetsRole.ComponentValue {
     return this.valueData();
+  }
+
+  @dynamicSetter
+  populate(
+    tableOrCb: DynamicSetValue<
+      string | Array<LetsRole.TableRow> | LetsRole.Choices
+    >,
+    label: string = "id",
+    optional: boolean = false
+  ): void {
+    let choiceDataProvider: IDataProvider | undefined;
+    [[tableOrCb, label = label, optional = optional], [choiceDataProvider]] =
+      getDataProvidersFromArgs<
+        [string | Array<LetsRole.TableRow> | LetsRole.Choices, string, boolean]
+      >(arguments);
+    if (arguments.length >= 2) {
+      this.optional(optional);
+    }
+    if (Array.isArray(tableOrCb)) {
+      const choices: LetsRole.Choices = {};
+      tableOrCb.forEach((row) => {
+        choices[row.id] = row[label];
+      });
+      this.setChoices(choices);
+    } else if (
+      lre.isObject<BasicObject<string | LetsRole.TableRow>>(tableOrCb)
+    ) {
+      const choices: LetsRole.Choices = {};
+      Object.keys(tableOrCb).forEach((choiceId) => {
+        const currentChoice: string | LetsRole.TableRow = tableOrCb[choiceId];
+        if (lre.isObject(currentChoice)) {
+          let id = choiceId;
+          let val = choiceId;
+          if (currentChoice.hasOwnProperty("id")) {
+            id = currentChoice.id;
+          }
+          if (currentChoice.hasOwnProperty(label)) {
+            val = currentChoice[label];
+          }
+          choices[id] = val;
+        } else {
+          choices[choiceId] = currentChoice;
+        }
+      });
+      this.setChoices(choices);
+      this.#choiceDataProvider = choiceDataProvider;
+    } else if (typeof tableOrCb === "string") {
+      const table = Tables.get(tableOrCb) as Table | null;
+      if (!table) return;
+      this.setChoices(table.select(label));
+    }
   }
 }
