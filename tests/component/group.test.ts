@@ -199,7 +199,7 @@ describe("Component group basics", () => {
     expect(group.includes(cmp3)).toBeTruthy();
     expect(group.contains(cmp3)).toBeTruthy();
     expect(group.has(cmp3)).toBeTruthy();
-    
+
     (sheet.get as jest.Mock).mockClear();
     updateCb.mockClear();
     group.add("cmp3");
@@ -225,7 +225,9 @@ describe("Component group basics", () => {
     expect(group.count()).toBe(1);
     expect(updateCb).toHaveBeenCalledTimes(0);
 
-    expect(() => group.add(sheet.get(MockServer.UNKNOWN_CMP_ID)! as IComponent)).toThrowError();
+    expect(() =>
+      group.add(sheet.get(MockServer.UNKNOWN_CMP_ID)! as IComponent)
+    ).toThrowError();
     expect(group.count()).toBe(1);
     expect(updateCb).toHaveBeenCalledTimes(0);
     expect(group.includes(MockServer.NON_EXISTING_CMP_ID)).toBeFalsy();
@@ -244,7 +246,7 @@ describe("Component group basics", () => {
   test("Group added to group is forbidden", () => {
     const group1: Group = new Group(context, "group1", sheet);
     const group2: Group = new Group(context, "group2", sheet);
-    
+
     /* @ts-expect-error */
     expect(() => group2.add(group1)).toThrowError();
   });

@@ -259,9 +259,8 @@ export class Group
   @dynamicSetter
   visible(
     _newValue?: DynamicSetValue<
-      | Record<LetsRole.ComponentID, boolean>
-      | boolean
-      | undefined>
+      Record<LetsRole.ComponentID, boolean> | boolean | undefined
+    >
   ): boolean {
     if (arguments.length > 0) {
       this.#getSet.apply(

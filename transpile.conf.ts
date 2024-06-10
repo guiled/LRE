@@ -33,7 +33,7 @@ const transformForLR: Options = {
         keep_fnames: false,
         keep_private_props: false,
         ie8: false,
-        safari10: false
+        safari10: false,
       },
     },
   },

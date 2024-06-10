@@ -10,7 +10,7 @@ type cb = (thisArg: any, argArray?: any) => (rawSheet: LetsRole.Sheet) => void;
 
 type BasicObject<T = any> = { [key: string]: T };
 
-export interface LRE extends ILRE, Logger, cb { }
+export interface LRE extends ILRE, Logger, cb {}
 
 export class LRE extends Logger implements ILRE {
   #context: ProxyModeHandler;
@@ -46,7 +46,8 @@ export class LRE extends Logger implements ILRE {
             }
           }
           this.log(
-            `init sheet ${rawSheet.id()} (${rawSheet.name()} ${rawSheet.properName() || ""
+            `init sheet ${rawSheet.id()} (${rawSheet.name()} ${
+              rawSheet.properName() || ""
             } ${sheetId ? "#" + sheetId : ""})`
           );
           try {
@@ -110,10 +111,7 @@ export class LRE extends Logger implements ILRE {
   }
 
   isUseableAsIndex(value: any): value is number | string {
-    return (
-      typeof value === "number" ||
-      typeof value === "string"
-    );
+    return typeof value === "number" || typeof value === "string";
   }
 
   deepMerge(target: any, ...sources: any[]): any {
@@ -138,8 +136,10 @@ export class LRE extends Logger implements ILRE {
     if (x === y) {
       return true;
     } else if (
-      typeof x == "object" && x != null &&
-      typeof y == "object" && y != null
+      typeof x == "object" &&
+      x != null &&
+      typeof y == "object" &&
+      y != null
     ) {
       if (Object.keys(x).length != Object.keys(y).length) return false;
 

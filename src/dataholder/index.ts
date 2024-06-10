@@ -1,1 +1,1 @@
-export * from './dataholder'
+export * from "./dataholder";

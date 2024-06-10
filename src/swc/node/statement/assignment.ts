@@ -1,9 +1,6 @@
-import {
-  AssignmentExpression,
-  ExpressionStatement,
-} from "@swc/core";
+import { AssignmentExpression, ExpressionStatement } from "@swc/core";
 
-import assignmentExpression from '../expression/assignment';
+import assignmentExpression from "../expression/assignment";
 
 export default function assignment({
   span,

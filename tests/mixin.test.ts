@@ -162,7 +162,7 @@ describe("Mixin tests", () => {
           return this.#id;
         }
       };
-    }
+    };
     const Bmixable = (superclass: Newable = class {}) => {
       abstract class B extends superclass {
         #name: string;

@@ -1,4 +1,3 @@
-
 import { structuredClone as lreStructuredClone } from "../../src/globals/structuredClone";
 
 global.each = jest.fn((obj: any, cb) => {

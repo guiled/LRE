@@ -1,9 +1,4 @@
-import {
-  ForStatement,
-  Program,
-  Statement,
-  TsType,
-} from "@swc/core";
+import { ForStatement, Program, Statement, TsType } from "@swc/core";
 import { Visitor } from "@swc/core/Visitor";
 import onevariable from "./node/declaration/onevariable";
 import identifier from "./node/identifier";

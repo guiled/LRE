@@ -6,8 +6,8 @@ type VARIABLE_PARAM = {
   kind?: VariableDeclaration["kind"];
   declare?: VariableDeclaration["declare"];
   definite?: VariableDeclarator["definite"];
-  id: PatternWithSpan,
-  init?: VariableDeclarator["init"]
+  id: PatternWithSpan;
+  init?: VariableDeclarator["init"];
 };
 
 export default function onevariable({
@@ -23,12 +23,14 @@ export default function onevariable({
     span: span ?? id.span,
     kind,
     declare,
-    declarations: [{
-      type: "VariableDeclarator",
-      span: span ?? id.span,
-      id,
-      init,
-      definite,
-    }],
+    declarations: [
+      {
+        type: "VariableDeclarator",
+        span: span ?? id.span,
+        id,
+        init,
+        definite,
+      },
+    ],
   };
-};
+}

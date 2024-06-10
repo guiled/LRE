@@ -1,9 +1,9 @@
 import { HasSpan, NewExpression, Span } from "@swc/core";
 
 type NewExpressionArgs = {
-  callee: NewExpression["callee"],
-  arguments?: NewExpression["arguments"],
-  span?: Span,
+  callee: NewExpression["callee"];
+  arguments?: NewExpression["arguments"];
+  span?: Span;
 };
 
 export const newexpression = ({

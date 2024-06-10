@@ -12,7 +12,7 @@ describe("Proxy generic class tests", () => {
     const newProxyCreator = jest.fn((_obj) => obj2);
     subject.setModeDest("virtual", newProxyCreator);
     expect(newProxyCreator).not.toHaveBeenCalled();
-    modeHandlerMock.setMode("virtual")
+    modeHandlerMock.setMode("virtual");
     expect(() => subject.getDest()).not.toThrowError();
     expect(newProxyCreator).toHaveBeenCalledTimes(1);
     expect(subject.getDest()).not.toBe(obj);

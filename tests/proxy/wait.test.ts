@@ -10,7 +10,7 @@ describe("Wait proxy", () => {
 
   beforeEach(() => {
     cb = jest.fn();
-    modeHandlerMock.setMode("real")
+    modeHandlerMock.setMode("real");
   });
 
   test("runs normally in real mode", () => {

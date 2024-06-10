@@ -19,7 +19,7 @@ export const fnApply = ({
   const callArgs = [...args];
   if (thisArg) {
     callArgs.unshift({
-      expression: thisArg
+      expression: thisArg,
     });
   } else {
     callArgs.unshift({

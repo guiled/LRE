@@ -1,4 +1,3 @@
-
 type ProxyInitiator<T> = (dest: T) => T;
 
 export class LreProxy<T> {

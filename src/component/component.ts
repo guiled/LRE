@@ -37,9 +37,9 @@ type ClassChangeApply = {
 };
 
 export class Component<
-  TypeValue extends LetsRole.ComponentValue = LetsRole.ComponentValue,
-  AdditionalEvents extends string = LetsRole.EventType
->
+    TypeValue extends LetsRole.ComponentValue = LetsRole.ComponentValue,
+    AdditionalEvents extends string = LetsRole.EventType
+  >
   extends (Mixin(EventHolder, HasRaw<LetsRole.Component>, DataHolder) as new <
     SubTypeEventHolder extends string
   >(
@@ -47,24 +47,25 @@ export class Component<
   ) => IEventHolder<SubTypeEventHolder> &
     InstanceType<ReturnType<typeof HasRaw<LetsRole.Component>>> &
     InstanceType<ReturnType<typeof DataHolder>>)<
-      ThisComponentEventTypes<AdditionalEvents>
-    >
+    ThisComponentEventTypes<AdditionalEvents>
+  >
   implements
-  Omit<
-    LetsRole.Component<TypeValue>,
-    | "on"
-    | "off"
-    | "find"
-    | "value"
-    | "sheet"
-    | "parent"
-    | "virtualValue"
-    | "rawValue"
-    | "text"
-  >,
-  IComponent,
-  ComponentContainer,
-  ComponentCommon {
+    Omit<
+      LetsRole.Component<TypeValue>,
+      | "on"
+      | "off"
+      | "find"
+      | "value"
+      | "sheet"
+      | "parent"
+      | "virtualValue"
+      | "rawValue"
+      | "text"
+    >,
+    IComponent,
+    ComponentContainer,
+    ComponentCommon
+{
   #realId: string;
   #sheet: ISheet;
   #lreType: ComponentType = "component";

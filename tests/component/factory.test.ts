@@ -24,7 +24,11 @@ describe("Component factory", () => {
       id: "main",
       realId: "123",
     });
-    sheet = new Sheet(rawSheet, new DataBatcher(modeHandlerMock, rawSheet), modeHandlerMock);
+    sheet = new Sheet(
+      rawSheet,
+      new DataBatcher(modeHandlerMock, rawSheet),
+      modeHandlerMock
+    );
     rawCmp = MockComponent({
       id: "cmp1",
       sheet: rawSheet,

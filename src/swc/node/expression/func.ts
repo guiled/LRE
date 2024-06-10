@@ -60,7 +60,7 @@ export default ({
           span,
           expression: fcn,
         },
-        property: identifier_({span, value: "bind"}),
+        property: identifier_({ span, value: "bind" }),
       }),
       arguments: [binded],
     };

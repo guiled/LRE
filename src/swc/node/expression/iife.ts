@@ -33,7 +33,7 @@ export default ({
   applied = null,
 }: IIFE_PARAM) => {
   let callee: CallExpression["callee"];
-  const parameters: FunctionExpression["params"] = params.map(p => {
+  const parameters: FunctionExpression["params"] = params.map((p) => {
     if (p.type == "Parameter") {
       return p;
     }
@@ -41,7 +41,7 @@ export default ({
       type: "Parameter",
       span,
       pat: p,
-    }
+    };
   });
 
   const fcn = parenthesis({

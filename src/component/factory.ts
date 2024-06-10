@@ -42,8 +42,8 @@ export class ComponentFactory {
     let classes: LetsRole.ClassName[] = [];
 
     try {
-        classes = raw.getClasses();
-    } catch (e) { }
+      classes = raw.getClasses();
+    } catch (e) {}
 
     const flags = {
       isRepeater: false,
@@ -66,7 +66,7 @@ export class ComponentFactory {
         flags.isIcon = true;
       } else if (c === "label") {
         flags.isLabel = true;
-      } else if (c === 'checkbox') {
+      } else if (c === "checkbox") {
         flags.isCheckbox = true;
       } else if (
         c === "widget-container" ||
