@@ -140,37 +140,64 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
     return pending.length > 0;
   }
 
-  #setValueToPendingData(key: string, value: LetsRole.ComponentValue, pending: AllPendingData, indexes: PendingIndexes) {
-    const componentId = this.#getComponentIdFromKey(key);
-    if (!indexes.hasOwnProperty(componentId) || typeof pending[indexes[componentId]] === "undefined") {
+  #setValueToPendingData(
+    key: string,
+    value: LetsRole.ComponentValue,
+    pending: AllPendingData,
+    indexes: PendingIndexes
+  ) {
+    const componentId = key;
+    if (
+      !indexes.hasOwnProperty(componentId) ||
+      typeof pending[indexes[componentId]] === "undefined"
+    ) {
       this.#addPendingData(componentId, pending, indexes);
       if (key !== componentId) {
-        pending[indexes[componentId]].v = this.#sheet.getData()[componentId] || {};
+        pending[indexes[componentId]].v =
+          this.#sheet.getData()[componentId] || {};
       }
     }
     if (key === componentId) {
       pending[indexes[componentId]].v = value;
     } else {
-      this.#mergeRepeaterValueToPendingData(componentId, key, value, pending, indexes);
+      this.#mergeRepeaterValueToPendingData(
+        componentId,
+        key,
+        value,
+        pending,
+        indexes
+      );
     }
   }
 
-  #getComponentIdFromKey(key: string): LetsRole.ComponentID {
-    return key.split(REP_ID_SEP)[0];
-  }
-
-  #addPendingData(key: string, pending: AllPendingData, indexes: PendingIndexes) {
+  #addPendingData(
+    key: string,
+    pending: AllPendingData,
+    indexes: PendingIndexes
+  ) {
     indexes[key] = pending.length;
     pending.push({ k: key, v: null });
   }
 
-  #mergeRepeaterValueToPendingData(repeaterId: LetsRole.ComponentID, key: string, value: LetsRole.ComponentValue, pending: AllPendingData, indexes: PendingIndexes) {
+  #mergeRepeaterValueToPendingData(
+    repeaterId: LetsRole.ComponentID,
+    key: string,
+    value: LetsRole.ComponentValue,
+    pending: AllPendingData,
+    indexes: PendingIndexes
+  ) {
     const repeaterValue = this.#generateRepeaterValueFromKey(key, value);
 
-    pending[indexes[repeaterId]].v = lre.deepMerge(pending[indexes[repeaterId]].v, repeaterValue);
+    pending[indexes[repeaterId]].v = lre.deepMerge(
+      pending[indexes[repeaterId]].v,
+      repeaterValue
+    );
   }
 
-  #generateRepeaterValueFromKey(key: string, value: LetsRole.ComponentValue): LetsRole.RepeaterValue {
+  #generateRepeaterValueFromKey(
+    key: string,
+    value: LetsRole.ComponentValue
+  ): LetsRole.RepeaterValue {
     const ids = key.split(REP_ID_SEP);
     if (ids.length === 1) {
       return value as LetsRole.RepeaterValue;
@@ -178,8 +205,10 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
     return this.#generateNestedValueFromKey(ids, value);
   }
 
-  #generateNestedValueFromKey(ids: string[], value: LetsRole.ComponentValue): LetsRole.RepeaterValue {
-
+  #generateNestedValueFromKey(
+    ids: string[],
+    value: LetsRole.ComponentValue
+  ): LetsRole.RepeaterValue {
     const result: LetsRole.RepeaterValue = {};
     let nestedResult = result;
     for (let i = 1; i < ids.length - 1; i++) {
@@ -189,7 +218,10 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
     return result;
   }
 
-  #createNestedValue(target: LetsRole.RepeaterValue, id: string): LetsRole.RepeaterValue {
+  #createNestedValue(
+    target: LetsRole.RepeaterValue,
+    id: string
+  ): LetsRole.RepeaterValue {
     if (typeof target[id] !== "object" || !target.hasOwnProperty(id)) {
       target[id] = {} as LetsRole.RepeaterValue;
     }
