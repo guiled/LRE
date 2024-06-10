@@ -46,3 +46,6 @@ LRE's goal is to facilitate Let's Rôle system coding of some common works that 
 - [Shadowdark](https://lets-role.com/system/shadowdark-18729)
 - [Knight](https://lets-role.com/system/knight-970)
 - [Black Sword Hack - Ultimate Chaos Edition](https://lets-role.com/system/black-sword-hack-ultimate-chaos-edition-18269)
+- [Berlin XVIII (PBTA)](https://lets-role.com/system/berlin-xviii-pbta-21777)
+- [Fallen](https://lets-role.com/system/fallen-21323)
+- [Vaesen](https://lets-role.com/system/vaesen-21606)
