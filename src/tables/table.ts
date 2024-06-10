@@ -6,11 +6,13 @@ export class Table
   extends Mixin(HasRaw<LetsRole.Table>, DataProvider)
   implements LetsRole.Table
 {
-  get(id: LetsRole.ColumnId): LetsRole.TableRow {
+  get(id: LetsRole.ColumnId): LetsRole.TableRow | null {
     return this.raw().get(id);
   }
-  each(callback: (row: LetsRole.TableRow) => void): void {
-    return this.raw().each(callback);
+  each(callback: (row: LetsRole.TableRow, key: string) => void): void {
+    return this.raw().each((row: LetsRole.TableRow) => {
+      callback(row, row.id);
+    });
   }
   random(...args: any[]): void {
     let callback: (row: LetsRole.TableRow) => void, count: number;
