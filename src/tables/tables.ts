@@ -2,15 +2,16 @@ import { HasRaw } from "../hasraw";
 import { Mixin } from "../mixin";
 import { Table } from "./table";
 
-class LreTables
+export class LreTables
   extends Mixin(HasRaw<LetsRole.Tables>)
   implements LetsRole.Tables
 {
-  #tables: Record<LetsRole.TableID, Table> = {};
+  #tables: Record<LetsRole.TableID, Table | null> = {};
 
-  get(id: LetsRole.TableID): Table {
+  get(id: LetsRole.TableID): Table | null {
     if (!this.#tables.hasOwnProperty(id)) {
-      this.#tables[id] = new Table(this.raw().get(id));
+      const foundTable = this.raw().get(id);
+      this.#tables[id] = foundTable ? new Table(foundTable) : null;
     }
     return this.#tables[id];
   }
