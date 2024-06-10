@@ -9,7 +9,7 @@ import { Visitor } from "@swc/core/Visitor";
 import undefinedidentifier from "./node/undefinedidentifier";
 
 /**
- * This module set Symbol to undefined in order to be able to use "instanceof"
+ * This module set Symbol to undefined in order to be abe to use "instanceof"
  * Because swc change instanceof operator by a function call _instanceof that first need
  */
 class KeepInstanceOf extends Visitor {
@@ -55,7 +55,7 @@ class KeepInstanceOf extends Visitor {
       const newStmt: EmptyStatement = {
         type: "EmptyStatement",
         span: stmt.span,
-      }
+      };
       return super.visitStatement(newStmt);
     }
     return super.visitStatement(stmt);

@@ -16,7 +16,6 @@ import identifier from "./node/identifier";
 import { spreadToConcat } from "./utils/spreadToConcat";
 
 class NoSpreadArgument extends Visitor {
-
   visitCallExpression(n: CallExpression): Expression {
     if (
       n.arguments.some((arg) => !!arg.spread) &&
@@ -29,11 +28,7 @@ class NoSpreadArgument extends Visitor {
           expression: n.arguments[0].expression,
         };
       } else {
-        
-        const {
-          concatArgs,
-          arrayInit,
-        } = spreadToConcat(n.span, n.arguments);
+        const { concatArgs, arrayInit } = spreadToConcat(n.span, n.arguments);
 
         let obj: ArrayExpression = arrayexpression({
           span: n.span,
@@ -55,10 +50,9 @@ class NoSpreadArgument extends Visitor {
 
       const callExpression = fnApply({
         callee: n.callee as ExpressionWithSpan,
-        args: [
-          callArg
-        ],
-        thisArg: (n.callee.type === "MemberExpression" ? n.callee.object : undefined)
+        args: [callArg],
+        thisArg:
+          n.callee.type === "MemberExpression" ? n.callee.object : undefined,
       });
       return this.visitExpression(callExpression);
     }

@@ -27,10 +27,10 @@ export default {
 
   // An array of regexp pattern strings used to skip coverage collection
   coveragePathIgnorePatterns: [
-     "\\.d\\.ts$",
-     "\\/I[A-Z][^\.]*\\.ts",
-     "src\\/swc\\/",
-     "src\\/index\\.ts",
+    "\\.d\\.ts$",
+    "\\/I[A-Z][^.]*\\.ts",
+    "src\\/swc\\/",
+    "src\\/index\\.ts",
   ],
 
   // Indicates which provider should be used to instrument code for coverage
@@ -103,7 +103,7 @@ export default {
   // notifyMode: "failure-change",
 
   // A preset that is used as a base for Jest's configuration
-  preset: 'ts-jest',
+  preset: "ts-jest",
 
   // Run tests from one or more projects
   // projects: undefined,
@@ -135,9 +135,7 @@ export default {
   // runner: "jest-runner",
 
   // The paths to modules that run some code to configure or set up the testing environment before each test
-  setupFiles: [
-    './tests/jest-config.ts'
-  ],
+  setupFiles: ["./tests/jest-config.ts"],
 
   // A list of paths to modules that run some code to configure or set up the testing framework before each test
   // setupFilesAfterEnv: [],
@@ -164,10 +162,7 @@ export default {
   // ],
 
   // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
-  testPathIgnorePatterns: [
-    "/node_modules/",
-    "/out/",
-  ],
+  testPathIgnorePatterns: ["/node_modules/", "/out/"],
 
   // The regexp pattern or array of patterns that Jest uses to detect test files
   // testRegex: [],
@@ -180,7 +175,7 @@ export default {
 
   // A map from regular expressions to paths to transformers
   transform: {
-    '^.+\\.(ts|tsx)$': 'ts-jest',
+    "^.+\\.(ts|tsx)$": "ts-jest",
   },
 
   // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation

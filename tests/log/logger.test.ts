@@ -98,7 +98,7 @@ describe("Log many args", () => {
     expect((global.log as jest.Mock).mock.calls[1][0]).toStrictEqual(arg);
 
     (global.log as jest.Mock).mockClear();
-    arg = {a: 42};
+    arg = { a: 42 };
     logger.log(arg);
     expect(global.log).toHaveBeenCalledTimes(2);
     expect((global.log as jest.Mock).mock.calls[1][0]).toStrictEqual(arg);
@@ -112,5 +112,5 @@ describe("Log many args", () => {
     expect(global.log).toHaveBeenCalledTimes(0);
     logger.log(arg);
     expect(global.log).toHaveBeenCalledTimes(0);
-  })
+  });
 });

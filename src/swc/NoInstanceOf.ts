@@ -1,15 +1,9 @@
-import {
-  BinaryExpression,
-  Expression,
-  Program,
-  TsType,
-} from "@swc/core";
+import { BinaryExpression, Expression, Program, TsType } from "@swc/core";
 import { Visitor } from "@swc/core/Visitor";
 import call from "./node/expression/call";
 import identifier from "./node/identifier";
 
 class NoInstanceOf extends Visitor {
-
   visitBinaryExpression(n: BinaryExpression): Expression {
     if (n.operator === "instanceof") {
       return this.visitExpression(

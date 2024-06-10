@@ -393,8 +393,6 @@ describe("Component simple event handling", () => {
   test("Click is triggered", () => {
     let eventTarget;
     const handler = jest.fn((target) => {
-      console.log("🚀 ~ handler ~ target:", target);
-
       eventTarget = target;
     });
     const handlerLabeled = jest.fn();

@@ -12,7 +12,6 @@ import call from "./node/expression/call";
 import { objectassign } from "./node/expression/objectassign";
 
 class NoObjectSpreading extends Visitor {
-
   #pushToArgs(args: Argument[], props: Property[], span: Span) {
     if (props.length > 0) {
       args.push({
@@ -27,13 +26,15 @@ class NoObjectSpreading extends Visitor {
 
   visitObjectExpression(n: ObjectExpression): Expression {
     if (n.properties.some((p) => p.type === "SpreadElement")) {
-      const assignArgs: Argument[] = [{
-        expression: {
-          span: n.span,
-          type: "ObjectExpression",
-          properties: [],
-        }
-      }];
+      const assignArgs: Argument[] = [
+        {
+          expression: {
+            span: n.span,
+            type: "ObjectExpression",
+            properties: [],
+          },
+        },
+      ];
       let tmpObjectProps: Property[] = [];
       n.properties.forEach((p) => {
         if (p.type === "SpreadElement") {
@@ -47,11 +48,13 @@ class NoObjectSpreading extends Visitor {
         }
       });
       this.#pushToArgs(assignArgs, tmpObjectProps, n.span);
-      return super.visitExpression(call({
-        span: n.span,
-        callee: objectassign(n.span),
-        args: assignArgs,
-      }));
+      return super.visitExpression(
+        call({
+          span: n.span,
+          callee: objectassign(n.span),
+          args: assignArgs,
+        })
+      );
     }
     return super.visitObjectExpression(n);
   }

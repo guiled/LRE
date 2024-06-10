@@ -176,12 +176,15 @@ describe("LRE autonum", () => {
     subject = new LRE(modeHandlerMock);
   });
 
-  test.each([["a", undefined], ["1", 1], ["1as", undefined], [{}, undefined], [[], undefined]])(
-    "Value %s auto conversion",
-    (init, result?) => {
-      expect(subject.value(init)).toBe(init);
-      subject.autoNum();
-      expect(subject.value(init)).toBe(result ?? init);
-    }
-  );
+  test.each([
+    ["a", undefined],
+    ["1", 1],
+    ["1as", undefined],
+    [{}, undefined],
+    [[], undefined],
+  ])("Value %s auto conversion", (init, result?) => {
+    expect(subject.value(init)).toBe(init);
+    subject.autoNum();
+    expect(subject.value(init)).toBe(result ?? init);
+  });
 });

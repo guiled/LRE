@@ -31,7 +31,7 @@ describe("RollBuilder proxy", () => {
     expect(rollBuilderMock.roll).toHaveBeenCalled();
   });
   test("works in virtual", () => {
-    modeHandlerMock.setMode("virtual")
+    modeHandlerMock.setMode("virtual");
     const rb = new subject(sheet);
     expect(rb).not.toBe(RollBuilder);
     expect(rb.title("title")).toBe(rb);

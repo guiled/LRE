@@ -23,10 +23,7 @@ const rawSheet = MockSheet({
 });
 const sheet = new Sheet(
   rawSheet,
-  new DataBatcher(
-    modeHandlerMock,
-    rawSheet
-  ),
+  new DataBatcher(modeHandlerMock, rawSheet),
   modeHandlerMock
 );
 const UNKNOWN_CMP_ID = "_unknown_";

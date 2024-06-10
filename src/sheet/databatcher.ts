@@ -15,6 +15,9 @@ type PendingIndexes = Record<LetsRole.ComponentID, number>;
 
 const ASYNC_DATA_SET_DELAY = 50;
 const MAX_DATA_BATCH_SIZE = 20;
+// This optimization is disabled because it naturally triggers repeater update event on every change
+// Just kept in case Let's Role changed its behavior one day
+const REPEATER_OPTIMIZATION_ENABLED = false;
 
 export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
   #modeHandler: ProxyModeHandler;
@@ -146,7 +149,9 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
     pending: AllPendingData,
     indexes: PendingIndexes
   ) {
-    const componentId = key;
+    const componentId = REPEATER_OPTIMIZATION_ENABLED
+      ? this.#getComponentIdFromKey(key)
+      : key;
     if (
       !indexes.hasOwnProperty(componentId) ||
       typeof pending[indexes[componentId]] === "undefined"
@@ -168,6 +173,10 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
         indexes
       );
     }
+  }
+
+  #getComponentIdFromKey(key: string): LetsRole.ComponentID {
+    return key.split(REP_ID_SEP)[0];
   }
 
   #addPendingData(

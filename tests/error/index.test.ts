@@ -26,7 +26,7 @@ describe("Test error handler", () => {
     const err2 = new Error(message, {});
     expect(err2.toString()).toContain(message);
     /* @ts-ignore-error */
-    const err3 = new Error(message, {cause: {}});
+    const err3 = new Error(message, { cause: {} });
     expect(err3.toString()).toContain(message);
   });
 

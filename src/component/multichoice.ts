@@ -1,5 +1,3 @@
-import {Component} from ".";
+import { Component } from ".";
 
-export class MultiChoice extends Component {
-
-}
+export class MultiChoice extends Component {}

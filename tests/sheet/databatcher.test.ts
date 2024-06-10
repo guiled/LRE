@@ -3,7 +3,11 @@ import { DataBatcher } from "../../src/sheet/databatcher";
 import { LRE } from "../../src/lre";
 import { SheetProxy } from "../../src/proxy/sheet";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
-import { initLetsRole, itHasWaitedEnough, itHasWaitedEverything } from "../mock/letsrole/letsrole.mock";
+import {
+  initLetsRole,
+  itHasWaitedEnough,
+  itHasWaitedEverything,
+} from "../mock/letsrole/letsrole.mock";
 
 initLetsRole();
 global.lre = new LRE(modeHandlerMock);

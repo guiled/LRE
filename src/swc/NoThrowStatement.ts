@@ -16,7 +16,6 @@ import binary from "./node/expression/binary";
 import parenthesis from "./node/expression/parenthesis";
 
 class NoThrowStatement extends Visitor {
-
   #lastExceptionIdentifier(span: Span): Identifier {
     return identifier({
       span,
@@ -73,13 +72,16 @@ class NoThrowStatement extends Visitor {
                     }),
                     args: [
                       {
-                        expression: member({
-                          object: handler.param,
-                          property: identifier({
-                            span: handler.param.span,
-                            value: "message",
-                          }),
-                        }, true),
+                        expression: member(
+                          {
+                            object: handler.param,
+                            property: identifier({
+                              span: handler.param.span,
+                              value: "message",
+                            }),
+                          },
+                          true
+                        ),
                       },
                     ],
                   }),

@@ -125,21 +125,24 @@ export class MockServer {
             ...(cmpStructure?.classes || []),
             ...(cmpId.indexOf("rep") !== -1 ? ["repeater"] : []),
           ],
-          value: cmpStructure?.value || this.sheetData[sheet.getSheetId()][cmpId],
+          value:
+            cmpStructure?.value || this.sheetData[sheet.getSheetId()][cmpId],
           text: cmpStructure?.text,
           choices: {
             ...(cmpStructure?.choices || {}),
           },
         })
       );
-      cmp.value = jest.fn((function (this: MockServer, v?:LetsRole.ComponentValue) {
-        if (arguments.length > 0) {
-          this.sheetData[sheet.getSheetId()][cmpId] = v;
-        }
-        return this.sheetData[sheet.getSheetId()][cmpId] || "";
-      }).bind(this))
+      cmp.value = jest.fn(
+        function (this: MockServer, v?: LetsRole.ComponentValue) {
+          if (arguments.length > 0) {
+            this.sheetData[sheet.getSheetId()][cmpId] = v;
+          }
+          return this.sheetData[sheet.getSheetId()][cmpId] || "";
+        }.bind(this)
+      );
       this.cmp[sheetId][cmpId].set(sheet, cmp);
-      
+
       return cmp;
     });
   }

@@ -8,4 +8,4 @@ export const throwError = function (err: any): undefined {
 
 export const newError = function (message: string = ""): Error {
   return new Error(message);
-}
+};

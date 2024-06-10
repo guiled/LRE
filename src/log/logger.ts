@@ -20,7 +20,10 @@ export class Logger {
     if (LogLevel[this.#logLevel] >= LogLevel[level]) {
       args.forEach((a) => {
         log(`[LRE]${LOG_PREFIXES[level]} ${a?.toString?.()}`);
-        typeof a !== "number" && typeof a !== "string" && typeof a !== "undefined" && log(a);
+        typeof a !== "number" &&
+          typeof a !== "string" &&
+          typeof a !== "undefined" &&
+          log(a);
       });
     }
   }

@@ -671,7 +671,6 @@ describe("Handle on change event trigger", () => {
     rawCmp.value({ a: 42, b: { c: 13 } });
     // the first time is always triggered because there is no info of the data before change
     expect(eventHandler).toHaveBeenCalledTimes(1);
-    console.log("now");
     rawCmp.value({ a: 42, b: { c: 13 } });
     expect(eventHandler).toHaveBeenCalledTimes(1);
     rawCmp.value({ a: 42, b: { c: 14 } });

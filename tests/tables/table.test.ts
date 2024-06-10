@@ -54,7 +54,6 @@ describe("Table as DataProvider", () => {
     });
     const table = new Table(rawTable);
     const onlyA = table.select("a");
-    console.log(onlyA.providedValue());
     expect(onlyA.providedValue()).toStrictEqual({
       "1": "42",
       "2": "1",

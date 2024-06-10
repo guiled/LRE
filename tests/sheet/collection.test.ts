@@ -21,7 +21,11 @@ describe("Sheet collection", () => {
       realId: realId,
     });
     server.registerMockedSheet(raw);
-    return new Sheet(raw, new DataBatcher(modeHandlerMock, raw), modeHandlerMock);
+    return new Sheet(
+      raw,
+      new DataBatcher(modeHandlerMock, raw),
+      modeHandlerMock
+    );
   };
 
   beforeEach(() => {

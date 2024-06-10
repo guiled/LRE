@@ -6,7 +6,7 @@ export default function binary({
   left,
   right,
 }: Omit<BinaryExpression, "type" | "span"> & {
-  span?: Span,
+  span?: Span;
 }): BinaryExpression {
   return {
     type: "BinaryExpression",

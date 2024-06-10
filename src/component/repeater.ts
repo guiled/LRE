@@ -11,6 +11,6 @@ export class Repeater extends Component {
   // }
 
   // remove() {
-    
+
   // }
 }

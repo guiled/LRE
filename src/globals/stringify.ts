@@ -1,7 +1,7 @@
 export const stringify = function (
   obj: any,
   indent: string | boolean = "",
-  treatedObject: Array<any> = [],
+  treatedObject: Array<any> = []
 ): string | undefined {
   if (typeof obj === "undefined") return undefined;
   let indent_ = indent === false ? "" : (indent === true ? "" : indent) + "  ";
