@@ -218,7 +218,9 @@ declare interface IDataHolder {
 
 declare interface IDataProvider {
   provider: boolean;
-  providedValue<T extends LetsRole.ComponentValue = LetsRole.ComponentValue> (_newValue?: T): T extends undefined ? LetsRole.ComponentValue : void;
+  providedValue<T extends LetsRole.ComponentValue = LetsRole.ComponentValue>(
+    _newValue?: T
+  ): T extends undefined ? LetsRole.ComponentValue : void;
   sort(): IDataProvider;
   each(mapper: (val: LetsRole.ComponentValue) => void): void;
   select(column: LetsRole.ComponentID): IDataProvider;
@@ -285,4 +287,4 @@ declare type ComponentValueWithData<T = LetsRole.ComponentValue> = {
   data: LetsRole.ViewData;
 };
 
-declare type DynamicSetValue<T> = T | IDataProvider | (() => T)
+declare type DynamicSetValue<T> = T | IDataProvider | ((...args: any[]) => T);

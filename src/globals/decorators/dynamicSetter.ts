@@ -5,6 +5,11 @@ type LogEventDefinition = {
   event: string;
 };
 
+type ProvidedValue = {
+  value: LetsRole.ComponentValue;
+  providedBy: IDataProvider;
+};
+
 const logEvent: Array<LogEventDefinition> = [
   { logType: "value", event: "update" },
   { logType: "rawValue", event: "update" },
@@ -15,60 +20,89 @@ const logEvent: Array<LogEventDefinition> = [
   { logType: "visible", event: "class-updated" },
 ];
 
+type DynamicArgType = "value" | "provider" | "callback";
+
 type ComponentAttachedToComponent = Partial<
   Record<ProxyModeHandlerLogType, Array<LetsRole.ComponentID>>
 >;
 
-const isDataProvider = (input: any):input is IDataProvider => {
-  return input.provider;
-}
+const isDataProvider = (input: any): input is IDataProvider => {
+  return !!input.provider;
+};
+
+const traceDynamicSetter = (
+  realId: string,
+  context: ClassMethodDecoratorContext<any>
+) => {
+  lre.trace(`Add dynamic setter for ${realId} on ${context.name as string}`);
+};
 
 export const dynamicSetter = function <
   This extends ComponentCommon,
-  TValue extends LetsRole.ComponentValue | IDataProvider | LetsRole.Choices,
-  Return
+  Return,
+  Args extends any[]
 >(
-  target: (this: This, newValue?: DynamicSetValue<TValue>, data?: IDataProvider) => Return,
+  target: (this: This, ...args: Args) => Return,
   context: ClassMethodDecoratorContext<
     This,
-    (this: This, value?: DynamicSetValue<TValue>, data?: IDataProvider) => Return
+    (this: This, ...args: Args) => Return
   >
 ) {
   const eventLogs: ComponentAttachedToComponent = {};
-  function replacementMethod(this: This, newValue?: DynamicSetValue<TValue>): Return {
+  function replacementMethod(this: This, ...args: Args): Return {
     if (arguments.length > 0) {
       removeOldEventLogHandlers.call(
         this,
         eventLogs,
         context as ClassMethodDecoratorContext
       );
-      if (isDataProvider(newValue)) {
-        lre.trace(
-          `Add dynamic setter for ${this.realId()} on ${context.name as string}`
-        );
+      let hasDynamicSetter = false;
+      const argTypes: Array<DynamicArgType> = [];
+
+      args.forEach((newValue) => {
+        if (isDataProvider(newValue)) {
+          argTypes.push("provider");
+          hasDynamicSetter = true;
+        } else if (typeof newValue === "function") {
+          argTypes.push("callback");
+          hasDynamicSetter = true;
+        } else {
+          argTypes.push("value");
+        }
+      });
+
+      if (hasDynamicSetter) {
+        traceDynamicSetter(this.realId(), context);
         const newSetter = (): any => {
-          const valueToSet = loggedCall(newValue.providedValue.bind(newValue));
-          const newEventLogs = handleAccessLog.call(this, eventLogs, newSetter);
-          Object.assign(eventLogs, newEventLogs);
-          return target.call(this, valueToSet, newValue);
-        };
-        return newSetter();
-      } else if (typeof newValue === "function") {
-        lre.trace(
-          `Add dynamic setter for ${this.realId()} on ${context.name as string}`
-        );
-        const newSetter = (): any => {
-          const valueToSet = loggedCall(newValue);
-          const newEventLogs = handleAccessLog.call(this, eventLogs, newSetter);
-          Object.assign(eventLogs, newEventLogs);
-          return target.call(this, valueToSet);
+          const argsForTarget: Args = [] as unknown as Args;
+          argTypes.forEach((t, i) => {
+            const newValue = args[i];
+            if (t === "provider") {
+              argsForTarget.push({
+                value: loggedCall(newValue.providedValue.bind(newValue)),
+                providedBy: newValue,
+              });
+            } else if (t === "callback") {
+              argsForTarget.push(loggedCall(newValue));
+            } else {
+              argsForTarget.push(args[i]);
+            }
+            const newEventLogs = handleAccessLog.call(
+              this,
+              eventLogs,
+              newSetter
+            );
+            Object.assign(eventLogs, newEventLogs);
+          });
+
+          return target.apply(this, argsForTarget);
         };
         return newSetter();
       }
-      return target.call(this, newValue);
+      return target.apply(this, args);
     }
 
-    return target.call(this);
+    return target.apply(this);
   }
 
   return replacementMethod;
@@ -124,4 +158,27 @@ const handleAccessLog = function <This extends ComponentCommon>(
   });
 
   return eventLogs;
+};
+
+export const getDataProvidersFromArgs = function <T extends Array<any>>(
+  args: IArguments
+): [T, Array<IDataProvider | undefined>] {
+  const values: T = [] as unknown as T;
+  const dataProviders: Array<IDataProvider | undefined> = [];
+
+  Array.from(args).forEach((arg: unknown) => {
+    if (isProvidedValue(arg)) {
+      values.push(arg.value);
+      dataProviders.push(arg.providedBy);
+    } else {
+      values.push(arg);
+      dataProviders.push(undefined);
+    }
+  });
+
+  return [values, dataProviders];
+};
+
+const isProvidedValue = (input: any): input is ProvidedValue => {
+  return !!input.providedBy;
 };
