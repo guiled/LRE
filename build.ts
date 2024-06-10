@@ -5,7 +5,7 @@ import fs from "fs";
 import { formatLRECode } from "./builder/formatLRECode";
 import { assembleLRECode } from "./builder/assemble";
 
-const DEBUG_BUILD: boolean = false;
+const DEBUG_BUILD: boolean = process.argv.includes("debug");
 
 let swcPlugin: esbuild.Plugin = {
   name: "swcPlugin",
