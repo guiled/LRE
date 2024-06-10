@@ -60,9 +60,11 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
   setChoices(
     choices: DynamicSetValue<LetsRole.Choices | ChoicesWithData>
   ): void {
-    let choiceDataProvider: IDataProvider | undefined;
-    [[choices], [choiceDataProvider]] =
+    const dataProviders =
       getDataProvidersFromArgs<[LetsRole.Choices | ChoicesWithData]>(arguments);
+    choices = dataProviders[0][0];
+    const choiceDataProvider = dataProviders[1][0];
+
     const currentValue: LetsRole.ChoiceValue = this.value()!;
     const newChoices: LetsRole.Choices = this.#optional
       ? this.#initChoicesWithEmpty()
@@ -162,11 +164,15 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
     label: string = "id",
     optional: boolean = false
   ): void {
-    let choiceDataProvider: IDataProvider | undefined;
-    [[tableOrCb, label = label, optional = optional], [choiceDataProvider]] =
+    const dataProviders =
       getDataProvidersFromArgs<
         [string | Array<LetsRole.TableRow> | LetsRole.Choices, string, boolean]
       >(arguments);
+    tableOrCb = dataProviders[0][0];
+    label = dataProviders[0][1] ?? label;
+    optional = dataProviders[0][2] ?? optional;
+    let choiceDataProvider = dataProviders[1][0];
+
     if (arguments.length >= 2) {
       this.optional(optional);
     }
