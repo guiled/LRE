@@ -206,4 +206,22 @@ describe("Dataprovider getData", () => {
     expect(dp.getData("b")).toStrictEqual("13");
     expect(dp.getData(["a", "b"])).toStrictEqual({ a: "42", b: "13" });
   });
+
+  test("getData through select", () => {
+    let data: any = {
+      "1": { a: "42", b: "13", c: "24" },
+      "2": { a: "1", b: "2", c: "3" },
+      "3": { a: "4", b: "5", c: "6" },
+    };
+    const dataGetter = jest.fn((_a: any) => {
+      return data as any;
+    });
+    const dp = new DirectDataProvider(dataGetter);
+
+    const result = dp.select("a");
+    expect(result.provider).toBeTruthy();
+    expect(result.getData("1")).toStrictEqual({ a: "42", b: "13", c: "24" });
+    expect(result.getData("2")).toStrictEqual({ a: "1", b: "2", c: "3" });
+    expect(result.getData("3")).toStrictEqual({ a: "4", b: "5", c: "6" });
+  });
 });
