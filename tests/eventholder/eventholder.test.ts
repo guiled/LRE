@@ -7,8 +7,6 @@ import { MockSheet } from "../mock/letsrole/sheet.mock";
 import { EventDef, EventHolder } from "../../src/eventholder/index";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 
-jest.mock("../../src/lre");
-
 global.lre = new LRE(modeHandlerMock);
 
 type TestedEvents = "test" | "unused" | "click" | "update";
@@ -590,6 +588,7 @@ describe("Handle error in event", () => {
   });
 
   test("Handle error", () => {
+    jest.spyOn(lre, "error");
     const eventHandler = jest.fn(() => {
       let a = undefined;
       /* @ts-expect-error This is intended to be erroneous */
@@ -662,7 +661,21 @@ describe("Handle on change event trigger", () => {
     expect(eventHandler).toHaveBeenCalledTimes(4);
     subject.trigger("update");
     expect(eventHandler).toHaveBeenCalledTimes(5);
-    expect(eventHandler).toBeCalledTimes(5);
+  });
+
+  test("Update is not triggered if value remains identical as object ", () => {
+    rawCmp.value({ a: 42, b: { c: 13 } });
+    const eventHandler = jest.fn();
+    subject.on("update", eventHandler);
+    expect(eventHandler).not.toHaveBeenCalled();
+    rawCmp.value({ a: 42, b: { c: 13 } });
+    // the first time is always triggered because there is no info of the data before change
+    expect(eventHandler).toHaveBeenCalledTimes(1);
+    console.log("now");
+    rawCmp.value({ a: 42, b: { c: 13 } });
+    expect(eventHandler).toHaveBeenCalledTimes(1);
+    rawCmp.value({ a: 42, b: { c: 14 } });
+    expect(eventHandler).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -677,7 +690,7 @@ describe("Component has not targeting", () => {
       sheet,
     });
     rawCmp.value(1);
-    subject = new (class extends (EventHolder<TestedEvents>()) {
+    subject = new (class extends EventHolder<TestedEvents>() {
       constructor(protected _raw: LetsRole.Component) {
         super(_raw.id());
       }
@@ -1065,9 +1078,9 @@ describe("Copy events from a component to an other", () => {
     expect(clickCbs[0]).toHaveBeenCalledTimes(1);
     expect(clickCbs[1]).toHaveBeenCalledTimes(1);
     jest.clearAllMocks();
-    
+
     source.off("click");
-    
+
     rawSource._trigger("click");
     expect(clickCbs[0]).toHaveBeenCalledTimes(0);
     expect(clickCbs[1]).toHaveBeenCalledTimes(1);

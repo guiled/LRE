@@ -166,28 +166,37 @@ export const EventHolder = <
         const cmp =
           this.#getTarget?.(rawTarget, this.#events[eventId]!) || this;
 
-        let currentValue = undefined;
-        try {
-          if (rawTarget.value) {
-            currentValue = rawTarget.value();
-          }
-        } catch (e) {
-        }
+        const currentValue = this.#getCurrentValue(rawTarget);
         if (rawTarget && "value" in rawTarget) {
           if (
             eventId === "update" &&
             !manuallyTriggered &&
-            currentValue === this.#lastUpdateEventValue
+            (currentValue === this.#lastUpdateEventValue ||
+              lre.deepEqual(currentValue, this.#lastUpdateEventValue))
           ) {
             return;
           }
 
-          this.#lastUpdateEventValue = structuredClone(currentValue) as LetsRole.ComponentValue;
+          this.#saveLastUpdateEventValue(currentValue);
         }
 
         this.#runHandlers(eventId, handlers, cmp, ...args);
         this.#propagateToLinks(eventName, ...args);
       };
+    }
+
+    #getCurrentValue(rawTarget: LREEventTarget): LetsRole.ComponentValue {
+      let result = undefined;
+      try {
+        if (rawTarget.value) {
+          result = rawTarget.value();
+        }
+      } catch (e) {}
+      return result;
+    }
+
+    #saveLastUpdateEventValue(value: LetsRole.ComponentValue) {
+      this.#lastUpdateEventValue = structuredClone(value);
     }
 
     #triggerThisEvent(
