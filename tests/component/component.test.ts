@@ -391,15 +391,22 @@ describe("Component visible setter", () => {
 
 describe("Component simple event handling", () => {
   test("Click is triggered", () => {
-    const handler = jest.fn();
+    let eventTarget;
+    const handler = jest.fn((target) => {
+      console.log("🚀 ~ handler ~ target:", target);
+
+      eventTarget = target;
+    });
     const handlerLabeled = jest.fn();
     cmp.on("click", handler);
     cmp.on("click:label", handlerLabeled);
     expect(handler).not.toHaveBeenCalled();
     expect(handlerLabeled).not.toHaveBeenCalled();
+    expect(eventTarget).toBeUndefined();
     rawCmp._trigger("click");
     expect(handler).toHaveBeenCalled();
     expect(handlerLabeled).toHaveBeenCalled();
+    expect(eventTarget).toStrictEqual(cmp);
   });
 });
 

@@ -18,7 +18,7 @@ const DEFAULT_HANDLER_ID = "default";
 type EventTargetGetter<T extends string> = (
   target: LREEventTarget,
   event: EventDef<EventType<T>>
-) => IEventHolder;
+) => IEventHolder | undefined;
 
 type AttachToRawCallback<AdditionalEvents extends string> = (
   eventDef: EventDef<EventType<AdditionalEvents>>,

@@ -79,7 +79,10 @@ export class Component<
     super([
       [
         /* eventHolder */ realId,
-        (rawCmp: LetsRole.Component, event: EventDef): IEventHolder => {
+        (
+          rawCmp: LetsRole.Component,
+          event: EventDef
+        ): IEventHolder | undefined => {
           let idToFind: string = "";
 
           if (event.delegated && rawCmp.index()) {
@@ -91,7 +94,6 @@ export class Component<
           if (idToFind !== "") {
             return this.find(idToFind) as unknown as IEventHolder;
           }
-          return this as IEventHolder;
         },
         (
           event: EventDef,
