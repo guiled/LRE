@@ -34,7 +34,6 @@ import {
   TsType,
   VariableDeclaration,
 } from "@swc/core";
-import { Visitor } from "@swc/core/Visitor";
 import onevariable from "./node/declaration/onevariable";
 import assignment from "./node/expression/assignment";
 import call from "./node/expression/call";
@@ -55,6 +54,7 @@ import { objectexpression } from "./node/expression/objectexpression";
 import { arrayfromarguments } from "./node/expression/arrayfromarguments";
 import { spannewctxt } from "./utils/spannewctxt";
 import { spreadToConcat } from "./utils/spreadToConcat";
+import { Visitor } from "@swc/core/Visitor.js";
 
 type PublicMethodToFunctionStatement = ExpressionStatement & {
   expression: AssignmentExpression & {

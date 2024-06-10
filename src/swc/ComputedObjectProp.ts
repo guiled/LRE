@@ -8,13 +8,13 @@ import {
   ThisExpression,
   TsType,
 } from "@swc/core";
-import { Visitor } from "@swc/core/Visitor";
 import onevariable from "./node/declaration/onevariable";
 import iife from "./node/expression/iife";
 import member from "./node/expression/member";
 import identifier from "./node/identifier";
 import assignment from "./node/statement/assignment";
 import returnstmt from "./node/statement/returnstmt";
+import { Visitor } from "@swc/core/Visitor.js";
 
 class ComputedObjectProps extends Visitor {
   protected hasThisExpression: boolean = false;

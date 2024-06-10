@@ -5,7 +5,7 @@ import {
   Program,
   Statement,
 } from "@swc/core";
-import { Visitor } from "@swc/core/Visitor";
+import { Visitor } from "@swc/core/Visitor.js";
 import undefinedidentifier from "./node/undefinedidentifier";
 
 /**

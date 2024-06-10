@@ -7,7 +7,7 @@ import {
   ThrowStatement,
   TsType,
 } from "@swc/core";
-import { Visitor } from "@swc/core/Visitor";
+import { Visitor } from "@swc/core/Visitor.js";
 import call from "./node/expression/call";
 import identifier from "./node/identifier";
 import assignment from "./node/expression/assignment";

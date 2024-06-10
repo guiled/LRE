@@ -15,7 +15,7 @@ import {
   TsType,
   VariableDeclaration,
 } from "@swc/core";
-import { Visitor } from "@swc/core/Visitor";
+import { Visitor } from "@swc/core/Visitor.js";
 import member from "./node/expression/member";
 import memberchained from "./node/expression/memberchained";
 import identifier from "./node/identifier";

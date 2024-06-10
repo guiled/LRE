@@ -1,5 +1,5 @@
 import { ForStatement, Program, Statement, TsType } from "@swc/core";
-import { Visitor } from "@swc/core/Visitor";
+import { Visitor } from "@swc/core/Visitor.js";
 import onevariable from "./node/declaration/onevariable";
 import identifier from "./node/identifier";
 import booleanliteral from "./node/literal/booleanliteral";

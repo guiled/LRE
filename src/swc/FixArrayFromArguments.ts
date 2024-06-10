@@ -5,7 +5,7 @@ import {
   Program,
   TsType,
 } from "@swc/core";
-import { Visitor } from "@swc/core/Visitor";
+import { Visitor } from "@swc/core/Visitor.js";
 import member from "./node/expression/member";
 import identifier from "./node/identifier";
 import nullliteral from "./node/literal/nullliteral";

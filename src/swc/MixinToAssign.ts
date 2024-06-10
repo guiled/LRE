@@ -15,7 +15,7 @@ import {
   Statement,
   TsType,
 } from "@swc/core";
-import { Visitor } from "@swc/core/Visitor";
+import { Visitor } from "@swc/core/Visitor.js";
 import identifier from "./node/identifier";
 import { objectassign } from "./node/expression/objectassign";
 import { newexpression } from "./node/expression/newexpression";
