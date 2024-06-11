@@ -20,7 +20,7 @@ const logEvent: Array<LogEventDefinition> = [
   { logType: "visible", event: "class-updated" },
 ];
 
-type DynamicArgType = "value" | "provider" | "callback";
+type DynamicArgType = "value" | "provider" | "callback" | "component";
 
 type ComponentAttachedToComponent = Partial<
   Record<ProxyModeHandlerLogType, Array<LetsRole.ComponentID>>
@@ -28,6 +28,10 @@ type ComponentAttachedToComponent = Partial<
 
 const isDataProvider = (input: any): input is IDataProvider => {
   return !!input.provider;
+};
+
+const isComponent = (input: any): input is ComponentCommon => {
+  return !!input.component;
 };
 
 const traceDynamicSetter = (
@@ -63,6 +67,9 @@ export const dynamicSetter = function <
         if (isDataProvider(newValue)) {
           argTypes.push("provider");
           hasDynamicSetter = true;
+        } else if (isComponent(newValue)) {
+          argTypes.push("component");
+          hasDynamicSetter = true;
         } else if (typeof newValue === "function") {
           argTypes.push("callback");
           hasDynamicSetter = true;
@@ -84,6 +91,8 @@ export const dynamicSetter = function <
               });
             } else if (t === "callback") {
               argsForTarget.push(loggedCall(newValue));
+            } else if (t === "component") {
+              argsForTarget.push(loggedCall(newValue.value.bind(newValue)));
             } else {
               argsForTarget.push(args[i]);
             }

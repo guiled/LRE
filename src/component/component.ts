@@ -66,6 +66,7 @@ export class Component<
     ComponentContainer,
     ComponentCommon
 {
+  component: boolean = true;
   #realId: string;
   #sheet: ISheet;
   #lreType: ComponentType = "component";
