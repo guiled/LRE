@@ -236,7 +236,7 @@ export const EventHolder = <
       if (
         !(eventName in this.#events) ||
         this.#events[eventName] === void 0 ||
-        Object.keys(this.#events[eventName]!.handlers).length === 0
+        lre.isObjectEmpty(this.#events[eventName]!.handlers)
       ) {
         this.#events[eventName] = {
           eventId,

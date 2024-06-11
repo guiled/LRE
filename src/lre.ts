@@ -110,6 +110,16 @@ export class LRE extends Logger implements ILRE {
     );
   }
 
+  isObjectEmpty(object: any): object is {} {
+    if (!this.isObject(object)) return false;
+
+    for (const key in object) {
+      if (Object.prototype.hasOwnProperty.call(object, key)) return false;
+    }
+
+    return true;
+  }
+
   isUseableAsIndex(value: any): value is number | string {
     return typeof value === "number" || typeof value === "string";
   }

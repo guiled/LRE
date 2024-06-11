@@ -9,6 +9,7 @@ declare interface ILRE {
   autoNum(v: boolean = true): void;
   value<T = any>(n: T): number | T;
   isObject<T extends BasicObject = BasicObject>(object: any): object is T;
+  isObjectEmpty<T extends BasicObject = BasicObject>(object: any): object is {};
   isUseableAsIndex(value: any): value is number | string | bigint;
   __debug: boolean = false;
   __enableGroupedSetValue: boolean = true;

@@ -188,3 +188,27 @@ describe("LRE autonum", () => {
     expect(subject.value(init)).toBe(result ?? init);
   });
 });
+
+describe("LRE global method isObjectEmpty", () => {
+  let subject: LRE;
+
+  beforeEach(() => {
+    subject = new LRE(modeHandlerMock);
+  });
+
+  test.each([
+    [undefined, false],
+    [null, false],
+    ["", false],
+    ["non plus", false],
+    [0, false],
+    [{}, true],
+    [[], false],
+    [{ a: 1 }, false],
+    [[1], false],
+    [1, false],
+    [true, false],
+  ])("Value %s is empty", (init, result) => {
+    expect(subject.isObjectEmpty(init)).toBe(result);
+  });
+});
