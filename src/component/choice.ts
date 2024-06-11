@@ -66,9 +66,7 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
     const choiceDataProvider = dataProviders[1][0];
 
     const currentValue: LetsRole.ChoiceValue = this.value()!;
-    const newChoices: LetsRole.Choices = this.#optional
-      ? this.#initChoicesWithEmpty()
-      : {};
+    const newChoices: LetsRole.Choices = {};
     let newValues: LetsRole.ChoiceValues = [];
     const newChoiceData: ChoiceData = {};
 
@@ -103,16 +101,24 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
     this.#choices = newChoices;
     this.#choiceData = newChoiceData;
     this.#choiceDataProvider = choiceDataProvider;
-    try {
-      super.setChoices.apply(this, Array.from(arguments) as [LetsRole.Choices]);
-    } catch (e) {}
+    this.#setChoicesToComponent();
     this.trigger("update", this);
   }
 
-  #initChoicesWithEmpty() {
-    const choices: LetsRole.Choices = {};
-    choices[""] = this.#defaultLabel;
-    return choices;
+  #setChoicesToComponent() {
+    try {
+      super.setChoices.apply(this, [
+        this.#getChoicesWithOptional(this.#choices),
+      ]);
+    } catch (e) {}
+  }
+
+  #getChoicesWithOptional(choices: LetsRole.Choices) {
+    const resultChoices: LetsRole.Choices = {};
+    if (this.#optional) {
+      resultChoices[""] = this.#defaultLabel;
+    }
+    return Object.assign(resultChoices, choices);
   }
 
   getChoices(): LetsRole.Choices {
@@ -146,6 +152,9 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
   optional(isOptional: boolean = true, labelForDefault: string = ""): void {
     this.#optional = isOptional;
     this.#defaultLabel = labelForDefault;
+    if (!lre.isObjectEmpty(this.#choices)) {
+      this.#setChoicesToComponent();
+    }
   }
 
   valueData(): LetsRole.TableRow | LetsRole.ComponentValue {
