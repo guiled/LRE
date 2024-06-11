@@ -44,6 +44,7 @@ beforeEach(() => {
     realId: "123",
     data: {
       cmp2: cmpValue,
+      [cmpId]: cmpValue,
     },
   });
   server.registerMockedSheet(rawSheet);
@@ -328,12 +329,22 @@ describe("Component get and set value", () => {
     });
     expect(() => cmp1.value(valSet)).not.toThrowError();
     expect(valSet).toHaveBeenCalledTimes(1);
-    expect(cmp1.value()).toBe(cmp2.value());
+    expect(cmp1.value()).toBe(1313);
     itHasWaitedEnough();
     cmp2.value(4243);
     expect(valSet).toHaveBeenCalledTimes(2);
     expect(cmp1.value()).toBe(cmp2.value());
     itHasWaitedEnough();
+  });
+
+  test("value set with a component", () => {
+    const cmp1 = sheet.get("cmp1")!;
+    const cmp2 = sheet.get("cmp2")!;
+    cmp1.value(4242);
+    expect(() => cmp2.value(cmp1)).not.toThrow();
+    expect(cmp2.value()).toBe(4242);
+    cmp1.value(1313);
+    expect(cmp2.value()).toBe(1313);
   });
 });
 
