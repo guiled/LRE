@@ -243,3 +243,55 @@ describe("choice populate", () => {
     expect(ch.getChoiceData("b")).toBeNull();
   });
 });
+
+describe("set choices with optional", () => {
+  let rawChoice: LetsRole.Component;
+  beforeEach(() => {
+    rawChoice = rawSheet.get("chA");
+  });
+  test("setChoices with optional", () => {
+    const ch = new Choice(rawChoice, sheet, "chA");
+    ch.optional(true);
+    ch.setChoices({
+      a: "1",
+      b: "2",
+    });
+    expect(rawChoice.setChoices).toHaveBeenCalledWith({
+      "": "",
+      a: "1",
+      b: "2",
+    });
+    expect(ch.getChoices()).toStrictEqual({
+      a: "1",
+      b: "2",
+    });
+  });
+
+  test("dynamic optional change", () => {
+    const ch = new Choice(rawChoice, sheet, "chA");
+    ch.setChoices({
+      a: "1",
+      b: "2",
+    });
+    expect(rawChoice.setChoices).toHaveBeenCalledWith({
+      a: "1",
+      b: "2",
+    });
+    expect(ch.getChoices()).toStrictEqual({
+      a: "1",
+      b: "2",
+    });
+    (rawChoice.setChoices as jest.Mock).mockClear();
+    const defaultLabel = "no choice";
+    ch.optional(true, defaultLabel);
+    expect(rawChoice.setChoices).toHaveBeenCalledWith({
+      "": defaultLabel,
+      a: "1",
+      b: "2",
+    });
+    expect(ch.getChoices()).toStrictEqual({
+      a: "1",
+      b: "2",
+    });
+  });
+});
