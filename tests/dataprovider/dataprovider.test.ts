@@ -271,3 +271,25 @@ describe("DataProvider filter and where", () => {
   });
 });
 
+describe("DataProvider get single value", () => {
+  test("Single value", () => {
+    let data: any = {
+      "1": { a: "42", b: "13", c: "24" },
+      "2": { a: "1", b: "2", c: "3" },
+      "3": { a: "4", b: "5", c: "6" },
+    };
+    const dataGetter = jest.fn((_a: any) => {
+      return data as any;
+    });
+    const dp = new DirectDataProvider(dataGetter);
+    const result = dp.select("a").where((_v, _k, data: any) => {
+      return data.b === "2";
+    });
+    expect(result.provider).toBeTruthy();
+    expect(result.getData()).toStrictEqual({ a: "1", b: "2", c: "3" });
+    expect(result.singleValue()).toBe("1");
+    expect(result.singleId()).toBe("2");
+    data["2"]["a"] = "42";
+    expect(result.singleValue()).toBe("42");
+  });
+});

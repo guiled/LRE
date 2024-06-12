@@ -228,7 +228,8 @@ declare type DataProviderDataValue =
 
 declare type DataProviderWhereConditioner = (
   value: LetsRole.ComponentValue | LetsRole.TableRow,
-  key: DataProviderDataId
+  key: DataProviderDataId,
+  data: DataProviderDataValue
 ) => boolean;
 
 declare interface IDataProvider {
@@ -242,6 +243,8 @@ declare interface IDataProvider {
   getData(id: DataProviderDataId): DataProviderDataValue;
   filter(condition: DataProviderWhereConditioner);
   where(condition: DataProviderDataValue | DataProviderWhereConditioner);
+  singleValue(): DataProviderDataValue;
+  singleId(): DataProviderDataId;
 }
 
 declare interface ComponentBase {
