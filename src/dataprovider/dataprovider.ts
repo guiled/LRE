@@ -1,8 +1,10 @@
 import { Mixin } from "../mixin";
 
 type ValueGetterSetter<
-  T extends LetsRole.ComponentValue | undefined = undefined
-> = (newValue?: T) => T extends undefined ? LetsRole.ComponentValue : void;
+  T extends LetsRole.ComponentValue | LetsRole.TableRow | undefined = undefined
+> = (
+  newValue?: T
+) => T extends undefined ? LetsRole.ComponentValue | LetsRole.TableRow : void;
 
 type Sorter = (a: any, b: any) => number;
 const defaultSorter: Sorter = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
@@ -116,27 +118,44 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     getData(
-      id:
+      id?:
         | LetsRole.ComponentID
         | LetsRole.ColumnId
         | LetsRole.ComponentValue
         | Array<number | string>
     ): LetsRole.TableRow | LetsRole.ComponentValue {
-      const values = this.#originalValueCb();
+      const originalValues = this.#originalValueCb();
 
-      if (Array.isArray(values) || lre.isObject(values)) {
+      if (typeof id === "undefined") {
+        if (Array.isArray(originalValues) && originalValues.length === 1) {
+          return originalValues[0];
+        } else if (lre.isObject<LetsRole.ValueAsObject>(originalValues)) {
+          const values = this.#valueCb() as LetsRole.ValueAsObject;
+          const valueKeys = Object.keys(values);
+          if (valueKeys.length === 1) {
+            return originalValues[valueKeys[0]];
+          }
+        } else {
+          return originalValues;
+        }
+        return undefined;
+      }
+
+      if (Array.isArray(originalValues) || lre.isObject(originalValues)) {
         if (lre.isUseableAsIndex(id)) {
-          return this.#getFromArrOrObj(values, id);
+          return this.#getFromArrOrObj(originalValues, id);
         }
 
         const result: LetsRole.ViewData = {};
         if (Array.isArray(id)) {
-          id.forEach((v) => (result[v] = this.#getFromArrOrObj(values, v)));
+          id.forEach(
+            (v) => (result[v] = this.#getFromArrOrObj(originalValues, v))
+          );
         }
 
         return result;
       } else {
-        return values;
+        return originalValues;
       }
     }
 
@@ -161,7 +180,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
           > = {};
 
           this.each((v, k) => {
-            if (condition(v, k)) {
+            if (condition(v, k, this.getData(k))) {
               result[k] = v;
             }
           });
@@ -183,6 +202,31 @@ export const DataProvider = (superclass: Newable = class {}) =>
       }
 
       return this.filter(conditioner);
+    }
+
+    singleValue(): DataProviderDataValue {
+      const values = this.#valueCb();
+      if (Array.isArray(values)) {
+        return values[0];
+      } else if (lre.isObject(values)) {
+        return Object.values(values)[0];
+      } else {
+        return values;
+      }
+    }
+
+    singleId(): DataProviderDataId {
+      const values = this.#valueCb();
+      if (Array.isArray(values)) {
+        if (lre.isObject(values[0]) && values[0].hasOwnProperty("id")) {
+          return values[0].id;
+        }
+        return 0;
+      } else if (lre.isObject(values)) {
+        return Object.keys(values)[0];
+      } else {
+        return 0;
+      }
     }
   };
 
