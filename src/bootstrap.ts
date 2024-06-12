@@ -23,11 +23,15 @@ export const bootstrap = (): ProxyModeHandler => {
   /* @ts-expect-error Overwrite Error because it is missing in LR */
   Error = LreError;
 
-  overloadTables(Tables);
-  lre = new LRE(ctx);
-  wait = registerLreWait(ctx, wait);
-  Bindings = registerLreBindings(ctx, Bindings);
-  RollBuilder = registerLreRollBuilder(ctx, RollBuilder);
+  const firstLaunch = (ctx: ProxyModeHandler) => {
+    lre.trace("LRE first launch bootstrap");
+    overloadTables(Tables);
+    wait = registerLreWait(ctx, wait);
+    Bindings = registerLreBindings(ctx, Bindings);
+    RollBuilder = registerLreRollBuilder(ctx, RollBuilder);
+  };
+
+  lre = new LRE(ctx, firstLaunch);
 
   // @ts-expect-error Overload console for some edge cases like throw new Error changed into console.error
   console = {
