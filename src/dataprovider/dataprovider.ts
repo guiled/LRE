@@ -69,7 +69,10 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     each(
-      mapper: (val: LetsRole.ComponentValue, key: number | string) => void
+      mapper: (
+        val: LetsRole.ComponentValue | LetsRole.TableRow,
+        key: DataProviderDataId
+      ) => void
     ): void {
       const values = this.#valueCb();
 
@@ -147,6 +150,39 @@ export const DataProvider = (superclass: Newable = class {}) =>
       } else {
         return values?.[id];
       }
+    }
+
+    filter(condition: DataProviderWhereConditioner): IDataProvider {
+      return new DirectDataProvider(
+        this.#handleSet(() => {
+          let result: Record<
+            string,
+            LetsRole.TableRow | LetsRole.ComponentValue
+          > = {};
+
+          this.each((v, k) => {
+            if (condition(v, k)) {
+              result[k] = v;
+            }
+          });
+
+          return result;
+        }),
+        this.#originalValueCb
+      );
+    }
+
+    where(
+      condition: LetsRole.ComponentValue | DataProviderWhereConditioner
+    ): IDataProvider {
+      if (typeof condition === undefined) return this;
+
+      let conditioner: DataProviderWhereConditioner = (v) => v === condition;
+      if (typeof condition === "function") {
+        conditioner = condition as DataProviderWhereConditioner;
+      }
+
+      return this.filter(conditioner);
     }
   };
 

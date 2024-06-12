@@ -217,17 +217,31 @@ declare interface IDataHolder {
   loadPersistent(): LetsRole.ViewData;
 }
 
+declare type DataProviderDataId =
+  | LetsRole.ComponentID
+  | keyof LetsRole.RepeaterValue
+  | LetsRole.ColumnId;
+
+declare type DataProviderDataValue =
+  | LetsRole.TableRow
+  | LetsRole.ComponentValue;
+
+declare type DataProviderWhereConditioner = (
+  value: LetsRole.ComponentValue | LetsRole.TableRow,
+  key: DataProviderDataId
+) => boolean;
+
 declare interface IDataProvider {
   provider: boolean;
-  providedValue<T extends LetsRole.ComponentValue = LetsRole.ComponentValue>(
+  providedValue<T extends DataProviderDataValue = DataProviderDataValue>(
     _newValue?: T
-  ): T extends undefined ? LetsRole.ComponentValue : void;
+  ): T extends undefined ? DataProviderDataValue : void;
   sort(): IDataProvider;
-  each(mapper: (val: LetsRole.ComponentValue) => void): void;
+  each(mapper: (val: DataProviderDataValue) => void): void;
   select(column: LetsRole.ComponentID): IDataProvider;
-  getData(
-    id: LetsRole.ComponentID | LetsRole.ColumnId | LetsRole.ComponentValue
-  ): LetsRole.TableRow | LetsRole.ComponentValue;
+  getData(id: DataProviderDataId): DataProviderDataValue;
+  filter(condition: DataProviderWhereConditioner);
+  where(condition: DataProviderDataValue | DataProviderWhereConditioner);
 }
 
 declare interface ComponentBase {
