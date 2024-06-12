@@ -39,13 +39,18 @@ describe("LRE bootstrap", () => {
     expect(global.lre).not.toBeInstanceOf(LRE);
     expect(global.structuredClone).toBeNull();
     const oldWait = global.wait;
+    //const realConsole = console;
     bootstrap();
     expect(global.lre).toBeInstanceOf(LRE);
     expect(global.isNaN).not.toBeNull();
     expect(global.structuredClone).not.toBeNull();
     expect(global.isNaN(123)).toBeFalsy();
     expect(global.isNaN(global as unknown as number)).toBeTruthy();
+
+    expect(global.wait).toBe(oldWait);
+    global.lre.apply(global.lre, [() => {}]);
     expect(global.wait).not.toBe(oldWait);
+
     const c = {
       a: 1,
       b: "2",

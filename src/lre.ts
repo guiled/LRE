@@ -5,6 +5,7 @@ import { SheetCollection } from "./sheet/collection";
 import { DataBatcher } from "./sheet/databatcher";
 
 firstInit = undefined;
+let firstLaunchDone: boolean = false;
 
 type cb = (thisArg: any, argArray?: any) => (rawSheet: LetsRole.Sheet) => void;
 
@@ -18,9 +19,16 @@ export class LRE extends Logger implements ILRE {
   sheets: SheetCollection;
   public __debug: boolean = false;
   public __enableGroupedSetValue: boolean = true;
+  #firstLaunchCb?: (ctx: ProxyModeHandler) => void;
 
   apply(_thisArg: any, argArray?: any) {
     this.log("prepare init");
+
+    if (!firstLaunchDone && this.#firstLaunchCb) {
+      firstLaunchDone = true;
+      this.#firstLaunchCb(this.#context);
+    }
+
     const [callback] = argArray;
     const thisLre = this;
     return (rawSheet: LetsRole.Sheet): void => {
@@ -61,9 +69,13 @@ export class LRE extends Logger implements ILRE {
     };
   }
 
-  constructor(context: ProxyModeHandler) {
+  constructor(
+    context: ProxyModeHandler,
+    firstLaunchCb?: (ctx: ProxyModeHandler) => void
+  ) {
     super();
     this.#context = context;
+    this.#firstLaunchCb = firstLaunchCb;
     this.log(`init`);
     this.sheets = new SheetCollection();
   }
