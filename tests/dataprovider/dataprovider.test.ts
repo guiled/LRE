@@ -225,3 +225,49 @@ describe("Dataprovider getData", () => {
     expect(result.getData("3")).toStrictEqual({ a: "4", b: "5", c: "6" });
   });
 });
+
+describe("DataProvider filter and where", () => {
+  test("Filter data", () => {
+    let data: Record<string, LetsRole.TableRow> = {
+      "1": { a: "42", b: "13", c: "24" },
+      "2": { a: "1", b: "2", c: "3" },
+      "3": { a: "4", b: "5", c: "6" },
+    };
+    const dataGetter = jest.fn((_a: any) => {
+      return data as any;
+    });
+    const dp = new DirectDataProvider(dataGetter);
+    const filtered = dp.filter((v: any, _k) => {
+      return 1 * v?.b < 10;
+    });
+    expect(filtered.provider).toBeTruthy();
+    expect(filtered.providedValue()).toStrictEqual({
+      "2": { a: "1", b: "2", c: "3" },
+      "3": { a: "4", b: "5", c: "6" },
+    });
+  });
+
+  test("Where", () => {
+    let data: Record<string, LetsRole.TableRow> = {
+      "1": { a: "42", b: "13", c: "24" },
+      "2": { a: "1", b: "2", c: "3" },
+      "3": { a: "4", b: "5", c: "6" },
+    };
+    const dataGetter = jest.fn((_a: any) => {
+      return data as any;
+    });
+    const dp = new DirectDataProvider(dataGetter);
+    let result = dp.select("a").where("1");
+    expect(result.provider).toBeTruthy();
+    expect(result.providedValue()).toStrictEqual({
+      2: "1",
+    });
+    result = dp.where((v: any) => {
+      return v.b === "2";
+    });
+    expect(result.providedValue()).toStrictEqual({
+      "2": { a: "1", b: "2", c: "3" },
+    });
+  });
+});
+

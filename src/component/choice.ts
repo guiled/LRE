@@ -141,6 +141,7 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
       if (arguments.length <= 0) {
         return this.#choiceDataProvider?.providedValue() || null;
       }
+      if (typeof value === "undefined" || value === null) return null;
       return this.#choiceDataProvider?.getData(value) || null;
     }
     if (arguments.length <= 0 || typeof value === "undefined") {
