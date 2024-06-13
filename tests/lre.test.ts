@@ -114,8 +114,8 @@ describe("LRE tests", () => {
     expect(cbErr).toHaveBeenCalledTimes(0);
     expect(global.firstInit).toHaveBeenCalledTimes(0);
     itHasWaitedEverything();
-    expect(cbErr).toThrowError();
-    expect(global.firstInit).toThrowError();
+    expect(cbErr).toThrow();
+    expect(global.firstInit).toThrow();
   });
 
   test("LRE util Object deep equal", () => {
@@ -164,7 +164,7 @@ describe("LRE wait", () => {
     const cb = () => null();
     subject.wait(100, cb, "hop");
     (lre.error as jest.Mock).mockClear();
-    expect(itHasWaitedEverything).not.toThrowError();
+    expect(itHasWaitedEverything).not.toThrow();
     expect(lre.error).toHaveBeenCalled();
   });
 });

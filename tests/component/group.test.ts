@@ -227,7 +227,7 @@ describe("Component group basics", () => {
 
     expect(() =>
       group.add(sheet.get(MockServer.UNKNOWN_CMP_ID)! as IComponent)
-    ).toThrowError();
+    ).toThrow();
     expect(group.count()).toBe(1);
     expect(updateCb).toHaveBeenCalledTimes(0);
     expect(group.includes(MockServer.NON_EXISTING_CMP_ID)).toBeFalsy();
@@ -248,7 +248,7 @@ describe("Component group basics", () => {
     const group2: Group = new Group(context, "group2", sheet);
 
     /* @ts-expect-error */
-    expect(() => group2.add(group1)).toThrowError();
+    expect(() => group2.add(group1)).toThrow();
   });
 
   test.each([
@@ -262,7 +262,7 @@ describe("Component group basics", () => {
       const group: Group = new Group(context, "group1", sheet);
       (lre.error as jest.Mock).mockClear();
       /* @ts-expect-error */
-      expect(() => group.add(invalidAddedElement)).toThrowError();
+      expect(() => group.add(invalidAddedElement)).toThrow();
 
       (lre.error as jest.Mock).mockClear();
       /* @ts-expect-error */
