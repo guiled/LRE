@@ -120,6 +120,9 @@ export class Sheet
     R extends SheetStoredState[T][keyof SheetStoredState[T]]
   >(type: T, componentId: LetsRole.ComponentID, newData?: R): R {
     this.#loadState(this.#storedState);
+    if (!this.#storedState[type]) {
+      this.#storedState[type] = {};
+    }
     if (newData !== void 0) {
       this.#storedState[type][componentId] = newData;
       this.#saveStoredState();
