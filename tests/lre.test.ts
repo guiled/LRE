@@ -177,11 +177,24 @@ describe("LRE autonum", () => {
   });
 
   test.each([
+    /* put undefined to specify that the input is not changed */
     ["a", undefined],
     ["1", 1],
+    ["2.34", 2.34],
+    ["-3.14", -3.14],
+    ["0x123", 0x123],
+    ["0o123", 0o123],
+    ["0b1010", 0b1010],
+    ["\u1010", undefined],
+    ["0123", 123],
+    [1, undefined],
+    [-42, undefined],
+    ["", undefined],
     ["1as", undefined],
     [{}, undefined],
+    [{ 42: 1 }, undefined],
     [[], undefined],
+    [[1, 2], undefined],
   ])("Value %s auto conversion", (init, result?) => {
     expect(subject.value(init)).toBe(init);
     subject.autoNum();
