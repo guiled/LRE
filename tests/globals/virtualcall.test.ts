@@ -73,7 +73,7 @@ describe("Virtual call", () => {
     });
     expect(modeHandlerMock.getMode()).toBe("real");
     expect(lre.error).not.toHaveBeenCalled();
-    expect(() => virtualCall(cb)).not.toThrowError();
+    expect(() => virtualCall(cb)).not.toThrow();
     expect(lre.error).toHaveBeenCalled();
     expect(modeHandlerMock.getMode()).toBe("real");
     expect(modeDuringVirtualCall).not.toBe("real");

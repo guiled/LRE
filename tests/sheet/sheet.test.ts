@@ -114,10 +114,10 @@ describe("Sheet data handling", () => {
   });
 
   test("Test sheet mock", () => {
-    expect(() => raw.setData(createLargeObject(30))).toThrowError();
+    expect(() => raw.setData(createLargeObject(30))).toThrow();
 
     const validObject = createLargeObject(20);
-    expect(() => raw.setData(validObject)).not.toThrowError();
+    expect(() => raw.setData(validObject)).not.toThrow();
     const raw2 = MockSheet({
       id: sheetId,
       realId: "4242",
@@ -187,9 +187,9 @@ describe("Sheet data handling", () => {
   test("No error when sending too much data", () => {
     sheet.setData(createLargeObject(35));
     expect(raw.setData).not.toHaveBeenCalled();
-    expect(mockedWaitDefs.itHasWaitedEverything).not.toThrowError();
+    expect(mockedWaitDefs.itHasWaitedEverything).not.toThrow();
     expect(raw.setData).toHaveBeenCalled();
-    expect(mockedWaitDefs.itHasWaitedEverything).not.toThrowError();
+    expect(mockedWaitDefs.itHasWaitedEverything).not.toThrow();
     expect(raw.setData).toHaveBeenCalledTimes(2);
   });
 });
@@ -292,7 +292,7 @@ describe("Sheet persisting data", () => {
     };
     const v = sheet1.persistingCmpData("123", newData);
     expect(sheet1.raw().setData).not.toHaveBeenCalled();
-    expect(mockedWaitDefs.itHasWaitedEverything).not.toThrowError();
+    expect(mockedWaitDefs.itHasWaitedEverything).not.toThrow();
     expect(sheet1.raw().setData).toHaveBeenCalled();
     expect(v).toEqual(newData);
     const v2 = sheet2.persistingCmpData("123");
@@ -358,13 +358,13 @@ describe("Sheet persisting data", () => {
     expect(sheet1.persistingCmpClasses("123", c)).toEqual(c);
     expect(sheet1.persistingCmpClasses("123")).toEqual(c);
     expect(sheet2.persistingCmpClasses("123")).not.toEqual(c);
-    expect(mockedWaitDefs.itHasWaitedEverything).not.toThrowError();
+    expect(mockedWaitDefs.itHasWaitedEverything).not.toThrow();
     expect(sheet2.persistingCmpClasses("123")).toEqual(c);
     const c1: ClassChanges = { class1: -1, class1b: 1 };
     const c2: ClassChanges = { class2: 1 };
     sheet1.persistingCmpClasses("123", c1);
     sheet2.persistingCmpClasses("123", c2);
-    expect(mockedWaitDefs.itHasWaitedEverything).not.toThrowError();
+    expect(mockedWaitDefs.itHasWaitedEverything).not.toThrow();
     // no need today to merge the two arrays of classes
     const result: ClassChanges = {
       ...c1,
@@ -652,7 +652,7 @@ describe("Sheet get component", () => {
     expect(grp.lreType()).toBe("group");
     sheet1.get("cmp1");
     let grp2;
-    expect(() => (grp2 = sheet1.group("cmp1"))).toThrowError();
+    expect(() => (grp2 = sheet1.group("cmp1"))).toThrow();
     expect(grp2).toBeUndefined();
 
     const grp3 = sheet1.group(`grp${MockServer.UNKNOWN_CMP_ID}`);
@@ -661,6 +661,6 @@ describe("Sheet get component", () => {
     const grp4 = sheet1.get(`grp${MockServer.UNKNOWN_CMP_ID}`);
     expect(grp4).toBe(grp);
 
-    expect(() => sheet1.group("cmp2")).toThrowError();
+    expect(() => sheet1.group("cmp2")).toThrow();
   });
 });

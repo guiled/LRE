@@ -302,7 +302,7 @@ describe("Component get and set value", () => {
       /* @ts-expect-error */
       null();
     });
-    expect(() => cmp.value()).not.toThrowError();
+    expect(() => cmp.value()).not.toThrow();
     expect(cmp.value()).toBeUndefined();
   });
 
@@ -328,7 +328,7 @@ describe("Component get and set value", () => {
     const valSet = jest.fn(() => {
       return cmp2.value();
     });
-    expect(() => cmp1.value(valSet)).not.toThrowError();
+    expect(() => cmp1.value(valSet)).not.toThrow();
     expect(valSet).toHaveBeenCalledTimes(1);
     expect(cmp1.value()).toBe(1313);
     itHasWaitedEnough();

@@ -107,7 +107,7 @@ describe("Choice get and set choices", () => {
         a: "1",
         b: "2",
       })
-    ).not.toThrowError();
+    ).not.toThrow();
     ch.value("a");
     itHasWaitedEverything();
     expect(ch.value()).toBe("a");
@@ -116,7 +116,7 @@ describe("Choice get and set choices", () => {
         c: "2",
         d: "3",
       })
-    ).not.toThrowError();
+    ).not.toThrow();
   });
 });
 
