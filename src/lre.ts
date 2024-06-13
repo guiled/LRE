@@ -193,7 +193,12 @@ export class LRE extends Logger implements ILRE {
   }
 
   value<T = any>(value: T): number | T {
-    if (this.#autoNum && !isNaN(value as any) && !Array.isArray(value)) {
+    if (
+      this.#autoNum &&
+      value !== "" &&
+      !isNaN(value as any) &&
+      !Array.isArray(value)
+    ) {
       return Number(value);
     }
     return value;
