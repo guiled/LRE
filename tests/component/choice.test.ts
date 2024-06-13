@@ -145,9 +145,9 @@ describe("Set choice dynamically", () => {
       };
     });
     ch.value(2);
-    expect(ch.valueData()).toStrictEqual(data2);
+    expect(ch.choiceData()).toStrictEqual(data2);
     ch.value(1);
-    expect(ch.valueData()).toStrictEqual(data1);
+    expect(ch.choiceData()).toStrictEqual(data1);
   });
 
   test("Set Choices from data provider", () => {

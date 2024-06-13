@@ -158,12 +158,12 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
     }
   }
 
-  valueData(): LetsRole.TableRow | LetsRole.ComponentValue {
+  choiceData(): LetsRole.TableRow | LetsRole.ComponentValue {
     return this.getChoiceData(this.value()!);
   }
 
   row(): LetsRole.TableRow | LetsRole.ComponentValue {
-    return this.valueData();
+    return this.choiceData();
   }
 
   @dynamicSetter
