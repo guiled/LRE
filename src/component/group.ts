@@ -33,7 +33,11 @@ export class Group
     sheet: ISheet,
     componentIds: Array<LetsRole.ComponentID> = []
   ) {
-    super([[id], [sheet, id], [(...args: any[]) => this.value(...args)]]);
+    super([
+      /* EventHolder */ [id],
+      /* DataHolder */ [sheet, id],
+      /* DataProvider */ [(...args: any[]) => this.value(...args)],
+    ]);
     this.#id = id;
     this.#sheet = sheet;
     this.#context = context;
@@ -236,6 +240,10 @@ export class Group
     this.#context.enableAccessLog();
 
     return result;
+  }
+
+  valueData(): LetsRole.TableRow | LetsRole.ComponentValue | null {
+    return null;
   }
 
   virtualValue(_newValue?: any): void | LetsRole.ViewData {

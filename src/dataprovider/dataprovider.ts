@@ -194,7 +194,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
     where(
       condition: LetsRole.ComponentValue | DataProviderWhereConditioner
     ): IDataProvider {
-      if (typeof condition === undefined) return this;
+      if (typeof condition === "undefined") return this;
 
       let conditioner: DataProviderWhereConditioner = (v) => v === condition;
       if (typeof condition === "function") {

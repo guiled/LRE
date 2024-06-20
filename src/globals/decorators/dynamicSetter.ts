@@ -41,6 +41,33 @@ const traceDynamicSetter = (
   lre.trace(`Add dynamic setter for ${realId} on ${context.name as string}`);
 };
 
+export const extractDataProviders = function <
+  This extends ComponentCommon,
+  Return,
+  Args extends any[]
+>(...callbacks: Array<(...args: any[]) => any>) {
+  return function (
+    target: (this: This, ...args: Args) => Return,
+    _context: ClassMethodDecoratorContext<
+      This,
+      (this: This, ...args: Args) => Return
+    >
+  ) {
+    const replacementMethod = function (this: This, ...args: Args): Return {
+      const dataProviders = getDataProvidersFromArgs<Array<unknown>>(args);
+      const newArgs: Args = [] as unknown as Args;
+      dataProviders[0].forEach((value, index) => {
+        newArgs.push(value);
+        if (!!dataProviders[1][index] && callbacks?.[index]) {
+          callbacks[index].call?.(this, dataProviders[1][index]);
+        }
+      });
+      return target.apply(this, newArgs);
+    };
+    return replacementMethod;
+  };
+};
+
 export const dynamicSetter = function <
   This extends ComponentCommon,
   Return,
@@ -53,7 +80,7 @@ export const dynamicSetter = function <
   >
 ) {
   const eventLogs: ComponentAttachedToComponent = {};
-  function replacementMethod(this: This, ...args: Args): Return {
+  const replacementMethod = function (this: This, ...args: Args): Return {
     if (arguments.length > 0) {
       removeOldEventLogHandlers.call(
         this,
@@ -92,7 +119,11 @@ export const dynamicSetter = function <
             } else if (t === "callback") {
               argsForTarget.push(loggedCall(newValue));
             } else if (t === "component") {
-              argsForTarget.push(loggedCall(newValue.value.bind(newValue)));
+              argsForTarget.push({
+                value: loggedCall(newValue.value.bind(newValue)),
+                providedBy: newValue.valueProvider() || newValue.dataProvider(),
+              });
+              //argsForTarget.push(loggedCall(newValue.value.bind(newValue)));
             } else {
               argsForTarget.push(args[i]);
             }
@@ -112,7 +143,7 @@ export const dynamicSetter = function <
     }
 
     return target.apply(this);
-  }
+  };
 
   return replacementMethod;
 };
@@ -170,7 +201,7 @@ const handleAccessLog = function <This extends ComponentCommon>(
 };
 
 export const getDataProvidersFromArgs = function <T extends Array<any>>(
-  args: IArguments
+  args: IArguments | Array<any>
 ): [T, Array<IDataProvider | undefined>] {
   const values: T = [] as unknown as T;
   const dataProviders: Array<IDataProvider | undefined> = [];

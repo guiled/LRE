@@ -11,12 +11,15 @@ import { MockSheet } from "../mock/letsrole/sheet.mock";
 import { LRE } from "../../src/lre";
 import { MockServer } from "../mock/letsrole/server.mock";
 import {
+  defineTable,
   initLetsRole,
   itHasWaitedEnough,
   itHasWaitedEverything,
 } from "../mock/letsrole/letsrole.mock";
 import { DataBatcher } from "../../src/sheet/databatcher";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
+import { Choice } from "../../src/component/choice";
+import { LreTables } from "../../src/tables";
 
 global.lre = new LRE(modeHandlerMock);
 initLetsRole();
@@ -354,6 +357,34 @@ describe("Component get and set value", () => {
     expect(cmp2.value()).toBe(4242);
     cmp1.value(1313);
     expect(cmp2.value()).toBe(1313);
+  });
+
+  test("valueData passed", () => {
+    const rawChoice = MockComponent({
+      id: "choice",
+      sheet: rawSheet,
+    });
+    Tables = new LreTables(Tables);
+    const TABLE_NAME = "theTable";
+    defineTable(TABLE_NAME, [
+      {
+        id: "z",
+        a: "1",
+        b: "2",
+      },
+      {
+        id: "y",
+        a: "2",
+        b: "3",
+      },
+    ]);
+    const choice = new Choice(rawChoice, sheet, "choice");
+    choice.populate(TABLE_NAME, "a");
+    choice.value("y");
+    const cmp1 = sheet.get("cmp1")!;
+    cmp1.value(choice);
+    expect(cmp1.value()).toBe("y");
+    expect(cmp1.valueData()).toBe(choice.choiceData());
   });
 });
 

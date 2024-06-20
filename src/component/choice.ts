@@ -138,7 +138,7 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
     value?: LetsRole.ChoiceValue
   ): LetsRole.TableRow | LetsRole.ComponentValue {
     if (this.#choiceDataProvider) {
-      if (arguments.length <= 0) {
+      if (arguments.length === 0) {
         return this.#choiceDataProvider?.providedValue() || null;
       }
       if (typeof value === "undefined" || value === null) return null;
@@ -158,8 +158,18 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
     }
   }
 
-  choiceData(): LetsRole.TableRow | LetsRole.ComponentValue {
-    return this.getChoiceData(this.value()!);
+  choiceData(
+    value: LetsRole.ChoiceValue = this.value()!
+  ): LetsRole.TableRow | LetsRole.ComponentValue {
+    return this.getChoiceData(value);
+  }
+
+  valueData(): LetsRole.ComponentValue | LetsRole.TableRow {
+    return this.choiceData();
+  }
+
+  valueProvider(): IDataProvider | undefined {
+    return this.#choiceDataProvider?.where(this.value()!);
   }
 
   row(): LetsRole.TableRow | LetsRole.ComponentValue {
@@ -186,6 +196,7 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
     if (arguments.length >= 2) {
       this.optional(optional);
     }
+
     if (Array.isArray(tableOrCb)) {
       const choices: LetsRole.Choices = {};
       tableOrCb.forEach((row) => {

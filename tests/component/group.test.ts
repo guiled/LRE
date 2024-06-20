@@ -511,3 +511,9 @@ describe("Group and context", () => {
     expect(accessLog).not.toContain("c");
   });
 });
+
+describe("Group as data provider", () => {
+  test("Get Data from group original components", () => {
+    //const cmp1 = sheet.get("cmp1")!;
+  });
+});
