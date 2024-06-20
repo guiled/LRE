@@ -295,7 +295,7 @@ describe("DataProvider get single value", () => {
 });
 
 describe("DataProvider count", () => {
-  test("Count data provider result", () => {
+  test("Count|length data provider result", () => {
     let data: any = {
       "1": { a: "42", b: "13", c: "24" },
       "2": { a: "1", b: "2", c: "3" },
@@ -312,6 +312,6 @@ describe("DataProvider count", () => {
     expect(filtered.count()).toBe(1);
     data["4"] = { a: "420", b: "2", c: "240" };
     expect(filtered.count()).toBe(2);
-    expect(filtered.where("no").count()).toBe(0);
+    expect(filtered.where("no").length()).toBe(0);
   });
 });

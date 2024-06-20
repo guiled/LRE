@@ -245,6 +245,8 @@ declare interface IDataProvider {
   where(condition: DataProviderDataValue | DataProviderWhereConditioner);
   singleValue(): DataProviderDataValue;
   singleId(): DataProviderDataId;
+  count(): number;
+  length(): number;
 }
 
 declare interface ComponentBase {
@@ -294,6 +296,7 @@ declare interface IComponent
   text(replacement?: string): string | void;
   visible(newValue?: boolean | ((...args: any[]) => any)): boolean;
   setChoices(choices: LetsRole.Choices): void;
+  valueData(): LetsRole.TableRow | LetsRole.ComponentValue | null;
 }
 
 declare interface IGroup extends IComponent, IDataProvider, IEventHolder {

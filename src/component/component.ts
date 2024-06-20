@@ -5,7 +5,11 @@ import { Mixin } from "../mixin";
 import { Repeater } from "./repeater";
 import { Entry } from "./entry";
 import { DataHolder } from "../dataholder";
-import { dynamicSetter } from "../globals/decorators/dynamicSetter";
+import {
+  dynamicSetter,
+  extractDataProviders,
+} from "../globals/decorators/dynamicSetter";
+import { DirectDataProvider } from "../dataprovider";
 
 export const REP_ID_SEP = ".";
 
@@ -76,6 +80,7 @@ export class Component<
   #mustSaveClasses: boolean = false;
   #classChanges: ClassChanges = {};
   #classChangesApply: ClassChangeApply | undefined = undefined;
+  #valueDataProvider: IDataProvider | undefined;
 
   constructor(raw: LetsRole.Component, sheet: ISheet, realId: string) {
     super([
@@ -249,6 +254,9 @@ export class Component<
   }
 
   @dynamicSetter
+  @extractDataProviders(function (this: any, dataProvider: IDataProvider) {
+    this.#valueDataProvider = dataProvider;
+  })
   value(newValue?: DynamicSetValue<unknown>): void | TypeValue {
     if (arguments.length > 0) {
       const oldValue = this.value();
@@ -282,6 +290,20 @@ export class Component<
       }
       return lre.value(val) as TypeValue;
     }
+  }
+
+  valueProvider(): IDataProvider | undefined {
+    return this.#valueDataProvider;
+  }
+
+  valueData(): LetsRole.TableRow | LetsRole.ComponentValue | null {
+    if (lre.isObject(this.value())) {
+      return;
+    }
+    return (
+      this.#valueDataProvider?.getData(this.value() as DataProviderDataId) ||
+      null
+    );
   }
 
   virtualValue(newValue?: TypeValue): void | TypeValue {
@@ -331,6 +353,17 @@ export class Component<
 
   knownChildren(): Array<IComponent> {
     return this.#sheet.knownChildren(this as IComponent);
+  }
+
+  dataProvider(): IDataProvider | undefined {
+    return new DirectDataProvider(
+      function (this: Component<TypeValue>, newValue?: TypeValue) {
+        if (arguments.length === 0) {
+          return this.value() as TypeValue;
+        }
+        this.value(newValue);
+      }.bind(this)
+    );
   }
 
   #saveClassChanges() {
