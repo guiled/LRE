@@ -204,6 +204,21 @@ export const DataProvider = (superclass: Newable = class {}) =>
       return this.filter(conditioner);
     }
 
+    count(): number {
+      const values = this.#valueCb();
+      if (Array.isArray(values)) {
+        return values.length;
+      } else if (lre.isObject(values)) {
+        return Object.keys(values).length;
+      } else {
+        return 1;
+      }
+    }
+
+    length(): number {
+      return this.count();
+    }
+
     singleValue(): DataProviderDataValue {
       const values = this.#valueCb();
       if (Array.isArray(values)) {
