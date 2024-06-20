@@ -293,3 +293,25 @@ describe("DataProvider get single value", () => {
     expect(result.singleValue()).toBe("42");
   });
 });
+
+describe("DataProvider count", () => {
+  test("Count data provider result", () => {
+    let data: any = {
+      "1": { a: "42", b: "13", c: "24" },
+      "2": { a: "1", b: "2", c: "3" },
+      "3": { a: "4", b: "5", c: "6" },
+    };
+    const dataGetter = jest.fn((_a: any) => {
+      return data as any;
+    });
+    const dp = new DirectDataProvider(dataGetter);
+    expect(dp.count()).toBe(3);
+    const filtered = dp.select("a").where((_v, _k, data: any) => {
+      return data.b === "2";
+    });
+    expect(filtered.count()).toBe(1);
+    data["4"] = { a: "420", b: "2", c: "240" };
+    expect(filtered.count()).toBe(2);
+    expect(filtered.where("no").count()).toBe(0);
+  });
+});
