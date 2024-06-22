@@ -5,7 +5,7 @@ export type SheetContext = {
   cmpClasses: Record<string, LetsRole.ClassName[]>;
   sheetData: LetsRole.ViewData;
   virtualValues: LetsRole.ViewData;
-  cmpTexts: Record<string, string>;
+  cmpTexts: Record<string, string | null>;
 };
 
 export class SheetProxy

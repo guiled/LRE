@@ -293,7 +293,7 @@ declare interface IComponent
   value(newValue?: unknown): void | LetsRole.ComponentValue;
   virtualValue(newValue?: TypeValue): void | TypeValue;
   rawValue(): TypeValue;
-  text(replacement?: string): string | void;
+  text(replacement?: string): string | null | void;
   visible(newValue?: boolean | ((...args: any[]) => any)): boolean;
   setChoices(choices: LetsRole.Choices): void;
   valueData(): LetsRole.TableRow | LetsRole.ComponentValue | null;

@@ -316,7 +316,7 @@ export class Component<
   rawValue(): TypeValue {
     return lre.value(this.raw().rawValue()) as TypeValue;
   }
-  text(replacement?: string): string | void {
+  text(replacement?: string): string | null | void {
     if (arguments.length > 0) {
       this.raw().text(replacement!);
       return;

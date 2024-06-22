@@ -108,7 +108,7 @@ declare namespace LetsRole {
 
     rawValue(): ValueType;
 
-    text(): string;
+    text(): string | null; // null is for choice expanded multiple
     text(replacement: string): void;
 
     visible(): boolean;
