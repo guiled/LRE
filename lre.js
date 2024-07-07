@@ -1,4 +1,4 @@
-//region LRE 6.23
+//region LRE 6.24
 // Custom functions
 function isObject(object) {
     return object != null && typeof object === 'object';
@@ -1461,7 +1461,7 @@ function lre(_arg) {
         // fix a bug with craft https://github.com/guiled/LRE/issues/14
         const fixRepeaterValues = function (rawCmp) {
             const data = rawCmp.sheet().getData().rep || {};
-            Object.keys(rawCmp.value()).forEach(function (entryId) {
+            Object.keys(rawCmp.value() || {}).forEach(function (entryId) {
                 rawCmp.find(entryId).value(data[entryId])
             });
         };
