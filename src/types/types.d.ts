@@ -27,16 +27,30 @@ declare namespace LetsRole {
   };
   export type ChoiceValue = string;
   export type ChoiceValues = Array<string>;
-  export type MultiChoiceValue = Array<string>;
+  export type MultiChoiceValue = Array<ChoiceValue>;
+  export type AvatarValue =
+    | {
+        avatar: string;
+        token: string;
+        frame: {
+          avatar: string | null;
+          token: string | null;
+        };
+      }
+    | undefined;
   export type ComposedComponentValue =
     | LetsRole.RepeaterValue
     | LetsRole.MultiChoiceValue
-    | LetsRole.ViewData;
+    | LetsRole.ViewData
+    | LetsRole.AvatarValue;
   export type ComponentValue =
     | LetsRole.BaseComponentValue
     | LetsRole.ChoiceValue
     | LetsRole.ComposedComponentValue;
-  export type ValueAsObject = LetsRole.RepeaterValue | LetsRole.ViewData;
+  export type ValueAsObject =
+    | Exclude<LetsRole.RepeaterValue, undefined>
+    | LetsRole.ViewData
+    | LetsRole.AvatarValue;
   export type Choices = Record<ChoiceValue, string>;
 
   export type Selector = LetsRole.ComponentID | LetsRole.ClassSelector;

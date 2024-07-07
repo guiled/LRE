@@ -122,6 +122,10 @@ export class LRE extends Logger implements ILRE {
     );
   }
 
+  isAvatarValue(value: LetsRole.ComponentValue): value is LetsRole.AvatarValue {
+    return this.isObject(value) && value.hasOwnProperty("avatar");
+  }
+
   isObjectEmpty(object: any): object is {} {
     if (!this.isObject(object)) return false;
 
