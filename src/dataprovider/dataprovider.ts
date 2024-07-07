@@ -46,10 +46,8 @@ export const DataProvider = (superclass: Newable = class {}) =>
           const data = this.#valueCb();
           if (Array.isArray(data)) {
             return data.toSorted(sorter);
-          } else if (typeof data === "object") {
-            return Object.entries(
-              data as LetsRole.ViewData | LetsRole.RepeaterValue
-            )
+          } else if (lre.isObject(data)) {
+            return Object.entries(data)
               .sort(([, a]: [any, any], [, b]: [any, any]) => sorter(a, b))
               .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
           }
@@ -82,7 +80,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
       if (Array.isArray(values)) {
         values.forEach(mapper);
-      } else if (lre.isObject(values)) {
+      } else if (lre.isObject(values) && !lre.isAvatarValue(values)) {
         Object.keys(values).forEach((k) => mapper(values[k], k));
       } else {
         mapper(values, "");
@@ -101,7 +99,12 @@ export const DataProvider = (superclass: Newable = class {}) =>
             if (typeof v === "undefined") return;
             else if (Array.isArray(v)) {
               result[k] = v.includes(column);
-            } else if (v && lre.isObject(v) && v.hasOwnProperty(column)) {
+            } else if (
+              v &&
+              lre.isObject(v) &&
+              !lre.isAvatarValue(v) &&
+              v.hasOwnProperty(column)
+            ) {
               result[k] = v[column] as LetsRole.ComponentValue;
             } else {
               result[k] = undefined;
@@ -129,8 +132,12 @@ export const DataProvider = (superclass: Newable = class {}) =>
       if (typeof id === "undefined") {
         if (Array.isArray(originalValues) && originalValues.length === 1) {
           return originalValues[0];
-        } else if (lre.isObject<LetsRole.ValueAsObject>(originalValues)) {
-          const values = this.#valueCb() as LetsRole.ValueAsObject;
+        } else if (
+          !Array.isArray(originalValues) &&
+          lre.isObject(originalValues) &&
+          !lre.isAvatarValue(originalValues)
+        ) {
+          const values = this.#valueCb() || {};
           const valueKeys = Object.keys(values);
           if (valueKeys.length === 1) {
             return originalValues[valueKeys[0]];
@@ -166,9 +173,10 @@ export const DataProvider = (superclass: Newable = class {}) =>
       if (Array.isArray(values)) {
         const index = typeof id === "string" ? parseInt(id) : id;
         return values?.[index];
-      } else {
+      } else if (!lre.isAvatarValue(values)) {
         return values?.[id];
       }
+      return undefined;
     }
 
     filter(condition: DataProviderWhereConditioner): IDataProvider {

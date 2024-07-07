@@ -167,8 +167,8 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
     } else {
       this.#mergeRepeaterValueToPendingData(
         componentId,
-        key,
-        value,
+        key as LetsRole.ComponentInRepeaterID,
+        value as LetsRole.RepeaterValue,
         pending,
         indexes
       );
@@ -180,7 +180,7 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
   }
 
   #addPendingData(
-    key: string,
+    key: LetsRole.ComponentInRepeaterID | LetsRole.ComponentID,
     pending: AllPendingData,
     indexes: PendingIndexes
   ) {
@@ -190,12 +190,13 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
 
   #mergeRepeaterValueToPendingData(
     repeaterId: LetsRole.ComponentID,
-    key: string,
-    value: LetsRole.ComponentValue,
+    key: LetsRole.ComponentInRepeaterID,
+    value: LetsRole.RepeaterValue,
     pending: AllPendingData,
     indexes: PendingIndexes
   ) {
-    const repeaterValue = this.#generateRepeaterValueFromKey(key, value);
+    const repeaterValue: LetsRole.RepeaterValue =
+      this.#generateRepeaterValueFromKey(key, value);
 
     pending[indexes[repeaterId]].v = lre.deepMerge(
       pending[indexes[repeaterId]].v,
@@ -204,13 +205,10 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
   }
 
   #generateRepeaterValueFromKey(
-    key: string,
+    key: LetsRole.ComponentInRepeaterID,
     value: LetsRole.ComponentValue
   ): LetsRole.RepeaterValue {
     const ids = key.split(REP_ID_SEP);
-    if (ids.length === 1) {
-      return value as LetsRole.RepeaterValue;
-    }
     return this.#generateNestedValueFromKey(ids, value);
   }
 
@@ -219,22 +217,23 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
     value: LetsRole.ComponentValue
   ): LetsRole.RepeaterValue {
     const result: LetsRole.RepeaterValue = {};
-    let nestedResult = result;
+    let nestedResult: LetsRole.ViewData = result;
     for (let i = 1; i < ids.length - 1; i++) {
       nestedResult = this.#createNestedValue(nestedResult, ids[i]);
     }
-    nestedResult[ids[ids.length - 1]] = value as LetsRole.RepeaterValue;
+    nestedResult[ids[ids.length - 1]] = value;
     return result;
   }
 
   #createNestedValue(
-    target: LetsRole.RepeaterValue,
+    target: LetsRole.RepeaterValue | LetsRole.ViewData,
     id: string
-  ): LetsRole.RepeaterValue {
+  ): LetsRole.ViewData {
+    target = typeof target === "undefined" ? ({} as LetsRole.ViewData) : target;
     if (typeof target[id] !== "object" || !target.hasOwnProperty(id)) {
-      target[id] = {} as LetsRole.RepeaterValue;
+      target[id] = {} as LetsRole.ViewData;
     }
-    return target[id] as LetsRole.RepeaterValue;
+    return target[id] as LetsRole.ViewData;
   }
 
   getPendingData(

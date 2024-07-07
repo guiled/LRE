@@ -22,9 +22,11 @@ declare namespace LetsRole {
   export type ClassSelector = `.${ClassName}`;
 
   export type BaseComponentValue = undefined | null | number | string | boolean;
-  export type RepeaterValue = {
-    [key: Index]: LetsRole.ViewData;
-  };
+  export type RepeaterValue =
+    | {
+        [key: Index]: LetsRole.ViewData;
+      }
+    | undefined;
   export type ChoiceValue = string;
   export type ChoiceValues = Array<string>;
   export type MultiChoiceValue = Array<ChoiceValue>;
@@ -59,6 +61,7 @@ declare namespace LetsRole {
   export type SheetID = string;
   export type SheetRealID = string;
   export type ComponentID = string;
+  export type ComponentInRepeaterID = `${string}.${string}`;
   export type VariableID = string;
   export type TooltipPlacement = "top" | "right" | "bottom" | "left";
   export type RollVisibility = "visible" | "gm" | "gmonly";
