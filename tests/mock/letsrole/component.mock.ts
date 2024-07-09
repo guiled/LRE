@@ -1,5 +1,6 @@
 export type MockedComponent = LetsRole.Component & {
   _trigger: (event: LetsRole.EventType, target?: MockedComponent) => void;
+  _getChoices: () => LetsRole.Choices;
 };
 
 type Params = {
@@ -119,6 +120,7 @@ export const MockComponent = ({
         handlers[event + target.id()]?.(target);
       }
     }),
+    _getChoices: jest.fn(() => privChoices),
     setToolTip: jest.fn((t) => t),
   };
   return cmp;

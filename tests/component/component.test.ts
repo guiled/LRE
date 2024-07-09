@@ -20,6 +20,7 @@ import { DataBatcher } from "../../src/sheet/databatcher";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 import { Choice } from "../../src/component/choice";
 import { LreTables } from "../../src/tables";
+import { SheetProxy } from "../../src/proxy/sheet";
 
 global.lre = new LRE(modeHandlerMock);
 initLetsRole();
@@ -34,12 +35,13 @@ const cmpValue = "42";
 const cmpClasses = ["cl1", "cl2", "cl3"];
 const realId = "cmp";
 const cmpText = "cmpText";
-let cmpDefs;
+//let cmpDefs;
 
 let server: MockServer;
 
 beforeEach(() => {
   modeHandlerMock.setMode("real");
+  modeHandlerMock.resetAccessLog();
   lre.autoNum(false);
   server = new MockServer();
   rawSheet = MockSheet({
@@ -51,26 +53,27 @@ beforeEach(() => {
       cmp3: "1342",
     },
   });
-  server.registerMockedSheet(rawSheet);
+  const proxySheet = new SheetProxy(modeHandlerMock, rawSheet);
+  server.registerMockedSheet(rawSheet, [
+    {
+      id: cmpId,
+      name: cmpName,
+      classes: [...cmpClasses],
+      text: cmpText,
+      value: cmpValue,
+    },
+  ]);
 
   sheet = new Sheet(
-    rawSheet,
-    new DataBatcher(modeHandlerMock, rawSheet),
+    proxySheet,
+    new DataBatcher(modeHandlerMock, proxySheet),
     modeHandlerMock
   );
-  sheet.raw = jest.fn(() => rawSheet);
+  sheet.raw = jest.fn(() => proxySheet);
   jest.spyOn(sheet, "get");
   jest.spyOn(sheet, "componentExists");
   jest.spyOn(sheet, "knownChildren");
-  cmpDefs = {
-    id: cmpId,
-    sheet: rawSheet,
-    name: cmpName,
-    classes: [...cmpClasses],
-    text: cmpText,
-    value: cmpValue,
-  };
-  rawCmp = MockComponent(cmpDefs);
+  rawCmp = rawSheet.get(cmpId) as MockedComponent;
   server.registerMockedComponent(rawCmp);
   cmp = new Component(rawCmp, sheet, realId);
 });
@@ -190,7 +193,7 @@ describe("Component construction", () => {
     cmp.addClass("clX");
     cmp.removeClass("cl2");
     expect(sheet.persistingCmpClasses).toHaveBeenCalledTimes(3);
-    const rawCmp2 = MockComponent(cmpDefs!);
+    const rawCmp2 = rawSheet.get(cmpId);
     expect(rawCmp2.hasClass("clX")).toBeTruthy();
     expect(rawCmp2.hasClass("clY")).toBeFalsy();
     const cmp2 = new Component(rawCmp2, sheet, realId);
@@ -244,6 +247,23 @@ describe("Component tree", () => {
     expect(sheet.componentExists).toHaveBeenCalled();
     cmp.knownChildren();
     expect(sheet.knownChildren).toHaveBeenCalled();
+  });
+});
+
+describe("Component update event handling", () => {
+  test("Update not triggered after sheet setData", () => {
+    const updateEvent = jest.fn();
+    cmp.on("update", updateEvent);
+    expect(updateEvent).not.toHaveBeenCalled();
+    rawCmp.value(42);
+    expect(updateEvent).toHaveBeenCalledTimes(1);
+    sheet.setData({
+      [cmp.id()]: 43,
+    });
+    itHasWaitedEverything();
+    expect(updateEvent).toHaveBeenCalledTimes(2);
+    rawCmp.value(43);
+    expect(updateEvent).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -334,7 +354,9 @@ describe("Component get and set value", () => {
     expect(() => cmp1.value(valSet)).not.toThrow();
     expect(valSet).toHaveBeenCalledTimes(1);
     expect(cmp1.value()).toBe(1313);
+    expect(valSet).toHaveBeenCalledTimes(1);
     itHasWaitedEnough();
+    expect(valSet).toHaveBeenCalledTimes(1);
     cmp2.value(4243);
     expect(valSet).toHaveBeenCalledTimes(2);
     expect(cmp1.value()).toBe(cmp2.value());
@@ -460,5 +482,20 @@ describe("Component simple event handling", () => {
 });
 
 describe("Component events on sub component", () => {
-  // @todo
+  it.todo("Test of event delegation");
+});
+
+describe("Component behavior with context", () => {
+  test("Context has component ref when value is get", () => {
+    const cmpProxy = sheet.get(cmpId)!;
+    expect(modeHandlerMock.getAccessLog("value")).toHaveLength(0);
+    cmpProxy.value();
+    expect(modeHandlerMock.getAccessLog("value")).toHaveLength(1);
+    expect(modeHandlerMock.getAccessLog("value")[0]).toStrictEqual(cmpId);
+    cmpProxy.value(42);
+    modeHandlerMock.resetAccessLog();
+    expect(modeHandlerMock.getAccessLog("value")).toHaveLength(0);
+    cmpProxy.value();
+    expect(modeHandlerMock.getAccessLog("value")).toHaveLength(1);
+  });
 });

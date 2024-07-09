@@ -57,7 +57,8 @@ export class MockServer {
     });
 
     sheet.setData = jest.fn((newData) => {
-      if (Object.keys(newData).length > 20) {
+      const ids = Object.keys(newData);
+      if (ids.length > 20) {
         throw "Limit of 20 data set exceeded";
       }
       Object.assign(
@@ -65,9 +66,12 @@ export class MockServer {
         structuredClone(newData)
       );
       this.sheets[sheet.getSheetId()].forEach((sh: MockedSheet) => {
-        const cmp = this.cmp[sheet.getSheetId()]?.[sheet.id()]?.get(sh);
-        if (cmp) {
-          cmp._trigger("update");
+        const sheetCmp = this.cmp[sheet.getSheetId()]?.[sheet.id()]?.get(sh);
+        if (sheetCmp) {
+          //sheetCmp._trigger("update");
+          ids.forEach((id) => {
+            (sh.get(id) as MockedComponent)?._trigger?.("update");
+          });
         }
       });
     });
@@ -121,6 +125,7 @@ export class MockServer {
           cntr: cmpContainerId
             ? (sheet.get(cmpContainerId!) as MockedComponent)
             : undefined,
+          name: cmpStructure?.name || "nameless",
           classes: [
             ...(cmpStructure?.classes || []),
             ...(cmpId.indexOf("rep") !== -1 ? ["repeater"] : []),
@@ -137,6 +142,7 @@ export class MockServer {
         function (this: MockServer, v?: LetsRole.ComponentValue) {
           if (arguments.length > 0) {
             this.sheetData[sheet.getSheetId()][cmpId] = v;
+            cmp._trigger("update");
           }
           return this.sheetData[sheet.getSheetId()][cmpId] || "";
         }.bind(this)

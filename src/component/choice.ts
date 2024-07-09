@@ -15,13 +15,18 @@ type ChoiceData = Record<
   LetsRole.TableRow | LetsRole.ComponentValue
 >;
 
-type ChoiceEvents =
+export const UPDATE_CHECK_CHANGES = "update:checkChanges:__lre__";
+
+export type ChoiceEvents =
   | "select"
   | "valselect"
   | "unselect"
   | "valunselect"
   | "valclick";
-export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
+export class Choice<
+  ValueType extends LetsRole.ComponentValue = LetsRole.ChoiceValue,
+  Events extends string = LetsRole.EventType
+> extends Component<ValueType, ChoiceEvents | Events> {
   #choices: LetsRole.Choices = {};
   #choiceData: ChoiceData = {};
   #choiceDataProvider: IDataProvider | undefined;
@@ -41,7 +46,7 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
     } catch (e) {
       lre.error(`[Choice] Unable to get ${realId} value. ${e}`);
     }
-    this.on("update:checkChanges", this.#checkChanges.bind(this));
+    this.on(UPDATE_CHECK_CHANGES, this.#checkChanges.bind(this));
   }
 
   #checkChanges(choice: Component) {
@@ -65,7 +70,8 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
     choices = dataProviders[0][0];
     const choiceDataProvider = dataProviders[1][0];
 
-    const currentValue: LetsRole.ChoiceValue = this.value()!;
+    const currentValue: LetsRole.ChoiceValue =
+      this.value() as LetsRole.ChoiceValue;
     const newChoices: LetsRole.Choices = {};
     let newValues: LetsRole.ChoiceValues = [];
     const newChoiceData: ChoiceData = {};
@@ -121,6 +127,10 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
     return Object.assign(resultChoices, choices);
   }
 
+  refreshChoices(): void {
+    this.#setChoicesToComponent();
+  }
+
   getChoices(): LetsRole.Choices {
     if (!this.#choices || lre.isObjectEmpty(this.#choices)) {
       lre.warn(
@@ -130,13 +140,24 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
     return this.#choices;
   }
 
-  label(): string {
+  label(value?: LetsRole.ChoiceValue): string {
+    if (
+      arguments.length > 0 &&
+      value !== this.value() &&
+      typeof value !== "undefined"
+    ) {
+      if (!this.#choices) {
+        lre.error("No choices known for this component. Use setChoices first.");
+        return "";
+      }
+      if (this.#choices.hasOwnProperty(value)) {
+        return this.#choices[value!];
+      }
+    }
     return this.text()!;
   }
 
-  getChoiceData(
-    value?: LetsRole.ChoiceValue
-  ): LetsRole.TableRow | LetsRole.ComponentValue {
+  getChoiceData(value?: LetsRole.ChoiceValue): DataProviderDataValue {
     if (this.#choiceDataProvider) {
       if (arguments.length === 0) {
         return this.#choiceDataProvider?.providedValue() || null;
@@ -159,7 +180,7 @@ export class Choice extends Component<LetsRole.ChoiceValue, ChoiceEvents> {
   }
 
   choiceData(
-    value: LetsRole.ChoiceValue = this.value()!
+    value: LetsRole.ChoiceValue = this.value() as LetsRole.ChoiceValue
   ): LetsRole.TableRow | LetsRole.ComponentValue {
     return this.getChoiceData(value);
   }

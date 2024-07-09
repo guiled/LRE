@@ -68,85 +68,100 @@ export const extractDataProviders = function <
   };
 };
 
-export const dynamicSetter = function <
+export const flaggedDynamicSetter = function <
   This extends ComponentCommon,
   Return,
   Args extends any[]
 >(
+  argFlags: Array<Boolean> = []
+): (
   target: (this: This, ...args: Args) => Return,
   context: ClassMethodDecoratorContext<
     This,
     (this: This, ...args: Args) => Return
   >
-) {
-  const eventLogs: ComponentAttachedToComponent = {};
-  const replacementMethod = function (this: This, ...args: Args): Return {
-    if (arguments.length > 0) {
-      removeOldEventLogHandlers.call(
-        this,
-        eventLogs,
-        context as ClassMethodDecoratorContext
-      );
-      let hasDynamicSetter = false;
-      const argTypes: Array<DynamicArgType> = [];
+) => any {
+  return function (
+    target: (this: This, ...args: Args) => Return,
+    context: ClassMethodDecoratorContext<
+      This,
+      (this: This, ...args: Args) => Return
+    >
+  ) {
+    const eventLogs: ComponentAttachedToComponent = {};
+    const replacementMethod = function (this: This, ...args: Args): Return {
+      if (arguments.length > 0) {
+        removeOldEventLogHandlers.call(
+          this,
+          eventLogs,
+          context as ClassMethodDecoratorContext
+        );
+        let hasDynamicSetter = false;
+        const argTypes: Array<DynamicArgType> = [];
 
-      args.forEach((newValue) => {
-        if (isDataProvider(newValue)) {
-          argTypes.push("provider");
-          hasDynamicSetter = true;
-        } else if (isComponent(newValue)) {
-          argTypes.push("component");
-          hasDynamicSetter = true;
-        } else if (typeof newValue === "function") {
-          argTypes.push("callback");
-          hasDynamicSetter = true;
-        } else {
-          argTypes.push("value");
+        args.forEach((newValue, idx) => {
+          if (argFlags[idx] === false) {
+            argTypes.push("value");
+          } else if (isDataProvider(newValue)) {
+            argTypes.push("provider");
+            hasDynamicSetter = true;
+          } else if (isComponent(newValue)) {
+            argTypes.push("component");
+            hasDynamicSetter = true;
+          } else if (typeof newValue === "function") {
+            argTypes.push("callback");
+            hasDynamicSetter = true;
+          } else {
+            argTypes.push("value");
+          }
+        });
+
+        if (hasDynamicSetter) {
+          traceDynamicSetter(this.realId(), context);
+          const newSetter = (): any => {
+            const argsForTarget: Args = [] as unknown as Args;
+            argTypes.forEach((t, i) => {
+              const newValue = args[i];
+              if (t === "provider") {
+                argsForTarget.push({
+                  value: loggedCall(newValue.providedValue.bind(newValue)),
+                  providedBy: newValue,
+                });
+              } else if (t === "callback") {
+                argsForTarget.push(loggedCall(newValue));
+              } else if (t === "component") {
+                argsForTarget.push({
+                  value: loggedCall(newValue.value.bind(newValue)),
+                  providedBy:
+                    newValue.valueProvider() || newValue.dataProvider(),
+                });
+                //argsForTarget.push(loggedCall(newValue.value.bind(newValue)));
+              } else {
+                argsForTarget.push(args[i]);
+              }
+              const newEventLogs = handleAccessLog.call(
+                this,
+                eventLogs,
+                newSetter
+              );
+              Object.assign(eventLogs, newEventLogs);
+            });
+
+            return target.apply(this, argsForTarget);
+          };
+          return newSetter();
         }
-      });
-
-      if (hasDynamicSetter) {
-        traceDynamicSetter(this.realId(), context);
-        const newSetter = (): any => {
-          const argsForTarget: Args = [] as unknown as Args;
-          argTypes.forEach((t, i) => {
-            const newValue = args[i];
-            if (t === "provider") {
-              argsForTarget.push({
-                value: loggedCall(newValue.providedValue.bind(newValue)),
-                providedBy: newValue,
-              });
-            } else if (t === "callback") {
-              argsForTarget.push(loggedCall(newValue));
-            } else if (t === "component") {
-              argsForTarget.push({
-                value: loggedCall(newValue.value.bind(newValue)),
-                providedBy: newValue.valueProvider() || newValue.dataProvider(),
-              });
-              //argsForTarget.push(loggedCall(newValue.value.bind(newValue)));
-            } else {
-              argsForTarget.push(args[i]);
-            }
-            const newEventLogs = handleAccessLog.call(
-              this,
-              eventLogs,
-              newSetter
-            );
-            Object.assign(eventLogs, newEventLogs);
-          });
-
-          return target.apply(this, argsForTarget);
-        };
-        return newSetter();
+        return target.apply(this, args);
       }
-      return target.apply(this, args);
-    }
 
-    return target.apply(this);
+      return target.apply(this);
+    };
+
+    return replacementMethod;
   };
-
-  return replacementMethod;
 };
+
+export const dynamicSetter = flaggedDynamicSetter();
 
 const removeOldEventLogHandlers = function <This extends ComponentCommon>(
   this: This,

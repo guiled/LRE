@@ -16,7 +16,8 @@ export const modeHandlerMock: ProxyModeHandler = {
   getAccessLog: jest.fn((_type) => (logs[_type] ??= [])),
   getPreviousAccessLog: jest.fn((_type) => prevLogs[_type] ?? []),
   logAccess: jest.fn((_type, _value) => {
-    (logs[_type] ??= []).push(_value);
+    logs[_type] ??= [];
+    if (!logs[_type]!.includes(_value)) logs[_type]!.push(_value);
     return modeHandlerMock;
   }),
   resetAccessLog: jest.fn(() => {

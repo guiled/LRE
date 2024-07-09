@@ -147,17 +147,29 @@ declare type EventSubComponent =
   | EventHandler
   | undefined;
 
+declare const EVENT_SEP = ":";
+
 declare type EventHolderDefaultEvents = EventHolderEvents;
 declare type EventType<T extends string = string> =
   | EventHolderDefaultEvents
+  | EventHolderDefaultEvents
   | T
-  | `${EventHolderDefaultEvents | T}${typeof EVENT_SEP}${string}`;
+  | `${
+      | EventHolderDefaultEvents
+      | EventHolderDefaultEvents
+      | T}${EVENT_SEP}${string}`;
+
+declare type WithValue = {
+  value: LetsRole.Component["value"];
+};
 
 declare type LREEventTarget = Object &
   Pick<LetsRole.Component, "id"> &
-  Partial<{
-    value: LetsRole.Component["value"];
-  }>;
+  Partial<WithValue>;
+
+declare type LREEventTargetWithValue = Object &
+  Pick<LetsRole.Component, "id"> &
+  WithValue;
 
 declare interface IEventHolder<
   AdditionalEvents extends string = EventHolderDefaultEvents
@@ -223,7 +235,8 @@ declare interface IDataHolder {
 declare type DataProviderDataId =
   | LetsRole.ComponentID
   | keyof LetsRole.RepeaterValue
-  | LetsRole.ColumnId;
+  | LetsRole.ColumnId
+  | number;
 
 declare type DataProviderDataValue =
   | LetsRole.TableRow

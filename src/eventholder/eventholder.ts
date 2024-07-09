@@ -99,6 +99,7 @@ export const EventHolder = <
       target: any,
       ...args: unknown[]
     ) {
+      let isHandlerRan = false;
       Object.keys(handlers).some((hId) => {
         const fcn = handlers[hId];
 
@@ -107,6 +108,7 @@ export const EventHolder = <
         }
 
         try {
+          isHandlerRan = true;
           fcn.apply(this, [target, ...args]);
         } catch (e) {
           lre.error(
@@ -120,6 +122,7 @@ export const EventHolder = <
       });
 
       this.#uncancelEvent(eventId);
+      return isHandlerRan;
     }
 
     #getEventIdAndHandlersFromEventName(
@@ -161,16 +164,19 @@ export const EventHolder = <
       return (rawTarget: LREEventTarget, ...args: unknown[]): void => {
         const { eventId, handlers } =
           this.#getEventIdAndHandlersFromEventName(eventName);
+        const currentValue = this.#getCurrentValue(rawTarget);
 
-        if (!this.isEventEnabled(eventId)) return;
+        if (!this.isEventEnabled(eventId)) {
+          if (eventId === "update")
+            this.#saveLastUpdateEventValue(currentValue);
+          return;
+        }
 
         const cmp =
           this.#getTarget?.(rawTarget, this.#events[eventId]!) || this;
 
-        const currentValue = this.#getCurrentValue(rawTarget);
-        if (rawTarget && "value" in rawTarget) {
+        if (this.#isValueAvailable(rawTarget) && eventId === "update") {
           if (
-            eventId === "update" &&
             !manuallyTriggered &&
             (currentValue === this.#lastUpdateEventValue ||
               lre.deepEqual(currentValue, this.#lastUpdateEventValue))
@@ -189,11 +195,17 @@ export const EventHolder = <
     #getCurrentValue(rawTarget: LREEventTarget): LetsRole.ComponentValue {
       let result = undefined;
       try {
-        if (rawTarget.value) {
+        if (this.#isValueAvailable(rawTarget)) {
           result = rawTarget.value();
         }
       } catch (e) {}
       return result;
+    }
+
+    #isValueAvailable(
+      rawTarget: LREEventTarget
+    ): rawTarget is LREEventTargetWithValue {
+      return !!rawTarget && !!rawTarget.value;
     }
 
     #saveLastUpdateEventValue(value: LetsRole.ComponentValue) {
@@ -399,7 +411,14 @@ export const EventHolder = <
     trigger(eventName: EventType<AdditionalEvents>, ...args: unknown[]): void {
       const { eventId, handlers } =
         this.#getEventIdAndHandlersFromEventName(eventName);
-      this.#runHandlers(eventId, handlers, this, ...args);
+      const isHandlerRan = this.#runHandlers(eventId, handlers, this, ...args);
+      if (
+        !isHandlerRan &&
+        eventId === "update" &&
+        this.#isValueAvailable(this)
+      ) {
+        this.#saveLastUpdateEventValue(this.value());
+      }
       this.#propagateToLinks(eventName, ...args);
     }
 
