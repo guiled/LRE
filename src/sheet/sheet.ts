@@ -30,7 +30,7 @@ export class Sheet
   ) => IEventHolder<SubTypeEventHolder> &
     InstanceType<ReturnType<typeof HasRaw<LetsRole.Sheet>>>)<SheetEvents>
   implements
-    Omit<LetsRole.Sheet, "get" | "find">,
+    Omit<LetsRole.Sheet, "get" | "find" | "getData">,
     ISheet,
     ComponentContainer<IGroup>,
     ComponentCommon
@@ -347,11 +347,34 @@ export class Sheet
     }
   }
 
-  getData(): LetsRole.ViewData {
-    return {
+  getData(
+    realId?: LetsRole.ComponentID
+  ): LetsRole.ViewData | LetsRole.ComponentValue {
+    const data = {
       ...this.raw().getData(),
       ...(this.#batcher.getPendingData() as LetsRole.ViewData),
     };
+    if (arguments.length === 0) {
+      return data;
+    }
+    const realIdParts: Array<LetsRole.ComponentID | LetsRole.Index> =
+      realId!.split(REP_ID_SEP);
+    if (realIdParts.length === 1) {
+      return data[realId!];
+    }
+    let result: LetsRole.ComponentValue | LetsRole.ViewData | undefined =
+      data[realIdParts[0]];
+    for (let i = 1; i < realIdParts.length; i++) {
+      if (
+        !result ||
+        !lre.isRepeaterValue(result) ||
+        !result.hasOwnProperty(realIdParts[i])
+      ) {
+        return null;
+      }
+      result = result[realIdParts[i]];
+    }
+    return result;
   }
 
   sendPendingDataFor(id: LetsRole.ComponentID) {

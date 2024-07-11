@@ -340,7 +340,8 @@ describe("Component get and set value", () => {
     expect(cmp.value()).toBe(newVal);
     expect(sheet.getPendingData(cmp.id())).toBe(newVal);
     itHasWaitedEverything();
-    expect(sheet.getData()[cmp.id()]).toBe(newVal);
+    const data = sheet.getData() as LetsRole.ViewData;
+    expect(data[cmp.id()]).toBe(newVal);
   });
 
   test("value set with a function", () => {

@@ -192,6 +192,30 @@ describe("Sheet data handling", () => {
     expect(mockedWaitDefs.itHasWaitedEverything).not.toThrow();
     expect(raw.setData).toHaveBeenCalledTimes(2);
   });
+
+  test("Sheet.getData can give a specific component data", () => {
+    const repValue: LetsRole.RepeaterValue = {
+      a: {
+        txt: "ok",
+      },
+    };
+    const data: LetsRole.ViewData = {
+      a: 1,
+      b: 2,
+      c: 3,
+      rep: repValue,
+    };
+    raw.getData = jest.fn(() => {
+      return data;
+    });
+    expect(sheet.getData("a")).toStrictEqual(1);
+    expect(sheet.getData("rep")).toStrictEqual(repValue);
+    expect(sheet.getData("rep.a")).toStrictEqual(repValue.a);
+    expect(sheet.getData("rep.a.txt")).toStrictEqual(repValue.a.txt);
+    expect(sheet.getData("b")).toBe(2);
+    expect(sheet.getData("b.a")).toBeNull();
+    expect(sheet.getData("b.a.txt")).toBeNull();
+  });
 });
 
 describe("Sheet persisting data", () => {

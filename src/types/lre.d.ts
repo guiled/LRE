@@ -29,6 +29,9 @@ declare interface ISheet extends LetsRole.Sheet, ComponentContainer<IGroup> {
   getSheetAlphaId(): string;
   realId(): string;
   get(id: string, silent = false): ComponentSearchResult | IGroup;
+  getData(
+    realId?: LetsRole.ComponentID
+  ): LetsRole.ViewData | LetsRole.ComponentValue;
   find(id: string): ComponentSearchResult | IGroup;
   componentExists(realId: string): boolean;
   persistingData<T extends StoredState>(
