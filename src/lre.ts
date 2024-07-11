@@ -126,6 +126,12 @@ export class LRE extends Logger implements ILRE {
     return this.isObject(value) && value.hasOwnProperty("avatar");
   }
 
+  isRepeaterValue(
+    object: LetsRole.ComponentValue
+  ): object is LetsRole.RepeaterValue {
+    return this.isObject(object) && !this.isAvatarValue(object);
+  }
+
   isObjectEmpty(object: any): object is {} {
     if (!this.isObject(object)) return false;
 

@@ -12,6 +12,9 @@ declare interface ILRE {
   isAvatarValue(
     object: LetsRole.ComposedComponentValue
   ): object is LetsRole.AvatarValue;
+  isRepeaterValue(
+    object: LetsRole.ComponentValue
+  ): object is LetsRole.RepeaterValue;
   isObjectEmpty<T extends BasicObject = BasicObject>(object: any): object is {};
   isUseableAsIndex(value: any): value is number | string | bigint;
   __debug: boolean = false;

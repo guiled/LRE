@@ -202,6 +202,12 @@ describe("LRE autonum", () => {
   });
 });
 
+describe("LRE global methods", () => {
+  test.todo("isObject");
+  test.todo("isAvatarValue");
+  test.todo("isRepeaterValue");
+});
+
 describe("LRE global method isObjectEmpty", () => {
   let subject: LRE;
 
