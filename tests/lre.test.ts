@@ -204,16 +204,76 @@ describe("LRE autonum", () => {
 });
 
 describe("LRE global methods", () => {
-  test.todo("isObject");
-  test.todo("isAvatarValue");
-  test.todo("isRepeaterValue");
-});
-
-describe("LRE global method isObjectEmpty", () => {
   let subject: LRE;
-
+  
   beforeEach(() => {
     subject = new LRE(modeHandlerMock);
+  });
+
+  test.each([
+    [undefined, false],
+    [null, false],
+    ["", false],
+    ["non plus", false],
+    [0, false],
+    [{}, true],
+    [[], false],
+    [{ a: 1 }, true],
+    [[1], false],
+    [1, false],
+    [true, false],
+  ])("Value %s is object", (init, result) => {
+    expect(subject.isObject(init)).toBe(result);
+  });
+
+  test.each([
+    [undefined, false],
+    [null, false],
+    ["", false],
+    ["non plus", false],
+    [0, false],
+    [{}, false],
+    [[], false],
+    [{ a: 1 }, false],
+    [[1], false],
+    [1, false],
+    [true, false],
+    [{
+      avatar: "avatar",
+      token: "token",
+      frame: {
+        avatar: null,
+        token: null,
+      }
+    }, true]
+  ])("Value %s is Avatar Value", (init, result) => {
+    // @ts-ignore
+    expect(subject.isAvatarValue(init)).toBe(result);
+  });
+
+  test.each([
+    [undefined, false],
+    [null, false],
+    ["", false],
+    ["non plus", false],
+    [0, false],
+    [{}, true],
+    [[], false],
+    [{ a: 1 }, true],
+    [[1], false],
+    [1, false],
+    [true, false],
+    [{
+      avatar: "avatar",
+      token: "token",
+      frame: {
+        avatar: null,
+        token: null,
+      }
+    }, false]
+  ])("Value %s is repeater value", (init, result) => {
+    /* @ts-ignore */
+    expect(subject.isRepeaterValue(init)).toBe(result);
   });
 
   test.each([
@@ -228,7 +288,7 @@ describe("LRE global method isObjectEmpty", () => {
     [[1], false],
     [1, false],
     [true, false],
-  ])("Value %s is empty", (init, result) => {
+  ])("Value %s is object empty", (init, result) => {
     expect(subject.isObjectEmpty(init)).toBe(result);
   });
 });
