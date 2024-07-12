@@ -12,7 +12,8 @@
     "lre_mig.js",
     "lremodulaire.js",
     "lre_test.js",
-    "todo"
+    "out/**",
+    "README.md"
   ],
   "words": [
     "autonum",
@@ -27,10 +28,12 @@
     "eventholder",
     "expl",
     "expladd",
+    "fnames",
     "gmonly",
     "hasraw",
     "iife",
     "ILRE",
+    "initread",
     "keeph",
     "keepl",
     "letsrole",

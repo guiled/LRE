@@ -163,7 +163,7 @@ describe("Mixin tests", () => {
         }
       };
     };
-    const Bmixable = (superclass: Newable = class {}) => {
+    const BMixable = (superclass: Newable = class {}) => {
       abstract class B extends superclass {
         #name: string;
         constructor(name: string) {
@@ -179,7 +179,7 @@ describe("Mixin tests", () => {
       return B;
     };
 
-    const C = class extends Mixin(A, Bmixable) {
+    const C = class extends Mixin(A, BMixable) {
       constructor(id: number, name: string) {
         super([[id], [name]]);
       }
@@ -306,6 +306,7 @@ describe("Mixin tests", () => {
     const B = (superclass: Newable = class {}) =>
       class B extends superclass {
         constructor(n: string) {
+          // cspell:disable-next-line
           if (n === "firstfirst") {
             new D(true);
           }

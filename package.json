@@ -29,6 +29,7 @@
     "testswc": "npx tsx test.ts",
     "count_output": "echo \"Number of lines in build/lre.js $(cat build/lre.js | wc -l) ($(cat build/lre.js | wc -c) caracters)\"",
     "build": "f() { tsx build.ts $@ && yarn count_output; }; f",
-    "buildcopy": "f() { tsx build.ts $@ && (cat build/lre.js | pbcopy); }; f"
+    "buildcopy": "f() { tsx build.ts $@ && (cat build/lre.js | pbcopy); }; f",
+    "cspell": "npx cspell --no-progress --no-summary --gitignore ."
   }
 }

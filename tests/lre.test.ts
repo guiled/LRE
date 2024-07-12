@@ -74,6 +74,7 @@ describe("LRE tests", () => {
     mathRandomSpy.mockImplementation(() => 0.424242);
     expect(subject.getRandomId()).toEqual("BTYuVvaBoU");
     mathRandomSpy.mockImplementation(() => 0.9999999999999999);
+    // cSpell:ignore DMZN
     expect(subject.getRandomId()).toEqual("DMZNPvePse");
     mathRandomSpy.mockRestore();
   });

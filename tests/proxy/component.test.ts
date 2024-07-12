@@ -21,7 +21,7 @@ const initTestMocks = (isVirtual: boolean = false): ComponentProxy => {
   rawSheet = MockSheet({
     id: "main",
     realId: "1234",
-    properName: "Kwalish",
+    properName: "Sheet 1",
   });
   parent = MockComponent({
     id: "parent_test",
