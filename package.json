@@ -22,7 +22,8 @@
     "ts-jest": "^29.1.4",
     "ts-node": "^10.9.1",
     "tsx": "^4.15.4",
-    "typescript": "^5.1.3"
+    "typescript": "^5.1.3",
+    "jest-silent-reporter": "^0.6.0"
   },
   "scripts": {
     "test": "jest",
@@ -30,6 +31,9 @@
     "count_output": "echo \"Number of lines in build/lre.js $(cat build/lre.js | wc -l) ($(cat build/lre.js | wc -c) caracters)\"",
     "build": "f() { tsx build.ts $@ && yarn count_output; }; f",
     "buildcopy": "f() { tsx build.ts $@ && (cat build/lre.js | pbcopy); }; f",
-    "cspell": "npx cspell --no-progress --no-summary --gitignore ."
+    "cspell": "npx cspell --no-progress --no-summary --gitignore .",
+    "testsilent": "jest --reporters jest-silent-reporter --collectCoverage=false",
+    "tscheck": "tsc --noEmit",
+    "checkall": "yarn cspell && yarn tscheck && yarn testsilent"
   }
 }
