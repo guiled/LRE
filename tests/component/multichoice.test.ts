@@ -76,6 +76,15 @@ describe("MultiChoice", () => {
     expect(multiChoice.lreType()).toBe("multichoice");
   });
 
+  test("Multichoice values are converted to number", () => {
+    const value = ["1", "2", "3", "a"];
+    rawMultiChoice.value(value);
+    expect(multiChoice.value()).toEqual(value);
+    lre.autoNum(true);
+    expect(multiChoice.value()).toEqual([1, 2, 3, "a"]);
+    expect(multiChoice.value()).not.toEqual(["1", "2", "3", "a"]);
+  });
+
   test("Remove values in the multichoice values call a setChoices", () => {
     multiChoice.value(["1", "2"]);
     jest.spyOn(rawMultiChoice, "setChoices");

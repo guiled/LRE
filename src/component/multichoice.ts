@@ -71,14 +71,14 @@ export class MultiChoice extends Choice<
   }
 
   #sanitizeValue(value: unknown): LetsRole.MultiChoiceValue {
-    if (
-      value !== null &&
-      typeof value !== "undefined" &&
-      !Array.isArray(value)
-    ) {
-      return [value as string].filter((v) => typeof v !== "undefined");
+    if (Array.isArray(value)) {
+      return value.map(lre.value.bind(lre));
+    } else if (value !== null && typeof value !== "undefined") {
+      return [value]
+        .filter((v) => typeof v !== "undefined")
+        .map(lre.value.bind(lre)) as LetsRole.MultiChoiceValue;
     }
-    return value as LetsRole.MultiChoiceValue;
+    return [];
   }
 
   #checkChanges(choice: MultiChoice) {
