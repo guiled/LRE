@@ -107,7 +107,7 @@ export class MultiChoice extends Choice<
     const args: [
       MultiChoiceEvents,
       (string | Array<string>)?,
-      (DataProviderDataValue | Array<DataProviderDataValue>)?
+      (DataProviderDataValue | Array<DataProviderDataValue>)?,
     ] = [eventName];
 
     if (values.length === 1) {
