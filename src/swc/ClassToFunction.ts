@@ -489,7 +489,8 @@ class ClassToFunction extends Visitor {
       if (n.type === "Constructor" && n.body) {
       } else if (
         (n.type === "ClassMethod" || n.type === "PrivateMethod") &&
-        !n.isAbstract
+        !n.isAbstract &&
+        !!n.function.body
       ) {
         if (n.isStatic) {
           staticMethods.push(this.#methodToFunction(n));
@@ -965,7 +966,7 @@ class ClassToFunction extends Visitor {
     this.isInClass = true;
 
     members.forEach((m) => {
-      if (m.type === "PrivateMethod") {
+      if (m.type === "PrivateMethod" && !!m.function.body) {
         this.#privateMethods.push(m.key.id.value);
       }
     });

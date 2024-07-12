@@ -1,5 +1,8 @@
 import { DirectDataProvider } from "../dataprovider";
-import { flaggedDynamicSetter } from "../globals/decorators/dynamicSetter";
+import {
+  dynamicSetter,
+  flaggedDynamicSetter,
+} from "../globals/decorators/dynamicSetter";
 import { Choice, ChoiceEvents, UPDATE_CHECK_CHANGES } from "./choice";
 
 type MultiChoiceEvents = "limit" | ChoiceEvents;
@@ -47,6 +50,9 @@ export class MultiChoice extends Choice<
       (this.raw().value() as LetsRole.MultiChoiceValue) || [];
   }
 
+  value(): LetsRole.MultiChoiceValue;
+  value(newValue?: DynamicSetValue<LetsRole.MultiChoiceValue>): void;
+  @dynamicSetter
   value(
     newValue?: DynamicSetValue<LetsRole.MultiChoiceValue>
   ): void | LetsRole.MultiChoiceValue {
@@ -168,7 +174,7 @@ export class MultiChoice extends Choice<
 
   invert() {
     const choices = this.getChoices();
-    const val = this.value() || [];
+    const val = this.value();
     this.value(Object.keys(choices).filter((v) => !val.includes(v)));
   }
 
