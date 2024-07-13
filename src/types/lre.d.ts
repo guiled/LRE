@@ -91,7 +91,7 @@ declare type ProxyMode = "real" | "virtual";
 
 declare var context: ProxyModeHandler;
 declare var isNaN = (n: any) => boolean;
-declare var structuredClone = <T = any>(val: T) => T;
+declare var structuredClone = <T>(val: T) => T;
 declare var lastException: any;
 declare var throwError = (err: any) => undefined;
 declare var newError = (err: message) => any;

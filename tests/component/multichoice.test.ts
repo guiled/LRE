@@ -105,7 +105,7 @@ describe("MultiChoice", () => {
     expect(mockSelectEvent).toHaveBeenCalledWith(
       multiChoice,
       value[0],
-      null,
+      undefined,
       null
     );
     value = [...value, "2", "3"];
@@ -115,7 +115,7 @@ describe("MultiChoice", () => {
     expect(mockSelectEvent).toHaveBeenCalledWith(
       multiChoice,
       [value[1], value[2]],
-      { 2: null, 3: null },
+      { 2: "", 3: "" },
       { 2: null, 3: null }
     );
   });
@@ -130,7 +130,7 @@ describe("MultiChoice", () => {
     expect(mockUnselectEvent).toHaveBeenCalledWith(
       multiChoice,
       [value[0], value[1]],
-      { 1: null, 2: null },
+      { 1: "", 2: "" },
       { 1: null, 2: null }
     );
   });

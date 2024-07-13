@@ -328,7 +328,7 @@ export class Component<
       this.raw().text(replacement!);
       return;
     }
-    return this.raw().text() || "";
+    return this.raw().text();
   }
 
   @dynamicSetter
