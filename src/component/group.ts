@@ -36,7 +36,9 @@ export class Group
     super([
       /* EventHolder */ [id],
       /* DataHolder */ [sheet, id],
-      /* DataProvider */ [(...args: any[]) => this.value(...args)],
+      /* DataProvider */ [
+        (...args: any[]) => this.value(...(args as [LetsRole.ComponentValue?])),
+      ],
     ]);
     this.#id = id;
     this.#sheet = sheet;
@@ -230,6 +232,8 @@ export class Group
     return this;
   }
 
+  value(): LetsRole.ViewData;
+  value(_newValue: LetsRole.ComponentValue): void;
   value(_newValue?: LetsRole.ComponentValue): void | LetsRole.ViewData {
     this.#context.logAccess("value", this.#id);
     this.#context.disableAccessLog();
@@ -287,7 +291,7 @@ export class Group
   ) {
     if (arguments.length === 1) {
       const result: LetsRole.ViewData = {};
-      this.#components.forEach((cmp) => (result[cmp.realId()] = cmp[type]()!));
+      this.#components.forEach((cmp) => (result[cmp.realId()] = cmp[type]()));
       return result;
     }
     if (lre.isObject(newValue)) {

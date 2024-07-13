@@ -88,7 +88,7 @@ export class MultiChoice extends Choice<
   }
 
   #checkChanges(choice: MultiChoice) {
-    const newValue = choice.value()!;
+    const newValue = choice.value();
     const selected: LetsRole.MultiChoiceValue = newValue.filter(
       (x) => !this.#currentValue.includes(x)
     );
@@ -128,7 +128,7 @@ export class MultiChoice extends Choice<
       > = {};
       args.push(values);
       values.forEach((v) => {
-        labels[v] = this.label(v);
+        labels[v] = this.label(v) || "";
         data[v] = this.getChoiceData(v);
       });
       args.push(labels);
@@ -199,7 +199,7 @@ export class MultiChoice extends Choice<
       () => {
         const result: LetsRole.ViewData = {};
         each(this.getChoices(), (_v, k) => {
-          if (!this.value()!.includes(k)) {
+          if (!this.value().includes(k)) {
             result[k] = this.label(k);
           }
         });
@@ -212,7 +212,7 @@ export class MultiChoice extends Choice<
           LetsRole.ComponentValue | LetsRole.TableRow
         > = {};
         each(this.getChoices(), (_v, k) => {
-          if (!this.value()!.includes(k)) {
+          if (!this.value().includes(k)) {
             result[k] = this.getChoiceData(k);
           }
         });
@@ -222,6 +222,9 @@ export class MultiChoice extends Choice<
     );
   }
 
+  maxChoiceNb(): MinMaxLimit;
+  maxChoiceNb(nb: MinMaxLimiter): void;
+  maxChoiceNb(nb: MinMaxLimiter, calculator: MinMaxCalculator): void;
   @flaggedDynamicSetter([true, false])
   maxChoiceNb(nb?: MinMaxLimiter, calculator?: MinMaxCalculator) {
     if (arguments.length === 0) {
@@ -232,6 +235,9 @@ export class MultiChoice extends Choice<
     this.on("update:__Lre__minmax", this.#checkLimit.bind(this));
   }
 
+  minChoiceNb(): MinMaxLimit;
+  minChoiceNb(nb: MinMaxLimiter): void;
+  minChoiceNb(nb: MinMaxLimiter, calculator: MinMaxCalculator): void;
   @flaggedDynamicSetter([true, false])
   minChoiceNb(nb?: MinMaxLimiter, calculator?: MinMaxCalculator) {
     if (arguments.length === 0) {
@@ -254,7 +260,7 @@ export class MultiChoice extends Choice<
     let resultMin: ReturnType<MinMaxCalculator> = 0,
       resultMax: ReturnType<MinMaxCalculator> = 0;
     const choices = this.getChoices();
-    const newValue = this.value()!;
+    const newValue = this.value();
 
     each(newValue, (id) => {
       resultMin = this.#calculate(choices, id, this.#minCalculator, resultMin);

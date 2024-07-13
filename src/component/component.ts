@@ -175,6 +175,8 @@ export class Component<
   sheet(): ISheet {
     return this.#sheet;
   }
+  parent(): ComponentContainer;
+  parent(newParent: ComponentContainer): void;
   parent(newParent?: ComponentContainer): ComponentContainer | undefined {
     if (newParent) {
       this.#parent = newParent;
@@ -253,6 +255,8 @@ export class Component<
     return this;
   }
 
+  value(): TypeValue;
+  value(newValue: DynamicSetValue<unknown>): void;
   @dynamicSetter
   @extractDataProviders(function (this: any, dataProvider: IDataProvider) {
     this.#valueDataProvider = dataProvider;
@@ -316,12 +320,15 @@ export class Component<
   rawValue(): TypeValue {
     return lre.value(this.raw().rawValue()) as TypeValue;
   }
+  text(): string;
+  text(replacement: string): void;
+  @dynamicSetter
   text(replacement?: string): string | null | void {
     if (arguments.length > 0) {
       this.raw().text(replacement!);
       return;
     }
-    return this.raw().text();
+    return this.raw().text() || "";
   }
 
   @dynamicSetter

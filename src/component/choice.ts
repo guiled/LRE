@@ -50,7 +50,7 @@ export class Choice<
   }
 
   #checkChanges(choice: Component) {
-    const newValue = choice.value()!;
+    const newValue = choice.value();
     if (newValue !== this.#currentValue) {
       this.trigger(`valselect:${newValue}`);
       this.trigger("select", newValue);
@@ -140,7 +140,7 @@ export class Choice<
     return this.#choices;
   }
 
-  label(value?: LetsRole.ChoiceValue): string {
+  label(value?: LetsRole.ChoiceValue): string | undefined {
     if (
       arguments.length > 0 &&
       value !== this.value() &&
@@ -153,8 +153,9 @@ export class Choice<
       if (this.#choices.hasOwnProperty(value)) {
         return this.#choices[value!];
       }
+      return undefined;
     }
-    return this.text()!;
+    return this.text();
   }
 
   getChoiceData(value?: LetsRole.ChoiceValue): DataProviderDataValue {
@@ -190,7 +191,7 @@ export class Choice<
   }
 
   valueProvider(): IDataProvider | undefined {
-    return this.#choiceDataProvider?.where(this.value()!);
+    return this.#choiceDataProvider?.where(this.value());
   }
 
   row(): LetsRole.TableRow | LetsRole.ComponentValue {

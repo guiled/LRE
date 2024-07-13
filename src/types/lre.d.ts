@@ -312,7 +312,8 @@ declare interface IComponent
   hasClass(className: LetsRole.ClassName): boolean;
   getClasses(): LetsRole.ClassName[];
   toggleClass(className: LetsRole.ClassName): this;
-  value(newValue?: unknown): void | LetsRole.ComponentValue;
+  value(): LetsRole.ComponentValue;
+  value(newValue: unknown): void;
   virtualValue(newValue?: TypeValue): void | TypeValue;
   rawValue(): TypeValue;
   text(replacement?: string): string | null | void;
