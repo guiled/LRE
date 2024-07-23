@@ -166,6 +166,9 @@ export class MockServer {
       value: jest.fn((newValue?: LetsRole.ComponentValue) => {
         if (newValue !== void 0) {
           this.sheetData[cmp.sheet().getSheetId()][cmp.id()] = newValue;
+          Object.assign(this.sheetData[cmp.sheet().getSheetId()], {
+            [newCmp._realId()]: newValue,
+          });
           newCmp._trigger("update");
           return;
         }
