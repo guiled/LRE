@@ -233,6 +233,7 @@ declare interface IEventHolder<
 
 declare interface IDataHolder {
   hasData(name: DataId): boolean;
+  data(name: DataId): any;
   data(name: DataId, value: any = "", persistent = false): this;
   deleteData(name: DataId, persistent: boolean = false): this;
   loadPersistent(): LetsRole.ViewData;

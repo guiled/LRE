@@ -95,7 +95,6 @@ export class MultiChoice extends Choice<
     const unselected: LetsRole.MultiChoiceValue = this.#currentValue.filter(
       (x) => !newValue.includes(x)
     );
-
     this.#handleSelectEvent("select", selected);
     this.#handleSelectEvent("unselect", unselected);
 
@@ -113,7 +112,7 @@ export class MultiChoice extends Choice<
     const args: [
       MultiChoiceEvents,
       (string | Array<string>)?,
-      (DataProviderDataValue | Array<DataProviderDataValue>)?,
+      (DataProviderDataValue | Array<DataProviderDataValue>)?
     ] = [eventName];
 
     if (values.length === 1) {
