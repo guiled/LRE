@@ -1,3 +1,4 @@
+import exp from "constants";
 import { Error } from "../src/error";
 import { Logger } from "../src/log";
 import { LRE } from "../src/lre";
@@ -142,6 +143,34 @@ describe("LRE tests", () => {
       subject.deepEqual({ a: 1, b: 2, c: a, d: 3 }, { e: 4, b: 2, c: {}, a: 1 })
     ).toBeFalsy();
   });
+
+  test("LRE util deep Equal on arrays", () => {
+    expect(subject.deepEqual([], [])).toBeTruthy();
+    expect(subject.deepEqual([1], [1])).toBeTruthy();
+    expect(subject.deepEqual([1], [])).toBeFalsy();
+    expect(subject.deepEqual([1], [2])).toBeFalsy();
+    expect(subject.deepEqual([1, 2], [1, 2])).toBeTruthy();
+    expect(subject.deepEqual([1, 2], [2, 1])).toBeFalsy();
+    expect(subject.deepEqual([1, 2], [1, 2, 3])).toBeFalsy();
+    expect(subject.deepEqual([1, 2, 3], [1, 2])).toBeFalsy();
+    expect(subject.deepEqual([1, 2, 3], [1, 2, 3])).toBeTruthy();
+    expect(subject.deepEqual([1, 2, 3], [1, 2, 4])).toBeFalsy();
+    expect(
+      subject.deepEqual([{ a: 1 }, { b: 2 }], [{ a: 1 }, { b: 2 }])
+    ).toBeTruthy();
+    expect(
+      subject.deepEqual([{ a: 1 }, { b: 2 }], [{ a: 1 }, { b: 3 }])
+    ).toBeFalsy();
+    expect(subject.deepEqual([1, { a: 1 }], [1, { a: 1 }])).toBeTruthy();
+    expect(subject.deepEqual([1, { a: 1 }], [1, { a: 2 }])).toBeFalsy();
+    expect(subject.deepEqual([1, { a: 1 }], [1, { b: 1 }])).toBeFalsy();
+    expect(subject.deepEqual({ a: [1, 2] }, { a: [1, 2] })).toBeTruthy();
+    expect(subject.deepEqual({ a: [1, 2] }, { a: [2, 1] })).toBeFalsy();
+    expect(subject.deepEqual({ a: [1, 2] }, { a: [1, 2, 3] })).toBeFalsy();
+    expect(subject.deepEqual({ a: [1, 2, 3] }, { a: [1, 2] })).toBeFalsy();
+    expect(subject.deepEqual({ a: [1, 2, 3] }, { a: [1, 2, 3] })).toBeTruthy();
+    expect(subject.deepEqual({ a: [1, 2, 3] }, { b: [1, 2, 3] })).toBeFalsy();
+  });
 });
 
 describe("LRE wait", () => {
@@ -205,7 +234,7 @@ describe("LRE autonum", () => {
 
 describe("LRE global methods", () => {
   let subject: LRE;
-  
+
   beforeEach(() => {
     subject = new LRE(modeHandlerMock);
   });
@@ -238,14 +267,17 @@ describe("LRE global methods", () => {
     [[1], false],
     [1, false],
     [true, false],
-    [{
-      avatar: "avatar",
-      token: "token",
-      frame: {
-        avatar: null,
-        token: null,
-      }
-    }, true]
+    [
+      {
+        avatar: "avatar",
+        token: "token",
+        frame: {
+          avatar: null,
+          token: null,
+        },
+      },
+      true,
+    ],
   ])("Value %s is Avatar Value", (init, result) => {
     // @ts-ignore
     expect(subject.isAvatarValue(init)).toBe(result);
@@ -263,14 +295,17 @@ describe("LRE global methods", () => {
     [[1], false],
     [1, false],
     [true, false],
-    [{
-      avatar: "avatar",
-      token: "token",
-      frame: {
-        avatar: null,
-        token: null,
-      }
-    }, false]
+    [
+      {
+        avatar: "avatar",
+        token: "token",
+        frame: {
+          avatar: null,
+          token: null,
+        },
+      },
+      false,
+    ],
   ])("Value %s is repeater value", (init, result) => {
     /* @ts-ignore */
     expect(subject.isRepeaterValue(init)).toBe(result);

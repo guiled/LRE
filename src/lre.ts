@@ -167,18 +167,21 @@ export class LRE extends Logger implements ILRE {
   deepEqual(x: any, y: any): boolean {
     if (x === y) {
       return true;
-    } else if (
-      typeof x == "object" &&
-      x != null &&
-      typeof y == "object" &&
-      y != null
-    ) {
+    } else if (this.isObject(x) && this.isObject(y)) {
       if (Object.keys(x).length != Object.keys(y).length) return false;
 
       for (var prop in x) {
         if (y.hasOwnProperty(prop)) {
           if (!this.deepEqual(x[prop], y[prop])) return false;
         } else return false;
+      }
+
+      return true;
+    } else if (Array.isArray(x) && Array.isArray(y)) {
+      if (x.length != y.length) return false;
+
+      for (let i = 0; i < x.length; i++) {
+        if (!this.deepEqual(x[i], y[i])) return false;
       }
 
       return true;
