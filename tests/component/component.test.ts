@@ -251,7 +251,7 @@ describe("Component tree", () => {
 });
 
 describe("Component update event handling", () => {
-  test("Update not triggered after sheet setData", () => {
+  test("Update not triggered after sheet setData if data not changed", () => {
     const updateEvent = jest.fn();
     cmp.on("update", updateEvent);
     expect(updateEvent).not.toHaveBeenCalled();
@@ -264,6 +264,21 @@ describe("Component update event handling", () => {
     expect(updateEvent).toHaveBeenCalledTimes(2);
     rawCmp.value(43);
     expect(updateEvent).toHaveBeenCalledTimes(2);
+  });
+
+  test("Raw sheet set data triggers update event", () => {
+    const updateEvent = jest.fn();
+    cmp.on("update", updateEvent);
+    rawSheet.setData({
+      [cmp.id()]: 43,
+    });
+    expect(updateEvent).toHaveBeenCalledTimes(1);
+  });
+
+  test("Raw Component value change applied to sheet data", () => {
+    expect(rawSheet.getData()[rawCmp.id()]).toBe(cmpValue);
+    rawCmp.value(43);
+    expect(rawSheet.getData()[rawCmp.id()]).toBe(43);
   });
 });
 
