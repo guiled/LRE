@@ -289,10 +289,16 @@ declare interface ComponentContainer<T = ComponentSearchResult>
   find: ComponentFinder<T>;
 }
 
+declare interface IHasRaw<T = LetsRole.Sheet | LetsRole.Component> {
+  raw(): T;
+  refreshRaw(newRaw?: T): T;
+}
+
 declare interface IComponent
   extends ComponentContainer,
     IEventHolder<any>,
-    IDataHolder {
+    IDataHolder,
+    IHasRaw {
   init(): this;
   repeater(repeater?: Repeater): Repeater | undefined;
   entry(entry?: Entry): Entry | undefined;

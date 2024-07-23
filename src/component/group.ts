@@ -82,6 +82,10 @@ export class Group
     return this as unknown as LetsRole.Component;
   }
 
+  refreshRaw(): LetsRole.Component {
+    return this as unknown as LetsRole.Component;
+  }
+
   add(cmp: LetsRole.ComponentID | IComponent): this {
     let cmpIndex: number;
     let component: ComponentSearchResult | IGroup = null;

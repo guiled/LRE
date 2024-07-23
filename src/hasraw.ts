@@ -7,7 +7,7 @@ type HasRawConstructorParams<T> = {
 export const HasRaw = <T = LetsRole.Sheet | LetsRole.Component>(
   superclass: Newable = class {}
 ) =>
-  class HasRaw extends superclass {
+  class HasRaw extends superclass implements IHasRaw<T> {
     #raw: T | undefined;
     #getRaw: HasRawConstructorParams<T>["getRaw"];
     #onRefresh: HasRawConstructorParams<T>["onRefresh"];
