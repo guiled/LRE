@@ -16,13 +16,12 @@ import {
   VariableDeclaration,
 } from "@swc/core";
 import { Visitor } from "@swc/core/Visitor.js";
-import member from "./node/expression/member";
-import memberchained from "./node/expression/memberchained";
 import identifier from "./node/identifier";
 import numericliteral from "./node/literal/numericliteral";
 import undefinedidentifier from "./node/undefinedidentifier";
 import returnstmt from "./node/statement/returnstmt";
 import onevariable from "./node/declaration/onevariable";
+import call from "./node/expression/call";
 
 const ARGS = "_arg";
 export function hasPropWithValue(o: ObjectPattern): boolean {
@@ -119,43 +118,30 @@ class DefaultParameter extends Visitor {
             type: "VariableDeclarator",
             span: span,
             id,
-            init: {
-              type: "ConditionalExpression",
-              span: span,
-              test: {
-                type: "ParenthesisExpression",
-                span: span,
-                expression: {
-                  type: "BinaryExpression",
-                  span: span,
-                  operator: "<",
-                  left: memberchained({
+            init: call({
+              span,
+              callee: identifier({
+                span,
+                value: "def",
+              }),
+              args: [
+                {
+                  expression: identifier({
                     span: span,
-                    properties: ["arguments", "length"],
-                  }),
-                  right: numericliteral({
-                    span: span,
-                    value: index + 1,
+                    value: "arguments",
                   }),
                 },
-              },
-              consequent: defaultValue,
-              alternate: member({
-                span: span,
-                object: identifier({
-                  span: span,
-                  value: "arguments",
-                }),
-                property: {
-                  type: "Computed",
-                  span: span,
+                {
                   expression: numericliteral({
                     span: span,
                     value: index,
                   }),
                 },
-              }),
-            },
+                {
+                  expression: defaultValue,
+                },
+              ],
+            }),
             definite: false,
           },
         ],
