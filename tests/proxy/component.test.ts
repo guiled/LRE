@@ -343,6 +343,7 @@ describe("Proxy logs", () => {
     subject.getDest();
     jest.spyOn(raw, "value");
     jest.spyOn(raw, "getClasses");
+    jest.spyOn(modeHandlerMock, "logAccess");
   });
 
   test.each(["value", "rawValue", "virtualValue", "text", "visible"])(

@@ -7,6 +7,7 @@ jest.mock("../../src/lre");
 
 describe("Logged call", () => {
   test("logged call runs the callback with clean logs", () => {
+    jest.spyOn(context, "resetAccessLog");
     const cb = jest.fn();
     expect(context.resetAccessLog).not.toHaveBeenCalled();
     expect(cb).not.toHaveBeenCalled();
