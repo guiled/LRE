@@ -5,5 +5,6 @@
   "prettier.printWidth": 80,
   "javascript.format.semicolons": "insert",
   "typescript.format.semicolons": "insert",
-  "prettier.semi": true
+  "prettier.semi": true,
+  "prettier.trailingComma": "es5"
 }
