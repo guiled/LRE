@@ -1,4 +1,4 @@
-declare type BasicObject<T = any> = { [key: string]: T };
+declare type BasicObject<T = any> = { [key: string]: T; };
 
 declare interface ILRE {
   deepMerge(target: any, ...sources: any[]): any;
@@ -160,10 +160,9 @@ declare type EventType<T extends string = string> =
   | EventHolderDefaultEvents
   | EventHolderDefaultEvents
   | T
-  | `${
-      | EventHolderDefaultEvents
-      | EventHolderDefaultEvents
-      | T}${EVENT_SEP}${string}`;
+  | `${| EventHolderDefaultEvents
+  | EventHolderDefaultEvents
+  | T}${EVENT_SEP}${string}`;
 
 declare type WithValue = {
   value: LetsRole.Component["value"];
@@ -180,7 +179,7 @@ declare type LREEventTargetWithValue = Object &
 declare interface IEventHolder<
   AdditionalEvents extends string = EventHolderDefaultEvents
 > {
-  id(): string;
+  id(): string | null;
 
   on(
     event: EventType<AdditionalEvents>,
@@ -297,9 +296,9 @@ declare interface IHasRaw<T = LetsRole.Sheet | LetsRole.Component> {
 
 declare interface IComponent
   extends ComponentContainer,
-    IEventHolder<any>,
-    IDataHolder,
-    IHasRaw {
+  IEventHolder<any>,
+  IDataHolder,
+  IHasRaw {
   init(): this;
   repeater(repeater?: Repeater): Repeater | undefined;
   entry(entry?: Entry): Entry | undefined;
@@ -307,7 +306,7 @@ declare interface IComponent
   toggle(): void;
   exists(): boolean;
   knownChildren(): Array<IComponent>;
-  id(): LetsRole.ComponentID;
+  id(): LetsRole.ComponentID | null;
   index(): string | null;
   name(): string;
   setToolTip(text: string, placement?: LetsRole.TooltipPlacement): void;
@@ -321,7 +320,7 @@ declare interface IComponent
   toggleClass(className: LetsRole.ClassName): this;
   value(): LetsRole.ComponentValue;
   value(newValue: unknown): void;
-  virtualValue(newValue?: TypeValue): void | TypeValue;
+  virtualValue(newValue?: TypeValue): void | TypeValue | null;
   rawValue(): TypeValue;
   text(replacement?: string): string | null | void;
   visible(newValue?: boolean | ((...args: any[]) => any)): boolean;

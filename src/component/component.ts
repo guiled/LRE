@@ -41,9 +41,9 @@ type ClassChangeApply = {
 };
 
 export class Component<
-    TypeValue extends LetsRole.ComponentValue = LetsRole.ComponentValue,
-    AdditionalEvents extends string = LetsRole.EventType
-  >
+  TypeValue extends LetsRole.ComponentValue = LetsRole.ComponentValue,
+  AdditionalEvents extends string = LetsRole.EventType
+>
   extends (Mixin(EventHolder, HasRaw<LetsRole.Component>, DataHolder) as new <
     SubTypeEventHolder extends string
   >(
@@ -51,25 +51,24 @@ export class Component<
   ) => IEventHolder<SubTypeEventHolder> &
     InstanceType<ReturnType<typeof HasRaw<LetsRole.Component>>> &
     InstanceType<ReturnType<typeof DataHolder>>)<
-    ThisComponentEventTypes<AdditionalEvents>
-  >
+      ThisComponentEventTypes<AdditionalEvents>
+    >
   implements
-    Omit<
-      LetsRole.Component<TypeValue>,
-      | "on"
-      | "off"
-      | "find"
-      | "value"
-      | "sheet"
-      | "parent"
-      | "virtualValue"
-      | "rawValue"
-      | "text"
-    >,
-    IComponent,
-    ComponentContainer,
-    ComponentCommon
-{
+  Omit<
+    LetsRole.Component<TypeValue>,
+    | "on"
+    | "off"
+    | "find"
+    | "value"
+    | "sheet"
+    | "parent"
+    | "virtualValue"
+    | "rawValue"
+    | "text"
+  >,
+  IComponent,
+  ComponentContainer,
+  ComponentCommon {
   component: boolean = true;
   #realId: string;
   #sheet: ISheet;
@@ -90,7 +89,7 @@ export class Component<
           rawCmp: LetsRole.Component,
           event: EventDef
         ): IEventHolder | undefined => {
-          let idToFind: string = "";
+          let idToFind: string | null = "";
 
           if (event.delegated && rawCmp.index()) {
             idToFind = rawCmp.index() + REP_ID_SEP + rawCmp.id();
@@ -98,7 +97,7 @@ export class Component<
             idToFind = rawCmp.id();
           }
 
-          if (idToFind !== "") {
+          if (idToFind !== "" && idToFind !== null) {
             return this.find(idToFind) as unknown as IEventHolder;
           }
         },
@@ -154,7 +153,7 @@ export class Component<
     return this.#lreType;
   }
 
-  id(): string {
+  id(): LetsRole.ComponentID | null {
     return this.raw().id();
   }
   realId(): string {
@@ -310,7 +309,7 @@ export class Component<
     );
   }
 
-  virtualValue(newValue?: TypeValue): void | TypeValue {
+  virtualValue(newValue?: TypeValue): void | null | TypeValue {
     if (arguments.length > 0) {
       this.raw().virtualValue(newValue!);
       return;

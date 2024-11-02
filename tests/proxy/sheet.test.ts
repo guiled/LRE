@@ -1,30 +1,59 @@
 import { Context } from "../../src/context";
+import { ServerMock } from "../../src/mock/letsrole/server.mock";
+import { ViewMock } from "../../src/mock/letsrole/view.mock";
 import { SheetProxy } from "../../src/proxy/sheet";
-import { MockServer } from "../mock/letsrole/server.mock";
-import { MockSheet } from "../mock/letsrole/sheet.mock";
 
 let context: ProxyModeHandler;
+let server: ServerMock;
 beforeEach(() => {
   context = new Context();
   context.setMode("real");
+  server = new ServerMock({
+    views: [
+      {
+        id: "main",
+        children: [{
+          id: "cmp1",
+          className: "Label",
+          text: "101",
+        }, {
+          id: "cmp2",
+          className: "Label",
+          text: "102",
+        }],
+        className: "View",
+        name: "theSheet",
+      },
+    ],
+    viewVariables: {
+      main: {
+        var1: 101,
+        var2: 102,
+      },
+    }
+  });
 });
+
+const spyView = (vw: ViewMock): ViewMock => {
+  jest.spyOn(vw, "id");
+  jest.spyOn(vw, "getSheetId");
+  jest.spyOn(vw, "name");
+  jest.spyOn(vw, "properName");
+  jest.spyOn(vw, "getVariable");
+  jest.spyOn(vw, "prompt");
+  jest.spyOn(vw, "getData");
+  jest.spyOn(vw, "setData");
+  jest.spyOn(vw, "get");
+  return vw;
+};
 
 describe("SheetProxy test", () => {
   test("Sheet proxy works in real by default", () => {
     const data = {
       cmp1: "42",
     };
-    const raw = MockSheet({
-      id: "main",
-      realId: "12345",
-      properName: "TheProperName",
-      data,
-      name: "theSheet",
-      variables: {
-        var1: 101,
-        var2: 102,
-      },
-    });
+    const raw = server.openView("main", "12345", data, "TheProperName");
+    spyView(raw);
     const subject = new SheetProxy(context, raw);
     expect(raw.id).not.toHaveBeenCalled();
     expect(raw.getSheetId).not.toHaveBeenCalled();
@@ -75,17 +104,8 @@ describe("SheetProxy test", () => {
     const data = {
       cmp1: "42",
     };
-    const raw = MockSheet({
-      id: "main",
-      realId: "12345",
-      properName: "TheProperName",
-      data,
-      name: "theSheet",
-      variables: {
-        var1: 101,
-        var2: 102,
-      },
-    });
+    const raw = server.openView("main", "12345", data, "TheProperName");
+    spyView(raw);
     const subject = new SheetProxy(context, raw);
     context.setMode("virtual");
     (raw.getData as jest.Mock).mockClear();
@@ -124,26 +144,12 @@ describe("Sheet real usages in virtual", () => {
   let data;
   let raw: LetsRole.Sheet;
   let subject: SheetProxy;
-  let server: MockServer;
   beforeEach(() => {
     data = {
       cmp1: "42",
       cmp2: "43",
     };
-    raw = MockSheet({
-      id: "main",
-      realId: "12345",
-      properName: "TheProperName",
-      data,
-      name: "theSheet",
-      variables: {
-        var1: 101,
-        var2: 102,
-      },
-    });
-    server = new MockServer();
-    server.registerMockedSheet(raw);
-
+    raw = server.openView("main", "12345", data, "TheProperName");
     subject = new SheetProxy(context, raw);
   });
 
@@ -174,17 +180,7 @@ describe("Proxy logs", () => {
     const data = {
       cmp1: "42",
     };
-    const raw = MockSheet({
-      id: "main",
-      realId: "12345",
-      properName: "TheProperName",
-      data,
-      name: "theSheet",
-      variables: {
-        var1: 101,
-        var2: 102,
-      },
-    });
+    const raw = server.openView("main", "12345", data, "TheProperName");
     const subject = new SheetProxy(context, raw);
     expect(context.getAccessLog("cmp")).toStrictEqual([]);
     subject.get("cmp1");

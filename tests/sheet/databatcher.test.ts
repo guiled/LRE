@@ -1,4 +1,3 @@
-import { MockSheet, MockedSheet } from "../mock/letsrole/sheet.mock";
 import { DataBatcher } from "../../src/sheet/databatcher";
 import { LRE } from "../../src/lre";
 import { SheetProxy } from "../../src/proxy/sheet";
@@ -7,22 +6,35 @@ import {
   initLetsRole,
   itHasWaitedEnough,
   itHasWaitedEverything,
-} from "../mock/letsrole/letsrole.mock";
+} from "../../src/mock/letsrole/letsrole.mock";
+import { ViewMock } from "../../src/mock/letsrole/view.mock";
+import { ServerMock } from "../../src/mock/letsrole/server.mock";
 
-initLetsRole();
-global.lre = new LRE(modeHandlerMock);
-lre.wait = global.wait;
+
+let server: ServerMock;
 
 beforeEach(() => {
   modeHandlerMock.setMode("real");
+  server = new ServerMock({
+    views: [
+      {
+        id: "main",
+        children: [],
+        className: "View",
+      },
+    ],
+  });
+  initLetsRole(server);
+  global.lre = new LRE(modeHandlerMock);
+  lre.wait = global.wait;
 });
 
 describe("DataBatcher instantiation", () => {
   let dataBatcher: DataBatcher;
-  let sheet: MockedSheet;
+  let sheet: ViewMock;
 
   beforeEach(() => {
-    sheet = MockSheet({ id: "123" });
+    sheet = server.openView("main", "123");
     dataBatcher = new DataBatcher(modeHandlerMock, sheet);
   });
 
@@ -33,14 +45,16 @@ describe("DataBatcher instantiation", () => {
 
 describe("DataBatcher async send data", () => {
   let dataBatcher: DataBatcher;
-  let sheet: MockedSheet;
+  let sheet: ViewMock;
 
   beforeEach(() => {
-    sheet = MockSheet({ id: "123" });
+    sheet = server.openView("main", "123");
+    jest.spyOn(sheet, "setData");
     dataBatcher = new DataBatcher(modeHandlerMock, sheet);
   });
 
   it("delayed data send and getPendingData", () => {
+    jest.spyOn(sheet, "setData");
     const data = {
       fortyTwo: 42,
       fortyThree: 43,
@@ -182,11 +196,11 @@ describe("Handle virtual and real modes", () => {
   let sheetProxy: LetsRole.Sheet;
 
   beforeEach(() => {
-    sheet = MockSheet({ id: "123" });
+    sheet = server.openView("main", "123");
     sheetProxy = new SheetProxy(modeHandlerMock, sheet);
     jest.spyOn(sheetProxy, "setData");
     dataBatcher = new DataBatcher(modeHandlerMock, sheetProxy);
-    (sheet.setData as jest.Mock).mockClear();
+    jest.spyOn(sheet, "setData");
   });
 
   test("Virtual mode", () => {

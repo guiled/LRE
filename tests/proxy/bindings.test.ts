@@ -1,12 +1,23 @@
+import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { registerLreBindings } from "../../src/proxy/bindings";
-import { initLetsRole } from "../mock/letsrole/letsrole.mock";
-import { MockSheet } from "../mock/letsrole/sheet.mock";
+import { initLetsRole } from "../../src/mock/letsrole/letsrole.mock";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 describe("Bindings proxy", () => {
   let subject: LetsRole.Bindings;
+  let server: ServerMock;
   beforeEach(() => {
-    initLetsRole();
+    server = new ServerMock({
+      views: [
+        {
+          id: "main",
+          children: [
+          ],
+          className: "View",
+        }
+      ],
+    });
+    initLetsRole(server);
     subject = registerLreBindings(modeHandlerMock, Bindings);
     (Bindings.add as jest.Mock).mockClear();
     (Bindings.clear as jest.Mock).mockClear();
@@ -24,7 +35,7 @@ describe("Bindings proxy", () => {
     expect(Bindings.clear).toHaveBeenCalled();
     subject.remove("bindingName");
     expect(Bindings.remove).toHaveBeenCalled();
-    subject.send(MockSheet({ id: "123" }), "bindingName");
+    subject.send(server.openView("main", "123"), "bindingName");
     expect(Bindings.send).toHaveBeenCalled();
   });
 
@@ -36,7 +47,7 @@ describe("Bindings proxy", () => {
     expect(Bindings.clear).not.toHaveBeenCalled();
     subject.remove("bindingName");
     expect(Bindings.remove).not.toHaveBeenCalled();
-    subject.send(MockSheet({ id: "123" }), "bindingName");
+    subject.send(server.openView("main", "123"), "bindingName");
     expect(Bindings.send).not.toHaveBeenCalled();
   });
 });

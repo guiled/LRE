@@ -1,52 +1,91 @@
 import { Group } from "../../src/component/group";
 import { LRE } from "../../src/lre";
+import { ComponentMock } from "../../src/mock/letsrole/component.mock";
+import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
-import { MockedComponent } from "../mock/letsrole/component.mock";
-import { initLetsRole } from "../mock/letsrole/letsrole.mock";
-import { MockServer } from "../mock/letsrole/server.mock";
-import { MockSheet } from "../mock/letsrole/sheet.mock";
+import { initLetsRole } from "../../src/mock/letsrole/letsrole.mock";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 let sheet: Sheet;
 global.lre = new LRE(modeHandlerMock);
 
 beforeEach(() => {
-  initLetsRole();
-  const server = new MockServer();
-  const rawSheet = MockSheet({
-    id: "main",
-    data: {
-      a: {
-        b: {
-          c: true,
-        },
+  const server = new ServerMock({
+    views: [
+      {
+        id: "main",
+        children: [
+          {
+            id: "cmp1",
+            name: "cmp1",
+            className: "TextInput",
+            classes: "a b c",
+            defaultValue: "txt1",
+          },
+          {
+            id: "cmp2",
+            name: "cmp2",
+            className: "TextInput",
+            classes: "a d b",
+            defaultValue: "txt2",
+          },
+          {
+            id: "cmp3",
+            name: "cmp3",
+            className: "TextInput",
+            classes: "b d a",
+            defaultValue: "txt3",
+          },
+          {
+            id: "cmp4",
+            name: "cmp4",
+            className: "TextInput",
+            classes: "b d a",
+            defaultValue: "txt3",
+          },
+          {
+            id: "a",
+            className: "Repeater",
+            viewId: "edt",
+            readViewId: "read",
+          },
+          {
+            id: "checkbox",
+            className: "Checkbox",
+          }
+        ],
+        className: "View",
       },
-      cmp1: "val1",
-      cmp2: "val2",
-      cmp3: "val3",
-    },
+      {
+        id: "edt",
+        children: [],
+        className: "View",
+      },
+      {
+        id: "read",
+        children: [
+          {
+            id: "c",
+            className: "Label",
+            text: "ok",
+          }
+        ],
+        className: "View",
+      }
+    ],
   });
-  server.registerMockedSheet(rawSheet, [
-    {
-      id: "cmp1",
-      name: "cmp1",
-      classes: ["a", "b", "c"],
-      text: "txt1",
+  initLetsRole(server);
+  const rawSheet = server.openView("main", "123", {
+    a: {
+      b: {
+        c: true,
+      },
     },
-    {
-      id: "cmp2",
-      name: "cmp1",
-      classes: ["a", "d", "b"],
-      text: "txt2",
-    },
-    {
-      id: "cmp3",
-      name: "cmp1",
-      classes: ["b", "d", "a"],
-      text: "txt3",
-    },
-  ]);
+    cmp1: "val1",
+    cmp2: "val2",
+    cmp3: "val3",
+  });
   sheet = new Sheet(
     rawSheet,
     new DataBatcher(modeHandlerMock, rawSheet),
@@ -221,16 +260,16 @@ describe("Component group basics", () => {
     expect(updateCb).toHaveBeenCalledTimes(2);
 
     updateCb.mockClear();
-    group.add(MockServer.UNKNOWN_CMP_ID);
+    group.add("unknown");
     expect(group.count()).toBe(1);
     expect(updateCb).toHaveBeenCalledTimes(0);
 
     expect(() =>
-      group.add(sheet.get(MockServer.UNKNOWN_CMP_ID)! as IComponent)
+      group.add(sheet.get("unknown")! as IComponent)
     ).toThrow();
     expect(group.count()).toBe(1);
     expect(updateCb).toHaveBeenCalledTimes(0);
-    expect(group.includes(MockServer.NON_EXISTING_CMP_ID)).toBeFalsy();
+    expect(group.includes("unknown")).toBeFalsy();
   });
 
   test("Large group", () => {
@@ -282,19 +321,19 @@ describe("Event attached to group are attached to all items", () => {
     const group: Group = new Group(context, "group1", sheet, ["cmp1", "cmp2"]);
     const updateFn = jest.fn();
     group.on("update", updateFn);
-    const cmp1: MockedComponent = sheet.raw().get("cmp1") as MockedComponent;
-    const cmp2: MockedComponent = sheet.raw().get("cmp2") as MockedComponent;
+    const cmp1: ComponentMock = sheet.raw().get("cmp1") as ComponentMock;
+    const cmp2: ComponentMock = sheet.raw().get("cmp2") as ComponentMock;
     expect(updateFn).not.toHaveBeenCalled();
 
-    cmp1._trigger("update");
+    cmp1.trigger("update");
     expect(updateFn).toHaveBeenCalledTimes(1);
-    cmp2._trigger("update");
+    cmp2.trigger("update");
     expect(updateFn).toHaveBeenCalledTimes(2);
 
-    const cmp3: MockedComponent = sheet.raw().get("cmp3") as MockedComponent;
+    const cmp3: ComponentMock = sheet.raw().get("cmp3") as ComponentMock;
     group.add("cmp3");
     updateFn.mockClear();
-    cmp3._trigger("update");
+    cmp3.trigger("update");
     expect(updateFn).toHaveBeenCalledTimes(1);
 
     group.remove("cmp2");
@@ -311,42 +350,42 @@ describe("Event attached to group are attached to all items", () => {
     ]);
     const clickFn = jest.fn();
     group.on("click:label", clickFn);
-    const cmp1: MockedComponent = sheet.raw().get("cmp1") as MockedComponent;
+    const cmp1: ComponentMock = sheet.raw().get("cmp1") as ComponentMock;
 
     expect(clickFn).not.toHaveBeenCalled();
-    cmp1._trigger("click");
+    cmp1.trigger("click");
     expect(clickFn).toHaveBeenCalled();
 
     clickFn.mockClear();
     const clickFn2 = jest.fn();
     group.on("click:label", clickFn2);
-    cmp1._trigger("click");
+    cmp1.trigger("click");
     expect(clickFn).not.toHaveBeenCalled();
     expect(clickFn2).toHaveBeenCalled();
 
     clickFn.mockClear();
     clickFn2.mockClear();
     group.off("click:label");
-    cmp1._trigger("click");
+    cmp1.trigger("click");
     expect(clickFn).not.toHaveBeenCalled();
     expect(clickFn2).not.toHaveBeenCalled();
 
     clickFn.mockClear();
     group.once("click:try", clickFn);
-    cmp1._trigger("click");
-    cmp1._trigger("click");
+    cmp1.trigger("click");
+    cmp1.trigger("click");
     expect(clickFn).toHaveBeenCalledTimes(1);
 
     clickFn.mockClear();
     group.on("click", clickFn);
-    cmp1._trigger("click");
+    cmp1.trigger("click");
     expect(clickFn).toHaveBeenCalledTimes(1);
     group.disableEvent("click");
-    cmp1._trigger("click");
-    cmp1._trigger("click");
+    cmp1.trigger("click");
+    cmp1.trigger("click");
     expect(clickFn).toHaveBeenCalledTimes(1);
     group.enableEvent("click");
-    cmp1._trigger("click");
+    cmp1.trigger("click");
     expect(clickFn).toHaveBeenCalledTimes(2);
   });
 
@@ -356,13 +395,13 @@ describe("Event attached to group are attached to all items", () => {
     group.on("click:label", clickFn);
 
     group.add("cmp1");
-    const cmp1: MockedComponent = sheet.raw().get("cmp1") as MockedComponent;
-    cmp1._trigger("click");
+    const cmp1: ComponentMock = sheet.raw().get("cmp1") as ComponentMock;
+    cmp1.trigger("click");
     expect(clickFn).toHaveBeenCalled();
 
     clickFn.mockClear();
     group.remove("cmp1");
-    cmp1._trigger("click");
+    cmp1.trigger("click");
     expect(clickFn).not.toHaveBeenCalled();
   });
 });
@@ -450,9 +489,9 @@ describe("Group get values", () => {
 
   test("getClasses gives classes that are on ALL components", () => {
     const group = new Group(context, "group2", sheet, ["cmp1", "cmp2", "cmp3"]);
-    expect(group.getClasses().sort()).toEqual(["a", "b"].sort());
+    expect(group.getClasses().sort()).toEqual(["a", "b", "form-control", "text-input", "widget"].sort());
     sheet.get("cmp1")!.addClass("d");
-    expect(group.getClasses().sort()).toEqual(["a", "b", "d"].sort());
+    expect(group.getClasses().sort()).toEqual(["a", "b", "d", "form-control", "text-input", "widget"].sort());
   });
 
   test("visible get / set", () => {

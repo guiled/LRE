@@ -10,8 +10,7 @@ export type SheetContext = {
 
 export class SheetProxy
   extends LreProxy<LetsRole.Sheet>
-  implements LetsRole.Sheet
-{
+  implements LetsRole.Sheet {
   constructor(proxyModeHandler: ProxyModeHandler, sheet: LetsRole.Sheet) {
     super(proxyModeHandler, sheet);
     this.setModeDest("virtual", (sheet: LetsRole.Sheet) => {
@@ -29,6 +28,10 @@ export class SheetProxy
       };
       return {
         ...sheet,
+        id: () => sheet.id(),
+        name: () => sheet.name(),
+        properName: () => sheet.properName(),
+        getSheetId: () => sheet.getSheetId(),
         getData: () => {
           return getContext().sheetData;
         },
@@ -47,10 +50,10 @@ export class SheetProxy
           _title: string,
           _view: string,
           _callback: (
-            result: Partial<{ [key: string]: LetsRole.ComponentValue }>
+            result: Partial<{ [key: string]: LetsRole.ComponentValue; }>
           ) => void,
           _callbackInit: (promptView: LetsRole.Sheet) => void
-        ): void => {},
+        ): void => { },
       };
     });
   }
@@ -94,7 +97,7 @@ export class SheetProxy
     _title: string,
     _view: string,
     _callback: (
-      result: Partial<{ [key: string]: LetsRole.ComponentValue }>
+      result: Partial<{ [key: string]: LetsRole.ComponentValue; }>
     ) => void,
     _callbackInit: (promptView: LetsRole.Sheet) => void
   ): void {
@@ -102,11 +105,11 @@ export class SheetProxy
     proxy.prompt.apply(proxy, Array.from(arguments) as any);
   }
 
-  setData(data: Partial<{ [key: string]: LetsRole.ComponentValue }>): void {
+  setData(data: Partial<{ [key: string]: LetsRole.ComponentValue; }>): void {
     this.getDest().setData(data);
   }
 
-  getData(): Partial<{ [key: string]: LetsRole.ComponentValue }> {
+  getData(): Partial<{ [key: string]: LetsRole.ComponentValue; }> {
     return this.getDest().getData();
   }
 }

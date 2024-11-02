@@ -1,10 +1,9 @@
-import exp from "constants";
 import { Error } from "../src/error";
 import { Logger } from "../src/log";
 import { LRE } from "../src/lre";
+import { ServerMock } from "../src/mock/letsrole/server.mock";
 import { Sheet } from "../src/sheet";
-import { MockSheet } from "./mock/letsrole/sheet.mock";
-import { newMockedWait } from "./mock/letsrole/wait.mock";
+import { newMockedWait } from "../src/mock/letsrole/wait.mock";
 import { modeHandlerMock } from "./mock/modeHandler.mock";
 
 jest.mock("../src/log");
@@ -20,6 +19,8 @@ describe("LRE tests", () => {
 
   beforeEach(() => {
     subject = new LRE(modeHandlerMock);
+    lre.deepMerge = subject.deepMerge;
+    lre.isObject = subject.isObject;
     spyOnMathRandom = jest.spyOn(global.Math, "random").mockReturnValue(1);
   });
 
@@ -84,8 +85,18 @@ describe("LRE tests", () => {
     const cb: jest.Mock = jest.fn();
     global.firstInit = jest.fn();
 
-    const sheet1 = MockSheet({ id: "main", realId: "13" });
-    const sheet2 = MockSheet({ id: "main", realId: "", properName: "" });
+    const server = new ServerMock({
+      views: [
+        {
+          id: "main",
+          children: [],
+          className: "View",
+        },
+      ],
+    });
+
+    const sheet1 = server.openView("main", "13");
+    const sheet2 = server.openView("main", "", undefined, "theSheet");
 
     let init = subject.apply(subject, [cb]);
 

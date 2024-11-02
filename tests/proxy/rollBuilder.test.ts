@@ -1,15 +1,25 @@
+import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { registerLreRollBuilder } from "../../src/proxy/rollBuilder";
-import { initLetsRole, rollBuilderMock } from "../mock/letsrole/letsrole.mock";
-import { MockSheet } from "../mock/letsrole/sheet.mock";
+import { initLetsRole, rollBuilderMock } from "../../src/mock/letsrole/letsrole.mock";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 describe("RollBuilder proxy", () => {
   let subject: typeof RollBuilder;
   let sheet: LetsRole.Sheet;
   beforeEach(() => {
-    initLetsRole();
+    const server = new ServerMock({
+      views: [
+        {
+          id: "main",
+          children: [
+          ],
+          className: "View",
+        }
+      ]
+    });
+    initLetsRole(server);
     subject = registerLreRollBuilder(modeHandlerMock, RollBuilder);
-    sheet = MockSheet({ id: "main" });
+    sheet = server.openView("main", "123");
   });
 
   test("works in real", () => {
@@ -18,9 +28,9 @@ describe("RollBuilder proxy", () => {
     expect(rb.title("title")).toBe(rb);
     expect(rb.visibility("visible")).toBe(rb);
     expect(rb.expression("2d6")).toBe(rb);
-    expect(rb.addAction("action1", () => {})).toBe(rb);
+    expect(rb.addAction("action1", () => { })).toBe(rb);
     expect(rb.removeAction("action1")).toBe(rb);
-    expect(rb.onRoll(() => {})).toBe(rb);
+    expect(rb.onRoll(() => { })).toBe(rb);
     expect(rb.roll()).toBeUndefined();
     expect(rollBuilderMock.title).toHaveBeenCalled();
     expect(rollBuilderMock.visibility).toHaveBeenCalled();
@@ -30,6 +40,7 @@ describe("RollBuilder proxy", () => {
     expect(rollBuilderMock.onRoll).toHaveBeenCalled();
     expect(rollBuilderMock.roll).toHaveBeenCalled();
   });
+
   test("works in virtual", () => {
     modeHandlerMock.setMode("virtual");
     const rb = new subject(sheet);
@@ -37,9 +48,9 @@ describe("RollBuilder proxy", () => {
     expect(rb.title("title")).toBe(rb);
     expect(rb.visibility("visible")).toBe(rb);
     expect(rb.expression("2d6")).toBe(rb);
-    expect(rb.addAction("action1", () => {})).toBe(rb);
+    expect(rb.addAction("action1", () => { })).toBe(rb);
     expect(rb.removeAction("action1")).toBe(rb);
-    expect(rb.onRoll(() => {})).toBe(rb);
+    expect(rb.onRoll(() => { })).toBe(rb);
     expect(rb.roll()).toBeUndefined();
     expect(rollBuilderMock.title).toHaveBeenCalled();
     expect(rollBuilderMock.visibility).toHaveBeenCalled();

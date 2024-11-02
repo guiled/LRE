@@ -84,10 +84,11 @@ export class Repeater extends Component<
           entry.data("saved", false);
           entry.data("children", this.sheet().knownChildren(entry));
           // Save the data before potential changes in init event
-          const valueSave = structuredClone(entryData);
+          // I don't remember the reason of this line
+          //const valueSave = structuredClone(entryData);
           this.trigger("init", entry, entryId, entryData);
           this.trigger("initedit", entry, entryId, entryData);
-          this.#applyValuesToEntry(entryId, valueSave);
+          //this.#applyValuesToEntry(entryId, valueSave);
         }
       } else if (
         entry.hasClass("editing") &&
@@ -114,27 +115,27 @@ export class Repeater extends Component<
     });
   }
 
-  #applyValuesToEntry(entryId: LetsRole.Index, value: LetsRole.ViewData) {
-    const entry = this.find(entryId) as Entry;
-    if (!entry.exists()) {
-      return;
-    }
+  // #applyValuesToEntry(entryId: LetsRole.Index, value: LetsRole.ViewData) {
+  //   const entry = this.find(entryId) as Entry;
+  //   if (!entry.exists()) {
+  //     return;
+  //   }
 
-    const values = this.value() as DefinedRepeaterValue;
+  //   const values = this.value() as DefinedRepeaterValue;
 
-    if (!values.hasOwnProperty(entryId)) {
-      values[entryId] = {};
-    }
+  //   if (!values.hasOwnProperty(entryId)) {
+  //     values[entryId] = {};
+  //   }
 
-    each(value, (val, key) => {
-      values[entryId][key] = val;
-      const child = entry.find(key);
-      // The child may not exists as the edit view is being closed by click on "Done"
-      if (child?.exists()) {
-        child.value(val);
-      }
-    });
-  }
+  //   each(value, (val, key) => {
+  //     values[entryId][key] = val;
+  //     const child = entry.find(key);
+  //     // The child may not exists as the edit view is being closed by click on "Done"
+  //     if (child?.exists()) {
+  //       child.value(val);
+  //     }
+  //   });
+  // }
 
   #updateHandler() {
     const newValues = this.value() as DefinedRepeaterValue;

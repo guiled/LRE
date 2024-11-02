@@ -1,10 +1,11 @@
 import { DirectDataProvider } from "../../src/dataprovider";
 import { LRE } from "../../src/lre";
-import { initLetsRole } from "../mock/letsrole/letsrole.mock";
+import { ServerMock } from "../../src/mock/letsrole/server.mock";
+import { initLetsRole } from "../../src/mock/letsrole/letsrole.mock";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 beforeEach(() => {
-  initLetsRole();
+  initLetsRole(new ServerMock({}));
   global.lre = new LRE(modeHandlerMock);
 });
 
@@ -229,9 +230,9 @@ describe("Dataprovider getData", () => {
 describe("DataProvider filter and where", () => {
   test("Filter data", () => {
     let data: Record<string, LetsRole.TableRow> = {
-      "1": { a: "42", b: "13", c: "24" },
-      "2": { a: "1", b: "2", c: "3" },
-      "3": { a: "4", b: "5", c: "6" },
+      "1": { id: "1", a: "42", b: "13", c: "24" },
+      "2": { id: "2", a: "1", b: "2", c: "3" },
+      "3": { id: "3", a: "4", b: "5", c: "6" },
     };
     const dataGetter = jest.fn((_a: any) => {
       return data as any;
@@ -242,16 +243,16 @@ describe("DataProvider filter and where", () => {
     });
     expect(filtered.provider).toBeTruthy();
     expect(filtered.providedValue()).toStrictEqual({
-      "2": { a: "1", b: "2", c: "3" },
-      "3": { a: "4", b: "5", c: "6" },
+      "2": { id: "2", a: "1", b: "2", c: "3" },
+      "3": { id: "3", a: "4", b: "5", c: "6" },
     });
   });
 
   test("Where", () => {
     let data: Record<string, LetsRole.TableRow> = {
-      "1": { a: "42", b: "13", c: "24" },
-      "2": { a: "1", b: "2", c: "3" },
-      "3": { a: "4", b: "5", c: "6" },
+      "1": { id: "1", a: "42", b: "13", c: "24" },
+      "2": { id: "2", a: "1", b: "2", c: "3" },
+      "3": { id: "3", a: "4", b: "5", c: "6" },
     };
     const dataGetter = jest.fn((_a: any) => {
       return data as any;
@@ -266,7 +267,7 @@ describe("DataProvider filter and where", () => {
       return v.b === "2";
     });
     expect(result.providedValue()).toStrictEqual({
-      "2": { a: "1", b: "2", c: "3" },
+      "2": { id: "2", a: "1", b: "2", c: "3" },
     });
   });
 });

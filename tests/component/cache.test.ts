@@ -1,43 +1,148 @@
-import { MockComponent } from "../mock/letsrole/component.mock";
-import { MockSheet } from "../mock/letsrole/sheet.mock";
 import { ComponentCache } from "../../src/component/cache";
-import { Component } from "../../src/component/component";
 import { LRE } from "../../src/lre";
-import { newMockedWait } from "../mock/letsrole/wait.mock";
 import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
+import { initLetsRole, itHasWaitedEverything } from "../../src/mock/letsrole/letsrole.mock";
+import { ServerMock } from "../../src/mock/letsrole/server.mock";
+import { ViewMock } from "../../src/mock/letsrole/view.mock";
+import { Component } from "../../src/component";
+import { FailingComponent } from "../../src/mock/letsrole/component.mock";
 
 jest.mock("../../src/lre");
 jest.mock("../../src/component/component");
 
-global.lre = new LRE(modeHandlerMock);
-const mockedWaitDefs = newMockedWait();
-global.wait = mockedWaitDefs.wait;
-lre.wait = wait;
 
 let cache: ComponentCache;
-const rawSheet = MockSheet({
-  id: "sheet",
-  realId: "realId",
+let server: ServerMock;
+let rawSheet: ViewMock;
+let sheet: Sheet;
+
+beforeEach(() => {
+  server = new ServerMock({
+    views: [
+      {
+        id: "sheet",
+        className: "View",
+        children: [{
+          id: "lbl1",
+          className: "Label",
+          text: "label1",
+        },
+        {
+          id: "rep",
+          className: "Repeater",
+          viewId: "edt",
+          readViewId: "rd"
+        },
+        {
+          id: "123",
+          className: "Repeater",
+          viewId: "edt",
+          readViewId: "rd"
+        },
+        {
+          id: "abc",
+          className: "Label",
+          text: "label1",
+        },
+        {
+          id: "b",
+          className: "Label",
+          text: "label1",
+        },
+        ],
+      },
+      {
+        id: "edt",
+        className: "View",
+        children: [
+          {
+            id: "txt",
+            className: "TextInput",
+            defaultValue: "",
+          }
+        ]
+      },
+      {
+        id: "rd",
+        className: "View",
+        children: [
+          {
+            id: "a",
+            className: "Label",
+            text: "label",
+          },
+          {
+            id: "b",
+            className: "Label",
+            text: "label",
+          },
+          {
+            id: "c",
+            className: "Label",
+            text: "label",
+          },
+        ],
+      }
+    ]
+  });
+  initLetsRole(server);
+  global.lre = new LRE(modeHandlerMock);
+  lre.wait = wait;
+  rawSheet = server.openView("sheet", "realId", {
+    rep: {
+      1: {
+        a: "a",
+        b: "b",
+        c: "c",
+      },
+      2: {
+        a: "a",
+        b: "b",
+        c: "c",
+      },
+      b: {
+        a: "a",
+        b: "b",
+        c: "c",
+      },
+    },
+    123: {
+      1: {
+        a: "a",
+        b: "b",
+        c: "c",
+      },
+      2: {
+        a: "a",
+        b: "b",
+        c: "c",
+      },
+      b: {
+        a: "a",
+        b: "b",
+        c: "c",
+      },
+    }
+  });
+  sheet = new Sheet(
+    rawSheet,
+    new DataBatcher(modeHandlerMock, rawSheet),
+    modeHandlerMock
+  );
 });
-const sheet = new Sheet(
-  rawSheet,
-  new DataBatcher(modeHandlerMock, rawSheet),
-  modeHandlerMock
-);
-const UNKNOWN_CMP_ID = "_unknown_";
+
 
 const newCmp = jest.fn((id: string): ComponentSearchResult => {
-  if (id === UNKNOWN_CMP_ID) {
+  const rawCmp = rawSheet.get(id);
+
+  if (rawCmp instanceof FailingComponent) {
     return null;
   }
 
   const cmp = new Component(
-    MockComponent({
-      id: id,
-      sheet: rawSheet,
-    }),
+    rawSheet.get(id),
     sheet,
     id
   );
@@ -53,24 +158,24 @@ beforeAll(() => {
 
 describe("Component cache set/get/unset/inCache", () => {
   test("Set / Get / In cache", () => {
-    expect(cache.get(UNKNOWN_CMP_ID)).toBeNull();
+    expect(cache.get("unknown")).toBeNull();
     expect(newCmp).toHaveBeenCalledTimes(1);
-    expect(cache.inCache(UNKNOWN_CMP_ID)).toBeFalsy();
-    expect(cache.inCache("123")).toBeFalsy();
+    expect(cache.inCache("unknown")).toBeFalsy();
+    expect(cache.inCache("lbl1")).toBeFalsy();
     expect(newCmp).toHaveBeenCalledTimes(1);
     newCmp.mockClear();
-    expect(cache.get("123")).not.toBeNull();
+    expect(cache.get("lbl1")).not.toBeNull();
     expect(newCmp).toHaveBeenCalledTimes(1);
-    expect(cache.inCache("123")).toBeTruthy();
-    const cmp = newCmp("123")!;
-    cache.set("123", cmp);
+    expect(cache.inCache("lbl1")).toBeTruthy();
+    const cmp = newCmp("lbl1")!;
+    cache.set("lbl1", cmp);
     newCmp.mockClear();
     expect(newCmp).not.toHaveBeenCalled();
-    expect(cache.get("123")).toStrictEqual(cmp);
+    expect(cache.get("lbl1")).toStrictEqual(cmp);
     expect(newCmp).not.toHaveBeenCalled();
-    cache.unset("123");
+    cache.unset("lbl1");
     expect(newCmp).not.toHaveBeenCalled();
-    expect(cache.get("123")).not.toStrictEqual(cmp);
+    expect(cache.get("lbl1")).not.toStrictEqual(cmp);
     expect(newCmp).toHaveBeenCalledTimes(1);
   });
 
@@ -115,14 +220,14 @@ describe("Component cache forget/remember", () => {
     expect(newCmp).not.toHaveBeenCalled();
     cache.get("123.b.c");
     expect(cache.inCache("123")).toBeFalsy();
-    mockedWaitDefs.itHasWaitedEverything();
+    itHasWaitedEverything();
     expect(cache.inCache("123")).not.toBeFalsy();
     expect(newCmp).toHaveBeenCalled();
     expect(cache.inCache("123.b.c")).not.toBeFalsy();
     cache.forget("123");
     expect(cache.inCache("123.b.c")).not.toBeFalsy();
     expect(cache.inCache("123")).not.toBeFalsy();
-    mockedWaitDefs.itHasWaitedEverything();
+    itHasWaitedEverything();
     expect(cache.inCache("123.b.c")).toBeFalsy();
     expect(cache.inCache("123")).toBeFalsy();
     cache.get("b");
@@ -130,7 +235,7 @@ describe("Component cache forget/remember", () => {
     cache.remember("a");
     cache.remember("b");
     cache.forget("a");
-    mockedWaitDefs.itHasWaitedEverything();
+    itHasWaitedEverything();
     expect(cache.inCache("a")).toBeFalsy();
     expect(cache.inCache("b")).not.toBeFalsy();
   });

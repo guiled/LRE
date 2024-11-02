@@ -1,5 +1,5 @@
 import { registerLreWait } from "../../src/proxy/wait";
-import { newMockedWait } from "../mock/letsrole/wait.mock";
+import { newMockedWait } from "../../src/mock/letsrole/wait.mock";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 const mockedWaitDefs = newMockedWait();

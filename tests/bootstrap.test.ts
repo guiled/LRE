@@ -1,9 +1,10 @@
 import { bootstrap } from "../src/bootstrap";
 import { LRE } from "../src/lre";
-import { initLetsRole } from "./mock/letsrole/letsrole.mock";
+import { ServerMock } from "../src/mock/letsrole/server.mock";
+import { initLetsRole } from "../src/mock/letsrole/letsrole.mock";
 
 beforeAll(() => {
-  initLetsRole();
+  initLetsRole(new ServerMock({}));
   /* @ts-ignore */
   global.lre = null;
   global.lastException = null;
@@ -48,7 +49,7 @@ describe("LRE bootstrap", () => {
     expect(global.isNaN(global as unknown as number)).toBeTruthy();
 
     expect(global.wait).toBe(oldWait);
-    global.lre.apply(global.lre, [() => {}]);
+    global.lre.apply(global.lre, [() => { }]);
     expect(global.wait).not.toBe(oldWait);
 
     const c = {

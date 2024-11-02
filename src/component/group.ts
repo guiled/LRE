@@ -20,8 +20,7 @@ export class Group
   ) => IEventHolder<SubTypeEventHolder> &
     InstanceType<ReturnType<typeof DataHolder>> &
     InstanceType<ReturnType<typeof DataProvider>>)<GroupEvents>
-  implements IGroup
-{
+  implements IGroup {
   #id: string;
   #sheet: ISheet;
   #components: Array<IComponent> = [];
@@ -34,9 +33,9 @@ export class Group
     componentIds: Array<LetsRole.ComponentID> = []
   ) {
     super([
-      /* EventHolder */ [id],
-      /* DataHolder */ [sheet, id],
-      /* DataProvider */ [
+      /* EventHolder */[id],
+      /* DataHolder */[sheet, id],
+      /* DataProvider */[
         (...args: any[]) => this.value(...(args as [LetsRole.ComponentValue?])),
       ],
     ]);
@@ -218,7 +217,7 @@ export class Group
   }
 
   getClasses(): LetsRole.ClassName[] {
-    const classNumber: { [key: LetsRole.ClassName]: number } = {};
+    const classNumber: { [key: LetsRole.ClassName]: number; } = {};
 
     this.#components.forEach((cmp) => {
       const classes = cmp.getClasses();
@@ -287,7 +286,7 @@ export class Group
     return this.#components.every((c) => c.visible());
   }
 
-  setChoices(_choices: LetsRole.Choices): void {}
+  setChoices(_choices: LetsRole.Choices): void { }
 
   #getSet(
     type: "value" | "virtualValue" | "text" | "rawValue",

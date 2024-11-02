@@ -1,11 +1,10 @@
 import { DataHolder } from "../../src/dataholder/index";
 import { Sheet } from "../../src/sheet";
-import { MockSheet } from "../mock/letsrole/sheet.mock";
 import { LRE } from "../../src/lre";
-import { newMockedWait } from "../mock/letsrole/wait.mock";
-import { MockServer } from "../mock/letsrole/server.mock";
+import { newMockedWait } from "../../src/mock/letsrole/wait.mock";
 import { DataBatcher } from "../../src/sheet/databatcher";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
+import { ServerMock } from "../../src/mock/letsrole/server.mock";
 
 const { wait, itHasWaitedEverything } = newMockedWait();
 global.wait = wait;
@@ -13,16 +12,12 @@ global.lre = new LRE(modeHandlerMock);
 
 describe("Dataholder", () => {
   let sheet1: Sheet;
-  let server: MockServer;
+  let server: ServerMock;
   let subject: IDataHolder;
   let C: Newable;
 
   const initSheet = function (sheetId: string, realId: string) {
-    const raw = MockSheet({
-      id: sheetId,
-      realId: realId,
-    });
-    server.registerMockedSheet(raw);
+    const raw = server.openView(sheetId, realId, {});
     return new Sheet(
       raw,
       new DataBatcher(modeHandlerMock, raw),
@@ -31,9 +26,34 @@ describe("Dataholder", () => {
   };
 
   beforeEach(() => {
-    server = new MockServer();
+    server = new ServerMock({
+      views: [
+        {
+          id: "main",
+          className: "View",
+          children: [
+            {
+              id: "a",
+              className: "Repeater",
+              viewId: "vw1",
+              readViewId: "vw2",
+            },
+            {
+              id: "b",
+              className: "Label",
+              text: "test",
+            },
+          ],
+        },
+        {
+          id: "testedSheet",
+          className: "View",
+          children: [],
+        },
+      ],
+    });
     sheet1 = initSheet("main", "4242");
-    C = class extends DataHolder() {};
+    C = class extends DataHolder() { };
     subject = new C(sheet1, "a.b.c");
   });
 
@@ -84,5 +104,5 @@ describe("Dataholder", () => {
     expect(subject2.hasData("d1")).toBeTruthy();
   });
 
-  test("Handle moving data from volatile to persistent", () => {});
+  test.todo("Handle moving data from volatile to persistent");
 });

@@ -4,8 +4,7 @@ import { SheetContext, SheetProxy } from "./sheet";
 
 class ComponentProxy
   extends LreProxy<LetsRole.Component>
-  implements LetsRole.Component
-{
+  implements LetsRole.Component {
   #sheet: SheetProxy;
   #getVirtualContext: () => SheetContext;
 
@@ -23,7 +22,7 @@ class ComponentProxy
   }
 
   #initVirtualComponent(cmp: LetsRole.Component): LetsRole.Component {
-    const id = cmp.id();
+    const id = cmp.id()!;
     const context = this.#getVirtualContext();
     let hidden: boolean | undefined;
 
@@ -34,6 +33,7 @@ class ComponentProxy
 
     const cmpProxy = {
       ...cmp,
+      id: () => id,
       find: this.find,
       parent: this.parent,
       sheet: this.sheet,
@@ -152,11 +152,11 @@ class ComponentProxy
     this.getDest().removeClass(className);
   }
   getClasses(): LetsRole.ClassName[] {
-    this._proxyModeHandler.logAccess("class", this.getDest().id());
+    this._proxyModeHandler.logAccess("class", this.getDest().id()!);
     return this.getDest().getClasses();
   }
   hasClass(className: LetsRole.ClassName): boolean {
-    this._proxyModeHandler.logAccess("class", this.getDest().id());
+    this._proxyModeHandler.logAccess("class", this.getDest().id()!);
     return this.getDest().hasClass(className);
   }
   toggleClass(className: LetsRole.ClassName): void {
@@ -167,12 +167,12 @@ class ComponentProxy
       this.getDest().virtualValue(newValue);
       return;
     }
-    this._proxyModeHandler.logAccess("virtualValue", this.getDest().id());
+    this._proxyModeHandler.logAccess("virtualValue", this.getDest().id()!);
     return this.getDest().virtualValue();
   }
 
   rawValue() {
-    this._proxyModeHandler.logAccess("rawValue", this.getDest().id());
+    this._proxyModeHandler.logAccess("rawValue", this.getDest().id()!);
     return this.getDest().rawValue();
   }
 
@@ -181,12 +181,12 @@ class ComponentProxy
       this.getDest().text(replacement!);
       return;
     }
-    this._proxyModeHandler.logAccess("text", this.getDest().id());
+    this._proxyModeHandler.logAccess("text", this.getDest().id()!);
     return this.getDest().text();
   }
 
   visible(): boolean {
-    this._proxyModeHandler.logAccess("visible", this.getDest().id());
+    this._proxyModeHandler.logAccess("visible", this.getDest().id()!);
     return this.getDest().visible();
   }
 
@@ -202,7 +202,7 @@ class ComponentProxy
       this.getDest().value(newValue);
       return;
     }
-    this._proxyModeHandler.logAccess("value", this.getDest().id());
+    this._proxyModeHandler.logAccess("value", this.getDest().id()!);
     return this.getDest().value();
   }
   sheet() {

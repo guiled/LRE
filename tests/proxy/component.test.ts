@@ -1,40 +1,61 @@
+import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { ComponentProxy } from "../../src/proxy/component";
 import { SheetProxy } from "../../src/proxy/sheet";
-import {
-  MockComponent,
-  MockedComponent,
-} from "../mock/letsrole/component.mock";
-import { MockSheet } from "../mock/letsrole/sheet.mock";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 jest.mock("../../src/sheet");
 
-let parent: MockedComponent;
+let server: ServerMock;
+let parent: LetsRole.Component;
 let raw: LetsRole.Component;
 let rawSheet: LetsRole.Sheet;
 let sheetProxy: SheetProxy;
-const initValue = 42;
+const initValue = "42";
 const initClasses = ["class1", "class2"];
 const initText = "42";
 
-const initTestMocks = (isVirtual: boolean = false): ComponentProxy => {
-  rawSheet = MockSheet({
-    id: "main",
-    realId: "1234",
-    properName: "Sheet 1",
+beforeAll(() => {
+  server = new ServerMock({
+    views: [
+      {
+        id: "main",
+        className: "View",
+        children: [
+          {
+            id: "parent_test",
+            className: "Container",
+            children: [
+              {
+                id: "test",
+                className: "NumberInput",
+                classes: "class1 class2",
+                defaultValue: initValue,
+              },
+              {
+                id: "container",
+                className: "Container",
+                classes: "class1 class2",
+                children: [
+                  {
+                    id: "hop",
+                    className: "NumberInput",
+                    classes: "class1 class2",
+                    defaultValue: initValue,
+                  },
+                ]
+              },
+            ]
+          },
+        ],
+      },
+    ],
   });
-  parent = MockComponent({
-    id: "parent_test",
-    sheet: rawSheet,
-  });
-  raw = MockComponent({
-    id: "test",
-    sheet: rawSheet,
-    parent,
-    value: initValue,
-    classes: [...initClasses],
-    text: initText,
-  });
+});
+
+const initTestMocks = (isVirtual: boolean = false, cmpId = "test"): ComponentProxy => {
+  rawSheet = server.openView("main", "1234", {}, "Sheet 1");
+  parent = rawSheet.get("parent_test");
+  raw = rawSheet.get(cmpId);
   sheetProxy = new SheetProxy(modeHandlerMock, rawSheet);
 
   const subject = new ComponentProxy(modeHandlerMock, raw, sheetProxy, () => ({
@@ -68,7 +89,7 @@ const methodsWithNoParams: Array<keyof LetsRole.Component> = [
 
 const methodsWithParams: Array<[keyof LetsRole.Component, any]> = [
   ["find", ["toto"]],
-  ["on", ["update", () => {}]],
+  ["on", ["update", () => { }]],
   ["off", ["update"]],
   ["addClass", ["text-danger"]],
   ["removeClass", ["text-danger"]],
@@ -82,14 +103,14 @@ const methodsWithParams: Array<[keyof LetsRole.Component, any]> = [
 describe("Real mode", () => {
   let subject: ComponentProxy;
 
-  beforeAll(() => {
+  beforeEach(() => {
     subject = initTestMocks();
   });
 
   test.each([...methodsWithoutEffect, ...methodsWithNoParams])(
     "Proxy call %s calls raw method",
     (method) => {
-      expect(raw[method!]).not.toHaveBeenCalled();
+      jest.spyOn(raw, method as any);
       /* @ts-ignore */
       subject[method].call(subject);
       expect(raw[method!]).toHaveBeenCalledTimes(1);
@@ -99,13 +120,14 @@ describe("Real mode", () => {
   test.each(methodsWithParams)(
     "Proxy call %s calls raw method",
     (method, args) => {
-      expect(raw[method]).not.toHaveBeenCalled();
+      jest.spyOn(raw, method as any);
       /* @ts-ignore */
       subject[method].apply(subject, args);
       expect(raw[method]).toHaveBeenCalledTimes(1);
     }
   );
 });
+
 describe("Virtual mode", () => {
   let subject: ComponentProxy;
 
@@ -120,10 +142,10 @@ describe("Virtual mode", () => {
   test.each(methodsWithNoParamsBis)(
     "Proxy call %s doesn't call raw method",
     (method) => {
-      const nbCalls = (raw[method] as jest.Mock).mock.calls.length;
+      jest.spyOn(raw, method as any);
       /* @ts-ignore */
       subject[method].call(subject);
-      expect(raw[method!]).toHaveBeenCalledTimes(nbCalls);
+      expect(raw[method!]).not.toHaveBeenCalled();
     }
   );
 
@@ -134,10 +156,10 @@ describe("Virtual mode", () => {
   test.each(methodsWithParamsBis)(
     "Proxy call %s doesn't call raw method",
     (method, args) => {
-      const nbCalls = (raw[method] as jest.Mock).mock.calls.length;
+      jest.spyOn(raw, method as any);
       /* @ts-ignore */
       subject[method].apply(subject, args);
-      expect(raw[method!]).toHaveBeenCalledTimes(nbCalls);
+      expect(raw[method!]).not.toHaveBeenCalled();
     }
   );
 });
@@ -146,10 +168,11 @@ describe("Virtual mode sheet, find and parent are virtual", () => {
   let subject: ComponentProxy;
 
   beforeAll(() => {
-    subject = initTestMocks(true);
+    subject = initTestMocks(true, "container");
   });
 
   test("cmp.sheet() is virtual", () => {
+    jest.spyOn(raw, "sheet");
     expect(subject.sheet()).toBe(sheetProxy);
     expect(subject.sheet()).not.toBe(rawSheet);
     expect(raw.sheet).not.toHaveBeenCalled();
@@ -175,9 +198,9 @@ describe("Virtual mode show hide", () => {
   });
 
   test("Visible, show, hide correctly mocked", () => {
-    expect(raw.visible).not.toHaveBeenCalled();
-    expect(raw.show).not.toHaveBeenCalled();
-    expect(raw.hide).not.toHaveBeenCalled();
+    jest.spyOn(raw, "visible");
+    jest.spyOn(raw, "show");
+    jest.spyOn(raw, "hide");
     expect(subject.visible()).toBeTruthy();
     expect(raw.visible).toHaveBeenCalledTimes(1);
     expect(raw.show).not.toHaveBeenCalled();
@@ -198,14 +221,15 @@ describe("Virtual mode show hide", () => {
 describe("Virtual mode changes are applied", () => {
   let subject: ComponentProxy;
 
-  beforeEach(() => {
+  beforeAll(() => {
     subject = initTestMocks(true);
     subject.getDest();
-    (raw.value as jest.Mock).mockClear();
-    (raw.getClasses as jest.Mock).mockClear();
+    jest.spyOn(raw, "value");
+    jest.spyOn(raw, "getClasses");
   });
 
   test("Value is virtually applied ", () => {
+    jest.spyOn(rawSheet, "setData");
     const nbMockCalls = (raw.value as jest.Mock).mock.calls.length;
     const val = subject.value();
     expect(raw.value).toHaveBeenCalledTimes(nbMockCalls);
@@ -218,6 +242,11 @@ describe("Virtual mode changes are applied", () => {
   });
 
   test("Show / Hide are virtually applied ", () => {
+    jest.spyOn(raw, "hide");
+    jest.spyOn(raw, "show");
+    jest.spyOn(raw, "addClass");
+    jest.spyOn(raw, "removeClass");
+    jest.spyOn(raw, "toggleClass");
     expect(subject.visible()).toBeTruthy();
     subject.hide();
     expect(subject.visible()).toBeFalsy();
@@ -232,12 +261,16 @@ describe("Virtual mode changes are applied", () => {
     expect(raw.removeClass).not.toHaveBeenCalled();
     expect(raw.toggleClass).not.toHaveBeenCalled();
   });
+
   test("Class changes are virtually applied", () => {
-    //const nbMockCalls = (raw.getClasses as jest.Mock).mock.calls.length;
+    jest.spyOn(raw, "hasClass");
+    jest.spyOn(raw, "addClass");
+    jest.spyOn(raw, "removeClass");
+    jest.spyOn(raw, "toggleClass");
+    jest.spyOn(raw, "getClasses");
     expect(subject.getClasses().sort().join(",")).toMatch(
       initClasses.sort().join(",")
     );
-    //expect(raw.getClasses).toHaveBeenCalledTimes(nbMockCalls);
     expect(raw.getClasses).not.toHaveBeenCalled();
 
     subject.addClass("added1");
@@ -284,20 +317,20 @@ describe("Virtual mode changes are applied", () => {
   });
 
   test("Virtual values are virtually applied", () => {
-    const nbMockCalls = (raw.virtualValue as jest.Mock).mock.calls.length;
+    jest.spyOn(raw, "virtualValue");
     expect(subject.virtualValue()).toBeNull();
-    expect(raw.virtualValue).toHaveBeenCalledTimes(nbMockCalls);
+    expect(raw.virtualValue).not.toHaveBeenCalled();
     subject.virtualValue(1313);
-    expect(raw.virtualValue).toHaveBeenCalledTimes(nbMockCalls);
+    expect(raw.virtualValue).not.toHaveBeenCalled();
     expect(subject.virtualValue()).toBe(1313);
   });
 
   test("Text are virtually applied", () => {
-    const nbMockCalls = (raw.text as jest.Mock).mock.calls.length;
+    jest.spyOn(raw, "text");
     expect(subject.text()).toBe(initText);
-    expect(raw.text).toHaveBeenCalledTimes(nbMockCalls);
+    expect(raw.text).not.toHaveBeenCalled();
     subject.text("1313");
-    expect(raw.text).toHaveBeenCalledTimes(nbMockCalls);
+    expect(raw.text).not.toHaveBeenCalled();
     expect(subject.text()).toBe("1313");
   });
 });
@@ -308,8 +341,8 @@ describe("Proxy logs", () => {
   beforeEach(() => {
     subject = initTestMocks();
     subject.getDest();
-    (raw.value as jest.Mock).mockClear();
-    (raw.getClasses as jest.Mock).mockClear();
+    jest.spyOn(raw, "value");
+    jest.spyOn(raw, "getClasses");
   });
 
   test.each(["value", "rawValue", "virtualValue", "text", "visible"])(

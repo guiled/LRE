@@ -2,49 +2,53 @@ import { Component } from "../../src/component";
 import { MultiChoice } from "../../src/component/multichoice";
 import { DirectDataProvider } from "../../src/dataprovider";
 import { LRE } from "../../src/lre";
+import { ComponentMock } from "../../src/mock/letsrole/component.mock";
+import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { SheetProxy } from "../../src/proxy/sheet";
 import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
-import {
-  MockComponent,
-  MockedComponent,
-} from "../mock/letsrole/component.mock";
-import { initLetsRole } from "../mock/letsrole/letsrole.mock";
-import { MockServer } from "../mock/letsrole/server.mock";
-import { MockSheet } from "../mock/letsrole/sheet.mock";
+import { initLetsRole } from "../../src/mock/letsrole/letsrole.mock";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 global.lre = new LRE(modeHandlerMock);
-initLetsRole();
 
 let rawSheet: LetsRole.Sheet;
 let sheet: Sheet;
 
-let server: MockServer;
-let cmpDefs;
+let server: ServerMock;
 
-let rawMultiChoice: MockedComponent;
+let rawMultiChoice: ComponentMock;
 let multiChoice: MultiChoice;
 beforeEach(() => {
   modeHandlerMock.setMode("real");
   lre.autoNum(false);
-  server = new MockServer();
-  rawSheet = MockSheet({
-    id: "main",
-    realId: "123",
-    data: {
-      multi: [],
-      cmd: "2",
-    },
+  server = new ServerMock({
+    views: [
+      {
+        id: "main",
+        children: [
+          {
+            id: "multi",
+            className: "Choice",
+            multiple: true,
+          },
+          {
+            id: "cmd",
+            name: "command",
+            className: "TextInput",
+            defaultValue: "2",
+          }
+        ],
+        className: "View",
+      },
+    ],
   });
-  server.registerMockedSheet(rawSheet, [
-    {
-      id: "cmd",
-      name: "command",
-      classes: ["label"],
-      value: "2",
-    },
-  ]);
+  initLetsRole(server);
+
+  rawSheet = server.openView("main", "123", {
+    multi: [],
+    cmd: "2",
+  });
   const proxySheet = new SheetProxy(modeHandlerMock, rawSheet);
 
   sheet = new Sheet(
@@ -56,18 +60,7 @@ beforeEach(() => {
   jest.spyOn(sheet, "get");
   jest.spyOn(sheet, "componentExists");
   jest.spyOn(sheet, "knownChildren");
-  cmpDefs = {
-    id: "multi",
-    sheet: proxySheet,
-    name: "multichoice",
-    classes: ["choice", "multiple"],
-    value: [],
-  };
-  rawMultiChoice = MockComponent(cmpDefs);
-  rawMultiChoice.text = jest.fn(() => {
-    return null;
-  });
-  server.registerMockedComponent(rawMultiChoice);
+  rawMultiChoice = rawSheet.get("multi") as ComponentMock;
   multiChoice = new MultiChoice(rawMultiChoice, sheet, "multi");
 });
 
@@ -88,7 +81,7 @@ describe("MultiChoice", () => {
   test("Remove values in the multichoice values call a setChoices", () => {
     multiChoice.value(["1", "2"]);
     jest.spyOn(rawMultiChoice, "setChoices");
-    (rawSheet.setData as jest.Mock).mockClear();
+    jest.spyOn(rawSheet, "setData");
     expect(rawSheet.setData).toHaveBeenCalledTimes(0);
     expect(rawMultiChoice.setChoices).toHaveBeenCalledTimes(0);
     multiChoice.value(["1"]);

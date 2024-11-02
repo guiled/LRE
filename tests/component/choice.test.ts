@@ -1,16 +1,14 @@
 import { Choice, ChoicesWithData } from "../../src/component/choice";
 import { DirectDataProvider } from "../../src/dataprovider";
 import { LRE } from "../../src/lre";
+import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
 import { LreTables } from "../../src/tables";
 import {
   initLetsRole,
   itHasWaitedEverything,
-  defineTable,
-} from "../mock/letsrole/letsrole.mock";
-import { MockServer } from "../mock/letsrole/server.mock";
-import { MockSheet } from "../mock/letsrole/sheet.mock";
+} from "../../src/mock/letsrole/letsrole.mock";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 let raw: LetsRole.Component;
@@ -18,30 +16,50 @@ let rawSheet: LetsRole.Sheet;
 let sheet: ISheet;
 
 beforeEach(() => {
-  initLetsRole();
+  const server = new ServerMock({
+    views: [
+      {
+        id: "main",
+        children: [
+          {
+            id: "ch",
+            className: "Choice",
+            tableId: "theTable",
+            label: "lbl",
+          },
+          {
+            id: "chA",
+            className: "Choice",
+            tableId: "theTable",
+            label: "lbl",
+          },
+          {
+            id: "cmp1",
+            className: "TextInput",
+          },
+          {
+            id: "cmp2",
+            className: "TextInput",
+          },
+        ],
+        className: "View",
+        name: "theSheet",
+      },
+    ],
+    tables: {
+      theTable: [
+        { id: "a", lbl: "theChoiceA", a: "1", b: "2" },
+        { id: "b", lbl: "theChoiceB", a: "2", b: "3" },
+      ]
+    }
+  });
+  initLetsRole(server);
   global.lre = new LRE(modeHandlerMock);
   Tables = new LreTables(Tables);
 
-  rawSheet = MockSheet({
-    id: "main",
-    realId: "12345",
+  rawSheet = server.openView("main", "12345", {
+    chA: "a"
   });
-  const server = new MockServer();
-  server.registerMockedSheet(rawSheet, [
-    {
-      id: "ch",
-      name: "choice",
-      classes: ["choice"],
-      text: "theChoice",
-    },
-    {
-      id: "chA",
-      name: "choice",
-      classes: ["choice"],
-      text: "theChoice",
-      value: "a",
-    },
-  ]);
   sheet = new Sheet(
     rawSheet,
     new DataBatcher(modeHandlerMock, rawSheet),
@@ -52,13 +70,14 @@ beforeEach(() => {
 
 describe("Choice basic", () => {
   test("label", () => {
-    const choice = new Choice(raw, sheet, "ch");
-    expect(choice.label()).toBe("theChoice");
+    const choice = new Choice(rawSheet.get("chA"), sheet, "chA");
+    expect(choice.label()).toBe("theChoiceA");
   });
 
   test("setChoices", () => {
+    jest.spyOn(raw, "setChoices");
     const choice = new Choice(raw, sheet, "ch");
-    expect(choice.value()).toBe("");
+    expect(choice.value()).toBeNull();
     expect(raw.setChoices).not.toHaveBeenCalled();
     const newChoices = {
       a: "1",
@@ -84,7 +103,7 @@ describe("Choice basic", () => {
     choice.on("valunselect:1", valunselect1);
     choice.on("valunselect:2", valunselect2);
     choice.on("valclick", valclick);
-    expect(choice.value()).toBe("");
+    expect(choice.value()).toBeNull();
 
     choice.value(1);
     expect(select).toHaveBeenCalledWith(choice, 1);
@@ -183,25 +202,10 @@ describe("Set choice dynamically", () => {
 });
 
 describe("choice populate", () => {
-  const TABLE_NAME = "theTable";
-  beforeAll(() => {
-    defineTable(TABLE_NAME, [
-      {
-        id: "a",
-        a: "1",
-        b: "2",
-      },
-      {
-        id: "b",
-        a: "2",
-        b: "3",
-      },
-    ]);
-  });
 
   test("populate with table name", () => {
     const ch = new Choice(rawSheet.get("chA"), sheet, "chA");
-    ch.populate(TABLE_NAME, "a");
+    ch.populate("theTable", "a");
     expect(ch.getChoices()).toStrictEqual({
       a: "1",
       b: "2",
@@ -210,12 +214,13 @@ describe("choice populate", () => {
       id: "b",
       a: "2",
       b: "3",
+      lbl: "theChoiceB",
     });
   });
 
   test("populate with table object", () => {
     const ch = new Choice(rawSheet.get("chA"), sheet, "chA");
-    const table = (Tables as LreTables).get(TABLE_NAME)!;
+    const table = (Tables as LreTables).get("theTable")!;
     ch.populate(table, "a");
     expect(ch.getChoices()).toStrictEqual({
       a: "1",
@@ -225,6 +230,7 @@ describe("choice populate", () => {
       id: "b",
       a: "2",
       b: "3",
+      lbl: "theChoiceB",
     });
   });
 
@@ -250,6 +256,7 @@ describe("set choices with optional", () => {
     rawChoice = rawSheet.get("chA");
   });
   test("setChoices with optional", () => {
+    jest.spyOn(rawChoice, "setChoices");
     const ch = new Choice(rawChoice, sheet, "chA");
     ch.optional(true);
     ch.setChoices({
@@ -268,6 +275,7 @@ describe("set choices with optional", () => {
   });
 
   test("dynamic optional change", () => {
+    jest.spyOn(rawChoice, "setChoices");
     const ch = new Choice(rawChoice, sheet, "chA");
     ch.setChoices({
       a: "1",

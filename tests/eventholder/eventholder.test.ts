@@ -1,11 +1,9 @@
 import { LRE } from "../../src/lre";
-import {
-  MockComponent,
-  MockedComponent,
-} from "../mock/letsrole/component.mock";
-import { MockSheet } from "../mock/letsrole/sheet.mock";
 import { EventDef, EventHolder } from "../../src/eventholder/index";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
+import { ComponentMock } from "../../src/mock/letsrole/component.mock";
+import { ViewMock } from "../../src/mock/letsrole/view.mock";
+import { ServerMock } from "../../src/mock/letsrole/server.mock";
 
 global.lre = new LRE(modeHandlerMock);
 
@@ -15,7 +13,7 @@ class Dummy extends EventHolder<TestedEvents>() {
   __id: string;
   constructor(protected _raw: LetsRole.Component, subRaw?: LetsRole.Component) {
     super(
-      _raw.id(),
+      _raw.id()!,
       (target: any): IEventHolder => {
         if (subRaw && target === subRaw) {
           return new Dummy(subRaw) as IEventHolder;
@@ -44,23 +42,60 @@ class Dummy extends EventHolder<TestedEvents>() {
         }
       }
     );
-    this.__id = _raw.id();
+    this.__id = _raw.id()!;
   }
 
   raw(): LetsRole.Component {
     return this._raw;
   }
 }
+let server: ServerMock;
+let vw: ViewMock;
+let rawCmp: ComponentMock;
+
+beforeEach(() => {
+  const cmpDef: LetsRoleMock.ComponentDefinitions = {
+    className: "Label",
+    text: "test",
+    id: "lbl",
+  };
+  server = new ServerMock({
+    views: [
+      {
+        id: "main",
+        className: "View",
+        children: [
+          cmpDef,
+          {
+            className: "Container",
+            id: "container",
+            children: [
+              {
+                className: "Label",
+                text: "sub",
+                id: "sub",
+              },
+              {
+                className: "Label",
+                text: "sub",
+                id: "lbl2",
+              },
+            ]
+          }
+        ]
+      }
+    ]
+  });
+  vw = server.openView("main", "123", {});
+  rawCmp = vw.get("lbl") as ComponentMock;
+  jest.spyOn(rawCmp, "on");
+  jest.spyOn(rawCmp, "off");
+});
 
 describe("Test simple events", () => {
   let subject: Dummy;
-  let rawCmp: MockedComponent;
 
   beforeEach(() => {
-    rawCmp = MockComponent({
-      id: "123",
-      sheet: MockSheet({ id: "main" }),
-    });
     subject = new Dummy(rawCmp, undefined);
   });
 
@@ -92,7 +127,7 @@ describe("Test simple events", () => {
     const eventHandler = jest.fn();
     subject.on("click", eventHandler);
     expect(rawCmp.on).toHaveBeenCalled();
-    rawCmp._trigger("click");
+    rawCmp.trigger("click");
     expect(eventHandler).toHaveBeenCalled();
 
     (rawCmp.on as jest.Mock).mockClear();
@@ -100,7 +135,7 @@ describe("Test simple events", () => {
     const eventHandler2 = jest.fn();
     subject.on("click:second", eventHandler2);
     expect(rawCmp.on).not.toHaveBeenCalled();
-    rawCmp._trigger("click");
+    rawCmp.trigger("click");
     expect(eventHandler).toHaveBeenCalled();
     expect(eventHandler2).toHaveBeenCalled();
 
@@ -110,7 +145,7 @@ describe("Test simple events", () => {
     const eventHandler3 = jest.fn();
     subject.on("click:third", undefined, eventHandler3);
     expect(rawCmp.on).not.toHaveBeenCalled();
-    rawCmp._trigger("click");
+    rawCmp.trigger("click");
     expect(eventHandler).toHaveBeenCalled();
     expect(eventHandler2).toHaveBeenCalled();
     expect(eventHandler3).toHaveBeenCalled();
@@ -120,7 +155,7 @@ describe("Test simple events", () => {
     eventHandler3.mockClear();
     subject.off("click:third");
     expect(rawCmp.off).not.toHaveBeenCalled();
-    rawCmp._trigger("click");
+    rawCmp.trigger("click");
     expect(eventHandler).toHaveBeenCalled();
     expect(eventHandler2).toHaveBeenCalled();
     expect(eventHandler3).not.toHaveBeenCalled();
@@ -130,7 +165,7 @@ describe("Test simple events", () => {
     eventHandler3.mockClear();
     subject.off("click:second", undefined);
     expect(rawCmp.off).not.toHaveBeenCalled();
-    rawCmp._trigger("click");
+    rawCmp.trigger("click");
     expect(eventHandler).toHaveBeenCalled();
     expect(eventHandler2).not.toHaveBeenCalled();
     expect(eventHandler3).not.toHaveBeenCalled();
@@ -140,7 +175,7 @@ describe("Test simple events", () => {
     eventHandler3.mockClear();
     subject.off("click");
     expect(rawCmp.off).toHaveBeenCalled();
-    rawCmp._trigger("click");
+    rawCmp.trigger("click");
     expect(eventHandler).not.toHaveBeenCalled();
     expect(eventHandler2).not.toHaveBeenCalled();
     expect(eventHandler3).not.toHaveBeenCalled();
@@ -162,22 +197,18 @@ describe("Test simple events", () => {
     expect(receivedCmp).toBe(subject);
     expect(receivedCmp === subject).toBeTruthy;
 
-    const raw = MockComponent({
-      id: "456",
-      sheet: MockSheet({ id: "main" }),
-    });
-    const eventholder = new (class extends EventHolder<"click">() {})(
+    const eventholder = new (class extends EventHolder<"click">() { })(
       "123",
       undefined,
       (event: EventDef<EventType<"click">>, operation: "on" | "off") => {
         if (event.delegated) {
-          raw[operation]?.(
+          rawCmp[operation]?.(
             event.eventId as any,
             event.subComponent!,
             event.rawHandler
           );
         } else {
-          raw[operation]?.(event.eventId as any, event.rawHandler);
+          rawCmp[operation]?.(event.eventId as any, event.rawHandler as any);
         }
       }
     );
@@ -190,7 +221,7 @@ describe("Test simple events", () => {
     expect(cb.mock.calls[0][0]).toBe(eventholder);
 
     cb.mockClear();
-    raw._trigger("click");
+    rawCmp.trigger("click");
     expect(cb).toHaveBeenCalled();
     expect(cb.mock.calls[0][0]).toBe(eventholder);
   });
@@ -260,12 +291,7 @@ describe("Many working handlers on same event", () => {
   let subject: Dummy;
 
   beforeEach(() => {
-    subject = new Dummy(
-      MockComponent({
-        id: "123",
-        sheet: MockSheet({ id: "main" }),
-      })
-    );
+    subject = new Dummy(rawCmp);
   });
 
   test("Named event trigger of named event", () => {
@@ -340,13 +366,8 @@ describe("Many working handlers on same event", () => {
 
 describe("Event executed only once", () => {
   let subject: Dummy;
-  let rawCmp: MockedComponent;
 
   beforeEach(() => {
-    rawCmp = MockComponent({
-      id: "123",
-      sheet: MockSheet({ id: "main" }),
-    });
     subject = new Dummy(rawCmp);
   });
 
@@ -377,16 +398,16 @@ describe("Event executed only once", () => {
     const eventHandler2 = jest.fn();
     subject.once("click", eventHandler);
     expect(rawCmp.on).toHaveBeenCalledTimes(1);
-    rawCmp._trigger("click");
-    rawCmp._trigger("click");
+    rawCmp.trigger("click");
+    rawCmp.trigger("click");
     expect(eventHandler).toHaveBeenCalledTimes(1);
     eventHandler.mockClear();
     (rawCmp.on as jest.Mock).mockClear();
     subject.once("click", eventHandler);
     subject.once("click:second", eventHandler2);
     expect(rawCmp.on).toHaveBeenCalledTimes(1);
-    rawCmp._trigger("click");
-    rawCmp._trigger("click");
+    rawCmp.trigger("click");
+    rawCmp.trigger("click");
     expect(eventHandler).toHaveBeenCalledTimes(1);
     expect(eventHandler2).toHaveBeenCalledTimes(1);
   });
@@ -394,40 +415,33 @@ describe("Event executed only once", () => {
 
 describe("Delegated events", () => {
   let subject: Dummy;
-  let rawCmp: MockedComponent, rawCmpSub: MockedComponent;
+  let rawCmpSub: ComponentMock;
+  let rawContainer: ComponentMock;
 
   beforeEach(() => {
-    let sheet = MockSheet({ id: "main" });
-    rawCmp = MockComponent({
-      id: "123",
-      sheet,
-    });
-    rawCmpSub = MockComponent({
-      id: "hop",
-      sheet,
-      cntr: rawCmp,
-    });
-    subject = new Dummy(rawCmp, rawCmpSub);
+    rawContainer = vw.get("container") as ComponentMock;
+    rawCmpSub = vw.get("sub") as ComponentMock;
+    subject = new Dummy(rawContainer, rawCmpSub);
   });
   test("Delegate an event", () => {
     const eventHandler1 = jest.fn();
-    subject.on("click", "hop", eventHandler1);
-    rawCmpSub._trigger("click");
+    subject.on("click", rawCmpSub.id()!, eventHandler1);
+    rawCmpSub.trigger("click");
     expect(eventHandler1).toHaveBeenCalledTimes(1);
   });
 
   test("Delegate an once event", () => {
     const eventHandler1 = jest.fn();
-    subject.once("click", "hop", eventHandler1);
-    rawCmpSub._trigger("click");
-    rawCmpSub._trigger("click");
+    subject.once("click", rawCmpSub.id()!, eventHandler1);
+    rawCmpSub.trigger("click");
+    rawCmpSub.trigger("click");
     expect(eventHandler1).toHaveBeenCalledTimes(1);
     eventHandler1.mockClear();
-    subject.once("click:ah", "hop", eventHandler1);
-    subject.once("click:be", "hop", eventHandler1);
-    subject.on("click:be", "hop", eventHandler1);
-    rawCmpSub._trigger("click");
-    rawCmpSub._trigger("click");
+    subject.once("click:ah", rawCmpSub.id()!, eventHandler1);
+    subject.once("click:be", rawCmpSub.id()!, eventHandler1);
+    subject.on("click:be", rawCmpSub.id()!, eventHandler1);
+    rawCmpSub.trigger("click");
+    rawCmpSub.trigger("click");
     expect(eventHandler1).toHaveBeenCalledTimes(4);
   });
 
@@ -435,28 +449,28 @@ describe("Delegated events", () => {
     const eventHandler0 = jest.fn();
     const eventHandler1 = jest.fn();
     const eventHandler2 = jest.fn();
-    subject.on("click", "hop", eventHandler1);
-    subject.off("click", "hop");
-    rawCmpSub._trigger("click");
-    rawCmpSub._trigger("click");
+    subject.on("click", rawCmpSub.id()!, eventHandler1);
+    subject.off("click", rawCmpSub.id()!);
+    rawCmpSub.trigger("click");
+    rawCmpSub.trigger("click");
     expect(eventHandler1).toHaveBeenCalledTimes(0);
     eventHandler1.mockClear();
-    subject.on("click", "hop", eventHandler0);
-    subject.on("click:ah", "hop", eventHandler1);
-    subject.on("click:be", "hop", eventHandler2);
-    subject.off("click:ah", "hop");
-    rawCmpSub._trigger("click");
-    rawCmpSub._trigger("click");
+    subject.on("click", rawCmpSub.id()!, eventHandler0);
+    subject.on("click:ah", rawCmpSub.id()!, eventHandler1);
+    subject.on("click:be", rawCmpSub.id()!, eventHandler2);
+    subject.off("click:ah", rawCmpSub.id()!);
+    rawCmpSub.trigger("click");
+    rawCmpSub.trigger("click");
     expect(eventHandler0).toHaveBeenCalledTimes(2);
     expect(eventHandler1).toHaveBeenCalledTimes(0);
     expect(eventHandler2).toHaveBeenCalledTimes(2);
     eventHandler0.mockClear();
     eventHandler1.mockClear();
     eventHandler2.mockClear();
-    subject.off("click:be", "hop");
-    subject.off("click", "hop");
-    rawCmpSub._trigger("click");
-    rawCmpSub._trigger("click");
+    subject.off("click:be", rawCmpSub.id()!);
+    subject.off("click", rawCmpSub.id()!);
+    rawCmpSub.trigger("click");
+    rawCmpSub.trigger("click");
     expect(eventHandler0).toHaveBeenCalledTimes(0);
     expect(eventHandler1).toHaveBeenCalledTimes(0);
     expect(eventHandler2).toHaveBeenCalledTimes(0);
@@ -465,19 +479,11 @@ describe("Delegated events", () => {
 
 describe("Disabling event", () => {
   let subject: Dummy;
-  let rawCmp: MockedComponent, rawCmpSub: MockedComponent;
+  let rawCmp: ComponentMock, rawCmpSub: ComponentMock;
 
   beforeEach(() => {
-    let sheet = MockSheet({ id: "main" });
-    rawCmp = MockComponent({
-      id: "123",
-      sheet,
-    });
-    rawCmpSub = MockComponent({
-      id: "hop",
-      sheet,
-      cntr: rawCmp,
-    });
+    rawCmp = vw.get("container") as ComponentMock;
+    rawCmpSub = vw.get("sub") as ComponentMock;
     subject = new Dummy(rawCmp, rawCmpSub);
   });
 
@@ -538,19 +544,11 @@ describe("Disabling event", () => {
 
 describe("Cancel event", () => {
   let subject: Dummy;
-  let rawCmp: MockedComponent, rawCmpSub: MockedComponent;
+  let rawCmp: ComponentMock, rawCmpSub: ComponentMock;
 
   beforeEach(() => {
-    let sheet = MockSheet({ id: "main" });
-    rawCmp = MockComponent({
-      id: "123",
-      sheet,
-    });
-    rawCmpSub = MockComponent({
-      id: "hop",
-      sheet,
-      cntr: rawCmp,
-    });
+    rawCmp = vw.get("container") as ComponentMock;
+    rawCmpSub = vw.get("sub") as ComponentMock;
     subject = new Dummy(rawCmp, rawCmpSub);
   });
 
@@ -576,14 +574,10 @@ describe("Cancel event", () => {
 
 describe("Handle error in event", () => {
   let subject: Dummy;
-  let rawCmp: MockedComponent;
+  let rawCmp: ComponentMock;
 
   beforeEach(() => {
-    let sheet = MockSheet({ id: "main" });
-    rawCmp = MockComponent({
-      id: "123",
-      sheet,
-    });
+    rawCmp = vw.get("lbl") as ComponentMock;
     subject = new Dummy(rawCmp);
   });
 
@@ -603,42 +597,31 @@ describe("Handle error in event", () => {
 
 describe("Transfer events", () => {
   let subject: Dummy;
-  let rawCmp: MockedComponent, rawCmpDest: MockedComponent;
+  let rawCmp: ComponentMock, rawCmpDest: ComponentMock;
 
   beforeEach(() => {
-    let sheet = MockSheet({ id: "main" });
-    rawCmp = MockComponent({
-      id: "123",
-      sheet,
-    });
-    rawCmpDest = MockComponent({
-      id: "123",
-      sheet,
-    });
+    rawCmp = vw.get("lbl") as ComponentMock;
+    rawCmpDest = vw.get("sub") as ComponentMock;
     subject = new Dummy(rawCmp);
   });
 
   test("Events are transferred", () => {
     const eventHandler = jest.fn();
     subject.on("click", eventHandler);
-    rawCmp._trigger("click");
+    rawCmp.trigger("click");
     expect(eventHandler).toHaveBeenCalledTimes(1);
     subject.transferEvents(rawCmpDest);
-    rawCmpDest._trigger("click");
+    rawCmpDest.trigger("click");
     expect(eventHandler).toHaveBeenCalledTimes(2);
   });
 });
 
 describe("Handle on change event trigger", () => {
   let subject: Dummy;
-  let rawCmp: MockedComponent;
+  let rawCmp: ComponentMock;
 
   beforeEach(() => {
-    let sheet = MockSheet({ id: "main" });
-    rawCmp = MockComponent({
-      id: "123",
-      sheet,
-    });
+    rawCmp = vw.get("lbl") as ComponentMock;
     rawCmp.value(1);
     subject = new Dummy(rawCmp);
   });
@@ -680,18 +663,14 @@ describe("Handle on change event trigger", () => {
 
 describe("Component has not targeting", () => {
   let subject: any;
-  let rawCmp: MockedComponent;
+  let rawCmp: ComponentMock;
 
   beforeEach(() => {
-    let sheet = MockSheet({ id: "main" });
-    rawCmp = MockComponent({
-      id: "123",
-      sheet,
-    });
+    rawCmp = vw.get("lbl") as ComponentMock;
     rawCmp.value(1);
     subject = new (class extends EventHolder<TestedEvents>() {
       constructor(protected _raw: LetsRole.Component) {
-        super(_raw.id());
+        super(_raw.id()!);
       }
 
       raw(): LetsRole.Component {
@@ -712,13 +691,10 @@ describe("Component has not targeting", () => {
 
 describe("Event holder triggers events", () => {
   let subject: Dummy;
-  let rawCmp: MockedComponent;
+  let rawCmp: ComponentMock;
 
   beforeEach(() => {
-    rawCmp = MockComponent({
-      id: "123",
-      sheet: MockSheet({ id: "main" }),
-    });
+    rawCmp = vw.get("lbl") as ComponentMock;
     subject = new Dummy(rawCmp);
   });
 
@@ -749,7 +725,7 @@ describe("Event holder triggers events", () => {
     subject.on("eventhandler-destroyed", destroyed);
     expect(added).toHaveBeenCalledTimes(0);
 
-    const fcn1 = () => {};
+    const fcn1 = () => { };
     subject.on("click", fcn1);
     expect(added).toHaveBeenCalledTimes(1);
     expect(added2).toHaveBeenCalledTimes(1);
@@ -765,7 +741,7 @@ describe("Event holder triggers events", () => {
     expect(created).toHaveBeenCalledTimes(1);
 
     expect(updated).toHaveBeenCalledTimes(0);
-    const fcn2 = () => {};
+    const fcn2 = () => { };
     subject.on("click", fcn2);
     expect(added).toHaveBeenCalledTimes(2);
     expect(added2).toHaveBeenCalledTimes(2);
@@ -824,18 +800,11 @@ describe("Event holder triggers events", () => {
 
   describe("Link events between holders", () => {
     let subject1: Dummy, subject2: Dummy;
-    let rawCmp1: MockedComponent, rawCmp2: MockedComponent;
+    let rawCmp1: ComponentMock, rawCmp2: ComponentMock;
 
     beforeEach(() => {
-      let sheet = MockSheet({ id: "main" });
-      rawCmp1 = MockComponent({
-        id: "123",
-        sheet,
-      });
-      rawCmp2 = MockComponent({
-        id: "456",
-        sheet,
-      });
+      rawCmp1 = vw.get("lbl") as ComponentMock;
+      rawCmp2 = vw.get("sub") as ComponentMock;
       subject1 = new Dummy(rawCmp1);
       subject2 = new Dummy(rawCmp2);
     });
@@ -903,27 +872,17 @@ describe("Copy events from a component to an other", () => {
   let source: Dummy;
   let dest: Dummy;
   let dest2: Dummy;
-  let rawSource: MockedComponent;
-  let rawDest: MockedComponent;
-  let rawDest2: MockedComponent;
+  let rawSource: ComponentMock;
+  let rawDest: ComponentMock;
+  let rawDest2: ComponentMock;
   let clickCbs: Array<jest.Mock> = [];
 
   beforeEach(() => {
-    const sheet = MockSheet({ id: "main" });
-    rawSource = MockComponent({
-      id: "123",
-      sheet,
-    });
+    rawSource = vw.get("lbl") as ComponentMock;
     source = new Dummy(rawSource, undefined);
-    rawDest = MockComponent({
-      id: "456",
-      sheet,
-    });
+    rawDest = vw.get("sub") as ComponentMock;
     dest = new Dummy(rawDest, undefined);
-    rawDest2 = MockComponent({
-      id: "789",
-      sheet,
-    });
+    rawDest2 = vw.get("lbl2") as ComponentMock;
     dest2 = new Dummy(rawDest2, undefined);
     for (let i = 0; i < 6; i++) {
       clickCbs[i] = jest.fn();
@@ -936,13 +895,13 @@ describe("Copy events from a component to an other", () => {
     dest.on("click", click1);
     dest.on("click:second", click2);
 
-    rawDest._trigger("click");
+    rawDest.trigger("click");
     expect(click1).toHaveBeenCalledWith(dest);
     expect(click2).toHaveBeenCalledWith(dest);
 
     click1.mockClear();
     click2.mockClear();
-    rawSource._trigger("click");
+    rawSource.trigger("click");
     expect(click1).not.toHaveBeenCalled();
     expect(click2).not.toHaveBeenCalled();
 
@@ -950,7 +909,7 @@ describe("Copy events from a component to an other", () => {
 
     click1.mockClear();
     click2.mockClear();
-    rawSource._trigger("click");
+    rawSource.trigger("click");
     expect(click1).toHaveBeenCalledWith(dest);
     expect(click2).toHaveBeenCalledWith(dest);
 
@@ -973,7 +932,7 @@ describe("Copy events from a component to an other", () => {
 
     click1.mockClear();
     click2.mockClear();
-    rawSource._trigger("click");
+    rawSource.trigger("click");
     expect(click1).toHaveBeenCalledTimes(0);
     expect(click2).toHaveBeenCalledTimes(0);
     expect(click3).toHaveBeenCalledWith(source);
@@ -981,7 +940,7 @@ describe("Copy events from a component to an other", () => {
     source.propagateEventTo(dest, ["click"]);
 
     click3.mockClear();
-    rawSource._trigger("click");
+    rawSource.trigger("click");
     expect(click1).toHaveBeenCalledWith(dest);
     expect(click2).toHaveBeenCalledWith(dest);
     expect(click3).toHaveBeenCalledWith(source);
@@ -991,7 +950,7 @@ describe("Copy events from a component to an other", () => {
     click1.mockClear();
     click2.mockClear();
     click3.mockClear();
-    rawSource._trigger("click");
+    rawSource.trigger("click");
     expect(click1).toHaveBeenCalledWith(dest);
     expect(click2).toHaveBeenCalledWith(dest);
     expect(click3).toHaveBeenCalledWith(source);
@@ -1007,7 +966,7 @@ describe("Copy events from a component to an other", () => {
     click2.mockClear();
     click3.mockClear();
     click4.mockClear();
-    rawSource._trigger("click");
+    rawSource.trigger("click");
     expect(click1).toHaveBeenCalledWith(dest);
     expect(click2).toHaveBeenCalledWith(dest);
     expect(click3).toHaveBeenCalledWith(source);
@@ -1026,7 +985,7 @@ describe("Copy events from a component to an other", () => {
     source.propagateEventTo(dest);
     source.propagateEventTo(dest2);
 
-    rawSource._trigger("click");
+    rawSource.trigger("click");
     expect(clickCbs[0]).toHaveBeenCalledTimes(1);
     expect(clickCbs[1]).toHaveBeenCalledTimes(1);
     expect(clickCbs[1]).toHaveBeenCalledWith(dest);
@@ -1073,14 +1032,14 @@ describe("Copy events from a component to an other", () => {
     dest.on("click", clickCbs[1]);
 
     source.propagateEventTo(dest, ["click"]);
-    rawSource._trigger("click");
+    rawSource.trigger("click");
     expect(clickCbs[0]).toHaveBeenCalledTimes(1);
     expect(clickCbs[1]).toHaveBeenCalledTimes(1);
     jest.clearAllMocks();
 
     source.off("click");
 
-    rawSource._trigger("click");
+    rawSource.trigger("click");
     expect(clickCbs[0]).toHaveBeenCalledTimes(0);
     expect(clickCbs[1]).toHaveBeenCalledTimes(1);
     jest.clearAllMocks();

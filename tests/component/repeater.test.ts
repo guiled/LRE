@@ -1,38 +1,69 @@
 import { Repeater } from "../../src/component/repeater";
 import { LRE } from "../../src/lre";
+import { ServerMock } from "../../src/mock/letsrole/server.mock";
+import { ViewMock } from "../../src/mock/letsrole/view.mock";
 import { SheetProxy } from "../../src/proxy/sheet";
 import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
-import {
-  MockComponent,
-  MockedComponent,
-} from "../mock/letsrole/component.mock";
-import { initLetsRole } from "../mock/letsrole/letsrole.mock";
-import { MockServer } from "../mock/letsrole/server.mock";
-import { MockedSheet, MockSheet } from "../mock/letsrole/sheet.mock";
+import { initLetsRole } from "../../src/mock/letsrole/letsrole.mock";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 
-let rawRepeater: MockedComponent;
+let rawRepeater: LetsRole.Component;
 let repeater: Repeater;
-let server: MockServer;
-let rawSheet: MockedSheet;
+let server: ServerMock;
+let rawSheet: ViewMock;
 let sheet: Sheet;
-let cmpDefs;
 beforeAll(() => {
+  server = new ServerMock({
+    views: [
+      {
+        id: "main",
+        children: [
+          {
+            id: "rep",
+            className: "Repeater",
+            viewId: "edt",
+            readViewId: "rd",
+          },
+          {
+            id: "cmp",
+            className: "Label",
+          },
+        ],
+        className: "View",
+      },
+      {
+        id: "edt",
+        className: "View",
+        children: [
+          {
+            id: "name",
+            className: "TextInput",
+            name: "name",
+          }
+        ],
+      },
+      {
+        id: "rd",
+        className: "View",
+        children: [
+          {
+            id: "name",
+            className: "Label",
+            name: "name",
+          }
+        ],
+      }
+    ],
+  });
+  initLetsRole(server);
   global.lre = new LRE(modeHandlerMock);
-  initLetsRole();
   modeHandlerMock.setMode("real");
   lre.autoNum(false);
-  server = new MockServer();
-  rawSheet = MockSheet({
-    id: "main",
-    realId: "123",
-    data: {
-      rep: {},
-      cmd: "2",
-    },
+  rawSheet = server.openView("main", "123", {
+    rep: {},
+    cmd: "2",
   });
-  server.registerMockedSheet(rawSheet, []);
   const proxySheet = new SheetProxy(modeHandlerMock, rawSheet);
 
   sheet = new Sheet(
@@ -40,21 +71,11 @@ beforeAll(() => {
     new DataBatcher(modeHandlerMock, proxySheet),
     modeHandlerMock
   );
-  sheet.raw = jest.fn(() => proxySheet);
   jest.spyOn(sheet, "get");
   jest.spyOn(sheet, "componentExists");
   jest.spyOn(sheet, "knownChildren");
-  cmpDefs = {
-    id: "rep",
-    sheet: proxySheet,
-    name: "repeater",
-    classes: ["repeater"],
-    value: {},
-  };
-  rawRepeater = MockComponent(cmpDefs);
-
-  server.registerMockedComponent(rawRepeater);
-  repeater = new Repeater(rawRepeater, sheet, "rep");
+  repeater = sheet.get("rep") as Repeater;
+  rawRepeater = repeater.raw();
 });
 
 describe("Repeater is correctly initialized", () => {
@@ -63,9 +84,11 @@ describe("Repeater is correctly initialized", () => {
   });
 
   test("text() is protected", () => {
+    jest.spyOn(rawRepeater, "text");
     /* @ts-expect-error repeater.text() is protected and cannot receive parameter */
     repeater.text("test");
-    expect(rawRepeater.text).not.toHaveBeenCalledWith("test");
+    expect(rawRepeater.text).toHaveBeenCalled();
+    expect((rawRepeater.text as jest.Mock).mock.calls[0].length).toBe(0);
   });
 });
 

@@ -6,33 +6,128 @@ import { Icon } from "../../src/component/icon";
 import { Label } from "../../src/component/label";
 import { MultiChoice } from "../../src/component/multichoice";
 import { LRE } from "../../src/lre";
+import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
-import { MockComponent } from "../mock/letsrole/component.mock";
-import { MockSheet } from "../mock/letsrole/sheet.mock";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 jest.mock("../../src/lre");
 
 global.lre = new LRE(modeHandlerMock);
+let server: ServerMock;
 
 describe("Component factory", () => {
   let rawCmp: LetsRole.Component, sheet: Sheet;
   let rawSheet: LetsRole.Sheet;
   beforeAll(() => {
-    rawSheet = MockSheet({
-      id: "main",
-      realId: "123",
+    server = new ServerMock({
+      views: [
+        {
+          id: "main",
+          children: [
+            {
+              id: "cmp1",
+              className: "Color",
+            },
+            {
+              id: "lbl",
+              className: "Label",
+              text: "Hello",
+            },
+            {
+              id: "rep1",
+              className: "Repeater",
+              viewId: "editView",
+              readViewId: "readView",
+            },
+            {
+              id: "choice",
+              className: "Choice",
+            },
+            {
+              id: "multipleChoice",
+              className: "Choice",
+              multiple: true,
+            },
+            {
+              id: "icon",
+              className: "Icon",
+              iconName: "icon"
+            },
+            {
+              id: "widgetContainer",
+              children: [
+                {
+                  id: "cmp1",
+                  className: "Color",
+                },
+              ],
+              className: "Container",
+            },
+            {
+              id: "view",
+              children: [
+                {
+                  id: "cmp1",
+                  className: "Color",
+                },
+              ],
+              className: "View",
+            },
+            {
+              id: "row",
+              children: [
+                {
+                  id: "cmp1",
+                  className: "Color",
+                },
+              ],
+              className: "Row",
+            },
+            {
+              id: "column",
+              children: [
+                {
+                  id: "cmp1",
+                  className: "Color",
+                },
+              ],
+              className: "Column",
+            }
+          ],
+          className: "View",
+        },
+        {
+          id: "editView",
+          children: [
+            {
+              id: "txt",
+              className: "TextInput",
+              defaultValue: "",
+            }
+          ],
+          className: "View",
+        },
+        {
+          id: "readView",
+          children: [
+            {
+              id: "lbl",
+              className: "Label",
+              text: "",
+            }
+          ],
+          className: "View",
+        }
+      ],
     });
+    rawSheet = server.openView("main", "123", { rep1: { entry1: { txt: "hello", lbl: "Hello Read" } } });
     sheet = new Sheet(
       rawSheet,
       new DataBatcher(modeHandlerMock, rawSheet),
       modeHandlerMock
     );
-    rawCmp = MockComponent({
-      id: "cmp1",
-      sheet: rawSheet,
-    });
+    rawCmp = rawSheet.get("cmp1");
   });
   test("Simple components", () => {
     const cmp = ComponentFactory.create(rawCmp, sheet);
@@ -42,16 +137,8 @@ describe("Component factory", () => {
   });
 
   test("Component in repeater", () => {
-    const rawRep = MockComponent({
-      id: "rep1",
-      sheet: rawSheet,
-      classes: ["repeater"],
-    });
-    const rawEntry = MockComponent({
-      id: "entry1",
-      sheet: rawSheet,
-      classes: ["repeater-element"],
-    });
+    const rawRep = rawSheet.get("rep1");
+    const rawEntry = rawRep.find("entry1");
     const rep = ComponentFactory.create(rawRep, sheet);
     expect(rep.lreType()).toBe<ComponentType>("repeater");
     expect(rep.entry()).toBeUndefined();
@@ -76,61 +163,29 @@ describe("Component factory", () => {
   });
 
   test("Various component creation", () => {
-    const rawChoice = MockComponent({
-      id: "choice",
-      sheet: rawSheet,
-      classes: ["choice"],
-    });
+    const rawChoice = rawSheet.get("choice");
     expect(ComponentFactory.create(rawChoice, sheet)).toBeInstanceOf(Choice);
-    const rawMultipleChoice = MockComponent({
-      id: "multipleChoice",
-      sheet: rawSheet,
-      classes: ["choice", "multiple"],
-    });
+    const rawMultipleChoice = rawSheet.get("multipleChoice");
     expect(ComponentFactory.create(rawMultipleChoice, sheet)).toBeInstanceOf(
       MultiChoice
     );
-    const rawIcon = MockComponent({
-      id: "icon",
-      sheet: rawSheet,
-      classes: ["icon"],
-    });
+    const rawIcon = rawSheet.get("icon");
     expect(ComponentFactory.create(rawIcon, sheet)).toBeInstanceOf(Icon);
-    const label = MockComponent({
-      id: "label",
-      sheet: rawSheet,
-      classes: ["label"],
-    });
+    const label = rawSheet.get("lbl");
     expect(ComponentFactory.create(label, sheet)).toBeInstanceOf(Label);
-    const container1 = MockComponent({
-      id: "container1",
-      sheet: rawSheet,
-      classes: ["widget-container"],
-    });
+    const container1 = rawSheet.get("widgetContainer");
     expect(ComponentFactory.create(container1, sheet)).toBeInstanceOf(
       Container
     );
-    const container2 = MockComponent({
-      id: "container2",
-      sheet: rawSheet,
-      classes: ["view"],
-    });
+    const container2 = rawSheet.get("view");
     expect(ComponentFactory.create(container2, sheet)).toBeInstanceOf(
       Container
     );
-    const container3 = MockComponent({
-      id: "container3",
-      sheet: rawSheet,
-      classes: ["row"],
-    });
+    const container3 = rawSheet.get("row");
     expect(ComponentFactory.create(container3, sheet)).toBeInstanceOf(
       Container
     );
-    const container4 = MockComponent({
-      id: "container4",
-      sheet: rawSheet,
-      classes: ["col"],
-    });
+    const container4 = rawSheet.get("column");
     expect(ComponentFactory.create(container4, sheet)).toBeInstanceOf(
       Container
     );

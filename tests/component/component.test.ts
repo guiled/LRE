@@ -3,66 +3,124 @@ import { Container } from "../../src/component/container";
 import { Entry } from "../../src/component/entry";
 import { Repeater } from "../../src/component/repeater";
 import { Sheet } from "../../src/sheet";
-import {
-  MockComponent,
-  MockedComponent,
-} from "../mock/letsrole/component.mock";
-import { MockSheet } from "../mock/letsrole/sheet.mock";
 import { LRE } from "../../src/lre";
-import { MockServer } from "../mock/letsrole/server.mock";
 import {
-  defineTable,
   initLetsRole,
   itHasWaitedEnough,
   itHasWaitedEverything,
-} from "../mock/letsrole/letsrole.mock";
+} from "../../src/mock/letsrole/letsrole.mock";
 import { DataBatcher } from "../../src/sheet/databatcher";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 import { Choice } from "../../src/component/choice";
 import { LreTables } from "../../src/tables";
 import { SheetProxy } from "../../src/proxy/sheet";
+import { ServerMock } from "../../src/mock/letsrole/server.mock";
+import { ComponentMock } from "../../src/mock/letsrole/component.mock";
 
-global.lre = new LRE(modeHandlerMock);
-initLetsRole();
 
 let rawSheet: LetsRole.Sheet;
 let sheet: Sheet;
-let rawCmp: MockedComponent;
+let rawCmp: ComponentMock;
 let cmp: Component;
 const cmpId = "cmp";
 const cmpName = "ComponentName";
 const cmpValue = "42";
 const cmpClasses = ["cl1", "cl2", "cl3"];
 const realId = "cmp";
-const cmpText = "cmpText";
+const cmpText = "42";
 //let cmpDefs;
 
-let server: MockServer;
+let server: ServerMock;
 
 beforeEach(() => {
   modeHandlerMock.setMode("real");
   modeHandlerMock.resetAccessLog();
-  lre.autoNum(false);
-  server = new MockServer();
-  rawSheet = MockSheet({
-    id: "main",
-    realId: "123",
-    data: {
-      [cmpId]: cmpValue,
-      cmp2: cmpValue,
-      cmp3: "1342",
+  server = new ServerMock({
+    views: [
+      {
+        id: "main",
+        className: "View",
+        children: [
+          {
+            id: cmpId,
+            className: "TextInput",
+            name: cmpName,
+            classes: cmpClasses.join(" "),
+            defaultValue: cmpValue,
+          },
+          {
+            id: "container",
+            className: "Container",
+          },
+          {
+            id: "rep",
+            className: "Repeater",
+            viewId: "edt",
+            readViewId: "rd",
+          },
+          {
+            id: "cmp1",
+            className: "TextInput",
+            defaultValue: "42",
+          },
+          {
+            id: "cmp2",
+            className: "TextInput",
+            defaultValue: "42",
+          },
+          {
+            id: "cmp3",
+            className: "TextInput",
+            defaultValue: "42",
+          },
+          {
+            id: "choice",
+            className: "Choice",
+          },
+          {
+            id: "chk",
+            className: "Checkbox",
+          },
+        ],
+      },
+      {
+        id: "edt",
+        className: "View",
+        children: []
+      },
+      {
+        id: "rd",
+        className: "View",
+        children: [
+          {
+            id: "b",
+            className: "Label",
+            text: "label1",
+          }
+        ]
+      },
+    ],
+    tables: {
+      theTable: [
+        { id: "1", a: "x", b: "y" },
+        { id: "2", a: "z", b: "w" },
+      ],
     },
   });
+  initLetsRole(server);
+  global.lre = new LRE(modeHandlerMock);
+  lre.autoNum(false);
+
+  rawSheet = server.openView("main", "123", {
+    [cmpId]: cmpValue,
+    cmp2: cmpValue,
+    cmp3: "1342",
+    rep: {
+      "123": {}
+    }
+  });
+
   const proxySheet = new SheetProxy(modeHandlerMock, rawSheet);
-  server.registerMockedSheet(rawSheet, [
-    {
-      id: cmpId,
-      name: cmpName,
-      classes: [...cmpClasses],
-      text: cmpText,
-      value: cmpValue,
-    },
-  ]);
 
   sheet = new Sheet(
     proxySheet,
@@ -73,8 +131,7 @@ beforeEach(() => {
   jest.spyOn(sheet, "get");
   jest.spyOn(sheet, "componentExists");
   jest.spyOn(sheet, "knownChildren");
-  rawCmp = rawSheet.get(cmpId) as MockedComponent;
-  server.registerMockedComponent(rawCmp);
+  rawCmp = rawSheet.get(cmpId) as ComponentMock;
   cmp = new Component(rawCmp, sheet, realId);
 });
 
@@ -86,32 +143,32 @@ describe("Component construction", () => {
     cmp.lreType("container");
     expect(cmp.lreType()).toBe("container");
 
-    (rawCmp.id as jest.Mock).mockClear();
+    jest.spyOn(rawCmp, "id");
     expect(cmp.id()).toEqual(cmpId);
     expect(rawCmp.id).toHaveBeenCalledTimes(1);
 
     expect(cmp.realId()).toEqual(realId);
 
-    (rawCmp.index as jest.Mock).mockClear();
+    jest.spyOn(rawCmp, "index");
     expect(cmp.index()).toBeNull();
     expect(rawCmp.index).toHaveBeenCalledTimes(1);
 
-    (rawCmp.name as jest.Mock).mockClear();
+    jest.spyOn(rawCmp, "name");
     expect(cmp.name()).toBe(cmpName);
     expect(rawCmp.name).toHaveBeenCalledTimes(1);
 
     expect(cmp.sheet()).toBe(sheet);
     expect(cmp.parent()).toBeUndefined();
 
-    (rawCmp.hide as jest.Mock).mockClear();
+    jest.spyOn(rawCmp, "hide");
     cmp.hide();
     expect(rawCmp.hide).toHaveBeenCalledTimes(1);
 
-    (rawCmp.visible as jest.Mock).mockClear();
+    jest.spyOn(rawCmp, "visible");
     expect(cmp.visible()).toBeFalsy();
     expect(rawCmp.visible).toHaveBeenCalledTimes(1);
 
-    (rawCmp.show as jest.Mock).mockClear();
+    jest.spyOn(rawCmp, "show");
     cmp.show();
     expect(rawCmp.show).toHaveBeenCalledTimes(1);
 
@@ -119,7 +176,7 @@ describe("Component construction", () => {
     expect(cmp.visible()).toBeTruthy();
     expect(rawCmp.visible).toHaveBeenCalledTimes(1);
 
-    (rawCmp.text as jest.Mock).mockClear();
+    jest.spyOn(rawCmp, "text");
     expect(cmp.text()).toBe(cmpText);
     expect(rawCmp.text).toHaveBeenCalledTimes(1);
     const newText = "new Text";
@@ -127,21 +184,21 @@ describe("Component construction", () => {
     expect(cmp.text()).toBe(newText);
     expect(rawCmp.text).toHaveBeenCalledTimes(3);
 
-    (rawCmp.setChoices as jest.Mock).mockClear();
+    jest.spyOn(rawCmp, "setChoices");
     cmp.setChoices({ a: "a", b: "b" });
     expect(rawCmp.setChoices).toHaveBeenCalledTimes(1);
 
-    (rawCmp.virtualValue as jest.Mock).mockClear();
+    jest.spyOn(rawCmp, "virtualValue");
     cmp.virtualValue();
     expect(rawCmp.virtualValue).toHaveBeenCalledTimes(1);
     cmp.virtualValue("virtual");
     expect(rawCmp.virtualValue).toHaveBeenCalledTimes(2);
 
-    (rawCmp.rawValue as jest.Mock).mockClear();
+    jest.spyOn(rawCmp, "rawValue");
     cmp.rawValue();
     expect(rawCmp.rawValue).toHaveBeenCalledTimes(1);
 
-    (rawCmp.setToolTip as jest.Mock).mockClear();
+    jest.spyOn(rawCmp, "setToolTip");
     cmp.setToolTip("the tool tip");
     expect(rawCmp.setToolTip).toHaveBeenCalledTimes(1);
     expect((rawCmp.setToolTip as jest.Mock).mock.calls[0].length).toBe(1);
@@ -161,12 +218,12 @@ describe("Component construction", () => {
   });
 
   test("Component classes", () => {
-    (rawCmp.addClass as jest.Mock).mockClear();
-    (rawCmp.removeClass as jest.Mock).mockClear();
-    (rawCmp.hasClass as jest.Mock).mockClear();
-    (rawCmp.getClasses as jest.Mock).mockClear();
+    jest.spyOn(rawCmp, "addClass");
+    jest.spyOn(rawCmp, "removeClass");
+    jest.spyOn(rawCmp, "hasClass");
+    jest.spyOn(rawCmp, "getClasses");
 
-    expect(cmp.getClasses()).toEqual(cmpClasses);
+    expect(cmp.getClasses()).toEqual(expect.arrayContaining(cmpClasses));
     expect(rawCmp.getClasses).toHaveBeenCalledTimes(1);
     expect(cmp.hasClass("cl1")).toBeTruthy();
     expect(cmp.hasClass("cl2")).toBeTruthy();
@@ -177,7 +234,7 @@ describe("Component construction", () => {
     expect(rawCmp.addClass).toHaveBeenCalledTimes(1);
     expect(cmp.hasClass("cl0")).toBeTruthy();
     cmp.removeClass("cl2");
-    expect(cmp.getClasses().sort()).toEqual(["cl0", "cl1", "cl3"].sort());
+    expect(cmp.getClasses()).toEqual(expect.arrayContaining(["cl0", "cl1", "cl3"]));
     expect(cmp.hasClass("cl2")).toBeFalsy();
     cmp.toggleClass("cl2");
     expect(cmp.hasClass("cl2")).toBeTruthy();
@@ -210,7 +267,7 @@ describe("Component tree", () => {
     expect(cmp.entry()).toBeUndefined();
 
     const parent = new Container(
-      MockComponent({ id: "container", sheet: rawSheet }),
+      rawSheet.get("container"),
       sheet,
       "container"
     );
@@ -218,7 +275,7 @@ describe("Component tree", () => {
     expect(cmp.parent()).toBe(parent);
 
     const rep = new Repeater(
-      MockComponent({ id: "rep", sheet: rawSheet }),
+      rawSheet.get("rep"),
       sheet,
       "rep"
     );
@@ -226,7 +283,7 @@ describe("Component tree", () => {
     expect(cmp.repeater()).toBe(rep);
 
     const entry = new Entry(
-      MockComponent({ id: "entry", sheet: rawSheet }),
+      rawSheet.get("rep.123"),
       sheet,
       "rep"
     );
@@ -237,7 +294,7 @@ describe("Component tree", () => {
   test("Find in a component (not complete yet… todo : test to find a sub component", () => {
     cmp.find("test");
     expect(sheet.get).toHaveBeenCalled();
-    (sheet.get as jest.Mock).mockClear();
+    jest.spyOn(sheet, "get");
     cmp.get("test");
     expect(sheet.get).toHaveBeenCalled();
   });
@@ -258,7 +315,7 @@ describe("Component update event handling", () => {
     rawCmp.value(42);
     expect(updateEvent).toHaveBeenCalledTimes(1);
     sheet.setData({
-      [cmp.id()]: 43,
+      [cmp.id()!]: 43,
     });
     itHasWaitedEverything();
     expect(updateEvent).toHaveBeenCalledTimes(2);
@@ -270,58 +327,55 @@ describe("Component update event handling", () => {
     const updateEvent = jest.fn();
     cmp.on("update", updateEvent);
     rawSheet.setData({
-      [cmp.id()]: 43,
+      [cmp.id()!]: 43,
     });
     expect(updateEvent).toHaveBeenCalledTimes(1);
   });
 
   test("Raw Component value change applied to sheet data", () => {
-    expect(rawSheet.getData()[rawCmp.id()]).toBe(cmpValue);
+    expect(rawSheet.getData()[rawCmp.id()!]).toBe(cmpValue);
     rawCmp.value(43);
-    expect(rawSheet.getData()[rawCmp.id()]).toBe(43);
+    expect(rawSheet.getData()[rawCmp.id()!]).toBe(43);
   });
 });
 
 describe("Persistent data are sync between sheets", () => {
   test("Sync persistent data", () => {
-    const rawSheet2 = MockSheet({
-      id: "main",
-      realId: "123",
-    });
+    const rawSheet2 = server.openView("main", "123");
     /* @ts-ignore */
     rawSheet.num = 1;
     /* @ts-ignore */
     rawSheet2.num = 2;
-    server.registerMockedSheet(rawSheet2);
 
     const sheet2 = new Sheet(
       rawSheet2,
       new DataBatcher(modeHandlerMock, rawSheet2),
       modeHandlerMock
     );
-    const cmp2 = sheet2.get("rep.a.b")!;
+    const cmp2 = sheet2.get("rep.123.b")!;
     /* @ts-ignore */
     sheet.sheet = "1";
     /* @ts-ignore */
     sheet2.sheet = "2";
-    const cmp1 = new Component(rawCmp, sheet, "rep.a.b");
+    const cmp1 = new Component(rawCmp, sheet, "rep.123.b");
     //const cmp2 = new Component(rawCmp, sheet2, "rep.a.b");
     expect(cmp1.data("not")).toBeUndefined();
     expect(cmp2.data("not")).toBeUndefined();
-    expect(sheet.persistingCmpData("rep.a.b")).toBeUndefined();
+    expect(sheet.persistingCmpData("rep.123.b")).toBeUndefined();
     cmp1.data("test", 42, true);
-    expect(sheet.persistingCmpData("rep.a.b")).toStrictEqual({ test: 42 });
+    expect(sheet.persistingCmpData("rep.123.b")).toStrictEqual({ test: 42 });
     expect(cmp2.data("test")).toBeUndefined();
     itHasWaitedEverything();
-    expect(sheet2.persistingCmpData("rep.a.b")).toStrictEqual({ test: 42 });
+    expect(sheet2.persistingCmpData("rep.123.b")).toStrictEqual({ test: 42 });
     expect(cmp2.data("test")).toBe(42);
   });
 });
 
 describe("Component get and set value", () => {
   test("Value get", () => {
-    const raw = rawSheet.get("cmp2");
     const cmp = sheet.get("cmp2")!;
+    const raw = cmp.raw() as LetsRole.Component;
+    jest.spyOn(raw, "value");
     expect(cmp.value()).toBe("42");
     expect(raw.value).toHaveBeenCalled();
     sheet.setData({
@@ -353,10 +407,10 @@ describe("Component get and set value", () => {
     cmp.value(newVal);
     expect(updateEvent).toHaveBeenCalledWith(cmp);
     expect(cmp.value()).toBe(newVal);
-    expect(sheet.getPendingData(cmp.id())).toBe(newVal);
+    expect(sheet.getPendingData(cmp.id()!)).toBe(newVal);
     itHasWaitedEverything();
     const data = sheet.getData() as LetsRole.ViewData;
-    expect(data[cmp.id()]).toBe(newVal);
+    expect(data[cmp.id()!]).toBe(newVal);
   });
 
   test("value set with a function", () => {
@@ -398,26 +452,10 @@ describe("Component get and set value", () => {
   });
 
   test("valueData passed", () => {
-    const rawChoice = MockComponent({
-      id: "choice",
-      sheet: rawSheet,
-    });
+    const rawChoice = rawSheet.get("choice");
     Tables = new LreTables(Tables);
-    const TABLE_NAME = "theTable";
-    defineTable(TABLE_NAME, [
-      {
-        id: "z",
-        a: "1",
-        b: "2",
-      },
-      {
-        id: "y",
-        a: "2",
-        b: "3",
-      },
-    ]);
     const choice = new Choice(rawChoice, sheet, "choice");
-    choice.populate(TABLE_NAME, "a");
+    choice.populate("theTable", "a");
     choice.value("y");
     const cmp1 = sheet.get("cmp1")!;
     cmp1.value(choice);
@@ -456,8 +494,6 @@ describe("Component visible setter", () => {
       return !!chk.value();
     });
     expect(cmp.visible()).toBeTruthy();
-    jest.spyOn(cmp, "hide");
-    jest.spyOn(cmp, "show");
     (cmp.hide as jest.Mock).mockClear();
     (cmp.show as jest.Mock).mockClear();
     chk.value(false);
@@ -490,7 +526,7 @@ describe("Component simple event handling", () => {
     expect(handler).not.toHaveBeenCalled();
     expect(handlerLabeled).not.toHaveBeenCalled();
     expect(eventTarget).toBeUndefined();
-    rawCmp._trigger("click");
+    rawCmp.trigger("click");
     expect(handler).toHaveBeenCalled();
     expect(handlerLabeled).toHaveBeenCalled();
     expect(eventTarget).toStrictEqual(cmp);

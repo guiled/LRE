@@ -5,4 +5,8 @@ export class Checkbox extends Component {
     super(raw, sheet, realId);
     this.lreType("checkbox");
   }
+
+  not(): boolean {
+    return !this.value();
+  }
 }

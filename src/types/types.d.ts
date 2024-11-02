@@ -24,21 +24,21 @@ declare namespace LetsRole {
   export type BaseComponentValue = undefined | null | number | string | boolean;
   export type RepeaterValue =
     | {
-        [key: Index]: LetsRole.ViewData;
-      }
+      [key: Index]: LetsRole.ViewData;
+    }
     | undefined;
   export type ChoiceValue = string;
   export type ChoiceValues = Array<string>;
   export type MultiChoiceValue = Array<ChoiceValue>;
   export type AvatarValue =
     | {
-        avatar: string;
-        token: string;
-        frame: {
-          avatar: string | null;
-          token: string | null;
-        };
-      }
+      avatar: string;
+      token: string;
+      frame: {
+        avatar: string | null;
+        token: string | null;
+      };
+    }
     | undefined;
   export type ComposedComponentValue =
     | LetsRole.RepeaterValue
@@ -91,7 +91,7 @@ declare namespace LetsRole {
   }
 
   export interface Component<ValueType = ComponentValue> extends Object {
-    id(): LetsRole.ComponentID;
+    id(): LetsRole.ComponentID | null;
 
     index(): Index | null;
 
@@ -118,9 +118,9 @@ declare namespace LetsRole {
     hasClass(className: ClassName): boolean;
     toggleClass(className: ClassName): void;
 
-    value(): ValueType;
+    value(): ValueType | undefined;
     value(newValue: ValueType): void;
-    virtualValue(): ValueType;
+    virtualValue(): ValueType | null;
     virtualValue(newValue: ValueType): void;
 
     rawValue(): ValueType;
@@ -140,7 +140,7 @@ declare namespace LetsRole {
   export type TableID = string;
   export type TableColumn = string;
   export type TableValue = string;
-  export type TableRow = Record<TableColumn, TableValue>;
+  export type TableRow = { id: TableValue; } & Record<TableColumn, TableValue>;
   export type ColumnId = string;
 
   export type Tables = {
