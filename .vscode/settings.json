@@ -6,5 +6,11 @@
   "javascript.format.semicolons": "insert",
   "typescript.format.semicolons": "insert",
   "prettier.semi": true,
-  "prettier.trailingComma": "es5"
+  "prettier.trailingComma": "all",
+  "editor.tabSize": 2,
+  "editor.detectIndentation": true,
+  "eslint.codeActionsOnSave.rules": null,
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
 }
