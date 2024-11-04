@@ -1,16 +1,14 @@
 {
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
-  "prettier.tabWidth": 2,
-  "prettier.printWidth": 80,
   "javascript.format.semicolons": "insert",
   "typescript.format.semicolons": "insert",
-  "prettier.semi": true,
-  "prettier.trailingComma": "all",
   "editor.tabSize": 2,
-  "editor.detectIndentation": true,
-  "eslint.codeActionsOnSave.rules": null,
+  "editor.detectIndentation": false,
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit"
   }
 }
