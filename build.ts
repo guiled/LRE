@@ -7,16 +7,17 @@ import { assembleLRECode } from "./builder/assemble";
 
 const DEBUG_BUILD: boolean = process.argv.includes("debug");
 
-let swcPlugin: esbuild.Plugin = {
+const swcPlugin: esbuild.Plugin = {
   name: "swcPlugin",
   setup(build) {
     if (DEBUG_BUILD && transformForLR.jsc) {
       delete transformForLR.jsc.minify;
     }
+
     build.onLoad({ filter: /\.ts?$/ }, async (args) => {
-      let input = await fs.promises.readFile(args.path, "utf8");
+      const input = await fs.promises.readFile(args.path, "utf8");
       //var output = transformFileSync(args.path, transformForLR);
-      var output = transformSync(input, transformForLR);
+      const output = transformSync(input, transformForLR);
       return {
         contents: output.code,
         loader: "ts",
@@ -43,6 +44,7 @@ esbuild
     if (DEBUG_BUILD && noVoid0Plugin.jsc) {
       delete noVoid0Plugin.jsc.minify;
     }
+
     return transformFile("build/lre.tmp.0.js", noVoid0Plugin);
   })
   .then((result) => result.code.trim())
@@ -55,11 +57,12 @@ esbuild
     if (!DEBUG_BUILD) {
       code = formatLRECode(code, true);
     }
+
     return fs.writeFileSync(
       "build/lre.js",
       `//region LRE ${process.env.npm_package_version} ${Date.now()}
 ${code}
 //endregion LRE ${process.env.npm_package_version}
-`
+`,
     );
   });

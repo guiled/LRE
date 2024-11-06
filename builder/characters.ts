@@ -527,7 +527,7 @@ export const logoWidth = logoLR.reduce((acc, parts) => {
     acc,
     parts.reduce((sum: number, part) => {
       return sum + (typeof part === "string" ? part.length : (part as number));
-    }, 0)
+    }, 0),
   );
 }, 0);
 

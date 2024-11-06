@@ -15,25 +15,30 @@ function getPaddedCodeWithUselessCode(
   codeParts: Array<string>,
   length: number,
   previousWith = " ",
-  semicolonFillerOk = true
+  semicolonFillerOk = true,
 ) {
   const tmpResult = [...codeParts];
+
   if (tmpResult.length === 0) {
     tmpResult.push("");
   }
+
   let totalLength: number = tmpResult.reduce((acc, val) => acc + val.length, 0);
+
   while (totalLength < length) {
     let remainingLength = length - totalLength;
+
     // remainingLength < 5 for security because in the "else" part, we can need 5 characters to add a space + /**/
     if (remainingLength < 5) {
       let partIdsContainingSemiColon = tmpResult.map((part, index) =>
         part.includes(";") && !codeParts[index + 1]?.match(/\W*else\W*/)
           ? index
-          : -1
+          : -1,
       );
       partIdsContainingSemiColon = partIdsContainingSemiColon.filter(
-        (index) => index !== -1
+        (index) => index !== -1,
       );
+
       if (semicolonFillerOk && partIdsContainingSemiColon.length > 0) {
         tmpResult[
           partIdsContainingSemiColon[
@@ -46,15 +51,18 @@ function getPaddedCodeWithUselessCode(
     } else {
       let randomPartIndex: number;
       let cnt = 0;
+
       // this part prevent to add a comment like /**/ just after a / (division operator)
       do {
         randomPartIndex = Math.floor(Math.random() * tmpResult.length);
         cnt++;
       } while (cnt < 10 && tmpResult[randomPartIndex].match(/\//));
+
       if (cnt >= 10) {
         tmpResult[randomPartIndex] += " ";
         remainingLength--;
       }
+
       if (remainingLength === 4) {
         tmpResult[Math.floor(Math.random() * tmpResult.length)] += "/**/";
       } else {
@@ -67,6 +75,7 @@ function getPaddedCodeWithUselessCode(
         tmpResult[Math.floor(Math.random() * tmpResult.length)] += uselessCode;
       }
     }
+
     totalLength = tmpResult.reduce((acc, val) => acc + val.length, 0);
   }
 
@@ -75,13 +84,13 @@ function getPaddedCodeWithUselessCode(
 
 export const formatLRECode = (
   code: string,
-  insertAsciiArts = false
+  insertAsciiArts = false,
 ): string => {
   [
     /^\s*(.*)/gm, // remove spaces from line starts
     /\n+\s*(\n)/g, // remove multiple line breaks
-    /([\{\[])\n+\s*/g, // remove spaces after opening brackets
-    /\n+\s*([\}\]]\)?;?)/g, // remove spaces before opening brackets
+    /([{[])\n+\s*/g, // remove spaces after opening brackets
+    /\n+\s*([}\]]\)?;?)/g, // remove spaces before opening brackets
     /((?=^.*,)(?!^.+[:;]).+?)\n[\s\n]*/gm,
     /[ \t]*([^\s\w"'$]+)[ \t]*/g,
   ].forEach((e) => (code = code.replace(e, "$1")));
@@ -89,6 +98,7 @@ export const formatLRECode = (
   const MAX_LINE_LENGTH = 127;
   const lines: Array<string> = [""];
   const compiledTextLines: TextLineDefs = [];
+
   if (insertAsciiArts) {
     const insertedAsciiLines: Array<string> = [
       "LRE",
@@ -100,6 +110,7 @@ export const formatLRECode = (
       if (text.length === 0) {
         return;
       }
+
       for (
         let i = 0;
         i < FontLineSpace - (index === 0 ? 0 : FontCharUnderlineHeight);
@@ -107,29 +118,34 @@ export const formatLRECode = (
       ) {
         compiledTextLines.push([]);
       }
+
       const topTextPosition = compiledTextLines.length;
       let textWith = 0;
       text.split("").forEach((char: string) => {
         textWith += asciiWidth[char] || FontCharWidth;
       });
       const wordLeftMargin = Math.floor(
-        (MAX_LINE_LENGTH - textWith - (text.length - 1) * FontCharSpace) / 2
+        (MAX_LINE_LENGTH - textWith - (text.length - 1) * FontCharSpace) / 2,
       );
+
       for (let i = 0; i < FontHeight + FontCharUnderlineHeight; i++) {
         compiledTextLines.push([wordLeftMargin]);
       }
+
       text.split("").forEach((char: string, index: number) => {
         const currentCharDef = ascii[char];
+
         if (!currentCharDef) {
           throw new Error(`Character ${char} not found in ascii`);
         }
+
         for (let i = 0; i < FontHeight + FontCharUnderlineHeight; i++) {
           const charLineDef = currentCharDef[i] || [];
           const totalCharLineLength = charLineDef.reduce(
             (acc: number, val: string | number) => {
               return acc + (typeof val === "string" ? val.length : val);
             },
-            0
+            0,
           );
           const lastCompiledLine =
             compiledTextLines[topTextPosition + i][
@@ -143,6 +159,7 @@ export const formatLRECode = (
                     FontCharSpace,
                 ]
               : [];
+
           if (
             typeof charLineDef[0] === "number" &&
             typeof lastCompiledLine === "number"
@@ -170,7 +187,7 @@ export const formatLRECode = (
 
     logoLR.forEach((line: Array<number | string>) => {
       compiledTextLines.push(
-        ([logoLeftMargin] as Array<number | string>).concat(line)
+        ([logoLeftMargin] as Array<number | string>).concat(line),
       );
     });
 
@@ -185,16 +202,17 @@ export const formatLRECode = (
           } else {
             acc.push(val);
           }
+
           return acc;
         },
-        [] as Array<number | string>
+        [] as Array<number | string>,
       );
     });
   }
 
   const codeParts: Array<string> =
     code.match(
-      /(?:return[\t \[\(\{;!\-])?(?:\/(?:\\\/|[^\/\n])+\/(?:[smudgy]|[iv])*|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'|`[^`\\]*(?:\\.[^`\\]*)*`|\/\/.*|\/\*[\s\S]*?\*\/|(?:\+=|-=|\*=|\/=|%=|===?|!==?|>=|<=|>|<|&&|\|\||\?\:|\&|\||\^|~|<<|>>|>>>|\?)|[\])](?:\-\-|\+\+)?|[\[{}(;,.:*+\-/%<>=!&|^~?]|[\w\$]+(?:\+\+|\-\-|\s*))/gm
+      /(?:return[\t [({;!-])?(?:\/(?:\\\/|[^/\n])+\/(?:[smudgy]|[iv])*|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'|`[^`\\]*(?:\\.[^`\\]*)*`|\/\/.*|\/\*[\s\S]*?\*\/|(?:\+=|-=|\*=|\/=|%=|===?|!==?|>=|<=|>|<|&&|\|\||\?:|&|\||\^|~|<<|>>|>>>|\?)|[\])](?:--|\+\+)?|[[{}(;,.:*+\-/%<>=!&|^~?]|[\w$]+(?:\+\+|--|\s*))/gm,
     ) || [];
 
   let largestPart = "";
@@ -203,8 +221,10 @@ export const formatLRECode = (
   let currentLinePart = 0;
   let awaitingSemicolon = 0;
   let foundSemicolon = 0;
+
   while (codeParts.length > 0) {
     let targetedLength = MAX_LINE_LENGTH - lines[currentLine].length;
+
     if (
       currentLine < compiledTextLines.length &&
       compiledTextLines[currentLine].length > 0
@@ -232,6 +252,7 @@ export const formatLRECode = (
       } else if (codeParts[0].match(/;/)) {
         foundSemicolon++;
       }
+
       if (codeParts[0].length <= remainingLength) {
         remainingLength -= codeParts[0].length;
         lineParts.push(codeParts.shift()!);
@@ -246,11 +267,11 @@ export const formatLRECode = (
         const codePartToExtract = codeParts.shift()!;
         lineParts.push(
           codePartToExtract.substring(0, remainingLength - 1) +
-            codePartToExtract[0]
+            codePartToExtract[0],
         );
         codeParts.unshift(
           codePartToExtract[0] +
-            codePartToExtract.substring(remainingLength - 1)
+            codePartToExtract.substring(remainingLength - 1),
         );
         codeParts.unshift("+");
         takeCodePart = false;
@@ -263,10 +284,10 @@ export const formatLRECode = (
           "return" +
             match[1] +
             codePartToExtract.substring(8, remainingLength) +
-            match[1]
+            match[1],
         );
         codeParts.unshift(
-          match[1] + codePartToExtract.substring(remainingLength)
+          match[1] + codePartToExtract.substring(remainingLength),
         );
         codeParts.unshift("+");
         takeCodePart = false;
@@ -274,19 +295,22 @@ export const formatLRECode = (
         takeCodePart = false;
       }
     }
-    let nextPart = codeParts[1] || "";
+
+    const nextPart = codeParts[0] || "";
     largestPart = lineParts.reduce((acc: string, value: string) => {
       if (value.length > acc.length) {
         return value;
       }
+
       return acc;
     }, largestPart);
+
     if (codeParts.length > 0 || remainingLength < 0.2 * MAX_LINE_LENGTH) {
       lines[currentLine] += getPaddedCodeWithUselessCode(
         lineParts,
         targetedLength,
         " ",
-        awaitingSemicolon === 0 && !nextPart.match(/\W*else\W*/)
+        awaitingSemicolon === 0 && !nextPart.match(/\W*else\W*/),
       );
     } else {
       lines[currentLine] += lineParts.join("");
@@ -297,6 +321,7 @@ export const formatLRECode = (
     }
 
     currentLinePart++;
+
     if (currentLinePart > (compiledTextLines[currentLine]?.length || 0)) {
       currentLine++;
       currentLinePart = 0;
