@@ -4,11 +4,11 @@ import { ExpressionWithSpan } from "../../types";
 
 export function objectexpression(
   properties: { [key: string]: ExpressionWithSpan },
-  span?: Span
+  span?: Span,
 ): Expression {
-  let props: Property[] = [];
+  const props: Property[] = [];
 
-  for (let k in properties) {
+  for (const k in properties) {
     span ??= properties[k].span;
     props.push({
       type: "KeyValueProperty",
@@ -19,6 +19,7 @@ export function objectexpression(
       value: properties[k],
     });
   }
+
   if (!span) {
     throw Error("objectexpression needs span or properties");
   }

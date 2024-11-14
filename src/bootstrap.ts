@@ -9,8 +9,12 @@ import { overloadTables } from "./tables";
 
 export const bootstrap = (): ProxyModeHandler => {
   const ctx = new Context();
+  /* eslint-disable no-global-assign */
   // @ts-expect-error Define isNaN because it is missing in Let's Role
   isNaN = globals.isNaN;
+  /* @ts-expect-error Overwrite Error because it is missing in LR */
+  Error = LreError;
+  /* eslint-enable no-global-assign */
 
   structuredClone = globals.structuredClone;
 
@@ -20,10 +24,8 @@ export const bootstrap = (): ProxyModeHandler => {
   stringify = globals.stringify;
   virtualCall = globals.virtualCall;
   loggedCall = globals.loggedCall;
-  /* @ts-expect-error Overwrite Error because it is missing in LR */
-  Error = LreError;
 
-  const firstLaunch = (ctx: ProxyModeHandler) => {
+  const firstLaunch = (ctx: ProxyModeHandler): void => {
     lre.trace("LRE first launch bootstrap");
     overloadTables(Tables);
     wait = registerLreWait(ctx, wait);

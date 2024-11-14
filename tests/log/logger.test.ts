@@ -106,8 +106,8 @@ describe("Log many args", () => {
 
   test("Unknown log level", () => {
     const logger = new Logger();
-    let arg: unknown = 42;
-    /* @ts-ignore because user can do that */
+    const arg: unknown = 42;
+    /* @ts-expect-error because user can do that */
     logger.setLogLevel("unknown");
     expect(global.log).toHaveBeenCalledTimes(0);
     logger.log(arg);

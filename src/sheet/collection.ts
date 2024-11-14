@@ -3,7 +3,7 @@ import { Sheet } from "./sheet";
 export class SheetCollection {
   #sheets: Record<LetsRole.SheetID, Sheet> = {};
 
-  add(s: Sheet) {
+  add(s: Sheet): void {
     if (s.getSheetId()) {
       lre.log(`sheet stored ${s.getSheetId()}`);
       this.#sheets[s.getSheetId()] = s;
@@ -11,7 +11,7 @@ export class SheetCollection {
   }
 
   each(f: (v: Sheet, k?: LetsRole.SheetID) => any): void {
-    for (let sheetId in this.#sheets) {
+    for (const sheetId in this.#sheets) {
       f(this.#sheets[sheetId], sheetId);
     }
   }

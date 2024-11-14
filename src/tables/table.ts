@@ -16,9 +16,10 @@ export class Table
   }
   random(...args: any[]): void {
     let callback: (row: LetsRole.TableRow) => void, count: number;
+
     if (args.length === 2) {
       [count, callback] = args;
-      /* @ts-ignore the second parameter is optional but raise an error */
+      /* @ts-expect-error the second parameter is optional but raise an error */
       this.raw().random(count, callback);
     } else {
       [callback] = args;

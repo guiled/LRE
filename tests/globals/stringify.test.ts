@@ -9,7 +9,7 @@ describe("stringify test", () => {
     expect(stringify("a\\b")).toStrictEqual('"a\\\\b"');
     expect(
       stringify(`a
-b`)
+b`),
     ).toStrictEqual('"a\\nb"');
     expect(stringify(8 / 10)).toStrictEqual("0.8");
     const d = new Date();
@@ -28,7 +28,7 @@ b`)
     expect(stringify([1, 2, 3], false)).toStrictEqual(`[1,2,3]`);
     expect(stringify(["1", "2", "3"], false)).toStrictEqual(`["1","2","3"]`);
     expect(stringify([undefined], false)).toStrictEqual(`[null]`);
-    const a: any[] = [1];
+    const a: unknown[] = [1];
     a.push(a);
     expect(stringify(a, false)).toStrictEqual(`[1,"[recursive…]"]`);
   });
@@ -43,10 +43,10 @@ b`)
   "a": 1,
   "b": "2"
 }`);
-    const obj: any = { a: 1, b: "2" };
+    const obj: Record<string, unknown> = { a: 1, b: "2" };
     obj.c = obj;
     expect(stringify(obj, false)).toStrictEqual(
-      `{"a":1,"b":"2","c":"{recursive…}"}`
+      `{"a":1,"b":"2","c":"{recursive…}"}`,
     );
   });
 });

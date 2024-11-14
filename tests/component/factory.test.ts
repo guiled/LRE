@@ -52,7 +52,7 @@ describe("Component factory", () => {
             {
               id: "icon",
               className: "Icon",
-              iconName: "icon"
+              iconName: "icon",
             },
             {
               id: "widgetContainer",
@@ -93,7 +93,7 @@ describe("Component factory", () => {
                 },
               ],
               className: "Column",
-            }
+            },
           ],
           className: "View",
         },
@@ -104,7 +104,7 @@ describe("Component factory", () => {
               id: "txt",
               className: "TextInput",
               defaultValue: "",
-            }
+            },
           ],
           className: "View",
         },
@@ -115,22 +115,27 @@ describe("Component factory", () => {
               id: "lbl",
               className: "Label",
               text: "",
-            }
+            },
           ],
           className: "View",
-        }
+        },
       ],
     });
-    rawSheet = server.openView("main", "123", { rep1: { entry1: { txt: "hello", lbl: "Hello Read" } } });
+    rawSheet = server.openView("main", "123", {
+      rep1: { entry1: { txt: "hello", lbl: "Hello Read" } },
+    });
     sheet = new Sheet(
       rawSheet,
       new DataBatcher(modeHandlerMock, rawSheet),
-      modeHandlerMock
+      modeHandlerMock,
     );
     rawCmp = rawSheet.get("cmp1");
   });
   test("Simple components", () => {
-    const cmp = ComponentFactory.create(rawCmp, sheet);
+    const cmp = ComponentFactory.create(
+      rawCmp,
+      sheet as ComponentContainer<ComponentSearchResult>,
+    );
     expect(cmp).toBeInstanceOf(Component);
     expect(cmp.sheet()).toStrictEqual(sheet);
     expect(cmp.parent()).toStrictEqual(sheet);
@@ -139,7 +144,10 @@ describe("Component factory", () => {
   test("Component in repeater", () => {
     const rawRep = rawSheet.get("rep1");
     const rawEntry = rawRep.find("entry1");
-    const rep = ComponentFactory.create(rawRep, sheet);
+    const rep = ComponentFactory.create(
+      rawRep,
+      sheet as ComponentContainer<ComponentSearchResult>,
+    );
     expect(rep.lreType()).toBe<ComponentType>("repeater");
     expect(rep.entry()).toBeUndefined();
     expect(rep.repeater()).toBeUndefined();
@@ -164,30 +172,60 @@ describe("Component factory", () => {
 
   test("Various component creation", () => {
     const rawChoice = rawSheet.get("choice");
-    expect(ComponentFactory.create(rawChoice, sheet)).toBeInstanceOf(Choice);
+    expect(
+      ComponentFactory.create(
+        rawChoice,
+        sheet as ComponentContainer<ComponentSearchResult>,
+      ),
+    ).toBeInstanceOf(Choice);
     const rawMultipleChoice = rawSheet.get("multipleChoice");
-    expect(ComponentFactory.create(rawMultipleChoice, sheet)).toBeInstanceOf(
-      MultiChoice
-    );
+    expect(
+      ComponentFactory.create(
+        rawMultipleChoice,
+        sheet as ComponentContainer<ComponentSearchResult>,
+      ),
+    ).toBeInstanceOf(MultiChoice);
     const rawIcon = rawSheet.get("icon");
-    expect(ComponentFactory.create(rawIcon, sheet)).toBeInstanceOf(Icon);
+    expect(
+      ComponentFactory.create(
+        rawIcon,
+        sheet as ComponentContainer<ComponentSearchResult>,
+      ),
+    ).toBeInstanceOf(Icon);
     const label = rawSheet.get("lbl");
-    expect(ComponentFactory.create(label, sheet)).toBeInstanceOf(Label);
+    expect(
+      ComponentFactory.create(
+        label,
+        sheet as ComponentContainer<ComponentSearchResult>,
+      ),
+    ).toBeInstanceOf(Label);
     const container1 = rawSheet.get("widgetContainer");
-    expect(ComponentFactory.create(container1, sheet)).toBeInstanceOf(
-      Container
-    );
+    expect(
+      ComponentFactory.create(
+        container1,
+        sheet as ComponentContainer<ComponentSearchResult>,
+      ),
+    ).toBeInstanceOf(Container);
     const container2 = rawSheet.get("view");
-    expect(ComponentFactory.create(container2, sheet)).toBeInstanceOf(
-      Container
-    );
+    expect(
+      ComponentFactory.create(
+        container2,
+        sheet as ComponentContainer<ComponentSearchResult>,
+      ),
+    ).toBeInstanceOf(Container);
     const container3 = rawSheet.get("row");
-    expect(ComponentFactory.create(container3, sheet)).toBeInstanceOf(
-      Container
-    );
+    expect(
+      ComponentFactory.create(
+        container3,
+        sheet as ComponentContainer<ComponentSearchResult>,
+      ),
+    ).toBeInstanceOf(Container);
     const container4 = rawSheet.get("column");
-    expect(ComponentFactory.create(container4, sheet)).toBeInstanceOf(
-      Container
-    );
+    expect(
+      ComponentFactory.create(
+        container4,
+        sheet as ComponentContainer<ComponentSearchResult>,
+      ),
+    ).toBeInstanceOf(Container);
   });
 });

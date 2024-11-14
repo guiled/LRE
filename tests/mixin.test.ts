@@ -3,7 +3,7 @@ import { Mixin } from "../src/mixin";
 describe("Mixin tests", () => {
   const createDummyMixableClass = function (
     ctorMock: jest.Mock | null,
-    methods: Record<string, jest.Mock> = {}
+    methods: Record<string, jest.Mock> = {},
   ): Mixable<any[], any> {
     const c: Mixable<any[], any> = (superclass: Newable = class {}) => {
       const tmpClass = class extends superclass {
@@ -13,11 +13,13 @@ describe("Mixin tests", () => {
         }
       };
       const methodNames = Object.keys(methods);
+
       if (methodNames.length > 0) {
         methodNames.forEach(
-          (n) => ((tmpClass as any).prototype[n] = methods[n])
+          (n) => ((tmpClass as any).prototype[n] = methods[n]),
         );
       }
+
       return tmpClass;
     };
 
@@ -59,11 +61,13 @@ describe("Mixin tests", () => {
     const classes: Array<Mixable<any[], any>> = [];
     const mocks = [];
     const nbClasses = 5;
+
     for (let i = 0; i < nbClasses; i++) {
       const mock = jest.fn();
       mocks.push(mock);
       classes.push(createDummyMixableClass(mock));
     }
+
     const Subject = Mixin.apply(null, classes);
     mocks.forEach((m) => expect(m).toHaveBeenCalledTimes(0));
     new Subject();
@@ -77,7 +81,7 @@ describe("Mixin tests", () => {
     const args2 = [{ a: 13 }];
     const Subject = Mixin(
       createDummyMixableClass(ctor1),
-      createDummyMixableClass(ctor2)
+      createDummyMixableClass(ctor2),
     );
     new Subject([args1, args2]);
     expect(ctor1).toHaveBeenCalledTimes(1);
@@ -91,10 +95,12 @@ describe("Mixin tests", () => {
   test("Mixin have all public attributes", () => {
     const valueA = 42,
       valueB = "B";
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     const A = (superclass: Newable = class {}) =>
       class A extends superclass {
         a: number = valueA;
       };
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     const B = (superclass: Newable = class {}) =>
       class B extends superclass {
         b: string = valueB;
@@ -138,9 +144,10 @@ describe("Mixin tests", () => {
 
   test("mixin pass this", () => {
     const cb = jest.fn();
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     const A = (superclass: Newable = class {}) =>
       class A extends superclass {
-        callIt() {
+        callIt(): void {
           cb(this);
         }
       };
@@ -151,6 +158,7 @@ describe("Mixin tests", () => {
   });
 
   test("Mixin cross access to methods", () => {
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     const A = (superclass: Newable = class {}) => {
       return class A extends superclass {
         #id: number;
@@ -163,6 +171,8 @@ describe("Mixin tests", () => {
         }
       };
     };
+
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     const BMixable = (superclass: Newable = class {}) => {
       abstract class B extends superclass {
         #name: string;
@@ -191,6 +201,7 @@ describe("Mixin tests", () => {
   });
 
   test("Getter and setter inheritance and override", () => {
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     const A = (superclass: Newable = class {}) =>
       class A extends superclass {
         #val: number;
@@ -207,6 +218,7 @@ describe("Mixin tests", () => {
         }
       };
 
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     const B = (superclass: Newable = class {}) => class B extends superclass {};
 
     class C extends Mixin(A, B) {
@@ -224,11 +236,11 @@ describe("Mixin tests", () => {
       constructor(v: number) {
         super([[v]]);
       }
-      get a() {
+      get a(): number {
         return 13;
       }
 
-      getSuper() {
+      getSuper(): number {
         return super.a;
       }
     }
@@ -239,6 +251,7 @@ describe("Mixin tests", () => {
   });
 
   test("Override a method", () => {
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     const A = (superclass: Newable = class {}) =>
       class extends superclass {
         #id: number;
@@ -247,7 +260,7 @@ describe("Mixin tests", () => {
           super();
           this.#id = id;
         }
-        id() {
+        id(): number {
           return this.#id;
         }
       };
@@ -256,7 +269,7 @@ describe("Mixin tests", () => {
       constructor(val: number) {
         super([[val]]);
       }
-      id() {
+      id(): number {
         return 13 + super.id();
       }
     }
@@ -266,6 +279,7 @@ describe("Mixin tests", () => {
   });
 
   test("Super overridden public property is undefined", () => {
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     const A = (superclass: Newable = class {}) =>
       class A extends superclass {
         a: number = 42;
@@ -274,12 +288,12 @@ describe("Mixin tests", () => {
     class C extends Mixin(A) {
       a: number = 43;
 
-      getA() {
+      getA(): number {
         return this.a;
       }
 
-      getSuperA() {
-        /* @ts-ignore */
+      getSuperA(): number {
+        /* @ts-expect-error Intended error */
         return super.a;
       }
     }
@@ -293,6 +307,7 @@ describe("Mixin tests", () => {
   test("Mixin instantiation into mixin instantiation", () => {
     const ctorCbA = jest.fn();
     const ctorCbB = jest.fn();
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     const A = (superclass: Newable = class {}) =>
       class A extends superclass {
         a: number = 42;
@@ -303,6 +318,7 @@ describe("Mixin tests", () => {
         }
       };
 
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     const B = (superclass: Newable = class {}) =>
       class B extends superclass {
         constructor(n: string) {
@@ -310,11 +326,13 @@ describe("Mixin tests", () => {
           if (n === "firstfirst") {
             new D(true);
           }
+
           super();
           ctorCbB(n);
         }
       };
 
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     const C = (superclass: Newable = class {}) => class C extends superclass {};
 
     class D extends Mixin(A, B, C) {
@@ -322,9 +340,11 @@ describe("Mixin tests", () => {
 
       constructor(a: boolean = false) {
         let val = "second";
+
         if (!a) {
           val = "first";
         }
+
         super([[val], [val + val]]);
       }
     }

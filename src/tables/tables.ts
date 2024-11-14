@@ -9,10 +9,11 @@ export class LreTables
   #tables: Record<LetsRole.TableID, Table | null> = {};
 
   get(id: LetsRole.TableID): Table | null {
-    if (!this.#tables.hasOwnProperty(id)) {
+    if (!Object.prototype.hasOwnProperty.call(this.#tables, id)) {
       const foundTable = this.raw().get(id);
       this.#tables[id] = foundTable ? new Table(foundTable) : null;
     }
+
     return this.#tables[id];
   }
 

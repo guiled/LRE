@@ -16,13 +16,14 @@ export class TableMock implements LetsRole.Table {
   random(count: number, callback: (row: LetsRole.TableRow) => void): void;
   random(
     count: number | ((row: LetsRole.TableRow) => void),
-    callback?: (row: LetsRole.TableRow) => void
+    callback?: (row: LetsRole.TableRow) => void,
   ): void {
     if (typeof count === "number" && callback) {
       for (let i = 0; i < count; i++) {
         const row = this.#rows[Math.floor(Math.random() * this.#rows.length)];
         callback(row);
       }
+
       return;
     } else if (typeof count === "function") {
       count(this.#rows[Math.floor(Math.random() * this.#rows.length)]);

@@ -49,6 +49,7 @@ export default ({
     typeParameters,
     returnType,
   };
+
   if (binded) {
     return {
       type: "CallExpression",
@@ -65,5 +66,6 @@ export default ({
       arguments: [binded],
     };
   }
+
   return fcn;
 };

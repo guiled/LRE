@@ -58,6 +58,7 @@ describe("Data provider sort", () => {
       if (_a) {
         Object.assign(data, _a);
       }
+
       return data as any;
     });
     const dp = new DirectDataProvider(dataGetter);
@@ -80,6 +81,7 @@ describe("Data provider sort", () => {
       if (_a) {
         Object.assign(data, _a);
       }
+
       return data as any;
     });
     const dp = new DirectDataProvider(dataGetter);
@@ -146,6 +148,7 @@ describe("DataProvider each", () => {
       if (_a) {
         Object.assign(data, _a);
       }
+
       return data as any;
     });
     const dp = new DirectDataProvider(dataGetter);
@@ -162,7 +165,7 @@ describe("DataProvider each", () => {
 
 describe("DataProvider select a column", () => {
   test("Select", () => {
-    let data: any = {
+    const data: any = {
       "1": { a: "42", b: "13", c: "24" },
       "2": { a: "1", b: "2", c: "3" },
       "4": { b: "5", c: "6" },
@@ -172,6 +175,7 @@ describe("DataProvider select a column", () => {
       if (_a) {
         Object.assign(data, _a);
       }
+
       return data as any;
     });
     const dp = new DirectDataProvider(dataGetter);
@@ -209,7 +213,7 @@ describe("Dataprovider getData", () => {
   });
 
   test("getData through select", () => {
-    let data: any = {
+    const data: any = {
       "1": { a: "42", b: "13", c: "24" },
       "2": { a: "1", b: "2", c: "3" },
       "3": { a: "4", b: "5", c: "6" },
@@ -229,7 +233,7 @@ describe("Dataprovider getData", () => {
 
 describe("DataProvider filter and where", () => {
   test("Filter data", () => {
-    let data: Record<string, LetsRole.TableRow> = {
+    const data: Record<string, LetsRole.TableRow> = {
       "1": { id: "1", a: "42", b: "13", c: "24" },
       "2": { id: "2", a: "1", b: "2", c: "3" },
       "3": { id: "3", a: "4", b: "5", c: "6" },
@@ -249,7 +253,7 @@ describe("DataProvider filter and where", () => {
   });
 
   test("Where", () => {
-    let data: Record<string, LetsRole.TableRow> = {
+    const data: Record<string, LetsRole.TableRow> = {
       "1": { id: "1", a: "42", b: "13", c: "24" },
       "2": { id: "2", a: "1", b: "2", c: "3" },
       "3": { id: "3", a: "4", b: "5", c: "6" },
@@ -274,7 +278,7 @@ describe("DataProvider filter and where", () => {
 
 describe("DataProvider get single value", () => {
   test("Single value", () => {
-    let data: any = {
+    const data: any = {
       "1": { a: "42", b: "13", c: "24" },
       "2": { a: "1", b: "2", c: "3" },
       "3": { a: "4", b: "5", c: "6" },
@@ -297,7 +301,7 @@ describe("DataProvider get single value", () => {
 
 describe("DataProvider count", () => {
   test("Count|length data provider result", () => {
-    let data: any = {
+    const data: any = {
       "1": { a: "42", b: "13", c: "24" },
       "2": { a: "1", b: "2", c: "3" },
       "3": { a: "4", b: "5", c: "6" },

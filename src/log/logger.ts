@@ -3,7 +3,7 @@ export enum LogLevel {
   error,
   warn,
   trace = 3,
-  all = 3,
+  all = 4,
 }
 
 const LOG_PREFIXES: Record<keyof typeof LogLevel, string> = {
@@ -20,10 +20,14 @@ export class Logger {
     if (LogLevel[this.#logLevel] >= LogLevel[level]) {
       args.forEach((a) => {
         log(`[LRE]${LOG_PREFIXES[level]} ${a?.toString?.()}`);
-        typeof a !== "number" &&
+
+        if (
+          typeof a !== "number" &&
           typeof a !== "string" &&
-          typeof a !== "undefined" &&
+          typeof a !== "undefined"
+        ) {
           log(a);
+        }
       });
     }
   }

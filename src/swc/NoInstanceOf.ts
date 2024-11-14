@@ -21,9 +21,10 @@ class NoInstanceOf extends Visitor {
               expression: n.right,
             },
           ],
-        })
+        }),
       );
     }
+
     return super.visitBinaryExpression(n);
   }
 

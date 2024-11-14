@@ -1,15 +1,13 @@
 import { Sheet } from "../sheet";
 
-type DataId = string;
-
-export const DataHolder: Mixable<any[], IDataHolder> = (
-  superclass: Newable = class {}
+export const DataHolder: Mixable<MixableParams, IDataHolder> = (
+  superclass: Newable = class {},
 ) =>
   class DataHolder extends superclass implements IDataHolder {
-    #data: Record<DataId, any> = {};
+    #data: DataStorage = {};
     #realId: string;
     #sheet: Sheet;
-    #persistent: LetsRole.ViewData = {};
+    #persistent: DataStorage = {};
 
     constructor(sheet: Sheet, realId: string) {
       super();
@@ -20,11 +18,16 @@ export const DataHolder: Mixable<any[], IDataHolder> = (
 
     hasData(name: DataId): boolean {
       return (
-        this.#data.hasOwnProperty(name) || this.#persistent.hasOwnProperty(name)
+        Object.prototype.hasOwnProperty.call(this.#data, name) ||
+        Object.prototype.hasOwnProperty.call(this.#persistent, name)
       );
     }
 
-    data(name: DataId, value: any = "", persistent = false): this {
+    data(
+      name: DataId,
+      value: DataType = "",
+      persistent = false,
+    ): this | DataType {
       if (arguments.length === 1) {
         return this.#getData(name);
       }
@@ -48,7 +51,7 @@ export const DataHolder: Mixable<any[], IDataHolder> = (
       return this;
     }
 
-    loadPersistent(): LetsRole.ViewData {
+    loadPersistent(): DataStorage {
       lre.trace(`Load persistent data for ${this.#realId}`);
       return (this.#persistent =
         this.#sheet.persistingCmpData(this.#realId) || {});
@@ -56,37 +59,41 @@ export const DataHolder: Mixable<any[], IDataHolder> = (
 
     #savePersistent(): void {
       lre.trace(`Save persistent data for ${this.#realId}`);
-      this.#sheet.persistingCmpData(this.#realId, this.#persistent);
+      this.#sheet.persistingCmpData(
+        this.#realId,
+        this.#persistent as LetsRole.ViewData,
+      );
     }
 
-    #setData(name: DataId, value: any): void {
+    #setData(name: DataId, value: DataType): void {
       this.#data[name] = value;
       this.#deletePersistent(name);
     }
 
-    #setPersistent(name: DataId, value: any): void {
+    #setPersistent(name: DataId, value: DataType): void {
       this.#persistent[name] = value;
       this.#deleteData(name);
       this.#savePersistent();
     }
 
-    #getData(name: DataId): any {
-      if (this.#data.hasOwnProperty(name)) {
+    #getData(name: DataId): DataType {
+      if (Object.prototype.hasOwnProperty.call(this.#data, name)) {
         return this.#data[name];
-      } else if (this.#persistent.hasOwnProperty(name)) {
+      } else if (Object.prototype.hasOwnProperty.call(this.#persistent, name)) {
         return this.#persistent[name];
       }
+
       return undefined;
     }
 
     #deleteData(name: DataId): void {
-      if (this.#data.hasOwnProperty(name)) {
+      if (Object.prototype.hasOwnProperty.call(this.#data, name)) {
         delete this.#data[name];
       }
     }
 
     #deletePersistent(name: DataId): void {
-      if (this.#persistent.hasOwnProperty(name)) {
+      if (Object.prototype.hasOwnProperty.call(this.#persistent, name)) {
         delete this.#persistent[name];
         this.#savePersistent();
       }

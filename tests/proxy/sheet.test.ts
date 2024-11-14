@@ -12,15 +12,18 @@ beforeEach(() => {
     views: [
       {
         id: "main",
-        children: [{
-          id: "cmp1",
-          className: "Label",
-          text: "101",
-        }, {
-          id: "cmp2",
-          className: "Label",
-          text: "102",
-        }],
+        children: [
+          {
+            id: "cmp1",
+            className: "Label",
+            text: "101",
+          },
+          {
+            id: "cmp2",
+            className: "Label",
+            text: "102",
+          },
+        ],
         className: "View",
         name: "theSheet",
       },
@@ -30,7 +33,7 @@ beforeEach(() => {
         var1: 101,
         var2: 102,
       },
-    }
+    },
   });
 });
 

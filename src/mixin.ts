@@ -5,12 +5,12 @@ export type MixinFunction = {
   <A1 extends any[], R1>(ctor1: Mixable<A1, R1>): new (...args: any) => R1;
   <A1 extends any[], R1, A2 extends any[], R2>(
     ctor1: Mixable<A1, R1>,
-    ctor2: Mixable<A2, R2>
+    ctor2: Mixable<A2, R2>,
   ): new (...args: any) => R1 & R2;
   <A1 extends any[], R1, A2 extends any[], R2, A3 extends any[], R3>(
     ctor1: Mixable<A1, R1>,
     ctor2: Mixable<A2, R2>,
-    ctor3: Mixable<A3, R3>
+    ctor3: Mixable<A3, R3>,
   ): new (...args: any) => R1 & R2 & R3;
   <
     A1 extends any[],
@@ -20,12 +20,12 @@ export type MixinFunction = {
     A3 extends any[],
     R3,
     A4 extends any[],
-    R4
+    R4,
   >(
     ctor1: Mixable<A1, R1>,
     ctor2: Mixable<A2, R2>,
     ctor3: Mixable<A3, R3>,
-    ctor4: Mixable<A4, R4>
+    ctor4: Mixable<A4, R4>,
   ): new (...args: any) => R1 & R2 & R3 & R4;
 
   // fall back to variadic

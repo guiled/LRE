@@ -1,9 +1,15 @@
 type WaitedCallback = (...args: any[]) => any;
 
-const newMockedWait = () => {
-  let waitedCallbacks: Array<WaitedCallback> = [];
+type MockedWait = {
+  wait: jest.Mock;
+  itHasWaitedEnough: () => void;
+  itHasWaitedEverything: () => void;
+};
 
-  const itHasWaitedEnough = () => {
+const newMockedWait = (): MockedWait => {
+  const waitedCallbacks: Array<WaitedCallback> = [];
+
+  const itHasWaitedEnough = (): void => {
     const cb = waitedCallbacks.shift();
 
     if (cb) {

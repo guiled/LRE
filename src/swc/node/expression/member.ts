@@ -13,7 +13,7 @@ type Member_Type = {
 
 export default function member(
   { span, object, property }: Member_Type,
-  optional: boolean = false
+  optional: boolean = false,
 ): MemberExpression | OptionalChainingExpression {
   const expression: MemberExpression = {
     type: "MemberExpression",
@@ -21,6 +21,7 @@ export default function member(
     object,
     property,
   };
+
   if (optional) {
     return {
       type: "OptionalChainingExpression",
@@ -29,5 +30,6 @@ export default function member(
       base: expression,
     };
   }
+
   return expression;
 }

@@ -50,20 +50,20 @@ beforeEach(() => {
       theTable: [
         { id: "a", lbl: "theChoiceA", a: "1", b: "2" },
         { id: "b", lbl: "theChoiceB", a: "2", b: "3" },
-      ]
-    }
+      ],
+    },
   });
   initLetsRole(server);
   global.lre = new LRE(modeHandlerMock);
   Tables = new LreTables(Tables);
 
   rawSheet = server.openView("main", "12345", {
-    chA: "a"
+    chA: "a",
   });
   sheet = new Sheet(
     rawSheet,
     new DataBatcher(modeHandlerMock, rawSheet),
-    modeHandlerMock
+    modeHandlerMock,
   );
   raw = rawSheet.get("ch");
 });
@@ -125,7 +125,7 @@ describe("Choice get and set choices", () => {
       ch.setChoices({
         a: "1",
         b: "2",
-      })
+      }),
     ).not.toThrow();
     ch.value("a");
     itHasWaitedEverything();
@@ -134,7 +134,7 @@ describe("Choice get and set choices", () => {
       ch.setChoices({
         c: "2",
         d: "3",
-      })
+      }),
     ).not.toThrow();
   });
 });
@@ -170,8 +170,8 @@ describe("Set choice dynamically", () => {
   });
 
   test("Set Choices from data provider", () => {
-    let a = "42";
-    let b = "13";
+    const a = "42";
+    const b = "13";
     const p = new DirectDataProvider(() => ({
       a,
       b,
@@ -202,7 +202,6 @@ describe("Set choice dynamically", () => {
 });
 
 describe("choice populate", () => {
-
   test("populate with table name", () => {
     const ch = new Choice(rawSheet.get("chA"), sheet, "chA");
     ch.populate("theTable", "a");

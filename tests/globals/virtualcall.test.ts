@@ -24,7 +24,7 @@ describe("Logged call", () => {
 });
 
 describe("Virtual call", () => {
-  let env: any = {};
+  const env: any = {};
   beforeEach(() => {
     global.init = env.init = jest.fn();
     global.initRoll = env.initRoll = jest.fn();
@@ -69,7 +69,7 @@ describe("Virtual call", () => {
     let modeDuringVirtualCall = "";
     const cb = jest.fn(() => {
       modeDuringVirtualCall = modeHandlerMock.getMode();
-      /* @ts-expect-error */
+      /* @ts-expect-error Intended error */
       null();
     });
     expect(modeHandlerMock.getMode()).toBe("real");

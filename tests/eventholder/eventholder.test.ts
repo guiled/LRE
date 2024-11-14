@@ -11,7 +11,10 @@ type TestedEvents = "test" | "unused" | "click" | "update";
 
 class Dummy extends EventHolder<TestedEvents>() {
   __id: string;
-  constructor(protected _raw: LetsRole.Component, subRaw?: LetsRole.Component) {
+  constructor(
+    protected _raw: LetsRole.Component,
+    subRaw?: LetsRole.Component,
+  ) {
     super(
       _raw.id()!,
       (target: any): IEventHolder => {
@@ -24,23 +27,23 @@ class Dummy extends EventHolder<TestedEvents>() {
       (
         event: EventDef<EventType<TestedEvents>>,
         operation: "on" | "off",
-        rawDest?: LetsRole.Component
+        rawDest?: LetsRole.Component,
       ) => {
         if (event.eventId === "click" || event.eventId === "update") {
           if (event.delegated) {
             (rawDest ?? _raw)[operation]?.(
               event.eventId as any,
               event.subComponent!,
-              event.rawHandler
+              event.rawHandler,
             );
           } else {
             (rawDest ?? _raw)[operation]?.(
               event.eventId as any,
-              event.rawHandler
+              event.rawHandler,
             );
           }
         }
-      }
+      },
     );
     this.__id = _raw.id()!;
   }
@@ -80,11 +83,11 @@ beforeEach(() => {
                 text: "sub",
                 id: "lbl2",
               },
-            ]
-          }
-        ]
-      }
-    ]
+            ],
+          },
+        ],
+      },
+    ],
   });
   vw = server.openView("main", "123", {});
   rawCmp = vw.get("lbl") as ComponentMock;
@@ -195,9 +198,9 @@ describe("Test simple events", () => {
     expect(eventFirstArg).toBe(subject);
     expect(eventFirstArg.raw()).toBe(rawCmp);
     expect(receivedCmp).toBe(subject);
-    expect(receivedCmp === subject).toBeTruthy;
+    expect(receivedCmp === subject).toBeTruthy();
 
-    const eventholder = new (class extends EventHolder<"click">() { })(
+    const eventholder = new (class extends EventHolder<"click">() {})(
       "123",
       undefined,
       (event: EventDef<EventType<"click">>, operation: "on" | "off") => {
@@ -205,12 +208,12 @@ describe("Test simple events", () => {
           rawCmp[operation]?.(
             event.eventId as any,
             event.subComponent!,
-            event.rawHandler
+            event.rawHandler,
           );
         } else {
           rawCmp[operation]?.(event.eventId as any, event.rawHandler as any);
         }
-      }
+      },
     );
     expect(eventholder.id()).toBe("123");
     const cb = jest.fn();
@@ -584,7 +587,7 @@ describe("Handle error in event", () => {
   test("Handle error", () => {
     jest.spyOn(lre, "error");
     const eventHandler = jest.fn(() => {
-      let a = undefined;
+      const a = undefined;
       /* @ts-expect-error This is intended to be erroneous */
       a();
     });
@@ -725,7 +728,8 @@ describe("Event holder triggers events", () => {
     subject.on("eventhandler-destroyed", destroyed);
     expect(added).toHaveBeenCalledTimes(0);
 
-    const fcn1 = () => { };
+    const fcn1 = (): void => {};
+
     subject.on("click", fcn1);
     expect(added).toHaveBeenCalledTimes(1);
     expect(added2).toHaveBeenCalledTimes(1);
@@ -741,7 +745,9 @@ describe("Event holder triggers events", () => {
     expect(created).toHaveBeenCalledTimes(1);
 
     expect(updated).toHaveBeenCalledTimes(0);
-    const fcn2 = () => { };
+
+    const fcn2 = (): void => {};
+
     subject.on("click", fcn2);
     expect(added).toHaveBeenCalledTimes(2);
     expect(added2).toHaveBeenCalledTimes(2);
@@ -875,7 +881,7 @@ describe("Copy events from a component to an other", () => {
   let rawSource: ComponentMock;
   let rawDest: ComponentMock;
   let rawDest2: ComponentMock;
-  let clickCbs: Array<jest.Mock> = [];
+  const clickCbs: Array<jest.Mock> = [];
 
   beforeEach(() => {
     rawSource = vw.get("lbl") as ComponentMock;
@@ -884,6 +890,7 @@ describe("Copy events from a component to an other", () => {
     dest = new Dummy(rawDest, undefined);
     rawDest2 = vw.get("lbl2") as ComponentMock;
     dest2 = new Dummy(rawDest2, undefined);
+
     for (let i = 0; i < 6; i++) {
       clickCbs[i] = jest.fn();
     }

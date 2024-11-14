@@ -32,20 +32,17 @@ const RollBuilderClass = class {
   onRoll = rollBuilderMock.onRoll;
 };
 
-const initLetsRole = (server: ServerMock) => {
-  global.each = jest.fn((obj: any, cb) => {
-    for (let k in obj) {
+const initLetsRole = (server: ServerMock): void => {
+  global.each = jest.fn((obj: unknown, cb) => {
+    for (const k in obj as object) {
+      /* @ts-expect-error can be various type */
       cb(obj[k], k);
     }
   });
 
   global.wait = wait;
-
   global.Bindings = Bindings;
-
-  /* @ts-ignore */
   global.RollBuilder = RollBuilderClass;
-
   global.Tables = server.getMockOfTables();
   global.loggedCall = loggedCall;
   global.virtualCall = virtualCall;

@@ -19,7 +19,7 @@ export class ServerMock {
     viewId: LetsRole.ViewID,
     viewSheetId: LetsRole.SheetRealID,
     data?: LetsRole.ViewData,
-    properName: LetsRole.Name = ""
+    properName: LetsRole.Name = "",
   ): ViewMock {
     this.getViewDefinitions(viewId);
 
@@ -32,14 +32,11 @@ export class ServerMock {
     }
 
     this.#viewData[viewSheetId] = structuredClone(data);
-    const newView = new ViewMock(
-      this,
-      viewId,
-      viewSheetId,
-      properName
-    );
+    const newView = new ViewMock(this, viewId, viewSheetId, properName);
 
-    if (!this.#openedSheets.hasOwnProperty(viewSheetId)) {
+    if (
+      !Object.prototype.hasOwnProperty.call(this.#openedSheets, viewSheetId)
+    ) {
       this.#openedSheets[viewSheetId] = [];
     }
 
@@ -51,7 +48,7 @@ export class ServerMock {
   getViewDefinitions(viewId: LetsRole.ViewID): LetsRoleMock.ViewDefinitions {
     const viewDefinitions: LetsRoleMock.ViewDefinitions | undefined =
       this.#views.find(
-        ({ id, className }) => id === viewId && className === "View"
+        ({ id, className }) => id === viewId && className === "View",
       );
 
     if (viewDefinitions === void 0) {
@@ -64,7 +61,7 @@ export class ServerMock {
   saveViewData(
     viewSheetId: LetsRole.SheetRealID,
     data: LetsRole.ViewData,
-    noUpdateEvent: boolean | ViewMock = false
+    noUpdateEvent: boolean | ViewMock = false,
   ): void {
     const newData = structuredClone(this.#viewData[viewSheetId] || {});
 
@@ -78,8 +75,7 @@ export class ServerMock {
         let target: LetsRole.ViewData = newData;
 
         parts.forEach((part) => {
-
-          if (!target?.hasOwnProperty(part)) {
+          if (!Object.prototype.hasOwnProperty.call(target, part)) {
             target[part] = {};
           }
 
@@ -91,11 +87,11 @@ export class ServerMock {
 
     this.#viewData[viewSheetId] = Object.assign(
       this.#viewData[viewSheetId],
-      newData
+      newData,
     );
 
     if (!noUpdateEvent || noUpdateEvent instanceof ViewMock) {
-      for (let id in data) {
+      for (const id in data) {
         this.#openedSheets[viewSheetId]?.forEach((view) => {
           if (!(noUpdateEvent instanceof ViewMock) || view !== noUpdateEvent) {
             view.triggerComponentEvent(id, "update");
@@ -117,10 +113,12 @@ export class ServerMock {
     return this.#tables[tableId] ? new TableMock(this.#tables[tableId]) : null;
   }
 
-  showError(_destView: ViewMock, _message: string): void {
-  }
+  showError(_destView: ViewMock, _message: string): void {}
 
-  dynamicAddComponentToView(viewId: LetsRole.ViewID, component: LetsRoleMock.ComponentDefinitions): void {
+  dynamicAddComponentToView(
+    viewId: LetsRole.ViewID,
+    component: LetsRoleMock.ComponentDefinitions,
+  ): void {
     const viewDef = this.#views?.find(({ id }) => id === viewId);
 
     if (!viewDef) {

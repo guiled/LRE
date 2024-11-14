@@ -66,6 +66,7 @@ describe("LRE tests", () => {
     expect(subject.numToAlpha(1)).toEqual("B");
     expect(subject.numToAlpha(26)).toEqual("a");
     expect(subject.numToAlpha(52)).toEqual("BA");
+
     for (let i = 0; i < 100; i++) {
       const n = Math.ceil(Math.random() * Number.MAX_SAFE_INTEGER);
       const res = subject.numToAlpha(n);
@@ -98,7 +99,7 @@ describe("LRE tests", () => {
     const sheet1 = server.openView("main", "13");
     const sheet2 = server.openView("main", "", undefined, "theSheet");
 
-    let init = subject.apply(subject, [cb]);
+    const init = subject.apply(subject, [cb]);
 
     expect(cb).toHaveBeenCalledTimes(0);
     init(sheet1);
@@ -109,7 +110,7 @@ describe("LRE tests", () => {
     expect(cb.mock.calls[0][0]).toBeInstanceOf(Sheet);
     expect(global.firstInit).toHaveBeenCalledTimes(1);
     expect((global.firstInit as jest.Mock).mock.calls[0][0]).toBeInstanceOf(
-      Sheet
+      Sheet,
     );
     init(sheet2);
     itHasWaitedEverything();
@@ -122,7 +123,7 @@ describe("LRE tests", () => {
     global.firstInit = jest.fn(() => {
       throw new Error("wow");
     });
-    let initErr = subject.apply(subject, [cbErr]);
+    const initErr = subject.apply(subject, [cbErr]);
     initErr(sheet1);
     expect(cbErr).toHaveBeenCalledTimes(0);
     expect(global.firstInit).toHaveBeenCalledTimes(0);
@@ -139,19 +140,22 @@ describe("LRE tests", () => {
     expect(subject.deepEqual({}, 1)).toBeFalsy();
     expect(subject.deepEqual([], [])).toBeTruthy();
     expect(
-      subject.deepEqual({ a: 1, b: 2, c: a }, { b: 2, c: a, a: 1 })
+      subject.deepEqual({ a: 1, b: 2, c: a }, { b: 2, c: a, a: 1 }),
     ).toBeTruthy();
     expect(
-      subject.deepEqual({ a: 1, b: 2, c: a }, { b: 2, c: {}, a: 1 })
+      subject.deepEqual({ a: 1, b: 2, c: a }, { b: 2, c: {}, a: 1 }),
     ).toBeTruthy();
     expect(
-      subject.deepEqual({ a: 1, b: 2, c: a }, { b: 2, c: { a: 1 }, a: 1 })
+      subject.deepEqual({ a: 1, b: 2, c: a }, { b: 2, c: { a: 1 }, a: 1 }),
     ).toBeFalsy();
     expect(
-      subject.deepEqual({ a: 1, b: 2, c: a, d: 3 }, { b: 2, c: {}, a: 1 })
+      subject.deepEqual({ a: 1, b: 2, c: a, d: 3 }, { b: 2, c: {}, a: 1 }),
     ).toBeFalsy();
     expect(
-      subject.deepEqual({ a: 1, b: 2, c: a, d: 3 }, { e: 4, b: 2, c: {}, a: 1 })
+      subject.deepEqual(
+        { a: 1, b: 2, c: a, d: 3 },
+        { e: 4, b: 2, c: {}, a: 1 },
+      ),
     ).toBeFalsy();
   });
 
@@ -167,10 +171,10 @@ describe("LRE tests", () => {
     expect(subject.deepEqual([1, 2, 3], [1, 2, 3])).toBeTruthy();
     expect(subject.deepEqual([1, 2, 3], [1, 2, 4])).toBeFalsy();
     expect(
-      subject.deepEqual([{ a: 1 }, { b: 2 }], [{ a: 1 }, { b: 2 }])
+      subject.deepEqual([{ a: 1 }, { b: 2 }], [{ a: 1 }, { b: 2 }]),
     ).toBeTruthy();
     expect(
-      subject.deepEqual([{ a: 1 }, { b: 2 }], [{ a: 1 }, { b: 3 }])
+      subject.deepEqual([{ a: 1 }, { b: 2 }], [{ a: 1 }, { b: 3 }]),
     ).toBeFalsy();
     expect(subject.deepEqual([1, { a: 1 }], [1, { a: 1 }])).toBeTruthy();
     expect(subject.deepEqual([1, { a: 1 }], [1, { a: 2 }])).toBeFalsy();
@@ -201,8 +205,8 @@ describe("LRE wait", () => {
   });
 
   test("handles errors", () => {
-    /* @ts-expect-error */
-    const cb = () => null();
+    /* @ts-expect-error The next error is deliberate */
+    const cb = (): void => null();
     subject.wait(100, cb, "hop");
     (lre.error as jest.Mock).mockClear();
     expect(itHasWaitedEverything).not.toThrow();
@@ -290,7 +294,7 @@ describe("LRE global methods", () => {
       true,
     ],
   ])("Value %s is Avatar Value", (init, result) => {
-    // @ts-ignore
+    // @ts-expect-error The next error is deliberate
     expect(subject.isAvatarValue(init)).toBe(result);
   });
 
@@ -318,7 +322,7 @@ describe("LRE global methods", () => {
       false,
     ],
   ])("Value %s is repeater value", (init, result) => {
-    /* @ts-ignore */
+    /* @ts-expect-error The next error is deliberate */
     expect(subject.isRepeaterValue(init)).toBe(result);
   });
 

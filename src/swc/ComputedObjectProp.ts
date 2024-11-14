@@ -40,10 +40,12 @@ class ComputedObjectProps extends Visitor {
 
   visitExpression(n: Expression): Expression {
     let expr = n;
+
     if (n.type === "ObjectExpression") {
       const computedProps: KeyValueProperty[] = n.properties.filter(
-        (p) => p.type === "KeyValueProperty" && p.key.type === "Computed"
+        (p) => p.type === "KeyValueProperty" && p.key.type === "Computed",
       ) as KeyValueProperty[];
+
       if (computedProps.length > 0) {
         const tmpObj = identifier({ span: n.span, value: "o" });
         const stmts = [
@@ -54,13 +56,13 @@ class ComputedObjectProps extends Visitor {
               ...n,
               properties: n.properties.filter(
                 (p) =>
-                  !(p.type === "KeyValueProperty" && p.key.type === "Computed")
+                  !(p.type === "KeyValueProperty" && p.key.type === "Computed"),
               ),
             },
           }),
           ...computedProps.map((p: KeyValueProperty) => {
             const key = this.visitComputedPropertyKey(
-              p.key as ComputedPropName
+              p.key as ComputedPropName,
             );
             const val = this.visitExpression(p.value);
             return assignment({
@@ -84,10 +86,11 @@ class ComputedObjectProps extends Visitor {
             span: n.span,
             stmts,
             called: this.hasThisExpression,
-          })
+          }),
         );
       }
     }
+
     const result = super.visitExpression(expr);
     return result;
   }

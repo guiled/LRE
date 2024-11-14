@@ -19,9 +19,10 @@ class ReplaceInOperator extends Visitor {
             }),
           }),
           args: [{ expression: n.left }],
-        })
+        }),
       );
     }
+
     return super.visitExpression(n);
   }
 

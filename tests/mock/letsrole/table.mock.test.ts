@@ -45,7 +45,7 @@ describe("Table", () => {
     expect(fn).toHaveBeenCalledTimes(1);
 
     expect(
-      defs.tables!.table1.find((r) => r.id === fn.mock.calls[0][0].id)
+      defs.tables!.table1.find((r) => r.id === fn.mock.calls[0][0].id),
     ).toBeTruthy();
 
     const fn2 = jest.fn();

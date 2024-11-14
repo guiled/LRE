@@ -28,7 +28,7 @@ class NoRestElement extends Visitor {
   #getVariableDeclarationForRest(
     span: Span,
     pat: RestElement,
-    nameArgsCount = 0
+    nameArgsCount = 0,
   ): VariableDeclaration {
     return {
       type: "VariableDeclaration",
@@ -88,6 +88,7 @@ class NoRestElement extends Visitor {
           async: false,
           span,
         };
+
         if (e.body.type !== "BlockStatement") {
           newFcn.body = {
             type: "BlockStatement",
@@ -107,8 +108,8 @@ class NoRestElement extends Visitor {
           this.#getVariableDeclarationForRest(
             lastParam.span,
             lastParam,
-            e.params.length
-          )
+            e.params.length,
+          ),
         );
 
         if (this.#hasThis) {
@@ -122,18 +123,21 @@ class NoRestElement extends Visitor {
                 }),
               }),
               args: [{ expression: thisexpression({ span }) }],
-            })
+            }),
           );
         }
+
         return this.visitFunctionExpression(newFcn);
       }
     }
+
     return super.visitArrowFunctionExpression(e);
   }
 
   visitFunction<T extends Fn>(n: T): T {
     const saveHasThis = this.#hasThis;
     this.#hasThis = false;
+
     if (typeof n.body !== "undefined" && n.body && n.params.length > 0) {
       const statementsToAdd: BlockStatement["stmts"] = [];
       const hasThisArgs =
@@ -148,13 +152,14 @@ class NoRestElement extends Visitor {
           this.#getVariableDeclarationForRest(
             span,
             lastParam.pat,
-            n.params.length - (hasThisArgs ? 1 : 0)
-          )
+            n.params.length - (hasThisArgs ? 1 : 0),
+          ),
         );
       }
 
-      n.body.stmts = [...statementsToAdd, ...n.body?.stmts];
+      n.body.stmts = [...statementsToAdd, ...(n.body?.stmts || [])];
     }
+
     const res = super.visitFunction(n);
     this.#hasThis = saveHasThis;
     return res;

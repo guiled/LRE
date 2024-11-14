@@ -23,6 +23,7 @@ class NoSpreadArgument extends Visitor {
       n.callee.type !== "Import"
     ) {
       let callArg: Argument;
+
       if (n.arguments.length === 1) {
         callArg = {
           expression: n.arguments[0].expression,
@@ -30,7 +31,7 @@ class NoSpreadArgument extends Visitor {
       } else {
         const { concatArgs, arrayInit } = spreadToConcat(n.span, n.arguments);
 
-        let obj: ArrayExpression = arrayexpression({
+        const obj: ArrayExpression = arrayexpression({
           span: n.span,
           elements: arrayInit,
         });
@@ -56,6 +57,7 @@ class NoSpreadArgument extends Visitor {
       });
       return this.visitExpression(callExpression);
     }
+
     return super.visitCallExpression(n);
   }
 

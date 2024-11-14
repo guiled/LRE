@@ -4,23 +4,22 @@ import { EventHolder } from "../eventholder";
 import { dynamicSetter } from "../globals/decorators/dynamicSetter";
 import { Mixin } from "../mixin";
 
-const groupEventsForComponent = ["update", "click"] as const;
-type GroupEventsForComponent = (typeof groupEventsForComponent)[number];
+type GroupEventsForComponent = ["update", "click"][number];
 
-const groupSpecificEvent = ["add", "remove"] as const;
-type GroupSpecificEvent = (typeof groupSpecificEvent)[number];
+type GroupSpecificEvent = ["add", "remove"][number];
 
 type GroupEvents = GroupEventsForComponent | GroupSpecificEvent;
 
 export class Group
   extends (Mixin(EventHolder, DataHolder, DataProvider) as new <
-    SubTypeEventHolder extends string
+    SubTypeEventHolder extends string,
   >(
-    ...args: any
+    ...args: unknown[]
   ) => IEventHolder<SubTypeEventHolder> &
     InstanceType<ReturnType<typeof DataHolder>> &
     InstanceType<ReturnType<typeof DataProvider>>)<GroupEvents>
-  implements IGroup {
+  implements IGroup
+{
   #id: string;
   #sheet: ISheet;
   #components: Array<IComponent> = [];
@@ -30,13 +29,14 @@ export class Group
     context: ProxyModeHandler,
     id: string,
     sheet: ISheet,
-    componentIds: Array<LetsRole.ComponentID> = []
+    componentIds: Array<LetsRole.ComponentID> = [],
   ) {
     super([
-      /* EventHolder */[id],
-      /* DataHolder */[sheet, id],
-      /* DataProvider */[
-        (...args: any[]) => this.value(...(args as [LetsRole.ComponentValue?])),
+      /* EventHolder */ [id],
+      /* DataHolder */ [sheet, id],
+      /* DataProvider */ [
+        (...args: unknown[]) =>
+          this.value(...(args as [LetsRole.ComponentValue?])),
       ],
     ]);
     this.#id = id;
@@ -53,15 +53,15 @@ export class Group
     return this.#id;
   }
 
-  sheet() {
+  sheet(): ISheet {
     return this.#sheet;
   }
 
-  parent(_newParent?: any) {
+  parent(_newParent?: unknown): ComponentContainer {
     return this.#sheet as ComponentContainer;
   }
 
-  realId() {
+  realId(): string {
     return this.#id;
   }
 
@@ -86,12 +86,12 @@ export class Group
   }
 
   add(cmp: LetsRole.ComponentID | IComponent): this {
-    let cmpIndex: number;
+    const cmpIndex: number = this.#getCmpIndex(cmp);
     let component: ComponentSearchResult | IGroup = null;
 
-    cmpIndex = this.#getCmpIndex(cmp);
     if (cmpIndex === -1) {
       component = this.#getComponent(cmp);
+
       if (component?.lreType() === "group") {
         throw new Error(`A group cannot be added to a group`);
       }
@@ -138,11 +138,13 @@ export class Group
 
   includes(cmp: LetsRole.ComponentID | IComponent): boolean {
     let result: number = -1;
+
     try {
       result = this.#getCmpIndex(cmp);
     } catch (e) {
       lre.error(e);
     }
+
     return result !== -1;
   }
 
@@ -176,7 +178,7 @@ export class Group
 
   setToolTip(
     text: string,
-    placement?: LetsRole.TooltipPlacement | undefined
+    placement?: LetsRole.TooltipPlacement | undefined,
   ): void {
     if (arguments.length < 2) {
       this.#components.forEach((cmp) => cmp.setToolTip(text));
@@ -217,7 +219,7 @@ export class Group
   }
 
   getClasses(): LetsRole.ClassName[] {
-    const classNumber: { [key: LetsRole.ClassName]: number; } = {};
+    const classNumber: { [key: LetsRole.ClassName]: number } = {};
 
     this.#components.forEach((cmp) => {
       const classes = cmp.getClasses();
@@ -225,7 +227,7 @@ export class Group
     });
 
     return Object.keys(classNumber).filter(
-      (k) => classNumber[k] === this.#components.length
+      (k) => classNumber[k] === this.#components.length,
     );
   }
 
@@ -242,7 +244,10 @@ export class Group
     this.#context.disableAccessLog();
     const result = this.#getSet.apply(
       this,
-      ["value"].concat(Array.from(arguments)) as any
+      ["value"].concat(Array.from(arguments)) as [
+        "value",
+        Record<string, unknown>,
+      ],
     );
     this.#context.enableAccessLog();
 
@@ -253,21 +258,27 @@ export class Group
     return null;
   }
 
-  virtualValue(_newValue?: any): void | LetsRole.ViewData {
+  virtualValue(_newValue?: unknown): void | LetsRole.ViewData {
     return this.#getSet.apply(
       this,
-      ["virtualValue"].concat(Array.from(arguments)) as any
+      ["virtualValue"].concat(Array.from(arguments)) as [
+        "virtualValue",
+        Record<string, unknown>,
+      ],
     );
   }
 
-  rawValue() {
+  rawValue(): LetsRole.ViewData | void {
     return this.#getSet("rawValue");
   }
 
   text(_replacement?: LetsRole.ViewData | undefined): void | LetsRole.ViewData {
     return this.#getSet.apply(
       this,
-      ["text"].concat(Array.from(arguments)) as any
+      ["text"].concat(Array.from(arguments)) as [
+        "text",
+        Record<string, unknown>,
+      ],
     );
   }
 
@@ -275,46 +286,51 @@ export class Group
   visible(
     _newValue?: DynamicSetValue<
       Record<LetsRole.ComponentID, boolean> | boolean | undefined
-    >
+    >,
   ): boolean {
     if (arguments.length > 0) {
       this.#getSet.apply(
         this,
-        ["visible"].concat(Array.from(arguments)) as any
+        ["visible"].concat(Array.from(arguments)) as [
+          "visible",
+          Record<string, unknown>,
+        ],
       );
     }
+
     return this.#components.every((c) => c.visible());
   }
 
-  setChoices(_choices: LetsRole.Choices): void { }
+  setChoices(_choices: LetsRole.Choices): void {}
 
   #getSet(
-    type: "value" | "virtualValue" | "text" | "rawValue",
-    newValue?: Record<string, any>
-  ) {
+    type: "value" | "virtualValue" | "text" | "rawValue" | "visible",
+    newValue?: Record<string, unknown>,
+  ): LetsRole.ViewData | void {
     if (arguments.length === 1) {
       const result: LetsRole.ViewData = {};
       this.#components.forEach((cmp) => (result[cmp.realId()] = cmp[type]()));
       return result;
     }
+
     if (lre.isObject(newValue)) {
       Object.keys(newValue!).forEach((cmpId) => {
         const cmp = this.find(cmpId);
-        cmp?.[type](newValue![cmpId] as any);
+        cmp?.[type](newValue![cmpId] as string);
       });
     } else {
-      this.#components.forEach((cmp) => cmp?.[type](newValue as any));
+      this.#components.forEach((cmp) => cmp?.[type](newValue));
     }
   }
 
   #getComponent(
-    cmp: LetsRole.ComponentID | IComponent
+    cmp: LetsRole.ComponentID | IComponent,
   ): ComponentSearchResult | IGroup {
     let component: ComponentSearchResult | IGroup;
 
     if (typeof cmp === "string") {
       component = this.#sheet.get(cmp);
-    } else if (typeof cmp === "object" && (cmp as any).lreType) {
+    } else if (this.#hasLreType(cmp)) {
       component = cmp;
     } else {
       throw new Error(`Invalid given component for group ${this.#id}`);
@@ -323,8 +339,18 @@ export class Group
     return component;
   }
 
+  #hasLreType(cmp: unknown): cmp is IComponent | IGroup {
+    return (
+      typeof cmp === "object" &&
+      !!cmp &&
+      Object.hasOwn(cmp, "lreType") &&
+      typeof (cmp as IComponent).lreType === "function"
+    );
+  }
+
   #getCmpIndex(cmp: LetsRole.ComponentID | IComponent): number {
     let id: string;
+
     if (typeof cmp === "string") {
       id = cmp;
     } else if (!cmp || typeof cmp.exists !== "function") {

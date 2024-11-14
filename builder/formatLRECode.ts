@@ -16,7 +16,7 @@ function getPaddedCodeWithUselessCode(
   length: number,
   previousWith = " ",
   semicolonFillerOk = true,
-) {
+): string {
   const tmpResult = [...codeParts];
 
   if (tmpResult.length === 0) {

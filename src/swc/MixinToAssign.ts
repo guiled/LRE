@@ -65,6 +65,7 @@ class MixinToAssign extends Visitor {
     if (!this.#mixinClasses || !n.body) {
       return super.visitConstructor(n);
     }
+
     this.#constructorFound = true;
     const span = n.span;
     const _a = identifier({ span, value: "_a" });
@@ -101,7 +102,7 @@ class MixinToAssign extends Visitor {
                   arrayexpression({
                     span,
                     elements: this.#mixinClasses!.map<ExprOrSpread>((m) => m),
-                  })
+                  }),
                 ),
                 ...callExpression.arguments,
               ],
@@ -160,7 +161,7 @@ class MixinToAssign extends Visitor {
                                             expression(
                                               nullliteral({
                                                 span,
-                                              })
+                                              }),
                                             ),
                                             expression(
                                               member({
@@ -170,10 +171,10 @@ class MixinToAssign extends Visitor {
                                                   span,
                                                   expression: _idx,
                                                 },
-                                              })
+                                              }),
                                             ),
                                           ],
-                                        })
+                                        }),
                                       ),
                                     ],
                                   }),
@@ -196,7 +197,7 @@ class MixinToAssign extends Visitor {
                               argument: parentMixin,
                             }),
                           ],
-                        })
+                        }),
                       ),
                     ],
                   }),
@@ -225,9 +226,11 @@ class MixinToAssign extends Visitor {
             }),
           });
         }
+
         return stmt;
-      }
+      },
     );
+
     if (!superFound) {
       n.body.stmts.unshift({
         type: "ExpressionStatement",
@@ -235,6 +238,7 @@ class MixinToAssign extends Visitor {
         span,
       });
     }
+
     return super.visitConstructor(n);
   }
 
@@ -249,6 +253,7 @@ class MixinToAssign extends Visitor {
   visitClassDeclaration(decl: ClassDeclaration): Declaration {
     const superClass = decl.superClass;
     const mixinCall = superClass && this.#getMixinCall(superClass);
+
     if (mixinCall) {
       const span = decl.span;
       const newClass: ClassDeclaration = {
@@ -260,6 +265,7 @@ class MixinToAssign extends Visitor {
       this.#mixinClasses = mixinCall.arguments;
       this.#constructorFound = false;
       const res = super.visitClassDeclaration(newClass);
+
       if (!this.#constructorFound) {
         newClass.body.push({
           type: "Constructor",
@@ -283,10 +289,12 @@ class MixinToAssign extends Visitor {
           },
         });
       }
+
       this.#mixinClasses = prevMixinClasses;
       this.#constructorFound = prevConstructorFound;
       return res;
     }
+
     return super.visitClassDeclaration(decl);
   }
 
@@ -323,6 +331,7 @@ class MixinToAssign extends Visitor {
       this.#transformMixable(e.body);
       return res;
     }
+
     const res = super.visitArrowFunctionExpression(e);
     return res;
   }
@@ -334,6 +343,7 @@ class MixinToAssign extends Visitor {
     ) {
       return true;
     }
+
     if (
       e.params[0]?.type === "AssignmentPattern" &&
       e.params[0].left.type === "Identifier" &&
@@ -352,12 +362,14 @@ class MixinToAssign extends Visitor {
     ) {
       c.superClass = undefined;
       const ctor = c.body.find(
-        (cm) => cm.type === "Constructor"
+        (cm) => cm.type === "Constructor",
       ) as Constructor;
+
       if (ctor && ctor.body) {
         ctor.body.stmts = ctor.body.stmts.filter((s) => !this.#isSuperCall(s));
       }
     }
+
     return c;
   }
 

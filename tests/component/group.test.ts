@@ -53,7 +53,7 @@ beforeEach(() => {
           {
             id: "checkbox",
             className: "Checkbox",
-          }
+          },
         ],
         className: "View",
       },
@@ -69,10 +69,10 @@ beforeEach(() => {
             id: "c",
             className: "Label",
             text: "ok",
-          }
+          },
         ],
         className: "View",
-      }
+      },
     ],
   });
   initLetsRole(server);
@@ -89,7 +89,7 @@ beforeEach(() => {
   sheet = new Sheet(
     rawSheet,
     new DataBatcher(modeHandlerMock, rawSheet),
-    modeHandlerMock
+    modeHandlerMock,
   );
   jest.spyOn(sheet, "get");
   jest.spyOn(lre, "error");
@@ -122,24 +122,29 @@ describe("Component group is like a component", () => {
     group.add(cmp1!);
     group.add(cmp2!);
 
-    (
-      ["autoLoadSaveClasses", "toggle", "hide", "show"] as Array<
-        keyof IComponent
-      >
-    ).forEach((method) => {
-      jest.spyOn(cmp1, method);
-      jest.spyOn(cmp2, method);
-      /* @ts-ignore */
-      group[method]();
-      expect(cmp1[method]).toHaveBeenCalled();
-      expect(cmp2[method]).toHaveBeenCalled();
-    });
+    const methods = ["autoLoadSaveClasses", "toggle", "hide", "show"];
+
+    type CommonMethodsBetweenComponentAndGroup =
+      | "autoLoadSaveClasses"
+      | "toggle"
+      | "hide"
+      | "show";
+
+    (methods as Array<CommonMethodsBetweenComponentAndGroup>).forEach(
+      (method) => {
+        jest.spyOn(cmp1, method);
+        jest.spyOn(cmp2, method);
+        group[method]();
+        expect(cmp1[method]).toHaveBeenCalled();
+        expect(cmp2[method]).toHaveBeenCalled();
+      },
+    );
 
     expect(
       group
         .knownChildren()
         .map((c) => c.realId())
-        .sort()
+        .sort(),
     ).toEqual([cmp1.realId(), cmp2.realId()].sort());
 
     jest.spyOn(cmp1, "setToolTip");
@@ -264,9 +269,7 @@ describe("Component group basics", () => {
     expect(group.count()).toBe(1);
     expect(updateCb).toHaveBeenCalledTimes(0);
 
-    expect(() =>
-      group.add(sheet.get("unknown")! as IComponent)
-    ).toThrow();
+    expect(() => group.add(sheet.get("unknown")! as IComponent)).toThrow();
     expect(group.count()).toBe(1);
     expect(updateCb).toHaveBeenCalledTimes(0);
     expect(group.includes("unknown")).toBeFalsy();
@@ -286,7 +289,7 @@ describe("Component group basics", () => {
     const group1: Group = new Group(context, "group1", sheet);
     const group2: Group = new Group(context, "group2", sheet);
 
-    /* @ts-expect-error */
+    /* @ts-expect-error Intended error to test */
     expect(() => group2.add(group1)).toThrow();
   });
 
@@ -300,19 +303,19 @@ describe("Component group basics", () => {
     ({ val: invalidAddedElement }) => {
       const group: Group = new Group(context, "group1", sheet);
       (lre.error as jest.Mock).mockClear();
-      /* @ts-expect-error */
+      /* @ts-expect-error Intended error to test */
       expect(() => group.add(invalidAddedElement)).toThrow();
 
       (lre.error as jest.Mock).mockClear();
-      /* @ts-expect-error */
+      /* @ts-expect-error Intended error to test */
       expect(group.includes(invalidAddedElement)).toBeFalsy();
       expect(lre.error).toHaveBeenCalled();
 
       (lre.error as jest.Mock).mockClear();
-      /* @ts-expect-error */
+      /* @ts-expect-error Intended error to test */
       group.remove(invalidAddedElement);
       expect(lre.error).toHaveBeenCalled();
-    }
+    },
   );
 });
 
@@ -489,9 +492,13 @@ describe("Group get values", () => {
 
   test("getClasses gives classes that are on ALL components", () => {
     const group = new Group(context, "group2", sheet, ["cmp1", "cmp2", "cmp3"]);
-    expect(group.getClasses().sort()).toEqual(["a", "b", "form-control", "text-input", "widget"].sort());
+    expect(group.getClasses().sort()).toEqual(
+      ["a", "b", "form-control", "text-input", "widget"].sort(),
+    );
     sheet.get("cmp1")!.addClass("d");
-    expect(group.getClasses().sort()).toEqual(["a", "b", "d", "form-control", "text-input", "widget"].sort());
+    expect(group.getClasses().sort()).toEqual(
+      ["a", "b", "d", "form-control", "text-input", "widget"].sort(),
+    );
   });
 
   test("visible get / set", () => {

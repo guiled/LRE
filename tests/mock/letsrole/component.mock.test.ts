@@ -72,7 +72,7 @@ describe("ComponentMock behavior", () => {
   });
 
   test("find behavior", () => {
-    let found = componentLabel.find("oh");
+    const found = componentLabel.find("oh");
     expect(found).toBeInstanceOf(FailingExistingComponent);
     expect(found.id()).toBe("oh");
     //found = componentContainer.find("oh");
@@ -199,11 +199,11 @@ describe("ComponentMock behavior", () => {
     componentContainer.addClass("toto");
     componentContainer.addClass("toto");
     expect(componentContainer.getClasses().reduce(countClass("toto"), 0)).toBe(
-      2
+      2,
     );
     componentContainer.removeClass("toto");
     expect(componentContainer.getClasses().reduce(countClass("toto"), 0)).toBe(
-      0
+      0,
     );
   });
 
@@ -264,7 +264,7 @@ describe("FailingComponent behavior", () => {
   });
 
   test("on throws exception", () => {
-    expect(() => failingComponent.on("click", () => { })).toThrow();
+    expect(() => failingComponent.on("click", () => {})).toThrow();
   });
 
   test("off does not throw exception", () => {
@@ -593,12 +593,11 @@ describe("Repeaters", () => {
       },
     });
     expect(sheet.get(["rep2", keys[0], "input"].join(".")).value()).toBe(
-      newVal
+      newVal,
     );
     expect(fnOnRepeater).not.toHaveBeenCalled();
     expect(fnOnRepeaterOther).toHaveBeenCalledTimes(1);
     expect(fnOnInput).toHaveBeenCalledTimes(1);
-
   });
 
   test("Repeater entry validation, edition or deletion triggers events", () => {
@@ -675,8 +674,16 @@ describe("Repeaters", () => {
     expect(repeaterOk.value()).toEqual({});
   });
 
-  test.todo("One view opened on two screens, it two different repeater entries are edited at the same time, an update on one screen will trigger update AND un-edit entries on the other screen");
-  test.todo("update a component in a readable view doesn't trigger repeater update event");
-  test.todo("One view opened on two screens, A number input change in a repeater edit view will un-edit the entry immediately IF the entry is in read view in the other screen AND it changes a read view component value");
-  test.todo("If an edit view contains a choice with a list A of choices, editing an entry with a choice from list B will empty the value of the choice !!!");
+  test.todo(
+    "One view opened on two screens, it two different repeater entries are edited at the same time, an update on one screen will trigger update AND un-edit entries on the other screen",
+  );
+  test.todo(
+    "update a component in a readable view doesn't trigger repeater update event",
+  );
+  test.todo(
+    "One view opened on two screens, A number input change in a repeater edit view will un-edit the entry immediately IF the entry is in read view in the other screen AND it changes a read view component value",
+  );
+  test.todo(
+    "If an edit view contains a choice with a list A of choices, editing an entry with a choice from list B will empty the value of the choice !!!",
+  );
 });

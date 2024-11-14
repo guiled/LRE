@@ -22,10 +22,8 @@ describe("Test error handler", () => {
     });
     expect(err.lineNumber).toStrictEqual(0);
     expect(err.columnNumber).toStrictEqual(0);
-    /* @ts-ignore-error */
     const err2 = new Error(message, {});
     expect(err2.toString()).toContain(message);
-    /* @ts-ignore-error */
     const err3 = new Error(message, { cause: {} });
     expect(err3.toString()).toContain(message);
   });

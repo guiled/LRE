@@ -17,14 +17,16 @@ export class LreProxy<T> {
 
   getDest(): T {
     const newMode = this._proxyModeHandler.getMode();
+
     if (newMode !== this.#currentMode) {
       this.#currentDest = this.#destCtors[newMode]!(this._realDest);
       this.#currentMode = newMode;
     }
+
     return this.#currentDest;
   }
 
-  setModeDest(mode: ProxyMode, init: ProxyInitiator<T>) {
+  setModeDest(mode: ProxyMode, init: ProxyInitiator<T>): void {
     this.#destCtors[mode] = init;
   }
 }

@@ -1,8 +1,9 @@
 import { ViewMock } from "./view.mock";
 
 export class ComponentMock<
-  T extends LetsRole.ComponentValue = LetsRole.ComponentValue
-> implements LetsRole.Component<T> {
+  T extends LetsRole.ComponentValue = LetsRole.ComponentValue,
+> implements LetsRole.Component<T>
+{
   #sheet: ViewMock;
   #realId: LetsRole.ComponentID;
   #definitions: LetsRoleMock.ComponentDefinitions;
@@ -12,11 +13,12 @@ export class ComponentMock<
     sheet: ViewMock,
     realId: LetsRole.ComponentID,
     definitions: LetsRoleMock.ComponentDefinitions,
-    _defaultValue: T
+    _defaultValue: T,
   ) {
     this.#sheet = sheet;
     this.#realId = realId;
     this.#definitions = definitions;
+
     if (definitions.className === "Label") {
       this.#currentText = definitions.text || "";
     } else if (definitions.className === "NumberInput") {
@@ -51,10 +53,15 @@ export class ComponentMock<
 
   find(id: LetsRole.ComponentID): LetsRole.Component {
     const type = this.getType();
-    const completeId = (type === "Repeater" || type === "RepeaterElement") ? this.#realId + "." + id : id;
+    const completeId =
+      type === "Repeater" || type === "RepeaterElement"
+        ? this.#realId + "." + id
+        : id;
+
     if (completeId === this.#realId) {
       return new FailingExistingComponent(this.#sheet, completeId);
     }
+
     return this.#sheet.get(completeId);
   }
 
@@ -62,19 +69,21 @@ export class ComponentMock<
   on(
     event: LetsRole.EventType,
     delegate: LetsRole.Selector,
-    callback?: LetsRole.EventCallback
+    callback?: LetsRole.EventCallback,
   ): void;
   on(
     event: LetsRole.EventType,
     delegate: LetsRole.Selector | LetsRole.EventCallback,
-    callback?: LetsRole.EventCallback
+    callback?: LetsRole.EventCallback,
   ): void {
     let delegation: string | false = false;
+
     if (!callback) {
       callback = delegate as LetsRole.EventCallback;
     } else {
       delegation = delegate as LetsRole.Selector;
     }
+
     this.#sheet.setEventToComponent(this.#realId, event, callback, delegation);
   }
 
@@ -117,6 +126,7 @@ export class ComponentMock<
   value(newValue?: T): T | undefined | void {
     if (newValue === void 0) {
       let defaultValue: T | undefined = undefined;
+
       if (this.#definitions.className === "Label") {
         defaultValue = (this.#definitions.text || "") as T;
       } else if (this.#definitions.className === "NumberInput") {
@@ -127,8 +137,10 @@ export class ComponentMock<
       ) {
         defaultValue = (this.#definitions.defaultValue || "") as T;
       }
+
       return this.#sheet.loadComponentValue(this.#realId, defaultValue) as T;
     }
+
     this.#sheet.saveComponentValue(this.#realId, newValue);
   }
 
@@ -138,6 +150,7 @@ export class ComponentMock<
     if (newValue !== void 0) {
       this.#sheet.setComponentVirtualValue(this.#realId, newValue);
     }
+
     return this.#sheet.getComponentVirtualValue(this.#realId) as T;
   }
 
@@ -153,19 +166,26 @@ export class ComponentMock<
         if (this.#definitions.multiple) {
           return null;
         }
+
         if (!this.#definitions.tableId || !this.#definitions.label) {
           return undefined;
         }
+
         const table = this.#sheet.getTableData(this.#definitions.tableId);
+
         if (!table) {
           return undefined;
         }
+
         const row = table.get(this.value() as string);
+
         if (!row) {
           return undefined;
         }
+
         return row[this.#definitions.label];
       }
+
       return this.#currentText;
     } else {
       this.#currentText = replacement;
@@ -209,6 +229,7 @@ export class FailingComponent implements LetsRole.Component<any> {
     if (this.#realId === "") {
       throw new Error("Component not found");
     }
+
     return null;
   }
 
@@ -224,7 +245,7 @@ export class FailingComponent implements LetsRole.Component<any> {
   on(
     event: LetsRole.EventType,
     delegate: LetsRole.Selector,
-    callback: LetsRole.EventCallback
+    callback: LetsRole.EventCallback,
   ): void;
   on(_event: unknown, _delegate: unknown, _callback?: unknown): void {
     throw new Error("Not implemented");
@@ -232,7 +253,7 @@ export class FailingComponent implements LetsRole.Component<any> {
 
   off(event: LetsRole.EventType): void;
   off(event: LetsRole.EventType, delegate: LetsRole.Selector): void;
-  off(_event: unknown, _delegate?: unknown): void { }
+  off(_event: unknown, _delegate?: unknown): void {}
 
   hide(): void {
     throw new Error("Not implemented");
@@ -266,6 +287,7 @@ export class FailingComponent implements LetsRole.Component<any> {
     if (arguments.length === 0) {
       return this.#sheet.loadComponentValue(this.#realId);
     }
+
     this.#sheet.saveComponentValue(this.#realId, newValue);
   }
 
@@ -296,12 +318,12 @@ export class FailingComponent implements LetsRole.Component<any> {
   }
 
   setChoices(_choices: LetsRole.Choices): void {
-    /* @ts-expect-error */
+    /* @ts-expect-error do nothing */
     return false;
   }
 
   name(): LetsRole.Name {
-    /* @ts-expect-error */
+    /* @ts-expect-error do nothing */
     return null;
   }
 
@@ -313,7 +335,7 @@ export class FailingComponent implements LetsRole.Component<any> {
     return "_Unknown_";
   }
 
-  realId() {
+  realId(): string {
     return "";
   }
 }
@@ -329,13 +351,12 @@ export class FailingExistingComponent extends FailingComponent {
   }
 }
 
-
 export class FailingOuterExistingComponent extends FailingExistingComponent {
   constructor(sheet: ViewMock, realId: LetsRole.ComponentID) {
     super(sheet, realId);
   }
 
-  value() {
+  value(): void {
     throw new Error("This call must throw an error");
   }
 }

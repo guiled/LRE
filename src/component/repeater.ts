@@ -25,7 +25,7 @@ export class Repeater extends Component<
     this.lreType("repeater");
     this.on(
       "eventhandler-added:__lre__:__rep__",
-      this.#runInitReadEvent.bind(this)
+      this.#runInitReadEvent.bind(this),
     );
     const currentValue = this.#saveValue();
 
@@ -41,6 +41,7 @@ export class Repeater extends Component<
     if (arguments.length === 0) {
       value = this.sheet().getData(this.realId()) as LetsRole.RepeaterValue;
     }
+
     this.#savedValue = structuredClone(value || {});
 
     return this.#savedValue;
@@ -59,13 +60,15 @@ export class Repeater extends Component<
       cmp: this,
       entry: Entry,
       entryId: LetsRole.Index,
-      value: LetsRole.ViewData
-    ) => void
-  ) {
+      value: LetsRole.ViewData,
+    ) => void,
+  ): void {
     if (event === "initread") {
       const val = this.value();
-      for (let entryId in val) {
+
+      for (const entryId in val) {
         const entry = this.find(entryId) as Entry;
+
         if (!entry?.hasClass("editing")) {
           callback.call(this, this, entry, entryId, val[entryId]);
         }
@@ -73,16 +76,26 @@ export class Repeater extends Component<
     }
   }
 
-  #clickHandler() {
-    const newValues = this.value();
-    each(newValues, (entryData, entryId) => {
+  #clickHandler(): void {
+    const newValues = this.value()!;
+
+    if (!newValues) {
+      return;
+    }
+
+    each(newValues, (entryData: LetsRole.ViewData, entryId: LetsRole.Index) => {
       const entry = this.find(entryId)!;
 
-      if (!this.#savedValue.hasOwnProperty(entryId)) {
+      if (!Object.prototype.hasOwnProperty.call(this.#savedValue, entryId)) {
         if (!entry.data("initialized")) {
           entry.data("initialized", true);
           entry.data("saved", false);
-          entry.data("children", this.sheet().knownChildren(entry));
+          entry.data(
+            "children",
+            this.sheet()
+              .knownChildren(entry)
+              .map((c) => c.realId()),
+          );
           // Save the data before potential changes in init event
           // I don't remember the reason of this line
           //const valueSave = structuredClone(entryData);
@@ -99,7 +112,7 @@ export class Repeater extends Component<
           "children",
           this.sheet()
             .knownChildren(entry)
-            .map((c) => c.realId())
+            .map((c) => c.realId()),
         );
 
         // Refresh all raw component of each entry children
@@ -123,7 +136,7 @@ export class Repeater extends Component<
 
   //   const values = this.value() as DefinedRepeaterValue;
 
-  //   if (!values.hasOwnProperty(entryId)) {
+  //   if (!Object.prototype.hasOwnProperty.call(values, entryId)) {
   //     values[entryId] = {};
   //   }
 
@@ -137,71 +150,78 @@ export class Repeater extends Component<
   //   });
   // }
 
-  #updateHandler() {
+  #updateHandler(): void {
     const newValues = this.value() as DefinedRepeaterValue;
     let somethingChanged = false;
-    each(this.#savedValue, (oldEntryData, entryId) => {
-      if (!newValues.hasOwnProperty(entryId)) {
-        this.trigger("delete", entryId, oldEntryData);
-        this.sheet().forget(this.realId() + REP_ID_SEP + entryId);
-        somethingChanged = true;
-      } else {
-        const entry = this.find(entryId) as Entry;
-        const newEntryValue = newValues[entryId];
-
-        if (!lre.deepEqual(oldEntryData, newEntryValue)) {
-          this.trigger(
-            "entrychange",
-            entry,
-            entryId,
-            newEntryValue,
-            oldEntryData
-          );
+    each(
+      this.#savedValue,
+      (oldEntryData: LetsRole.ViewData, entryId: LetsRole.Index) => {
+        if (!Object.prototype.hasOwnProperty.call(newValues, entryId)) {
+          this.trigger("delete", entryId, oldEntryData);
+          this.sheet().forget(this.realId() + REP_ID_SEP + entryId);
           somethingChanged = true;
-        }
+        } else {
+          const entry = this.find(entryId) as Entry;
+          const newEntryValue = newValues[entryId];
 
-        // Refresh all raw component of each entry children
-        entry.knownChildren().forEach((child) => {
-          if (child && child.exists()) {
-            child.refreshRaw();
-          }
-        });
-
-        if (entry.hasData("saved") && !entry.data("saved")) {
-          entry.data("saved", true);
-          this.trigger("save", entry, entryId, newEntryValue, oldEntryData);
-        }
-
-        if (
-          !entry.hasClass("lre_initread") ||
-          !lre.deepEqual(newEntryValue, oldEntryData)
-        ) {
-          this.trigger("initread", entryId, newEntryValue, oldEntryData);
-          entry.addClass("lre_initread");
-        }
-
-        if (entry.hasData("children")) {
-          let oldChildren = entry.data("children");
-
-          if (!Array.isArray(oldChildren)) {
-            oldChildren = [];
+          if (!lre.deepEqual(oldEntryData, newEntryValue)) {
+            this.trigger(
+              "entrychange",
+              entry,
+              entryId,
+              newEntryValue,
+              oldEntryData,
+            );
+            somethingChanged = true;
           }
 
-          const addedChildren = this.sheet().knownChildren(entry);
-
-          each(oldChildren, (realId) => {
-            if (!addedChildren.includes(realId)) {
-              this.sheet().forget(realId);
+          // Refresh all raw component of each entry children
+          entry.knownChildren().forEach((child) => {
+            if (child && child.exists()) {
+              child.refreshRaw();
             }
           });
+
+          if (entry.hasData("saved") && !entry.data("saved")) {
+            entry.data("saved", true);
+            this.trigger("save", entry, entryId, newEntryValue, oldEntryData);
+          }
+
+          if (
+            !entry.hasClass("lre_initread") ||
+            !lre.deepEqual(newEntryValue, oldEntryData)
+          ) {
+            this.trigger("initread", entryId, newEntryValue, oldEntryData);
+            entry.addClass("lre_initread");
+          }
+
+          if (entry.hasData("children")) {
+            let oldChildren: Array<LetsRole.ComponentID> = entry.data(
+              "children",
+            ) as Array<LetsRole.ComponentID>;
+
+            if (!Array.isArray(oldChildren)) {
+              oldChildren = [];
+            }
+
+            const addedChildren: Array<LetsRole.ComponentID> = this.sheet()
+              .knownChildren(entry)
+              .map((c) => c.realId());
+
+            each(oldChildren, (realId: LetsRole.ComponentID) => {
+              if (!addedChildren.includes(realId)) {
+                this.sheet().forget(realId);
+              }
+            });
+          }
         }
-      }
-    });
+      },
+    );
 
     // New entries
-    each(newValues, (entryData, entryId) => {
-      if (!this.#savedValue.hasOwnProperty(entryId)) {
-        let entry = this.find(entryId) as Entry;
+    each(newValues, (entryData: LetsRole.ViewData, entryId: LetsRole.Index) => {
+      if (!Object.prototype.hasOwnProperty.call(this.#savedValue, entryId)) {
+        const entry = this.find(entryId) as Entry;
         entry.data("saved", true);
         this.trigger("save", entry, entryId, entryData, {});
         this.trigger("initread", entry, entryId, entryData, {});
@@ -214,6 +234,7 @@ export class Repeater extends Component<
     if (somethingChanged) {
       this.trigger("dataChange");
     }
+
     this.#saveValue();
   }
 
@@ -222,7 +243,7 @@ export class Repeater extends Component<
     this.sheet().sendPendingDataFor(this.realId());
     return this.sheet().get(
       this.realId() + REP_ID_SEP + id,
-      silent
+      silent,
     ) as ComponentSearchResult;
   }
 

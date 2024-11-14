@@ -1,9 +1,11 @@
-import { Span } from "@swc/core";
+import { CallExpression, OptionalChainingExpression, Span } from "@swc/core";
 import identifier from "../identifier";
 import call from "./call";
 import member from "./member";
 
-export const arrayfromarguments = (span: Span) =>
+export const arrayfromarguments = (
+  span: Span,
+): CallExpression | OptionalChainingExpression =>
   call({
     callee: member({
       object: identifier({

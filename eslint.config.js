@@ -34,6 +34,37 @@ export default tsESlint.config(
         { blankLine: "always", prev: "*", next: "block-like" },
         { blankLine: "always", prev: "block-like", next: "*" },
       ],
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          caughtErrors: "none",
+        },
+      ],
+      "@typescript-eslint/explicit-function-return-type": [
+        "error",
+        {
+          allowExpressions: true,
+        },
+      ],
+      "prefer-rest-params": "off",
+      "no-empty": [
+        "error",
+        {
+          allowEmptyCatch: true,
+        },
+      ],
+      "prefer-spread": "off",
+      "@typescript-eslint/no-unused-expressions": [
+        "error",
+        {
+          allowShortCircuit: true,
+          allowTernary: true,
+        },
+      ],
     },
   },
 );

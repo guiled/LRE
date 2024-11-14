@@ -87,13 +87,13 @@ export class ComponentCache {
       }
     }
 
-    return this.#components.hasOwnProperty(realId)
+    return Object.prototype.hasOwnProperty.call(this.#components, realId)
       ? this.#components[realId]
       : false;
   }
 
   set(realId: LetsRole.ComponentID, cmp: CacheableTypes): this {
-    if (this.#components.hasOwnProperty(realId)) {
+    if (Object.prototype.hasOwnProperty.call(this.#components, realId)) {
       lre.trace(`Component overwritten in cache ${realId}`);
     } else {
       lre.trace(`Component added to cache ${realId}`);
@@ -141,7 +141,7 @@ export class ComponentCache {
 
   forget(realId: LetsRole.ComponentID): void {
     if (
-      this.#components.hasOwnProperty(realId) &&
+      Object.prototype.hasOwnProperty.call(this.#components, realId) &&
       !this.#toDelete.includes(realId)
     ) {
       this.#toDelete.push(realId);
@@ -161,7 +161,7 @@ export class ComponentCache {
 
   remember(realId: LetsRole.ComponentID): void {
     if (
-      !this.#components.hasOwnProperty(realId) &&
+      !Object.prototype.hasOwnProperty.call(this.#components, realId) &&
       !this.#toAdd.includes(realId)
     ) {
       this.#toAdd.push(realId);

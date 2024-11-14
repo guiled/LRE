@@ -7,7 +7,7 @@ type Member_Type = {
   properties: [
     Identifier["value"],
     Identifier["value"],
-    ...Identifier["value"][]
+    ...Identifier["value"][],
   ];
 };
 
@@ -21,8 +21,9 @@ export default function memberchained({
     property: identifier({ span, value: properties[1] }),
   }) as MemberExpression;
   let index = 2;
+
   while (index < properties.length) {
-    let p = properties[index];
+    const p = properties[index];
     obj = member({
       span,
       object: obj,
@@ -30,5 +31,6 @@ export default function memberchained({
     }) as MemberExpression;
     index++;
   }
+
   return obj;
 }

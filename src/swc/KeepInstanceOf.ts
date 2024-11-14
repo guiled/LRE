@@ -19,6 +19,7 @@ class KeepInstanceOf extends Visitor {
     this.instanceOfFound = false;
     super.visitProgram(n);
     const span = n.span;
+
     if (this.instanceOfFound) {
       n.body.unshift({
         type: "ExpressionStatement",
@@ -37,6 +38,7 @@ class KeepInstanceOf extends Visitor {
         },
       });
     }
+
     return n;
   }
 
@@ -44,6 +46,7 @@ class KeepInstanceOf extends Visitor {
     if (n.operator === "instanceof") {
       this.instanceOfFound = true;
     }
+
     return super.visitBinaryExpression(n);
   }
 
@@ -58,6 +61,7 @@ class KeepInstanceOf extends Visitor {
       };
       return super.visitStatement(newStmt);
     }
+
     return super.visitStatement(stmt);
   }
 
@@ -85,6 +89,7 @@ class KeepInstanceOf extends Visitor {
       };
       return super.visitExpression(binaryExpression);
     }
+
     return super.visitExpression(n);
   }
 }

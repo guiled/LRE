@@ -4,7 +4,8 @@ import { SheetContext, SheetProxy } from "./sheet";
 
 class ComponentProxy
   extends LreProxy<LetsRole.Component>
-  implements LetsRole.Component {
+  implements LetsRole.Component
+{
   #sheet: SheetProxy;
   #getVirtualContext: () => SheetContext;
 
@@ -12,7 +13,7 @@ class ComponentProxy
     proxyModeHandler: ProxyModeHandler,
     realCmp: LetsRole.Component,
     sheet: SheetProxy,
-    getVirtualContext: () => SheetContext
+    getVirtualContext: () => SheetContext,
   ) {
     super(proxyModeHandler, realCmp);
     this.#sheet = sheet;
@@ -53,6 +54,7 @@ class ComponentProxy
       },
       removeClass: (className: LetsRole.ClassName) => {
         const idx = context.cmpClasses[id].indexOf(className);
+
         if (idx !== -1) {
           context.cmpClasses[id].splice(idx, 1);
         }
@@ -62,6 +64,7 @@ class ComponentProxy
         context.cmpClasses[id].includes(className),
       toggleClass: (className: LetsRole.ClassName) => {
         const idx = context.cmpClasses[id].indexOf(className);
+
         if (idx === -1) {
           context.cmpClasses[id].push(className);
         } else {
@@ -80,6 +83,7 @@ class ComponentProxy
         if (replacement !== void 0) {
           context.cmpTexts[id] = replacement!;
         }
+
         return context.cmpTexts[id];
       },
       visible: (): boolean =>
@@ -90,19 +94,22 @@ class ComponentProxy
         if (newValue !== void 0) {
           context.sheetData[id] = newValue;
         }
+
         return context.sheetData[id];
       },
     };
     return cmpProxy;
   }
 
-  id() {
+  id(): LetsRole.ComponentID | null {
     let id;
+
     try {
       id = this.getDest().id();
     } catch (e) {
       id = "";
     }
+
     return id;
   }
 
@@ -114,33 +121,37 @@ class ComponentProxy
     return this.getDest().index();
   }
 
-  #proxyIt(raw: LetsRole.Component) {
+  #proxyIt(raw: LetsRole.Component): ComponentProxy {
     return new ComponentProxy(
       this._proxyModeHandler,
       raw,
       this.#sheet,
-      this.#getVirtualContext
+      this.#getVirtualContext,
     );
   }
 
-  parent() {
+  parent(): LetsRole.Component {
     return this.#proxyIt(this._realDest.parent());
   }
 
-  find(id: string) {
+  find(id: string): LetsRole.Component {
     return this.#proxyIt(this._realDest.find(id));
   }
-  on() {
+
+  on(): void {
     const proxy = this.getDest();
     proxy.on.apply(proxy, Array.from(arguments) as any);
   }
-  off() {
+
+  off(): void {
     const proxy = this.getDest();
     proxy.off.apply(proxy, Array.from(arguments) as any);
   }
+
   hide(): void {
     this.getDest().hide();
   }
+
   show(): void {
     this.getDest().show();
   }
@@ -148,30 +159,35 @@ class ComponentProxy
   addClass(className: LetsRole.ClassName): void {
     this.getDest().addClass(className);
   }
+
   removeClass(className: LetsRole.ClassName): void {
     this.getDest().removeClass(className);
   }
+
   getClasses(): LetsRole.ClassName[] {
     this._proxyModeHandler.logAccess("class", this.getDest().id()!);
     return this.getDest().getClasses();
   }
+
   hasClass(className: LetsRole.ClassName): boolean {
     this._proxyModeHandler.logAccess("class", this.getDest().id()!);
     return this.getDest().hasClass(className);
   }
+
   toggleClass(className: LetsRole.ClassName): void {
     this.getDest().toggleClass(className);
   }
-  virtualValue(newValue?: LetsRole.ComponentValue) {
+  virtualValue(newValue?: LetsRole.ComponentValue): LetsRole.ComponentValue {
     if (arguments.length > 0) {
       this.getDest().virtualValue(newValue);
       return;
     }
+
     this._proxyModeHandler.logAccess("virtualValue", this.getDest().id()!);
     return this.getDest().virtualValue();
   }
 
-  rawValue() {
+  rawValue(): LetsRole.ComponentValue {
     this._proxyModeHandler.logAccess("rawValue", this.getDest().id()!);
     return this.getDest().rawValue();
   }
@@ -181,6 +197,7 @@ class ComponentProxy
       this.getDest().text(replacement!);
       return;
     }
+
     this._proxyModeHandler.logAccess("text", this.getDest().id()!);
     return this.getDest().text();
   }
@@ -190,23 +207,25 @@ class ComponentProxy
     return this.getDest().visible();
   }
 
-  setChoices(newChoices: LetsRole.Choices) {
+  setChoices(newChoices: LetsRole.Choices): void {
     this.getDest().setChoices(newChoices);
   }
 
-  setToolTip(text: string, placement?: LetsRole.TooltipPlacement) {
+  setToolTip(text: string, placement?: LetsRole.TooltipPlacement): void {
     this.getDest().setToolTip(text, placement);
   }
-  value(newValue?: any) {
+
+  value(newValue?: any): LetsRole.ComponentValue {
     if (arguments.length > 0) {
       this.getDest().value(newValue);
       return;
     }
+
     this._proxyModeHandler.logAccess("value", this.getDest().id()!);
     return this.getDest().value();
   }
-  sheet() {
-    return this.#sheet;
+  sheet(): LetsRole.Sheet {
+    return this.#sheet as LetsRole.Sheet;
   }
 }
 

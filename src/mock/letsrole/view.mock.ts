@@ -58,13 +58,16 @@ export class ViewMock implements LetsRole.Sheet {
   #entryStates: Record<LetsRole.ComponentID, EntryState> = {};
   #componentClasses: Record<LetsRole.ComponentID, Array<LetsRole.ClassName>> =
     {};
-  #componentVirtualValues: Record<LetsRole.ComponentID, LetsRole.ComponentValue> = {};
+  #componentVirtualValues: Record<
+    LetsRole.ComponentID,
+    LetsRole.ComponentValue
+  > = {};
 
   constructor(
     server: ServerMock,
     viewDefinitionId: LetsRole.ViewID,
     viewSheetId: LetsRole.SheetRealID,
-    properName: LetsRole.Name = ""
+    properName: LetsRole.Name = "",
   ) {
     this.#server = server;
     this.#definitionId = viewDefinitionId;
@@ -94,15 +97,18 @@ export class ViewMock implements LetsRole.Sheet {
 
   get(id: LetsRole.ComponentID): ComponentMock | FailingComponent {
     let usedId = id;
+
     if (this.#realView) {
       if (!usedId.startsWith(this.#idPrefix)) {
         return this.#realView.get(usedId);
       }
+
       usedId = usedId.substring(this.#idPrefix.length + 1);
     }
 
     const parts = usedId.split(".");
-    let [cmpId, entryId, ...rest] = parts;
+    let cmpId = parts[0];
+    const [_unused, entryId, ...rest] = parts;
 
     if (id === this.id()) {
       return this.toComponent(id, "_Unknown_");
@@ -110,7 +116,7 @@ export class ViewMock implements LetsRole.Sheet {
 
     const definition = this.#findIdInDefinition(
       this.#getDefinitions().children,
-      cmpId
+      cmpId,
     );
 
     if (definition === null) {
@@ -124,8 +130,9 @@ export class ViewMock implements LetsRole.Sheet {
       if (this.#idPrefix) {
         cmpId = this.#idPrefix + "." + cmpId;
       }
+
       CommonComponentClasses.forEach((cl) =>
-        this.addComponentClass(cmpId, cl, true)
+        this.addComponentClass(cmpId, cl, true),
       );
       definition.classes
         ?.split(" ")
@@ -133,7 +140,7 @@ export class ViewMock implements LetsRole.Sheet {
 
       if (Array.isArray(ComponentClasses[definition.className])) {
         ComponentClasses[definition.className]?.forEach((cl) =>
-          this.addComponentClass(cmpId, cl || "view", true)
+          this.addComponentClass(cmpId, cl || "view", true),
         );
       }
 
@@ -160,8 +167,7 @@ export class ViewMock implements LetsRole.Sheet {
         }
       }
 
-      if (definition.className === "Choice"
-        && definition.multiple) {
+      if (definition.className === "Choice" && definition.multiple) {
         this.addComponentClass(cmpId, "multiple", true);
       }
 
@@ -169,7 +175,7 @@ export class ViewMock implements LetsRole.Sheet {
         this.#realView || this,
         cmpId,
         definition,
-        sheetData[cmpId] || null
+        sheetData[cmpId] || null,
       );
     }
 
@@ -185,11 +191,12 @@ export class ViewMock implements LetsRole.Sheet {
 
     const repValue = (sheetData[cmpId] as LetsRole.RepeaterValue) || {};
 
-    if (!repValue.hasOwnProperty(entryId)) {
+    if (!Object.prototype.hasOwnProperty.call(repValue, entryId)) {
       return new FailingComponent(this.#realView || this, id);
     }
 
     let viewToSearch: LetsRole.SheetID | null;
+
     if (this.getEntryState(cmpId + "." + entryId) === "read") {
       viewToSearch = definition.readViewId;
     } else {
@@ -203,7 +210,7 @@ export class ViewMock implements LetsRole.Sheet {
     const entryView = this.#server.openView(
       viewToSearch,
       this.id() + "." + cmpId + "." + entryId,
-      repValue[entryId]
+      repValue[entryId],
     );
     entryView.setRealView(this, cmpId + "." + entryId);
 
@@ -216,7 +223,7 @@ export class ViewMock implements LetsRole.Sheet {
 
   toComponent(
     id: LetsRole.ComponentID,
-    className: Exclude<LetsRoleMock.ComponentClassName, "View">
+    className: Exclude<LetsRoleMock.ComponentClassName, "View">,
   ): ComponentMock {
     const cmp = new ComponentMock(
       this.#realView || this,
@@ -225,11 +232,13 @@ export class ViewMock implements LetsRole.Sheet {
         id,
         className,
       } as any,
-      this.#getData()
+      this.#getData(),
     );
 
-    if (this.#realView?.getEntryState(id) === "write"
-      || this.getEntryState(id) === "write") {
+    if (
+      this.#realView?.getEntryState(id) === "write" ||
+      this.getEntryState(id) === "write"
+    ) {
       cmp.addClass("editing");
     }
 
@@ -239,7 +248,7 @@ export class ViewMock implements LetsRole.Sheet {
   setRealView(view: ViewMock, idPrefix: LetsRole.ComponentID): void {
     this.#realView = view;
     this.#idPrefix = idPrefix;
-  };
+  }
 
   getVariable(_id: LetsRole.VariableID): number | null {
     const vars = this.#server.loadViewVariable(this.#definitionId);
@@ -251,27 +260,31 @@ export class ViewMock implements LetsRole.Sheet {
     _title: string,
     _view: LetsRole.ViewID,
     _callback: (result: LetsRole.ViewData) => void,
-    _callbackInit: (promptView: LetsRole.Sheet) => void
+    _callbackInit: (promptView: LetsRole.Sheet) => void,
   ): void {
     return;
-  };
+  }
 
   setData(data: LetsRole.ViewData, noUpdateEvent: boolean = false): void {
     if (Object.keys(data).length > 20) {
-      this.#server.showError(this, "You cannot set more than 20 values with setData()");
+      this.#server.showError(
+        this,
+        "You cannot set more than 20 values with setData()",
+      );
       return;
     }
+
     this.setDataNoLimit(data, noUpdateEvent);
   }
 
   setDataNoLimit(
     data: LetsRole.ViewData,
-    noUpdateEvent: boolean = false
+    noUpdateEvent: boolean = false,
   ): void {
     this.#server.saveViewData(
       this.#sheetId,
       data,
-      noUpdateEvent ? this : noUpdateEvent
+      noUpdateEvent ? this : noUpdateEvent,
     );
   }
 
@@ -287,44 +300,46 @@ export class ViewMock implements LetsRole.Sheet {
 
   #findIdInDefinition(
     children: Array<LetsRoleMock.ComponentDefinitions>,
-    id: LetsRole.ComponentID
+    id: LetsRole.ComponentID,
   ): LetsRoleMock.ComponentDefinitions | null {
     return this.#traverseDefinition(
       children,
-      (definition) => definition.id === id
+      (definition) => definition.id === id,
     );
   }
 
   #traverseDefinition(
     children: Array<LetsRoleMock.ComponentDefinitions>,
-    finder: (definition: LetsRoleMock.ComponentDefinitions) => boolean
+    finder: (definition: LetsRoleMock.ComponentDefinitions) => boolean,
   ): LetsRoleMock.ComponentDefinitions | null {
     for (const definition of children) {
       if (finder(definition)) {
         return definition;
       }
+
       if (definition.children) {
         const result = this.#traverseDefinition(definition.children, finder);
+
         if (result) {
           return result;
         }
       }
     }
+
     return null;
   }
 
   saveComponentValue(
     realId: LetsRole.ComponentID,
-    value: LetsRole.ComponentValue
+    value: LetsRole.ComponentValue,
   ): void {
-
     // const data = this.getData();
     // const parts = realId.split(".");
     // const last = parts.pop()!;
     // let target: LetsRole.ViewData = data;
 
     // parts.forEach((part) => {
-    //   if (!target?.hasOwnProperty(part)) {
+    //   if (!target?Object.prototype.hasOwnProperty.call(, part)) {
     //     target[part] = {};
     //   }
     //   target = target[part] as LetsRole.ViewData;
@@ -333,47 +348,57 @@ export class ViewMock implements LetsRole.Sheet {
 
     // this.setData(data, this.isInEditingRepeaterEntry(realId));
     this.setData({
-      [realId]: value
+      [realId]: value,
     });
   }
 
   isInsideEditingRepeaterEntry(realId: LetsRole.ComponentID): boolean {
     let result = false;
-    this.#getParentsRealIds(realId).reverse().some((id) => {
-      const cmp = this.get(id);
-      if (cmp.getType() === "RepeaterElement") {
-        result = this.getEntryState(id) === "write";
-        return true;
-      }
-      return false;
-    });
+    this.#getParentsRealIds(realId)
+      .reverse()
+      .some((id) => {
+        const cmp = this.get(id);
+
+        if (cmp.getType() === "RepeaterElement") {
+          result = this.getEntryState(id) === "write";
+          return true;
+        }
+
+        return false;
+      });
 
     return result;
   }
 
   loadComponentValue(
     realId: LetsRole.ComponentID,
-    defaultValue?: LetsRole.ComponentValue | undefined
+    defaultValue?: LetsRole.ComponentValue | undefined,
   ): LetsRole.ComponentValue {
     let data: LetsRole.ViewData | LetsRole.ComponentValue = this.#getData();
     let usedId = realId;
+
     if (this.#realView && realId.startsWith(this.#idPrefix)) {
       usedId = realId.substring(this.#idPrefix.length + 1);
     }
+
     const parts = usedId.split(".");
     const finalId = parts.pop()!;
 
     parts.forEach((part) => {
-      if (data?.hasOwnProperty(part)) {
+      if (data && Object.prototype.hasOwnProperty.call(data, part)) {
         data = (data as LetsRole.ViewData)[part];
       } else {
         data = {};
       }
     });
+
     if (finalId === "") {
       return data;
     }
-    let val = data.hasOwnProperty(finalId) ? data[finalId] : defaultValue;
+
+    const val = Object.prototype.hasOwnProperty.call(data, finalId)
+      ? data[finalId]
+      : defaultValue;
 
     if (val === void 0) {
       return null;
@@ -386,15 +411,17 @@ export class ViewMock implements LetsRole.Sheet {
     realId: LetsRole.ComponentID,
     event: LetsRole.EventType,
     callback: LetsRole.EventCallback,
-    delegation: false | LetsRole.Selector
+    delegation: false | LetsRole.Selector,
   ): void {
     if (delegation) {
       if (this.#componentDelegatedEvents[realId] === void 0) {
         this.#componentDelegatedEvents[realId] = {};
       }
+
       if (this.#componentDelegatedEvents[realId][event] === void 0) {
         this.#componentDelegatedEvents[realId][event] = {};
       }
+
       this.#componentDelegatedEvents[realId][event]![delegation] = callback;
 
       return;
@@ -410,15 +437,17 @@ export class ViewMock implements LetsRole.Sheet {
   unsetEventToComponent(
     realId: LetsRole.ComponentID,
     event: LetsRole.EventType,
-    delegation: false | LetsRole.Selector
+    delegation: false | LetsRole.Selector,
   ): void {
     if (delegation) {
       if (this.#componentDelegatedEvents[realId] === void 0) {
         return;
       }
+
       if (this.#componentDelegatedEvents[realId][event] === void 0) {
         return;
       }
+
       delete this.#componentDelegatedEvents[realId][event]![delegation];
 
       return;
@@ -433,7 +462,7 @@ export class ViewMock implements LetsRole.Sheet {
 
   triggerComponentEvent(
     realId: LetsRole.ComponentID,
-    event: LetsRole.EventType
+    event: LetsRole.EventType,
   ): void {
     if (event === "update" && realId.includes(".")) {
       if (this.isInsideEditingRepeaterEntry(realId)) {
@@ -466,12 +495,15 @@ export class ViewMock implements LetsRole.Sheet {
     const id = realId.substring(realId.lastIndexOf(".") + 1);
     // event delegation
     let parent = this.findParent(id);
+
     while (parent.id()) {
       const parentEvent =
         this.#componentDelegatedEvents[parent.realId()]?.[event] || {};
-      for (let selector in parentEvent) {
+
+      for (const selector in parentEvent) {
         if (selector[0] === ".") {
           const className = selector.substring(1);
+
           if (this.componentHasClass(realId, className)) {
             parentEvent[selector](this.get(realId));
           }
@@ -479,31 +511,44 @@ export class ViewMock implements LetsRole.Sheet {
           parentEvent[selector](this.get(realId));
         }
       }
+
       parent = this.findParent(parent.id()!);
     }
   }
 
-  getContainingRepeater(realId: LetsRole.ComponentID): LetsRole.ComponentID | null {
-    return this.#getParentsRealIds(realId).reverse().find((id) => {
-      const cmp = this.get(id);
-      return cmp.getType() === "Repeater";
-    }) || null;
+  getContainingRepeater(
+    realId: LetsRole.ComponentID,
+  ): LetsRole.ComponentID | null {
+    return (
+      this.#getParentsRealIds(realId)
+        .reverse()
+        .find((id) => {
+          const cmp = this.get(id);
+          return cmp.getType() === "Repeater";
+        }) || null
+    );
   }
 
-  #getParentsRealIds(realId: LetsRole.ComponentID): Array<LetsRole.ComponentID> {
+  #getParentsRealIds(
+    realId: LetsRole.ComponentID,
+  ): Array<LetsRole.ComponentID> {
     const parts = realId.split(".");
-    return parts.reduce((acc: Array<LetsRole.ComponentID>, part: LetsRole.ComponentID) => {
-      if (acc.length === 0) {
-        return [part];
-      }
-      return [...acc, acc[acc.length - 1] + "." + part];
-    }, []);
+    return parts.reduce(
+      (acc: Array<LetsRole.ComponentID>, part: LetsRole.ComponentID) => {
+        if (acc.length === 0) {
+          return [part];
+        }
+
+        return [...acc, acc[acc.length - 1] + "." + part];
+      },
+      [],
+    );
   }
 
   findParent(id: LetsRole.ComponentID): ComponentMock | FailingComponent {
     const def = this.#traverseDefinition(
       [this.#getDefinitions()],
-      (definition) => !!definition.children?.some((child) => child.id === id)
+      (definition) => !!definition.children?.some((child) => child.id === id),
     );
 
     if (!def) {
@@ -525,18 +570,19 @@ export class ViewMock implements LetsRole.Sheet {
     delete this.#entryStates[realId];
   }
 
-  getComponentClass(realId: LetsRole.ComponentID) {
+  getComponentClass(realId: LetsRole.ComponentID): Array<LetsRole.ClassName> {
     return this.#componentClasses[realId] || [];
   }
 
   addComponentClass(
     realId: LetsRole.ComponentID,
     className: LetsRole.ClassName,
-    unique: boolean = false
-  ) {
+    unique: boolean = false,
+  ): void {
     if (!this.#componentClasses[realId]) {
       this.#componentClasses[realId] = [];
     }
+
     if (!unique || !this.componentHasClass(realId, className)) {
       this.#componentClasses[realId].push(className);
     }
@@ -544,48 +590,56 @@ export class ViewMock implements LetsRole.Sheet {
 
   removeComponentClass(
     realId: LetsRole.ComponentID,
-    className: LetsRole.ClassName
-  ) {
+    className: LetsRole.ClassName,
+  ): void {
     if (this.#componentClasses[realId]) {
       this.#componentClasses[realId] = this.#componentClasses[realId].filter(
-        (cl) => cl !== className
+        (cl) => cl !== className,
       );
     }
   }
 
   componentHasClass(
     realId: LetsRole.ComponentID,
-    className: LetsRole.ClassName
+    className: LetsRole.ClassName,
   ): boolean {
     if (this.#realView && realId === this.#idPrefix) {
       return this.#realView.componentHasClass(realId, className);
     }
+
     return !!this.#componentClasses[realId]?.includes(className);
   }
 
   componentChangedManually(
     realId: LetsRole.ComponentID,
-    newValue: LetsRole.ComponentValue
-  ) {
+    newValue: LetsRole.ComponentValue,
+  ): void {
     const currentValue = this.loadComponentValue(realId);
 
     if (newValue === currentValue) return;
 
     this.saveComponentValue(realId, newValue);
-    const defs = this.#findIdInDefinition(this.#getDefinitions().children, realId);
+    const defs = this.#findIdInDefinition(
+      this.#getDefinitions().children,
+      realId,
+    );
 
     if (
       defs &&
       ["TextInput", "Textarea", "NumberInput", "Choice"].includes(
-        defs.className
+        defs.className,
       )
     ) {
       this.triggerComponentEvent(realId, "change");
     }
   }
 
-  repeaterClickOnAdd(realId: LetsRole.ComponentID) {
-    const defs = this.#findIdInDefinition(this.#getDefinitions().children, realId);
+  repeaterClickOnAdd(realId: LetsRole.ComponentID): void {
+    const defs = this.#findIdInDefinition(
+      this.#getDefinitions().children,
+      realId,
+    );
+
     if (!defs || defs.className !== "Repeater") {
       throw new Error(`Component ${realId} is not a repeater`);
     }
@@ -593,12 +647,13 @@ export class ViewMock implements LetsRole.Sheet {
     if (!defs.viewId) {
       throw new Error(`Repeater ${realId} has an empty edit view id`);
     }
+
     const newEntryId = this.#randomString(10);
 
     const editView = this.#server.openView(
       defs.viewId,
       realId + "." + newEntryId,
-      {}
+      {},
     );
 
     const choiceDefs =
@@ -607,9 +662,11 @@ export class ViewMock implements LetsRole.Sheet {
     if (!!choiceDefs && !!choiceDefs.tableId) {
       const tableRows: Array<LetsRole.TableRow> = [];
       const table = this.#server.getTable(choiceDefs.tableId);
+
       if (!table) {
         throw new Error(`Table ${choiceDefs.tableId} not found`);
       }
+
       table.each((row) => tableRows.push(row));
       const sheetData = this.getData();
       const repValue = (sheetData[realId] || {}) as LetsRole.RepeaterValue;
@@ -623,13 +680,13 @@ export class ViewMock implements LetsRole.Sheet {
             },
           },
         },
-        true
+        true,
       );
       this.setEntryState(realId + "." + newEntryId, "write");
     }
   }
 
-  repeaterClickOnDone(entryRealId: LetsRole.ComponentID) {
+  repeaterClickOnDone(entryRealId: LetsRole.ComponentID): void {
     const idParts = entryRealId.split(".");
 
     if (idParts.length < 2) {
@@ -641,7 +698,7 @@ export class ViewMock implements LetsRole.Sheet {
 
     const defs = this.#findIdInDefinition(
       this.#getDefinitions().children,
-      repeaterRealId
+      repeaterRealId,
     );
 
     if (!defs || defs.className !== "Repeater") {
@@ -662,7 +719,7 @@ export class ViewMock implements LetsRole.Sheet {
     });
   }
 
-  repeaterClickOnRemove(entryRealId: LetsRole.ComponentID) {
+  repeaterClickOnRemove(entryRealId: LetsRole.ComponentID): void {
     const idParts = entryRealId.split(".");
 
     if (idParts.length < 2) {
@@ -674,7 +731,7 @@ export class ViewMock implements LetsRole.Sheet {
 
     const defs = this.#findIdInDefinition(
       this.#getDefinitions().children,
-      repeaterRealId
+      repeaterRealId,
     );
 
     if (!defs || defs.className !== "Repeater") {
@@ -686,14 +743,15 @@ export class ViewMock implements LetsRole.Sheet {
     }
 
     this.deleteEntryState(entryRealId);
-    const repValue = (this.getData()[repeaterRealId] as LetsRole.RepeaterValue) || {};
+    const repValue =
+      (this.getData()[repeaterRealId] as LetsRole.RepeaterValue) || {};
     delete repValue[entryId];
     this.setData({
       [repeaterRealId]: repValue,
     });
   }
 
-  repeaterClickOnEdit(entryRealId: LetsRole.ComponentID) {
+  repeaterClickOnEdit(entryRealId: LetsRole.ComponentID): void {
     const idParts = entryRealId.split(".");
 
     if (idParts.length < 2) {
@@ -705,7 +763,7 @@ export class ViewMock implements LetsRole.Sheet {
 
     const defs = this.#findIdInDefinition(
       this.#getDefinitions().children,
-      repeaterRealId
+      repeaterRealId,
     );
 
     if (!defs || defs.className !== "Repeater") {
@@ -717,7 +775,9 @@ export class ViewMock implements LetsRole.Sheet {
     }
 
     if (this.getEntryState(entryRealId) !== "read") {
-      throw new Error(`Repeater entry ${repeaterRealId} is already being edited`);
+      throw new Error(
+        `Repeater entry ${repeaterRealId} is already being edited`,
+      );
     }
 
     this.setEntryState(entryRealId, "write");
@@ -744,11 +804,16 @@ export class ViewMock implements LetsRole.Sheet {
     return this.#server.getTable(tableId);
   }
 
-  getComponentVirtualValue(realId: LetsRole.ComponentID): LetsRole.ComponentValue {
+  getComponentVirtualValue(
+    realId: LetsRole.ComponentID,
+  ): LetsRole.ComponentValue {
     return this.#componentVirtualValues[realId] || null;
   }
 
-  setComponentVirtualValue(realId: LetsRole.ComponentID, value: LetsRole.ComponentValue): void {
+  setComponentVirtualValue(
+    realId: LetsRole.ComponentID,
+    value: LetsRole.ComponentValue,
+  ): void {
     this.#componentVirtualValues[realId] = value;
   }
 }

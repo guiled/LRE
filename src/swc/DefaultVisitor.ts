@@ -200,7 +200,7 @@ class DefaultVisitor extends Visitor {
     return super.visitModuleDeclaration(n);
   }
   visitTsNamespaceExportDeclaration(
-    n: TsNamespaceExportDeclaration
+    n: TsNamespaceExportDeclaration,
   ): ModuleDeclaration {
     console.log("visitTsNamespaceExportDeclaration");
     return super.visitTsNamespaceExportDeclaration(n);
@@ -210,7 +210,7 @@ class DefaultVisitor extends Visitor {
     return super.visitTsExportAssignment(n);
   }
   visitTsImportEqualsDeclaration(
-    n: TsImportEqualsDeclaration
+    n: TsImportEqualsDeclaration,
   ): ModuleDeclaration {
     console.log("visitTsImportEqualsDeclaration");
     return super.visitTsImportEqualsDeclaration(n);
@@ -220,7 +220,7 @@ class DefaultVisitor extends Visitor {
     return super.visitTsModuleReference(n);
   }
   visitTsExternalModuleReference(
-    n: TsExternalModuleReference
+    n: TsExternalModuleReference,
   ): TsExternalModuleReference {
     console.log("visitTsExternalModuleReference");
     return super.visitTsExternalModuleReference(n);
@@ -262,13 +262,13 @@ class DefaultVisitor extends Visitor {
     return super.visitExportDefaultSpecifier(n);
   }
   visitOptionalStringLiteral(
-    n: StringLiteral | undefined
+    n: StringLiteral | undefined,
   ): StringLiteral | undefined {
     console.log("visitOptionalStringLiteral");
     return super.visitOptionalStringLiteral(n);
   }
   visitExportDefaultDeclaration(
-    n: ExportDefaultDeclaration
+    n: ExportDefaultDeclaration,
   ): ModuleDeclaration {
     console.log("visitExportDefaultDeclaration");
     return super.visitExportDefaultDeclaration(n);
@@ -318,7 +318,7 @@ class DefaultVisitor extends Visitor {
     return super.visitArrowFunctionExpression(e);
   }
   visitArrowBody(
-    body: BlockStatement | Expression
+    body: BlockStatement | Expression,
   ): BlockStatement | Expression {
     console.log("visitArrowBody");
     return super.visitArrowBody(body);
@@ -444,7 +444,7 @@ class DefaultVisitor extends Visitor {
     return super.visitTsNamespaceBody(n);
   }
   visitTsNamespaceDeclaration(
-    n: TsNamespaceDeclaration
+    n: TsNamespaceDeclaration,
   ): TsModuleBlock | TsNamespaceDeclaration {
     console.log("visitTsNamespaceDeclaration");
     return super.visitTsNamespaceDeclaration(n);
@@ -454,7 +454,7 @@ class DefaultVisitor extends Visitor {
     return super.visitTsModuleBlock(n);
   }
   visitTsInterfaceDeclaration(
-    n: TsInterfaceDeclaration
+    n: TsInterfaceDeclaration,
   ): TsInterfaceDeclaration {
     console.log("visitTsInterfaceDeclaration");
     return super.visitTsInterfaceDeclaration(n);
@@ -472,13 +472,13 @@ class DefaultVisitor extends Visitor {
     return super.visitTsTypeElement(n);
   }
   visitTsCallSignatureDeclaration(
-    n: TsCallSignatureDeclaration
+    n: TsCallSignatureDeclaration,
   ): TsCallSignatureDeclaration {
     console.log("visitTsCallSignatureDeclaration");
     return super.visitTsCallSignatureDeclaration(n);
   }
   visitTsConstructSignatureDeclaration(
-    n: TsConstructSignatureDeclaration
+    n: TsConstructSignatureDeclaration,
   ): TsConstructSignatureDeclaration {
     console.log("visitTsConstructSignatureDeclaration");
     return super.visitTsConstructSignatureDeclaration(n);
@@ -560,13 +560,13 @@ class DefaultVisitor extends Visitor {
     return super.visitConstructor(n);
   }
   visitConstructorParameters(
-    nodes: (Param | TsParameterProperty)[]
+    nodes: (Param | TsParameterProperty)[],
   ): (Param | TsParameterProperty)[] {
     console.log("visitConstructorParameters");
     return super.visitConstructorParameters(nodes);
   }
   visitConstructorParameter(
-    n: Param | TsParameterProperty
+    n: Param | TsParameterProperty,
   ): Param | TsParameterProperty {
     console.log("visitConstructorParameter");
     return super.visitConstructorParameter(n);
@@ -576,13 +576,13 @@ class DefaultVisitor extends Visitor {
     return super.visitStaticBlock(n);
   }
   visitTsParameterProperty(
-    n: TsParameterProperty
+    n: TsParameterProperty,
   ): TsParameterProperty | Param {
     console.log("visitTsParameterProperty");
     return super.visitTsParameterProperty(n);
   }
   visitTsParameterPropertyParameter(
-    n: TsParameterPropertyParameter
+    n: TsParameterPropertyParameter,
   ): TsParameterPropertyParameter {
     console.log("visitTsParameterPropertyParameter");
     return super.visitTsParameterPropertyParameter(n);
@@ -616,19 +616,19 @@ class DefaultVisitor extends Visitor {
     return super.visitFunction(n);
   }
   visitTsExpressionsWithTypeArguments(
-    nodes: TsExpressionWithTypeArguments[]
+    nodes: TsExpressionWithTypeArguments[],
   ): TsExpressionWithTypeArguments[] {
     console.log("visitTsExpressionsWithTypeArguments");
     return super.visitTsExpressionsWithTypeArguments(nodes);
   }
   visitTsExpressionWithTypeArguments(
-    n: TsExpressionWithTypeArguments
+    n: TsExpressionWithTypeArguments,
   ): TsExpressionWithTypeArguments {
     console.log("visitTsExpressionWithTypeArguments");
     return super.visitTsExpressionWithTypeArguments(n);
   }
   visitTsTypeParameterInstantiation(
-    n: TsTypeParameterInstantiation | undefined
+    n: TsTypeParameterInstantiation | undefined,
   ): TsTypeParameterInstantiation | undefined {
     console.log("visitTsTypeParameterInstantiation");
     return super.visitTsTypeParameterInstantiation(n);
@@ -670,7 +670,7 @@ class DefaultVisitor extends Visitor {
     return super.visitOptionalChainingExpression(n);
   }
   visitMemberExpressionOrOptionalChainingCall(
-    n: MemberExpression | OptionalChainingCall
+    n: MemberExpression | OptionalChainingCall,
   ): MemberExpression | OptionalChainingCall {
     console.log("visitMemberExpressionOrOptionalChainingCall");
     return super.visitMemberExpressionOrOptionalChainingCall(n);
@@ -756,7 +756,7 @@ class DefaultVisitor extends Visitor {
     return super.visitObjectExpression(n);
   }
   visitObjectProperties(
-    nodes: (Property | SpreadElement)[]
+    nodes: (Property | SpreadElement)[],
   ): (Property | SpreadElement)[] {
     console.log("visitObjectProperties");
     return super.visitObjectProperties(nodes);
@@ -798,7 +798,7 @@ class DefaultVisitor extends Visitor {
     return super.visitNewExpression(n);
   }
   visitTsTypeArguments(
-    n: TsTypeParameterInstantiation | undefined
+    n: TsTypeParameterInstantiation | undefined,
   ): TsTypeParameterInstantiation | undefined {
     console.log("visitTsTypeArguments");
     return super.visitTsTypeArguments(n);
@@ -860,7 +860,7 @@ class DefaultVisitor extends Visitor {
     return super.visitJSXElementChild(n);
   }
   visitJSXExpressionContainer(
-    n: JSXExpressionContainer
+    n: JSXExpressionContainer,
   ): JSXExpressionContainer {
     console.log("visitJSXExpressionContainer");
     return super.visitJSXExpressionContainer(n);
@@ -882,7 +882,7 @@ class DefaultVisitor extends Visitor {
     return super.visitJSXElement(n);
   }
   visitJSXClosingElement(
-    n: JSXClosingElement | undefined
+    n: JSXClosingElement | undefined,
   ): JSXClosingElement | undefined {
     console.log("visitJSXClosingElement");
     return super.visitJSXClosingElement(n);
@@ -896,7 +896,7 @@ class DefaultVisitor extends Visitor {
     return super.visitJSXOpeningElement(n);
   }
   visitJSXAttributes(
-    attrs: JSXAttributeOrSpread[] | undefined
+    attrs: JSXAttributeOrSpread[] | undefined,
   ): JSXAttributeOrSpread[] | undefined {
     console.log("visitJSXAttributes");
     return super.visitJSXAttributes(attrs);
@@ -906,7 +906,7 @@ class DefaultVisitor extends Visitor {
     return super.visitJSXAttributeOrSpread(n);
   }
   visitJSXAttributeOrSpreads(
-    nodes: JSXAttributeOrSpread[]
+    nodes: JSXAttributeOrSpread[],
   ): JSXAttributeOrSpread[] {
     console.log("visitJSXAttributeOrSpreads");
     return super.visitJSXAttributeOrSpreads(nodes);
@@ -916,7 +916,7 @@ class DefaultVisitor extends Visitor {
     return super.visitJSXAttribute(n);
   }
   visitJSXAttributeValue(
-    n: JSXAttrValue | undefined
+    n: JSXAttrValue | undefined,
   ): JSXAttrValue | undefined {
     console.log("visitJSXAttributeValue");
     return super.visitJSXAttributeValue(n);
@@ -946,7 +946,7 @@ class DefaultVisitor extends Visitor {
     return super.visitAwaitExpression(n);
   }
   visitTsTypeParameterDeclaration(
-    n: TsTypeParameterDeclaration | undefined
+    n: TsTypeParameterDeclaration | undefined,
   ): TsTypeParameterDeclaration | undefined {
     console.log("visitTsTypeParameterDeclaration");
     return super.visitTsTypeParameterDeclaration(n);
@@ -960,7 +960,7 @@ class DefaultVisitor extends Visitor {
     return super.visitTsTypeParameter(n);
   }
   visitTsTypeAnnotation(
-    a: TsTypeAnnotation | undefined
+    a: TsTypeAnnotation | undefined,
   ): TsTypeAnnotation | undefined {
     console.log("visitTsTypeAnnotation");
     return super.visitTsTypeAnnotation(a);
@@ -990,7 +990,7 @@ class DefaultVisitor extends Visitor {
     return super.visitNamedImportSpecifier(node);
   }
   visitImportNamespaceSpecifier(
-    node: ImportNamespaceSpecifier
+    node: ImportNamespaceSpecifier,
   ): ImportNamespaceSpecifier {
     console.log("visitImportNamespaceSpecifier");
     return super.visitImportNamespaceSpecifier(node);
@@ -1044,7 +1044,7 @@ class DefaultVisitor extends Visitor {
     return super.visitObjectPattern(n);
   }
   visitObjectPatternProperties(
-    nodes: ObjectPatternProperty[]
+    nodes: ObjectPatternProperty[],
   ): ObjectPatternProperty[] {
     console.log("visitObjectPatternProperties");
     return super.visitObjectPatternProperties(nodes);
@@ -1054,13 +1054,13 @@ class DefaultVisitor extends Visitor {
     return super.visitObjectPatternProperty(n);
   }
   visitKeyValuePatternProperty(
-    n: KeyValuePatternProperty
+    n: KeyValuePatternProperty,
   ): ObjectPatternProperty {
     console.log("visitKeyValuePatternProperty");
     return super.visitKeyValuePatternProperty(n);
   }
   visitAssignmentPatternProperty(
-    n: AssignmentPatternProperty
+    n: AssignmentPatternProperty,
   ): ObjectPatternProperty {
     console.log("visitAssignmentPatternProperty");
     return super.visitAssignmentPatternProperty(n);
@@ -1070,7 +1070,7 @@ class DefaultVisitor extends Visitor {
     return super.visitArrayPattern(n);
   }
   visitArrayPatternElements(
-    nodes: (Pattern | undefined)[]
+    nodes: (Pattern | undefined)[],
   ): (Pattern | undefined)[] {
     console.log("visitArrayPatternElements");
     return super.visitArrayPatternElements(nodes);

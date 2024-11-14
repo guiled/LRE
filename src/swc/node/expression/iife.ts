@@ -3,6 +3,7 @@ import {
   ArrowFunctionExpression,
   CallExpression,
   FunctionExpression,
+  OptionalChainingExpression,
   Span,
   Statement,
 } from "@swc/core";
@@ -31,12 +32,13 @@ export default ({
   args = [],
   called = null,
   applied = null,
-}: IIFE_PARAM) => {
+}: IIFE_PARAM): CallExpression | OptionalChainingExpression => {
   let callee: CallExpression["callee"];
   const parameters: FunctionExpression["params"] = params.map((p) => {
     if (p.type == "Parameter") {
       return p;
     }
+
     return {
       type: "Parameter",
       span,
@@ -54,6 +56,7 @@ export default ({
     }),
   });
   let firstArg: Argument[] = [];
+
   if (applied) {
     callee = member({
       span,
@@ -73,6 +76,7 @@ export default ({
         value: "call",
       }),
     });
+
     if (called === true) {
       firstArg = [{ expression: thisexpression({ span }) }];
     } else {
@@ -81,6 +85,7 @@ export default ({
   } else {
     callee = fcn;
   }
+
   return call({
     span,
     callee,

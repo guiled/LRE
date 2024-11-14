@@ -17,7 +17,6 @@ import { SheetProxy } from "../../src/proxy/sheet";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { ComponentMock } from "../../src/mock/letsrole/component.mock";
 
-
 let rawSheet: LetsRole.Sheet;
 let sheet: Sheet;
 let rawCmp: ComponentMock;
@@ -86,7 +85,7 @@ beforeEach(() => {
       {
         id: "edt",
         className: "View",
-        children: []
+        children: [],
       },
       {
         id: "rd",
@@ -96,8 +95,8 @@ beforeEach(() => {
             id: "b",
             className: "Label",
             text: "label1",
-          }
-        ]
+          },
+        ],
       },
     ],
     tables: {
@@ -116,8 +115,8 @@ beforeEach(() => {
     cmp2: cmpValue,
     cmp3: "1342",
     rep: {
-      "123": {}
-    }
+      "123": {},
+    },
   });
 
   const proxySheet = new SheetProxy(modeHandlerMock, rawSheet);
@@ -125,7 +124,7 @@ beforeEach(() => {
   sheet = new Sheet(
     proxySheet,
     new DataBatcher(modeHandlerMock, proxySheet),
-    modeHandlerMock
+    modeHandlerMock,
   );
   sheet.raw = jest.fn(() => proxySheet);
   jest.spyOn(sheet, "get");
@@ -203,7 +202,7 @@ describe("Component construction", () => {
     expect(rawCmp.setToolTip).toHaveBeenCalledTimes(1);
     expect((rawCmp.setToolTip as jest.Mock).mock.calls[0].length).toBe(1);
     expect((rawCmp.setToolTip as jest.Mock).mock.calls[0][0]).toBe(
-      "the tool tip"
+      "the tool tip",
     );
     cmp.setToolTip("the tool tip", "top");
     expect(rawCmp.setToolTip).toHaveBeenCalledTimes(2);
@@ -234,7 +233,9 @@ describe("Component construction", () => {
     expect(rawCmp.addClass).toHaveBeenCalledTimes(1);
     expect(cmp.hasClass("cl0")).toBeTruthy();
     cmp.removeClass("cl2");
-    expect(cmp.getClasses()).toEqual(expect.arrayContaining(["cl0", "cl1", "cl3"]));
+    expect(cmp.getClasses()).toEqual(
+      expect.arrayContaining(["cl0", "cl1", "cl3"]),
+    );
     expect(cmp.hasClass("cl2")).toBeFalsy();
     cmp.toggleClass("cl2");
     expect(cmp.hasClass("cl2")).toBeTruthy();
@@ -266,27 +267,15 @@ describe("Component tree", () => {
     expect(cmp.parent()).toBeUndefined();
     expect(cmp.entry()).toBeUndefined();
 
-    const parent = new Container(
-      rawSheet.get("container"),
-      sheet,
-      "container"
-    );
+    const parent = new Container(rawSheet.get("container"), sheet, "container");
     expect(cmp.parent(parent)).toBe(parent);
     expect(cmp.parent()).toBe(parent);
 
-    const rep = new Repeater(
-      rawSheet.get("rep"),
-      sheet,
-      "rep"
-    );
+    const rep = new Repeater(rawSheet.get("rep"), sheet, "rep");
     expect(cmp.repeater(rep)).toBe(rep);
     expect(cmp.repeater()).toBe(rep);
 
-    const entry = new Entry(
-      rawSheet.get("rep.123"),
-      sheet,
-      "rep"
-    );
+    const entry = new Entry(rawSheet.get("rep.123"), sheet, "rep");
     expect(cmp.entry(entry)).toBe(entry);
     expect(cmp.entry()).toBe(entry);
   });
@@ -342,20 +331,20 @@ describe("Component update event handling", () => {
 describe("Persistent data are sync between sheets", () => {
   test("Sync persistent data", () => {
     const rawSheet2 = server.openView("main", "123");
-    /* @ts-ignore */
+    /* @ts-expect-error Intended error */
     rawSheet.num = 1;
-    /* @ts-ignore */
+    /* @ts-expect-error Intended error */
     rawSheet2.num = 2;
 
     const sheet2 = new Sheet(
       rawSheet2,
       new DataBatcher(modeHandlerMock, rawSheet2),
-      modeHandlerMock
+      modeHandlerMock,
     );
     const cmp2 = sheet2.get("rep.123.b")!;
-    /* @ts-ignore */
+    /* @ts-expect-error Intended error */
     sheet.sheet = "1";
-    /* @ts-ignore */
+    /* @ts-expect-error Intended error */
     sheet2.sheet = "2";
     const cmp1 = new Component(rawCmp, sheet, "rep.123.b");
     //const cmp2 = new Component(rawCmp, sheet2, "rep.a.b");
@@ -389,9 +378,9 @@ describe("Component get and set value", () => {
     itHasWaitedEverything();
     expect(cmp.value()).toBe(4242);
     expect(raw.value).toHaveBeenCalled();
-    /* @ts-ignore */
+    /* @ts-expect-error Typing this mock is not important */
     raw.value = jest.fn(() => {
-      /* @ts-expect-error */
+      /* @ts-expect-error Intended error */
       null();
     });
     expect(() => cmp.value()).not.toThrow();

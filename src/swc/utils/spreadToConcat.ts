@@ -9,7 +9,7 @@ type ArrayConcatArgs = {
 
 export const spreadToConcat = (
   span: Span,
-  args: Argument[]
+  args: Argument[],
 ): ArrayConcatArgs => {
   const arrayInit: Argument[] = [];
   const concatArgs: Argument[] = [];
@@ -30,15 +30,19 @@ export const spreadToConcat = (
             }),
           });
         }
+
         unspreadArgs = [];
       }
+
       let expression = arg.expression;
+
       if (
         arg.expression.type === "Identifier" &&
         arg.expression.value === "arguments"
       ) {
         expression = arrayfromarguments(arg.expression.span);
       }
+
       concatArgs.push({
         expression,
       });

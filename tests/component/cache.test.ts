@@ -3,7 +3,10 @@ import { LRE } from "../../src/lre";
 import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
-import { initLetsRole, itHasWaitedEverything } from "../../src/mock/letsrole/letsrole.mock";
+import {
+  initLetsRole,
+  itHasWaitedEverything,
+} from "../../src/mock/letsrole/letsrole.mock";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { ViewMock } from "../../src/mock/letsrole/view.mock";
 import { Component } from "../../src/component";
@@ -11,7 +14,6 @@ import { FailingComponent } from "../../src/mock/letsrole/component.mock";
 
 jest.mock("../../src/lre");
 jest.mock("../../src/component/component");
-
 
 let cache: ComponentCache;
 let server: ServerMock;
@@ -24,33 +26,34 @@ beforeEach(() => {
       {
         id: "sheet",
         className: "View",
-        children: [{
-          id: "lbl1",
-          className: "Label",
-          text: "label1",
-        },
-        {
-          id: "rep",
-          className: "Repeater",
-          viewId: "edt",
-          readViewId: "rd"
-        },
-        {
-          id: "123",
-          className: "Repeater",
-          viewId: "edt",
-          readViewId: "rd"
-        },
-        {
-          id: "abc",
-          className: "Label",
-          text: "label1",
-        },
-        {
-          id: "b",
-          className: "Label",
-          text: "label1",
-        },
+        children: [
+          {
+            id: "lbl1",
+            className: "Label",
+            text: "label1",
+          },
+          {
+            id: "rep",
+            className: "Repeater",
+            viewId: "edt",
+            readViewId: "rd",
+          },
+          {
+            id: "123",
+            className: "Repeater",
+            viewId: "edt",
+            readViewId: "rd",
+          },
+          {
+            id: "abc",
+            className: "Label",
+            text: "label1",
+          },
+          {
+            id: "b",
+            className: "Label",
+            text: "label1",
+          },
         ],
       },
       {
@@ -61,8 +64,8 @@ beforeEach(() => {
             id: "txt",
             className: "TextInput",
             defaultValue: "",
-          }
-        ]
+          },
+        ],
       },
       {
         id: "rd",
@@ -84,8 +87,8 @@ beforeEach(() => {
             text: "label",
           },
         ],
-      }
-    ]
+      },
+    ],
   });
   initLetsRole(server);
   global.lre = new LRE(modeHandlerMock);
@@ -124,15 +127,14 @@ beforeEach(() => {
         b: "b",
         c: "c",
       },
-    }
+    },
   });
   sheet = new Sheet(
     rawSheet,
     new DataBatcher(modeHandlerMock, rawSheet),
-    modeHandlerMock
+    modeHandlerMock,
   );
 });
-
 
 const newCmp = jest.fn((id: string): ComponentSearchResult => {
   const rawCmp = rawSheet.get(id);
@@ -141,11 +143,7 @@ const newCmp = jest.fn((id: string): ComponentSearchResult => {
     return null;
   }
 
-  const cmp = new Component(
-    rawSheet.get(id),
-    sheet,
-    id
-  );
+  const cmp = new Component(rawSheet.get(id), sheet, id);
 
   jest.spyOn(cmp, "realId").mockReturnValue(id);
 
@@ -199,10 +197,10 @@ describe("Component cache set/get/unset/inCache", () => {
     expect(cache.inCache("*rep.1")).toBeTruthy();
     expect(cache.inCache("*rep.1")).toBeTruthy();
     expect(cache.children("rep.1").sort()).toEqual(
-      ["rep.1.a", "rep.1.b"].sort()
+      ["rep.1.a", "rep.1.b"].sort(),
     );
     expect(cache.children("rep").sort()).toEqual(
-      ["rep.2.a", "rep.2", "rep.1", "rep.2.b", "rep.1.a", "rep.1.b"].sort()
+      ["rep.2.a", "rep.2", "rep.1", "rep.2.b", "rep.1.a", "rep.1.b"].sort(),
     );
   });
 });

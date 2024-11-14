@@ -1,4 +1,4 @@
-export const loggedCall = <T extends any>(cb: () => T): T => {
+export const loggedCall = <T>(cb: () => T): T => {
   context.resetAccessLog();
 
   const result: T = cb();
@@ -8,7 +8,7 @@ export const loggedCall = <T extends any>(cb: () => T): T => {
   return result;
 };
 
-export const virtualCall = <T extends any>(cb: () => T): T => {
+export const virtualCall = <T>(cb: () => T): T => {
   context.setMode("virtual");
 
   const backup = {
@@ -21,7 +21,9 @@ export const virtualCall = <T extends any>(cb: () => T): T => {
     drop,
     roll: Dice.roll,
   };
+
   Dice.roll = () => {};
+
   let result!: T;
 
   try {

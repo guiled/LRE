@@ -103,7 +103,7 @@ class ClassToFunction extends Visitor {
   #privateProps: Array<PrivateProperty> = [];
   #inPrivateCallExpression = false;
   currentSuperClass?: ExpressionWithSpan;
-  inConstructor: Boolean = false;
+  inConstructor: boolean = false;
   superIdentifierInCtor: Identifier | undefined;
   isInClass = false;
   #ctorStates: ClassConstructorStates = {
@@ -116,22 +116,26 @@ class ClassToFunction extends Visitor {
   #createConstructorReturnStatement(
     span: Span,
     originalReturnArgument: Expression | undefined,
-    superIdentifier: Identifier | undefined
-  ) {
+    superIdentifier: Identifier | undefined,
+  ): Statement | undefined {
     const returnElements: ExprOrSpread[] = [];
+
     if (originalReturnArgument) {
       returnElements.push({
         expression: originalReturnArgument,
       });
     }
+
     if (superIdentifier) {
       returnElements.push({
         expression: superIdentifier,
       });
     }
+
     if (returnElements.length === 0) {
       return;
     }
+
     return super.visitStatement(
       returnstmt({
         span,
@@ -142,7 +146,7 @@ class ClassToFunction extends Visitor {
                 span,
                 elements: returnElements,
               }),
-      })
+      }),
     );
   }
 
@@ -167,6 +171,7 @@ class ClassToFunction extends Visitor {
       generator: false,
       async: false,
     };
+
     if (n.key.type === "PrivateName") {
       return onevariable({
         span: { ...n.span, ctxt: n.span.ctxt + 1 },
@@ -175,7 +180,9 @@ class ClassToFunction extends Visitor {
         init: f,
       }) as PrivateMethodToFunctionStatement;
     }
+
     let assignmentRight: CallExpression | FunctionExpression = f;
+
     if (n.function.decorators) {
       n.function.decorators.reverse().forEach((decorator) => {
         assignmentRight = call({
@@ -190,17 +197,18 @@ class ClassToFunction extends Visitor {
                   n.key.type === "Computed"
                     ? (n.key.expression as ExpressionWithSpan)
                     : n.key.type === "Identifier"
-                    ? stringliteral({
-                        span: n.key.span,
-                        value: n.key.value,
-                      })
-                    : n.key,
+                      ? stringliteral({
+                          span: n.key.span,
+                          value: n.key.value,
+                        })
+                      : n.key,
               }),
             },
           ],
         }) as CallExpression;
       });
     }
+
     return {
       type: "ExpressionStatement",
       span: n.span,
@@ -220,7 +228,7 @@ class ClassToFunction extends Visitor {
   }
 
   #ConstructorToFunction(n: Constructor): Statement[] {
-    let args: Argument[] = [
+    const args: Argument[] = [
       {
         expression: {
           type: "Identifier",
@@ -235,6 +243,7 @@ class ClassToFunction extends Visitor {
     const params: Param[] = n.params.map<Param>((p) => {
       if (p.type === "Parameter") return p;
       let propName: PrivateName | Identifier;
+
       if (p.accessibility === "public") {
         propName = {
           type: "Identifier",
@@ -244,8 +253,8 @@ class ClassToFunction extends Visitor {
             p.param.type === "Identifier"
               ? p.param.value
               : p.param.left.type === "Identifier"
-              ? p.param.left.value
-              : "_todo",
+                ? p.param.left.value
+                : "_todo",
         } as Identifier;
       } else {
         propName = {
@@ -259,8 +268,8 @@ class ClassToFunction extends Visitor {
               p.param.type === "Identifier"
                 ? p.param.value
                 : p.param.left.type === "Identifier"
-                ? p.param.left.value
-                : "_todo",
+                  ? p.param.left.value
+                  : "_todo",
           },
         } as PrivateName;
         this.#privateProps.push({
@@ -276,6 +285,7 @@ class ClassToFunction extends Visitor {
           definite: false,
         });
       }
+
       propertyDeclarations.push({
         type: "ExpressionStatement",
         span: p.span,
@@ -291,10 +301,10 @@ class ClassToFunction extends Visitor {
             p.param.type === "Identifier"
               ? p.param
               : p.param.left.type === "Identifier"
-              ? p.param.left
-              : ({
-                  /* todo */
-                } as Identifier),
+                ? p.param.left
+                : ({
+                    /* todo */
+                  } as Identifier),
         }),
       });
       return {
@@ -350,6 +360,7 @@ class ClassToFunction extends Visitor {
     };
 
     const result: Statement[] = [];
+
     if (
       (this.#ctorStates.exists &&
         !this.#ctorStates.hasReturn &&
@@ -374,8 +385,9 @@ class ClassToFunction extends Visitor {
                 optional: false,
               }),
           init: ctorAsFunction,
-        })
+        }),
       );
+
       if (this.#ctorStates.hasReturn && this.#ctorStates.superUsed) {
         result.push(
           onevariable({
@@ -400,9 +412,10 @@ class ClassToFunction extends Visitor {
                   },
                 })
               : returnIdentifier,
-          })
+          }),
         );
       }
+
       if (this.#ctorStates.hasReturn) {
         result.push(
           returnstmt({
@@ -419,7 +432,7 @@ class ClassToFunction extends Visitor {
                 }),
               },
             }),
-          })
+          }),
         );
       }
     }
@@ -464,17 +477,17 @@ class ClassToFunction extends Visitor {
   }
 
   #transformClassBodyToFunction(
-    classStmt: ClassDeclaration | ClassExpression
+    classStmt: ClassDeclaration | ClassExpression,
   ): FunctionExpression | CallExpression {
     const { body, span, identifier: _identifier } = classStmt;
-    let methods: Array<MethodToFunctionStatement> = [];
-    let staticMethods: Array<MethodToFunctionStatement> = [];
-    let properties: Array<PropertyToVariable> = [];
-    let staticProperties: Array<PropertyToVariable> = [];
+    const methods: Array<MethodToFunctionStatement> = [];
+    const staticMethods: Array<MethodToFunctionStatement> = [];
+    const properties: Array<PropertyToVariable> = [];
+    const staticProperties: Array<PropertyToVariable> = [];
     let constructorFunctionStatement: Statement[] | undefined = [];
     let staticStmts: Statement[] = [];
     const ctor: Constructor | undefined = body.find(
-      (n: ClassMember) => n.type === "Constructor" && n.body
+      (n: ClassMember) => n.type === "Constructor" && n.body,
     ) as Constructor;
 
     if (ctor) {
@@ -487,6 +500,7 @@ class ClassToFunction extends Visitor {
 
     body.forEach((n: ClassMember) => {
       if (n.type === "Constructor" && n.body) {
+        // nothing
       } else if (
         (n.type === "ClassMethod" || n.type === "PrivateMethod") &&
         !n.isAbstract &&
@@ -515,7 +529,7 @@ class ClassToFunction extends Visitor {
       ...constructorFunctionStatement,
     ];
 
-    let classFunction: FunctionExpression = {
+    const classFunction: FunctionExpression = {
       type: "FunctionExpression",
       params: [
         {
@@ -541,6 +555,7 @@ class ClassToFunction extends Visitor {
     };
 
     const _: any[] = [];
+
     if (_.concat(staticMethods, staticProperties, staticStmts).length > 0) {
       const tmpClassFunctionId = identifier({
         span: classFunction.span,
@@ -550,20 +565,20 @@ class ClassToFunction extends Visitor {
         PublicMethodToFunctionStatement | PublicPropertyToVariable
       > = [
         ...(staticMethods.filter(
-          (m: MethodToFunctionStatement) => m.type === "ExpressionStatement"
+          (m: MethodToFunctionStatement) => m.type === "ExpressionStatement",
         ) as Array<PublicMethodToFunctionStatement>),
         ...(staticProperties.filter(
-          (m: PropertyToVariable) => m.type === "ExpressionStatement"
+          (m: PropertyToVariable) => m.type === "ExpressionStatement",
         ) as Array<PublicPropertyToVariable>),
       ];
       const privateStatic: Array<
         PrivateMethodToFunctionStatement | PrivatePropertyToVariable
       > = [
         ...(staticMethods.filter(
-          (m: MethodToFunctionStatement) => m.type === "VariableDeclaration"
+          (m: MethodToFunctionStatement) => m.type === "VariableDeclaration",
         ) as Array<PrivateMethodToFunctionStatement>),
         ...(staticProperties.filter(
-          (m: PropertyToVariable) => m.type === "VariableDeclaration"
+          (m: PropertyToVariable) => m.type === "VariableDeclaration",
         ) as Array<PrivatePropertyToVariable>),
       ];
       return iife({
@@ -587,7 +602,7 @@ class ClassToFunction extends Visitor {
                   },
                 },
               };
-            }
+            },
           ),
           ...staticStmts,
           returnstmt({
@@ -635,14 +650,15 @@ class ClassToFunction extends Visitor {
                 expression: thisexpression({ span: n.span }),
               },
             ],
-          })
+          }),
         );
       } else {
         return this.visitExpression(
-          this.#transformPrivateIdentifier(n.property.id)
+          this.#transformPrivateIdentifier(n.property.id),
         );
       }
     }
+
     return this.visitMemberExpression(n);
   }
 
@@ -656,14 +672,14 @@ class ClassToFunction extends Visitor {
       span: Span;
       id: Identifier;
       newexpr: NewExpression;
-    }
+    },
   ): void {
     stmts.push(
       onevariable({
         span,
         id,
         init: newexpr,
-      })
+      }),
     );
     stmts.push(
       onevariable({
@@ -676,7 +692,7 @@ class ClassToFunction extends Visitor {
           { expression: objectexpression({}, span) },
           { expression: thisexpression({ span }) },
         ]),
-      })
+      }),
     );
     stmts.push({
       type: "ExpressionStatement",
@@ -730,6 +746,7 @@ class ClassToFunction extends Visitor {
   visitCallExpression(n: CallExpression): Expression {
     const oldInPrivateCallExpression = this.#inPrivateCallExpression;
     this.#inPrivateCallExpression = false;
+
     if (
       n.callee.type === "MemberExpression" &&
       n.callee.object.type === "ThisExpression" &&
@@ -748,6 +765,7 @@ class ClassToFunction extends Visitor {
         value: "call",
       });
     }
+
     const result = super.visitCallExpression(n);
     this.#inPrivateCallExpression = oldInPrivateCallExpression;
     return result;
@@ -758,7 +776,7 @@ class ClassToFunction extends Visitor {
 
     stmts.forEach((stmt: Statement) => {
       if (stmt.type === "ClassDeclaration") {
-        let prevCtorState = this.#initCtorStates();
+        const prevCtorState = this.#initCtorStates();
         stmt = this.visitStatement(stmt) as ClassDeclaration;
         const res: VariableDeclaration = {
           type: "VariableDeclaration",
@@ -790,10 +808,11 @@ class ClassToFunction extends Visitor {
             value: PARENT_IN_CTOR,
           });
           let newexpr: NewExpression;
+
           if (stmt.expression.arguments.some((a) => !!a.spread)) {
             const { arrayInit, concatArgs } = spreadToConcat(
               stmt.span,
-              stmt.expression.arguments
+              stmt.expression.arguments,
             );
             newexpr = this.#createNewBindApplyArgs({
               span: stmt.span,
@@ -818,6 +837,7 @@ class ClassToFunction extends Visitor {
               arguments: stmt.expression.arguments,
             });
           }
+
           this.#createInstantiateParentAndAssign(newStmts, {
             span: stmt.span,
             id: this.superIdentifierInCtor,
@@ -834,13 +854,14 @@ class ClassToFunction extends Visitor {
   }
 
   visitExpression(n: Expression): Expression {
+    let prevCtorState: ClassConstructorStates;
+    let result: Expression;
+
     switch (n.type) {
       case "ClassExpression":
-        let prevCtorState = this.#initCtorStates();
+        prevCtorState = this.#initCtorStates();
         n = this.visitClassExpression(n);
-        const result = super.visitExpression(
-          this.#transformClassBodyToFunction(n)
-        );
+        result = super.visitExpression(this.#transformClassBodyToFunction(n));
         this.#ctorStates = prevCtorState;
         return result;
       case "MemberExpression":
@@ -851,19 +872,20 @@ class ClassToFunction extends Visitor {
   }
 
   visitExportDefaultDeclaration(
-    n: ExportDefaultDeclaration
+    n: ExportDefaultDeclaration,
   ): ModuleDeclaration {
     return super.visitExportDefaultDeclaration(n);
   }
 
   visitDefaultDeclaration(n: DefaultDecl): DefaultDecl {
     if (n.type === "ClassExpression") {
-      let prevCtorState = this.#initCtorStates();
+      const prevCtorState = this.#initCtorStates();
       n = super.visitClassExpression(n);
       const res = this.#transformClassBodyToFunction(n);
       this.#ctorStates = prevCtorState;
       return super.visitExpression(res) as FunctionExpression;
     }
+
     return super.visitDefaultDeclaration(n);
   }
 
@@ -872,10 +894,11 @@ class ClassToFunction extends Visitor {
       n.type === "ExportDefaultDeclaration" &&
       n.decl.type === "ClassExpression"
     ) {
-      let prevCtorState = this.#initCtorStates();
+      const prevCtorState = this.#initCtorStates();
       let result: ModuleDeclaration;
       n.decl = this.visitClassExpression(n.decl);
       const res = this.#transformClassBodyToFunction(n.decl);
+
       if (res.type === "CallExpression") {
         const decl: ExportDefaultExpression = {
           type: "ExportDefaultExpression",
@@ -896,9 +919,11 @@ class ClassToFunction extends Visitor {
           decl: res,
         });
       }
+
       this.#ctorStates = prevCtorState;
       return result;
     }
+
     return super.visitModuleDeclaration(n);
   }
 
@@ -927,18 +952,20 @@ class ClassToFunction extends Visitor {
           return this.#createConstructorReturnStatement(
             stmt.span,
             stmt.argument,
-            this.superIdentifierInCtor
+            this.superIdentifierInCtor,
           )!;
         }
+
         return this.visitReturnStatement(stmt);
       }
     }
+
     return super.visitStatement(stmt);
   }
 
   visitConstructor(n: Constructor): ClassMember {
     this.inConstructor = true;
-    let prevIsSuperConstructorFound = this.superIdentifierInCtor;
+    const prevIsSuperConstructorFound = this.superIdentifierInCtor;
     this.superIdentifierInCtor = undefined;
     this.#ctorStates.exists = true;
     const res: Constructor = super.visitConstructor(n) as Constructor;
@@ -949,11 +976,12 @@ class ClassToFunction extends Visitor {
           this.#createConstructorReturnStatement(
             res.body.span,
             undefined,
-            this.superIdentifierInCtor
-          )!
+            this.superIdentifierInCtor,
+          )!,
         );
       }
     }
+
     this.inConstructor = false;
     this.superIdentifierInCtor = prevIsSuperConstructorFound;
     return res;
@@ -961,7 +989,7 @@ class ClassToFunction extends Visitor {
 
   visitClassBody(members: ClassMember[]): ClassMember[] {
     this.#privateMethods = [];
-    let prevInConstructor = this.inConstructor;
+    const prevInConstructor = this.inConstructor;
     this.inConstructor = false;
     this.isInClass = true;
 
@@ -978,17 +1006,19 @@ class ClassToFunction extends Visitor {
   }
 
   visitClass<T extends Class>(n: T): T {
-    var prevSuperClass = this.currentSuperClass;
+    const prevSuperClass = this.currentSuperClass;
     this.currentSuperClass = undefined;
+
     if (n.superClass) {
       this.currentSuperClass = n.superClass as ExpressionWithSpan;
 
       if (!n.body.some((m) => m.type === "Constructor")) {
         n.body.push(
-          this.#createEmptyConstructorWithSuper(this.currentSuperClass, n.span)
+          this.#createEmptyConstructorWithSuper(this.currentSuperClass, n.span),
         );
       }
     }
+
     const res = super.visitClass(n);
     this.currentSuperClass = prevSuperClass;
     return res;
@@ -996,7 +1026,7 @@ class ClassToFunction extends Visitor {
 
   #createEmptyConstructorWithSuper(
     superClass: ExpressionWithSpan,
-    wholeSpan: Span
+    wholeSpan: Span,
   ): ClassMember {
     const stmts: Statement[] = [];
     const span: Span = {
@@ -1086,7 +1116,7 @@ class ClassToFunction extends Visitor {
 
   visitDeclaration(decl: Declaration): Declaration {
     if (decl.type === "ClassDeclaration") {
-      let prevCtorState = this.#initCtorStates();
+      const prevCtorState = this.#initCtorStates();
       decl = this.visitClassDeclaration(decl) as ClassDeclaration;
       const result = super.visitDeclaration(
         onevariable({
@@ -1095,11 +1125,12 @@ class ClassToFunction extends Visitor {
           init: this.#transformClassBodyToFunction(decl),
           declare: decl.declare,
           kind: "const",
-        })
+        }),
       );
       this.#ctorStates = prevCtorState;
       return result;
     }
+
     return super.visitDeclaration(decl);
   }
 
@@ -1114,6 +1145,7 @@ class ClassToFunction extends Visitor {
         }),
       });
     }
+
     return super.visitNewExpression(n);
   }
 

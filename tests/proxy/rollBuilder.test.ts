@@ -1,6 +1,9 @@
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { registerLreRollBuilder } from "../../src/proxy/rollBuilder";
-import { initLetsRole, rollBuilderMock } from "../../src/mock/letsrole/letsrole.mock";
+import {
+  initLetsRole,
+  rollBuilderMock,
+} from "../../src/mock/letsrole/letsrole.mock";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 describe("RollBuilder proxy", () => {
@@ -11,11 +14,10 @@ describe("RollBuilder proxy", () => {
       views: [
         {
           id: "main",
-          children: [
-          ],
+          children: [],
           className: "View",
-        }
-      ]
+        },
+      ],
     });
     initLetsRole(server);
     subject = registerLreRollBuilder(modeHandlerMock, RollBuilder);
@@ -28,9 +30,9 @@ describe("RollBuilder proxy", () => {
     expect(rb.title("title")).toBe(rb);
     expect(rb.visibility("visible")).toBe(rb);
     expect(rb.expression("2d6")).toBe(rb);
-    expect(rb.addAction("action1", () => { })).toBe(rb);
+    expect(rb.addAction("action1", () => {})).toBe(rb);
     expect(rb.removeAction("action1")).toBe(rb);
-    expect(rb.onRoll(() => { })).toBe(rb);
+    expect(rb.onRoll(() => {})).toBe(rb);
     expect(rb.roll()).toBeUndefined();
     expect(rollBuilderMock.title).toHaveBeenCalled();
     expect(rollBuilderMock.visibility).toHaveBeenCalled();
@@ -48,9 +50,9 @@ describe("RollBuilder proxy", () => {
     expect(rb.title("title")).toBe(rb);
     expect(rb.visibility("visible")).toBe(rb);
     expect(rb.expression("2d6")).toBe(rb);
-    expect(rb.addAction("action1", () => { })).toBe(rb);
+    expect(rb.addAction("action1", () => {})).toBe(rb);
     expect(rb.removeAction("action1")).toBe(rb);
-    expect(rb.onRoll(() => { })).toBe(rb);
+    expect(rb.onRoll(() => {})).toBe(rb);
     expect(rb.roll()).toBeUndefined();
     expect(rollBuilderMock.title).toHaveBeenCalled();
     expect(rollBuilderMock.visibility).toHaveBeenCalled();

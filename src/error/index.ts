@@ -1,5 +1,5 @@
 type ErrorOptions = {
-  cause: any;
+  cause?: LetsRole.Error;
 };
 
 export class Error {
@@ -12,27 +12,29 @@ export class Error {
   public trace: Array<LetsRole.ErrorTrace> = [];
   public stack = {};
 
-  #handleTrace(trace: LetsRole.Error["trace"]) {
+  #handleTrace(trace: LetsRole.Error["trace"]): void {
     if (!trace) return;
     this.trace = trace;
-    let throwErrorLocation = trace.find(function (tr) {
+    const throwErrorLocation = trace.find(function (tr) {
       return (
         lre.__debug &&
         tr.type === "CallExpression" &&
         tr.callee!.name === "throwError"
       );
     });
+
     if (throwErrorLocation) {
       this.lineNumber = throwErrorLocation?.loc?.start?.line;
       this.columnNumber = throwErrorLocation?.loc?.start?.column;
     } else {
-      let location = trace.find(function (tr) {
+      const location = trace.find(function (tr) {
         return (
           lre.__debug ||
           tr?.loc?.start?.line < errExclFirstLine ||
           tr?.loc?.start?.line > errExclLastLine
         );
       });
+
       if (location) {
         this.lineNumber = location.loc.start.line;
         this.columnNumber = location.loc.start.column;
@@ -42,23 +44,25 @@ export class Error {
 
   public constructor(message: string = "", options?: ErrorOptions) {
     this.message = message;
+
     if (options?.cause?.trace) {
       this.#handleTrace(options?.cause?.trace);
     }
   }
 
   public thrownBy(err: LetsRole.Error | Error): this {
-    if (err.hasOwnProperty("type")) {
+    if (Object.prototype.hasOwnProperty.call(err, "type")) {
       this.lineNumber = (err as Error).lineNumber;
       this.columnNumber = (err as Error).columnNumber;
       this.trace = (err as Error).trace;
     } else {
       this.#handleTrace((err as LetsRole.Error).trace);
     }
+
     return this;
   }
 
-  public toString() {
+  public toString(): string {
     return this.message + " at line " + this.lineNumber;
   }
 }

@@ -24,19 +24,23 @@ import onevariable from "./node/declaration/onevariable";
 import call from "./node/expression/call";
 
 const ARGS = "_arg";
+
 export function hasPropWithValue(o: ObjectPattern): boolean {
   return !!o.properties.find((p: ObjectPatternProperty): boolean => {
-    var obj: ObjectPatternProperty | Pattern = p;
+    let obj: ObjectPatternProperty | Pattern = p;
+
     while (obj.type === "KeyValuePatternProperty") {
       if (obj.value.type === "AssignmentPattern") {
         return true;
       } else if (obj.value.type === "ObjectPattern") {
-        let tmp = hasPropWithValue(obj.value);
+        const tmp = hasPropWithValue(obj.value);
+
         if (tmp) {
           return true;
         }
       } else if (obj.value.type === "ArrayPattern") {
-        let tmp = hasArrayItemWithValue(obj.value);
+        const tmp = hasArrayItemWithValue(obj.value);
+
         if (tmp) {
           return true;
         }
@@ -44,6 +48,7 @@ export function hasPropWithValue(o: ObjectPattern): boolean {
         obj = obj.value;
       }
     }
+
     return obj.type === "AssignmentPatternProperty" && !!obj.value;
   });
 }
@@ -64,12 +69,13 @@ class DefaultParameter extends Visitor {
   #parsePattern(
     pat: Pattern,
     index: number,
-    span: Span
+    span: Span,
   ): [Pattern | null, BlockStatement["stmts"]] {
     const statementsToAdd: BlockStatement["stmts"] = [];
     let defaultValue: Expression | undefined = undefined;
     let id: Pattern | undefined = undefined;
     let newPat: Pattern | null = null;
+
     if (pat.type === "Identifier" && pat.optional) {
       id = {
         ...pat,
@@ -148,6 +154,7 @@ class DefaultParameter extends Visitor {
       });
       newPat = null;
     }
+
     return [newPat, statementsToAdd];
   }
 
@@ -163,7 +170,7 @@ class DefaultParameter extends Visitor {
   #createVariableDeclarationFromParams(
     params: Pattern[],
     span: Span,
-    init: Expression
+    init: Expression,
   ): VariableDeclaration {
     return onevariable({
       span,
@@ -186,6 +193,7 @@ class DefaultParameter extends Visitor {
               }),
             };
           }
+
           return p;
         }),
         optional: false,
@@ -207,7 +215,7 @@ class DefaultParameter extends Visitor {
         this.#createVariableDeclarationFromParams(
           e.params,
           e.span,
-          argIdentifier
+          argIdentifier,
         ),
       ];
 
@@ -216,11 +224,12 @@ class DefaultParameter extends Visitor {
           returnstmt({
             span: e.span,
             argument: e.body,
-          })
+          }),
         );
       } else {
         bodyStatements.push(...e.body.stmts);
       }
+
       return this.visitExpression({
         type: "ArrowFunctionExpression",
         span: e.span,
@@ -239,6 +248,7 @@ class DefaultParameter extends Visitor {
         async: false,
       });
     }
+
     return super.visitArrowFunctionExpression(e);
   }
 
@@ -257,15 +267,16 @@ class DefaultParameter extends Visitor {
           const [newPat, newStmts] = this.#parsePattern(
             p.pat,
             index - (hasThisArgs ? 1 : 0),
-            p.span
+            p.span,
           );
           p.pat = newPat!;
           statementsToAdd.push.apply(statementsToAdd, newStmts);
           return p;
         })
         .filter((p) => !!p.pat);
-      n.body.stmts = [...statementsToAdd, ...n.body?.stmts];
+      n.body.stmts = [...statementsToAdd, ...(n.body?.stmts || [])];
     }
+
     return super.visitFunction(n);
   }
 

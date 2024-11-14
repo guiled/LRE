@@ -1,14 +1,15 @@
-export const stringify = function (
-  obj: any,
+const _stringify = function <T>(
+  obj: T,
   indent: string | boolean = "",
-  treatedObject: Array<any> = []
+  treatedObject: Array<unknown> = [],
 ): string | undefined {
   if (typeof obj === "undefined") return undefined;
-  let indent_ = indent === false ? "" : (indent === true ? "" : indent) + "  ";
-  let newLine = typeof indent === "string" || indent === true ? "\n" : "";
+  const indent_ =
+    indent === false ? "" : (indent === true ? "" : indent) + "  ";
+  const newLine = typeof indent === "string" || indent === true ? "\n" : "";
 
-  let recursive = function (obj: any) {
-    return stringify(obj, indent === false ? false : indent_, treatedObject);
+  const recursive = function (obj: unknown): string | undefined {
+    return _stringify(obj, indent === false ? false : indent_, treatedObject);
   };
 
   if (
@@ -29,19 +30,23 @@ export const stringify = function (
       return "" + obj;
     } else if (typeof obj === "object") {
       if (obj instanceof Date) return '"' + obj.toISOString() + '"';
+
       if (Array.isArray(obj)) {
         if (treatedObject.some((o) => o === obj)) {
           return '"[recursive…]"';
         }
+
         treatedObject.push(obj);
         let result = "[" + newLine + indent_;
         result += obj
-          .map((v: any) => {
+          .map((v: unknown) => {
             //if (("" + indent).length > 8) return "nope"
             const r = recursive(v);
+
             if (typeof r === "undefined") {
               return "null";
             }
+
             return r;
           })
           .join("," + newLine + indent_);
@@ -50,6 +55,7 @@ export const stringify = function (
         treatedObject.pop();
         return result;
       }
+
       if (obj === null) return "null";
     }
   }
@@ -66,7 +72,7 @@ export const stringify = function (
       k +
       '":' +
       (indent === false ? "" : " ") +
-      recursive(obj[k])
+      recursive(obj[k as keyof T])
     );
   });
   const result: string =
@@ -79,3 +85,6 @@ export const stringify = function (
   treatedObject.pop();
   return result;
 };
+
+export const stringify = (obj: unknown, indent?: boolean): string | undefined =>
+  _stringify(obj, indent ?? "");

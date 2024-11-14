@@ -80,7 +80,7 @@ class NoThrowStatement extends Visitor {
                               value: "message",
                             }),
                           },
-                          true
+                          true,
                         ),
                       },
                     ],

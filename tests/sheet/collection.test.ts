@@ -14,12 +14,12 @@ describe("Sheet collection", () => {
   let server: ServerMock;
   let subject: SheetCollection;
 
-  const initSheet = function (sheetId: string, realId: string) {
+  const initSheet = function (sheetId: string, realId: string): Sheet {
     const raw = server.openView(sheetId, realId);
     return new Sheet(
       raw,
       new DataBatcher(modeHandlerMock, raw),
-      modeHandlerMock
+      modeHandlerMock,
     );
   };
 

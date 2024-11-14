@@ -11,24 +11,31 @@ import { Checkbox } from "./checkbox";
 export class ComponentFactory {
   static create(
     rawComponent: LetsRole.Component,
-    container: ComponentContainer<any>
+    container: ComponentContainer<ComponentSearchResult>,
   ): IComponent {
     let realId = "";
+
     if (container.lreType() === "entry" || container.lreType() === "repeater") {
       realId = container.realId() + REP_ID_SEP;
     }
-    let cmp: IComponent;
+
     realId += rawComponent.id();
 
-    cmp = ComponentFactory.createCmp(rawComponent, container, realId);
+    const cmp: IComponent = ComponentFactory.createCmp(
+      rawComponent,
+      container,
+      realId,
+    );
     cmp.parent(container);
     const containerLreType = container.lreType();
+
     if (containerLreType === "entry") {
       cmp.entry(container as Entry);
       cmp.repeater((container as Entry).repeater());
     } else if (containerLreType === "repeater") {
       cmp.repeater(container as Repeater);
     }
+
     cmp.init();
 
     return cmp;
@@ -37,7 +44,7 @@ export class ComponentFactory {
   static createCmp(
     raw: LetsRole.Component,
     container: ComponentContainer,
-    realId: string
+    realId: string,
   ): IComponent {
     let classes: LetsRole.ClassName[] = [];
 

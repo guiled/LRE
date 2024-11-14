@@ -17,6 +17,7 @@ export const fnApply = ({
   args,
 }: fnApplyArgs): CallExpression => {
   const callArgs = [...args];
+
   if (thisArg) {
     callArgs.unshift({
       expression: thisArg,

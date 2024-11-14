@@ -36,7 +36,7 @@ describe("Context access logs", () => {
       const logMessage = "This is log type " + logType;
       expect(subject.logAccess(logType, logMessage)).toBe(subject);
       expect(subject.getAccessLog(logType)).toStrictEqual([logMessage]);
-    }
+    },
   );
 
   test("Reset access log", () => {
@@ -44,7 +44,7 @@ describe("Context access logs", () => {
     allLogTypes.forEach((logType) => subject.logAccess(logType, "Message"));
     subject.resetAccessLog();
     allLogTypes.forEach((logType) =>
-      expect(subject.getAccessLog(logType)).toStrictEqual([])
+      expect(subject.getAccessLog(logType)).toStrictEqual([]),
     );
   });
 
@@ -62,7 +62,7 @@ describe("Context access logs", () => {
     const subject = new Context();
     allLogTypes.forEach((logType) => subject.logAccess(logType, "Message"));
     allLogTypes.forEach((logType) =>
-      expect(subject.getAccessLog(logType)).not.toStrictEqual([])
+      expect(subject.getAccessLog(logType)).not.toStrictEqual([]),
     );
     subject.setMode("real");
     const saveLogs: ContextLog = {};
@@ -77,15 +77,15 @@ describe("Context access logs", () => {
     });
     allLogTypes.forEach((logType) => subject.logAccess(logType, "Message"));
     allLogTypes.forEach((logType) =>
-      expect(subject.getAccessLog(logType)).not.toStrictEqual([])
+      expect(subject.getAccessLog(logType)).not.toStrictEqual([]),
     );
     subject.setMode("virtual");
     allLogTypes.forEach((logType) =>
-      expect(subject.getAccessLog(logType)).not.toStrictEqual([])
+      expect(subject.getAccessLog(logType)).not.toStrictEqual([]),
     );
     subject.setMode("real");
     allLogTypes.forEach((logType) =>
-      expect(subject.getAccessLog(logType)).toStrictEqual([])
+      expect(subject.getAccessLog(logType)).toStrictEqual([]),
     );
   });
 });

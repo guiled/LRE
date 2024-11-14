@@ -3,7 +3,7 @@ import call from "./call";
 
 export const objectassign = (
   span: Span,
-  callParameters: Argument[] | false = false
+  callParameters: Argument[] | false = false,
 ): Expression => {
   const obj: Expression = {
     type: "MemberExpression",
@@ -29,5 +29,6 @@ export const objectassign = (
       args: callParameters,
     });
   }
+
   return obj;
 };

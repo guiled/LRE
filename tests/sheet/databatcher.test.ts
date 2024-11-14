@@ -10,7 +10,6 @@ import {
 import { ViewMock } from "../../src/mock/letsrole/view.mock";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 
-
 let server: ServerMock;
 
 beforeEach(() => {
@@ -106,13 +105,17 @@ describe("DataBatcher async send data", () => {
   it("multiple send when too much values", () => {
     const max = 20;
     const data1: LetsRole.ViewData = {};
+
     for (let i = 0; i < max; i++) {
       data1["d" + i] = i;
     }
+
     const data2: LetsRole.ViewData = {};
+
     for (let i = max; i < max + max / 2; i++) {
       data2["d" + i] = i;
     }
+
     const data = { ...data1, ...data2 };
     dataBatcher.setData(data);
     expect(sheet.setData).toHaveBeenCalledTimes(0);
@@ -121,10 +124,10 @@ describe("DataBatcher async send data", () => {
     itHasWaitedEnough();
     expect(sheet.setData).toHaveBeenCalledTimes(2);
     expect(
-      Object.keys((sheet.setData as jest.Mock).mock.calls[0][0])
+      Object.keys((sheet.setData as jest.Mock).mock.calls[0][0]),
     ).toHaveLength(max);
     expect(
-      Object.keys((sheet.setData as jest.Mock).mock.calls[1][0])
+      Object.keys((sheet.setData as jest.Mock).mock.calls[1][0]),
     ).toHaveLength(max / 2);
   });
 
@@ -166,7 +169,7 @@ describe("DataBatcher async send data", () => {
   test("Databatcher raise and log an error when data pending failed", () => {
     jest.spyOn(lre, "error");
     dataBatcher.on("pending", () => {
-      /* @ts-expect-error */
+      /* @ts-expect-error this error is desired */
       no();
     });
     dataBatcher.setData({
@@ -178,7 +181,7 @@ describe("DataBatcher async send data", () => {
   test("Databatcher raise and log an error when data processed failed", () => {
     jest.spyOn(lre, "error");
     dataBatcher.on("processed", () => {
-      /* @ts-expect-error */
+      /* @ts-expect-error this error is desired */
       no();
     });
     dataBatcher.setData({

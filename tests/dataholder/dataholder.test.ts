@@ -16,12 +16,12 @@ describe("Dataholder", () => {
   let subject: IDataHolder;
   let C: Newable;
 
-  const initSheet = function (sheetId: string, realId: string) {
+  const initSheet = function (sheetId: string, realId: string): Sheet {
     const raw = server.openView(sheetId, realId, {});
     return new Sheet(
       raw,
       new DataBatcher(modeHandlerMock, raw),
-      modeHandlerMock
+      modeHandlerMock,
     );
   };
 
@@ -53,14 +53,14 @@ describe("Dataholder", () => {
       ],
     });
     sheet1 = initSheet("main", "4242");
-    C = class extends DataHolder() { };
+    C = class extends DataHolder() {};
     subject = new C(sheet1, "a.b.c");
   });
 
   test("Volatile data", () => {
     expect(subject.hasData("d1")).toBeFalsy();
     expect(subject.data("d1")).toBeUndefined();
-    let val = 42;
+    const val = 42;
     expect(subject.data("d1", val)).toBe(subject);
     expect(subject.hasData("d1")).toBeTruthy();
     expect(subject.data("d1")).toBe(val);
@@ -80,7 +80,7 @@ describe("Dataholder", () => {
 
   test("Persistent data", () => {
     expect(subject.hasData("d1")).toBeFalsy();
-    let val = 42;
+    const val = 42;
     expect(subject.data("d1", val, true)).toBe(subject);
     expect(subject.hasData("d1")).toBeTruthy();
     expect(subject.data("d1")).toBe(val);

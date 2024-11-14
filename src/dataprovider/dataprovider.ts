@@ -1,14 +1,17 @@
 import { Mixin } from "../mixin";
 
 type ValueGetterSetter<
-  T extends LetsRole.ComponentValue | LetsRole.TableRow | undefined = undefined
+  T extends LetsRole.ComponentValue | LetsRole.TableRow | undefined = undefined,
 > = (
-  newValue?: T
+  newValue?: T,
 ) => T extends undefined ? LetsRole.ComponentValue | LetsRole.TableRow : void;
 
-type Sorter = (a: any, b: any) => number;
-const defaultSorter: Sorter = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+type Sorter<T = unknown> = (a: T, b: T) => number;
+const defaultSorter: Sorter = ((a: number, b: number) =>
+  a < b ? -1 : a > b ? 1 : 0) as Sorter;
 
+// giving a type to the function will break the Mixin usage
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const DataProvider = (superclass: Newable = class {}) =>
   class DataProvider extends superclass implements IDataProvider {
     public provider = true;
@@ -17,7 +20,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
     constructor(
       valueCb: ValueGetterSetter,
-      originalValueCb: ValueGetterSetter = valueCb
+      originalValueCb: ValueGetterSetter = valueCb,
     ) {
       super();
       this.#valueCb = valueCb;
@@ -25,45 +28,53 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     providedValue<T extends LetsRole.ComponentValue | undefined = undefined>(
-      _newValue?: T
+      _newValue?: T,
     ): ReturnType<ValueGetterSetter<T>> {
       return this.#handleSet(this.#valueCb).apply(
         this,
-        Array.from(arguments) as [any]
+        Array.from(arguments) as [undefined],
       ) as ReturnType<ValueGetterSetter<T>>;
     }
 
-    sort(sorterOrString: string | Sorter = defaultSorter): IDataProvider {
+    sort(sorterOrString: Sorter | string = defaultSorter): IDataProvider {
       let sorter: Sorter;
+
       if (typeof sorterOrString === "string") {
-        let field: string = sorterOrString;
-        sorter = (a: any, b: any) => defaultSorter(a[field], b[field]);
+        const field: string = sorterOrString;
+        sorter = ((a: Record<string, unknown>, b: Record<string, unknown>) =>
+          defaultSorter(a[field], b[field])) as Sorter;
       } else {
         sorter = sorterOrString;
       }
+
       return new DirectDataProvider(
         this.#handleSet(() => {
           const data = this.#valueCb();
+
           if (Array.isArray(data)) {
             return data.toSorted(sorter);
           } else if (lre.isObject(data)) {
             return Object.entries(data)
-              .sort(([, a]: [any, any], [, b]: [any, any]) => sorter(a, b))
+              .sort(([, a]: [unknown, unknown], [, b]: [unknown, unknown]) =>
+                sorter(a, b),
+              )
               .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
           }
+
           return data;
         }),
-        this.#originalValueCb
+        this.#originalValueCb,
       );
     }
 
     #handleSet<T extends LetsRole.ComponentValue | undefined = undefined>(
-      valueCb: ValueGetterSetter<T>
+      valueCb: ValueGetterSetter<T>,
     ): ValueGetterSetter<T> {
-      return ((...args: [any] | []): ReturnType<ValueGetterSetter<T>> => {
+      return ((...args: [undefined] | []): ReturnType<ValueGetterSetter<T>> => {
         if (args.length === 0) {
           return valueCb();
         }
+
         this.#valueCb(...args);
       }) as ValueGetterSetter<T>;
     }
@@ -71,8 +82,8 @@ export const DataProvider = (superclass: Newable = class {}) =>
     each(
       mapper: (
         val: LetsRole.ComponentValue | LetsRole.TableRow,
-        key: DataProviderDataId
-      ) => void
+        key: DataProviderDataId,
+      ) => void,
     ): void {
       const values = this.#valueCb();
 
@@ -90,7 +101,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
     select(column: string): IDataProvider {
       return new DirectDataProvider(
         this.#handleSet(() => {
-          let result: Record<
+          const result: Record<
             string,
             LetsRole.TableRow | LetsRole.ComponentValue
           > = {};
@@ -103,7 +114,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
               v &&
               lre.isObject(v) &&
               !lre.isAvatarValue(v) &&
-              v.hasOwnProperty(column)
+              Object.prototype.hasOwnProperty.call(v, column)
             ) {
               result[k] = v[column] as LetsRole.ComponentValue;
             } else {
@@ -111,12 +122,16 @@ export const DataProvider = (superclass: Newable = class {}) =>
             }
           });
 
-          if (result.hasOwnProperty("") && Object.keys(result).length === 1) {
+          if (
+            Object.prototype.hasOwnProperty.call(result, "") &&
+            Object.keys(result).length === 1
+          ) {
             return result[""];
           }
+
           return result;
         }),
-        this.#originalValueCb
+        this.#originalValueCb,
       );
     }
 
@@ -125,7 +140,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
         | LetsRole.ComponentID
         | LetsRole.ColumnId
         | LetsRole.ComponentValue
-        | Array<number | string>
+        | Array<number | string>,
     ): LetsRole.TableRow | LetsRole.ComponentValue {
       const originalValues = this.#originalValueCb();
 
@@ -139,12 +154,14 @@ export const DataProvider = (superclass: Newable = class {}) =>
         ) {
           const values = this.#valueCb() || {};
           const valueKeys = Object.keys(values);
+
           if (valueKeys.length === 1) {
             return originalValues[valueKeys[0]];
           }
         } else {
           return originalValues;
         }
+
         return undefined;
       }
 
@@ -154,9 +171,10 @@ export const DataProvider = (superclass: Newable = class {}) =>
         }
 
         const result: LetsRole.ViewData = {};
+
         if (Array.isArray(id)) {
           id.forEach(
-            (v) => (result[v] = this.#getFromArrOrObj(originalValues, v))
+            (v) => (result[v] = this.#getFromArrOrObj(originalValues, v)),
           );
         }
 
@@ -168,7 +186,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
     #getFromArrOrObj(
       values: LetsRole.ComposedComponentValue,
-      id: number | string
+      id: number | string,
     ): LetsRole.ComponentValue {
       if (Array.isArray(values)) {
         const index = typeof id === "string" ? parseInt(id) : id;
@@ -176,13 +194,14 @@ export const DataProvider = (superclass: Newable = class {}) =>
       } else if (!lre.isAvatarValue(values)) {
         return values?.[id];
       }
+
       return undefined;
     }
 
     filter(condition: DataProviderWhereConditioner): IDataProvider {
       return new DirectDataProvider(
         this.#handleSet(() => {
-          let result: Record<
+          const result: Record<
             string,
             LetsRole.TableRow | LetsRole.ComponentValue
           > = {};
@@ -195,16 +214,17 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
           return result;
         }),
-        this.#originalValueCb
+        this.#originalValueCb,
       );
     }
 
     where(
-      condition: LetsRole.ComponentValue | DataProviderWhereConditioner
+      condition: LetsRole.ComponentValue | DataProviderWhereConditioner,
     ): IDataProvider {
       if (typeof condition === "undefined") return this;
 
       let conditioner: DataProviderWhereConditioner = (v) => v === condition;
+
       if (typeof condition === "function") {
         conditioner = condition as DataProviderWhereConditioner;
       }
@@ -214,6 +234,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
     count(): number {
       const values = this.#valueCb();
+
       if (Array.isArray(values)) {
         return values.length;
       } else if (lre.isObject(values)) {
@@ -229,6 +250,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
     singleValue(): DataProviderDataValue {
       const values = this.#valueCb();
+
       if (Array.isArray(values)) {
         return values[0];
       } else if (lre.isObject(values)) {
@@ -240,10 +262,15 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
     singleId(): DataProviderDataId {
       const values = this.#valueCb();
+
       if (Array.isArray(values)) {
-        if (lre.isObject(values[0]) && values[0].hasOwnProperty("id")) {
+        if (
+          lre.isObject(values[0]) &&
+          Object.prototype.hasOwnProperty.call(values[0], "id")
+        ) {
           return values[0].id;
         }
+
         return 0;
       } else if (lre.isObject(values)) {
         return Object.keys(values)[0];
@@ -256,12 +283,14 @@ export const DataProvider = (superclass: Newable = class {}) =>
 export class DirectDataProvider extends Mixin(DataProvider) {
   constructor(
     valueCb: ValueGetterSetter,
-    originalValueCb: ValueGetterSetter = valueCb
+    originalValueCb: ValueGetterSetter = valueCb,
   ) {
     const dataProviderArgs = [valueCb];
+
     if (arguments.length > 1) {
       dataProviderArgs.push(originalValueCb);
     }
+
     super([dataProviderArgs]);
   }
 }

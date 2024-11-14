@@ -27,5 +27,5 @@ export const modeHandlerMock: ProxyModeHandler = {
   },
 
   setContext: (_id: string, _context: any) => modeHandlerMock,
-  getContext: (_id: string) => ({} as any),
+  getContext: (_id: string) => ({}) as any,
 };

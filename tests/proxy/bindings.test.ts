@@ -11,10 +11,9 @@ describe("Bindings proxy", () => {
       views: [
         {
           id: "main",
-          children: [
-          ],
+          children: [],
           className: "View",
-        }
+        },
       ],
     });
     initLetsRole(server);
@@ -27,7 +26,7 @@ describe("Bindings proxy", () => {
   test("works in real", () => {
     expect(subject).not.toBe(Bindings);
     expect(Object.keys(subject).sort()).toMatchObject(
-      Object.keys(Bindings).sort()
+      Object.keys(Bindings).sort(),
     );
     subject.add("bindingName", "componentId", "viewId", () => ({}));
     expect(Bindings.add).toHaveBeenCalled();

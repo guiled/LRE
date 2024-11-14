@@ -5,11 +5,10 @@ import { initLetsRole } from "../src/mock/letsrole/letsrole.mock";
 
 beforeAll(() => {
   initLetsRole(new ServerMock({}));
-  /* @ts-ignore */
-  global.lre = null;
+  global.lre = null as unknown as LRE;
   global.lastException = null;
-  global.isNaN = null as unknown as (c: any) => any;
-  global.structuredClone = null as unknown as (c: any) => any;
+  global.isNaN = null as unknown as (c: unknown) => boolean;
+  global.structuredClone = null as unknown as typeof structuredClone;
   global.Tables = {
     get: jest.fn((_id: string) => ({
       each: jest.fn(),
@@ -49,7 +48,7 @@ describe("LRE bootstrap", () => {
     expect(global.isNaN(global as unknown as number)).toBeTruthy();
 
     expect(global.wait).toBe(oldWait);
-    global.lre.apply(global.lre, [() => { }]);
+    global.lre!.apply(global.lre, [() => {}]);
     expect(global.wait).not.toBe(oldWait);
 
     const c = {

@@ -187,8 +187,8 @@
     }();`,
   },
   {
-     input: "const {a = 2} = toto;",
-     output: `var a = typeof toto.a !== "undefined" ? toto.a : 2;`
+    input: "const {a = 2} = toto;",
+    output: `var a = typeof toto.a !== "undefined" ? toto.a : 2;`,
   },
 ].forEach(() => {
   // var oldConsole = console;

@@ -1,10 +1,16 @@
 import { structuredClone as lreStructuredClone } from "../../src/globals/structuredClone";
 
-global.each = jest.fn((obj: any, cb) => {
-  for (let k in obj) {
-    cb(obj[k], k);
-  }
-});
+global.each = jest.fn(
+  <T extends Array<unknown> | Record<string, unknown>>(
+    obj: T,
+    cb: LetsRole.EachCallback<T>,
+  ) => {
+    for (const k in obj) {
+      /* @ts-expect-error For the mock the cb is badly typed */
+      cb(obj[k], k);
+    }
+  },
+);
 describe("structuredClone polyfill test", () => {
   test("structuredClone polyfill test", () => {
     [{}, [], [1, 2, 3], [1, 2, [3, 4, 5]]].forEach((v) => {

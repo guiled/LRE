@@ -50,6 +50,7 @@ class NoDoWhile extends Visitor {
       };
       return super.visitStatement(forLoop);
     }
+
     return super.visitStatement(stmt);
   }
 

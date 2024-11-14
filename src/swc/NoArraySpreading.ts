@@ -18,6 +18,7 @@ class NoArraySpreading extends Visitor {
 
   visitArrayExpression(e: ArrayExpression): Expression {
     const firstSpreadPosition = e.elements.findIndex(this.#isSpread);
+
     if (firstSpreadPosition > -1) {
       e.elements.slice(0, firstSpreadPosition);
       let secondArrayPart: ArrayExpression["elements"] =
@@ -29,8 +30,9 @@ class NoArraySpreading extends Visitor {
         },
       ];
       let nextSpreadPosition: number = secondArrayPart.findIndex(
-        this.#isSpread
+        this.#isSpread,
       );
+
       while (nextSpreadPosition > -1) {
         concatArgs.push({
           spread: void 0,
@@ -47,6 +49,7 @@ class NoArraySpreading extends Visitor {
         });
         nextSpreadPosition = secondArrayPart.findIndex(this.#isSpread);
       }
+
       if (secondArrayPart.length > 0) {
         concatArgs.push({
           spread: void 0,
@@ -73,6 +76,7 @@ class NoArraySpreading extends Visitor {
       });
       return super.visitExpression(res);
     }
+
     return super.visitArrayExpression(e);
   }
 

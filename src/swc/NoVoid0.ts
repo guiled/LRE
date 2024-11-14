@@ -18,19 +18,22 @@ import { ExpressionWithSpan } from "./types";
 
 class NoVoid0 extends Visitor {
   #changeVoid0ToUndefined<T extends Expression | undefined>(
-    n: T
+    n: T,
   ): T | Identifier | BindingIdentifier {
-    var result: T | Identifier | BindingIdentifier = n;
+    let result: T | Identifier | BindingIdentifier = n;
+
     if (n && n.type === "UnaryExpression" && n.operator === "void") {
       result = undefinedidentifier({
         span: n.span,
       });
     }
+
     return result;
   }
 
   visitBinaryExpression(n: BinaryExpression): Expression {
-    var obj: ExpressionWithSpan | undefined, val;
+    let obj: ExpressionWithSpan | undefined, val;
+
     if (n.right.type === "UnaryExpression" && n.right.operator === "void") {
       obj = n.left as ExpressionWithSpan;
       val = n.right;
@@ -41,6 +44,7 @@ class NoVoid0 extends Visitor {
       obj = n.right as ExpressionWithSpan;
       val = n.left;
     }
+
     if (obj && val) {
       Object.assign(n, {
         left: typeofexpression({
@@ -55,6 +59,7 @@ class NoVoid0 extends Visitor {
         },
       });
     }
+
     return super.visitBinaryExpression(n);
   }
 
@@ -74,7 +79,7 @@ class NoVoid0 extends Visitor {
   }
 
   visitAssignmentPatternProperty(
-    n: AssignmentPatternProperty
+    n: AssignmentPatternProperty,
   ): ObjectPatternProperty {
     n.value = this.#changeVoid0ToUndefined(n.value);
     return super.visitAssignmentPatternProperty(n);

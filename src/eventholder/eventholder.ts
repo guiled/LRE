@@ -17,13 +17,13 @@ const DEFAULT_HANDLER_ID = "default";
 
 type EventTargetGetter<T extends string> = (
   target: LREEventTarget,
-  event: EventDef<EventType<T>>
+  event: EventDef<EventType<T>>,
 ) => IEventHolder | undefined;
 
 type AttachToRawCallback<AdditionalEvents extends string> = (
   eventDef: EventDef<EventType<AdditionalEvents>>,
   operation: "on" | "off",
-  rawDest?: LetsRole.Component
+  rawDest?: LetsRole.Component,
 ) => void;
 
 type EventPropagationLink = {
@@ -41,12 +41,14 @@ const excludedEventId: Array<EventType<any>> = [
   "eventhandler-destroyed",
 ];
 
-const EMPTY_CB = () => {};
+const EMPTY_CB = (): void => {};
 
 export const EventHolder = <
-  AdditionalEvents extends string = EventHolderDefaultEvents
+  AdditionalEvents extends string = EventHolderDefaultEvents,
 >(
-  superclass: Newable = class {}
+  superclass: Newable = class {},
+  // giving a type to the function will break the Mixin usage
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 ) =>
   class EventHolder
     extends superclass
@@ -67,10 +69,14 @@ export const EventHolder = <
     constructor(
       holderId: string,
       targetGetter: EventTargetGetter<AdditionalEvents> | undefined = undefined,
-      attachToRaw: AttachToRawCallback<AdditionalEvents> | undefined = undefined
+      attachToRaw:
+        | AttachToRawCallback<AdditionalEvents>
+        | undefined = undefined,
     ) {
       super();
+
       (() => new Error())(); // todo see what is the use of that
+
       this.#holderId = holderId;
       this.#getTarget = targetGetter;
       this.#attachToRaw = attachToRaw;
@@ -85,7 +91,7 @@ export const EventHolder = <
       rest: Array<EventType<AdditionalEvents>>;
     } {
       const [eventId, ...rest] = event.split(
-        EVENT_SEP
+        EVENT_SEP,
       ) as EventType<AdditionalEvents>[];
       return {
         eventId,
@@ -98,8 +104,8 @@ export const EventHolder = <
       handlers: EventDef["handlers"],
       target: any,
       ...args: unknown[]
-    ) {
-      let isHandlerRan = false;
+    ): boolean {
+      let isHandlerRan: boolean = false;
       Object.keys(handlers).some((hId) => {
         const fcn = handlers[hId];
 
@@ -113,8 +119,8 @@ export const EventHolder = <
         } catch (e) {
           lre.error(
             `[Event:${[this.#holderId, eventId, hId].join(
-              EVENT_SEP
-            )}] Unhandled error : ${e}`
+              EVENT_SEP,
+            )}] Unhandled error : ${e}`,
           );
         }
 
@@ -126,21 +132,23 @@ export const EventHolder = <
     }
 
     #getEventIdAndHandlersFromEventName(
-      eventName: EventType<AdditionalEvents>
+      eventName: EventType<AdditionalEvents>,
     ): {
       eventId: EventType<AdditionalEvents>;
       handlers: EventDef["handlers"];
     } {
       const { eventId, rest } = this.#getEventIdAndRest(eventName);
-      let handlerId: string = rest.join(EVENT_SEP) || DEFAULT_HANDLER_ID;
+      const handlerId: string = rest.join(EVENT_SEP) || DEFAULT_HANDLER_ID;
       let handlers = {} as EventDef["handlers"];
       const event = this.#events[eventId]!;
+
       if (!event) {
         return {
           eventId,
           handlers,
         };
       }
+
       if (handlerId !== DEFAULT_HANDLER_ID) {
         if (handlerId in event.handlers) {
           handlers = {
@@ -159,7 +167,7 @@ export const EventHolder = <
 
     #runEvents(
       eventName: EventType<AdditionalEvents>,
-      manuallyTriggered = false
+      manuallyTriggered = false,
     ): LetsRole.EventCallback<LREEventTarget> {
       return (rawTarget: LREEventTarget, ...args: unknown[]): void => {
         const { eventId, handlers } =
@@ -194,21 +202,23 @@ export const EventHolder = <
 
     #getCurrentValue(rawTarget: LREEventTarget): LetsRole.ComponentValue {
       let result = undefined;
+
       try {
         if (this.#isValueAvailable(rawTarget)) {
           result = rawTarget.value();
         }
       } catch (e) {}
+
       return result;
     }
 
     #isValueAvailable(
-      rawTarget: LREEventTarget
+      rawTarget: LREEventTarget,
     ): rawTarget is LREEventTargetWithValue {
       return !!rawTarget && !!rawTarget.value;
     }
 
-    #saveLastUpdateEventValue(value: LetsRole.ComponentValue) {
+    #saveLastUpdateEventValue(value: LetsRole.ComponentValue): void {
       this.#lastUpdateEventValue = structuredClone(value);
     }
 
@@ -216,9 +226,10 @@ export const EventHolder = <
       eventHandlerEvent: EventHolderDefaultEvents,
       event: EventType<AdditionalEvents>,
       subComponent?: LetsRole.ComponentID | EventHandler | undefined,
-      handler?: EventHandler
-    ) {
+      handler?: EventHandler,
+    ): void {
       const { eventId } = this.#getEventIdAndRest(event);
+
       if (!excludedEventId.includes(eventId)) {
         this.trigger(eventHandlerEvent, event, subComponent, handler);
       }
@@ -227,10 +238,10 @@ export const EventHolder = <
     on(
       event: EventType<AdditionalEvents>,
       subComponent: EventSubComponent,
-      handler?: EventHandler
+      handler?: EventHandler,
     ): void {
       const { eventId, rest } = this.#getEventIdAndRest(event);
-      let handlerId: string = rest.join(EVENT_SEP) || DEFAULT_HANDLER_ID;
+      const handlerId: string = rest.join(EVENT_SEP) || DEFAULT_HANDLER_ID;
       let delegated = false;
       //let eventId: EventType<AdditionalEvents> = eventParts[0];
       let eventName = eventId;
@@ -265,19 +276,21 @@ export const EventHolder = <
         this.#attachToRaw?.(this.#events[eventName]!, "on");
       }
 
-      const handlerAlreadyExists = this.#events[
-        eventName
-      ]!.handlers.hasOwnProperty(handlerId!);
+      const handlerAlreadyExists = Object.prototype.hasOwnProperty.call(
+        this.#events[eventName]!.handlers,
+        handlerId!,
+      );
       this.#events[eventName]!.handlers[handlerId] = handler!;
       const cnt = Object.keys(this.#events[eventName]!.handlers).length;
 
       let logText = "Handler added";
+
       if (Object.keys(this.#events[eventName]!.handlers).length === 1) {
         this.#triggerThisEvent(
           "eventhandler-created",
           event,
           subComponent,
-          handler
+          handler,
         );
       }
 
@@ -286,28 +299,29 @@ export const EventHolder = <
           "eventhandler-added",
           event,
           subComponent,
-          handler
+          handler,
         );
       } else {
         this.#triggerThisEvent(
           "eventhandler-updated",
           event,
           subComponent,
-          handler
+          handler,
         );
         logText = "Handler updated ";
       }
+
       lre.trace(
         `${logText} for event ${eventName} ${handlerId} on ${
           this.#holderId + (subComponent ? ">" + subComponent : "")
-        }. Count : ${cnt}`
+        }. Count : ${cnt}`,
       );
     }
 
     once(
       event: EventType<AdditionalEvents>,
       handlerOrId: EventSubComponent,
-      handler?: EventHandler
+      handler?: EventHandler,
     ): void {
       const eventName = (event + EVENT_SEP + "once") as AdditionalEvents;
 
@@ -316,39 +330,42 @@ export const EventHolder = <
           this.off(eventName);
           (handlerOrId as EventHandler).apply(this, [cmp, ...args]);
         };
+
         this.on(eventName, onceHandler);
       } else {
         const onceHandler: EventHandler = (cmp, ...args) => {
           this.off(eventName, handlerOrId as LetsRole.ComponentID);
           handler!.apply(this, [cmp, ...args]);
         };
+
         this.on(eventName, handlerOrId, onceHandler);
       }
     }
 
     // Cancel the next callbacks of an event
     // Cancel happens only "once" per trigger
-    cancelEvent(event: EventType<AdditionalEvents>) {
+    cancelEvent(event: EventType<AdditionalEvents>): void {
       if (!this.#canceledEvents.includes(event)) {
         this.#canceledEvents.push(event);
       }
     }
 
-    #uncancelEvent(event: EventType<AdditionalEvents>) {
+    #uncancelEvent(event: EventType<AdditionalEvents>): void {
       const pos = this.#canceledEvents.indexOf(event);
+
       if (pos !== -1) {
         this.#canceledEvents.splice(pos, 1);
       }
     }
 
-    disableEvent(event: EventType<AdditionalEvents>) {
+    disableEvent(event: EventType<AdditionalEvents>): void {
       if (this.#isEventExists(event) && this.isEventEnabled(event)) {
         this.#triggerThisEvent("eventhandler-disabled", event);
         this.#events[event]!.state = false;
       }
     }
 
-    enableEvent(event: EventType<AdditionalEvents>) {
+    enableEvent(event: EventType<AdditionalEvents>): void {
       if (this.#isEventExists(event) && !this.isEventEnabled(event)) {
         this.#triggerThisEvent("eventhandler-enabled", event);
         this.#events[event]!.state = true;
@@ -368,11 +385,15 @@ export const EventHolder = <
       );
     }
 
-    off(event: EventType<AdditionalEvents>, delegateId?: LetsRole.ComponentID) {
+    off(
+      event: EventType<AdditionalEvents>,
+      delegateId?: LetsRole.ComponentID,
+    ): void {
       const { eventId, rest } = this.#getEventIdAndRest(event);
-      let handlerId = rest.join(EVENT_SEP) || DEFAULT_HANDLER_ID;
+      const handlerId = rest.join(EVENT_SEP) || DEFAULT_HANDLER_ID;
 
       let eventName = eventId;
+
       if (arguments.length === 2 && typeof delegateId === "string") {
         eventName = (eventId +
           DELEGATED_SEP +
@@ -388,7 +409,7 @@ export const EventHolder = <
       lre.trace(
         `Handlers for ${event} removed on ${
           this.#holderId + (delegateId ? ">" + delegateId : "")
-        }`
+        }`,
       );
 
       const prevCount = Object.keys(eventDef.handlers).length;
@@ -412,6 +433,7 @@ export const EventHolder = <
       const { eventId, handlers } =
         this.#getEventIdAndHandlersFromEventName(eventName);
       const isHandlerRan = this.#runHandlers(eventId, handlers, this, ...args);
+
       if (
         !isHandlerRan &&
         eventId === "update" &&
@@ -419,12 +441,14 @@ export const EventHolder = <
       ) {
         this.#saveLastUpdateEventValue(this.value());
       }
+
       this.#propagateToLinks(eventName, ...args);
     }
 
     transferEvents(rawCmp: LetsRole.Component): void {
-      for (let eventName in this.#events) {
+      for (const eventName in this.#events) {
         const event = this.#events[eventName as EventType<AdditionalEvents>];
+
         if (event && !event.delegated) {
           // delegated event are automatically transferred
           this.#attachToRaw?.(event, "on", rawCmp);
@@ -435,43 +459,45 @@ export const EventHolder = <
     linkEventTo(
       event: EventType<AdditionalEvents>,
       destination: IEventHolder<any>,
-      triggeredEvent: string = event
+      triggeredEvent: string = event,
     ): void {
       this.on(
         this.#getLinkedEventName(event, destination, triggeredEvent),
         (...args) => {
           destination.trigger.apply(destination, [triggeredEvent, ...args]);
-        }
+        },
       );
     }
 
     unlinkEventTo(
       event: EventType<AdditionalEvents>,
       destination: IEventHolder<any>,
-      triggeredEvent: string = event
+      triggeredEvent: string = event,
     ): void {
       this.off(this.#getLinkedEventName(event, destination, triggeredEvent));
     }
 
-    propagateEventTo(destination: IEventHolder<any>, events: any[] = []) {
+    propagateEventTo(destination: IEventHolder<any>, events: any[] = []): void {
       const propagationLink = {
         link: destination,
         events,
       };
+
       if (this.#getLinkIndex(destination) === -1) {
         this.#links.push(propagationLink);
         this.#createDummyEventForPropagation(propagationLink);
       }
     }
 
-    unpropagateEventTo(destination: IEventHolder<any>) {
+    unpropagateEventTo(destination: IEventHolder<any>): void {
       const idx = this.#getLinkIndex(destination);
+
       if (idx !== -1) {
         this.#links.splice(idx, 1);
       }
     }
 
-    #createDummyEventForPropagation(link: EventPropagationLink) {
+    #createDummyEventForPropagation(link: EventPropagationLink): void {
       link.events.forEach((eventBase) => {
         if (!this.#events[eventBase]) {
           this.on(eventBase, EMPTY_CB);
@@ -479,7 +505,7 @@ export const EventHolder = <
       });
     }
 
-    #getLinkIndex(destination: IEventHolder<any>) {
+    #getLinkIndex(destination: IEventHolder<any>): number {
       return this.#links.findIndex((d) => d.link.id() === destination.id());
     }
 
@@ -495,10 +521,10 @@ export const EventHolder = <
     #getLinkedEventName(
       event: EventType<AdditionalEvents>,
       destination: IEventHolder<any>,
-      triggeredEvent: string = event
+      triggeredEvent: string = event,
     ): EventType<AdditionalEvents> {
       return [event, "linkedTo", destination.id(), triggeredEvent].join(
-        EVENT_SEP
+        EVENT_SEP,
       ) as EventType<AdditionalEvents>;
     }
   };

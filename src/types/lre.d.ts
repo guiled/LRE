@@ -1,4 +1,4 @@
-declare type BasicObject<T = any> = { [key: string]: T; };
+declare type BasicObject<T = any> = { [key: string]: T };
 
 declare interface ILRE {
   deepMerge(target: any, ...sources: any[]): any;
@@ -10,15 +10,16 @@ declare interface ILRE {
   value<T = any>(n: T): number | T;
   isObject<T extends BasicObject = BasicObject>(object: any): object is T;
   isAvatarValue(
-    object: LetsRole.ComposedComponentValue
+    object: LetsRole.ComposedComponentValue,
   ): object is LetsRole.AvatarValue;
   isRepeaterValue(
-    object: LetsRole.ComponentValue
+    object: LetsRole.ComponentValue,
   ): object is LetsRole.RepeaterValue;
-  isObjectEmpty<T extends BasicObject = BasicObject>(object: any): object is {};
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  isObjectEmpty<T extends BasicObject = BasicObject>(object: T): object is {};
   isUseableAsIndex(value: any): value is number | string | bigint;
-  __debug: boolean = false;
-  __enableGroupedSetValue: boolean = true;
+  __debug: boolean;
+  __enableGroupedSetValue: boolean;
 }
 
 declare interface ISheet extends LetsRole.Sheet, ComponentContainer<IGroup> {
@@ -30,13 +31,13 @@ declare interface ISheet extends LetsRole.Sheet, ComponentContainer<IGroup> {
   realId(): string;
   get(id: string, silent = false): ComponentSearchResult | IGroup;
   getData(
-    realId?: LetsRole.ComponentID
+    realId?: LetsRole.ComponentID,
   ): LetsRole.ViewData | LetsRole.ComponentValue;
   find(id: string): ComponentSearchResult | IGroup;
   componentExists(realId: string): boolean;
   persistingData<T extends StoredState>(
     dataName: T,
-    value?: any
+    value?: any,
   ): SheetStoredState[T];
   deletePersistingData(dataName: Exclude<string, ProtectedStoredState>): void;
   sendPendingDataFor(id: LetsRole.ComponentID): void;
@@ -44,11 +45,11 @@ declare interface ISheet extends LetsRole.Sheet, ComponentContainer<IGroup> {
   getPendingData(id: LetsRole.ComponentID): LetsRole.ComponentValue;
   persistingCmpData(
     componentId: LetsRole.ComponentID,
-    newData?: LetsRole.ViewData
+    newData?: LetsRole.ViewData,
   ): LetsRole.ViewData;
   persistingCmpClasses(
     componentId: LetsRole.ComponentID,
-    classChanges?: ClassChanges
+    classChanges?: ClassChanges,
   ): ClassChanges;
   forget(realId: LetsRole.ComponentID): void;
   remember(realId: LetsRole.ComponentID): void;
@@ -78,26 +79,16 @@ declare interface ProxyModeHandler {
   enableAccessLog: () => this;
   logAccess: (
     type: ProxyModeHandlerLogType,
-    value: LetsRole.ComponentID
+    value: LetsRole.ComponentID,
   ) => this;
   getAccessLog: (type: ProxyModeHandlerLogType) => Array<LetsRole.ComponentID>;
   getPreviousAccessLog: (
-    type: ProxyModeHandlerLogType
+    type: ProxyModeHandlerLogType,
   ) => Array<LetsRole.ComponentID>;
   setContext: (id: string, context: any) => this;
   getContext: <T = any>(id: string) => T;
 }
 declare type ProxyMode = "real" | "virtual";
-
-declare var context: ProxyModeHandler;
-declare var isNaN = (n: any) => boolean;
-declare var structuredClone = <T>(val: T) => T;
-declare var lastException: any;
-declare var throwError = (err: any) => undefined;
-declare var newError = (err: message) => any;
-declare var stringify = (obj: any, indent: string = "") => string;
-declare var virtualCall = <T extends any>(cb: () => T) => T;
-declare var loggedCall = <T extends any>(cb: () => T) => T;
 
 declare interface Logger {
   error(...args: any[]): void;
@@ -109,9 +100,24 @@ declare interface Logger {
 
 type cb = (thisArg: any, argArray?: any) => (rawSheet: LetsRole.Sheet) => void;
 
-declare var lre: ILRE & Logger & cb;
-declare var firstInit: undefined | ((sheet: ISheet) => boolean);
-declare var errExclFirstLine: number, errExclLastLine: number;
+declare module "lre" {
+  global {
+    /* eslint-disable no-var */
+    var lre: ILRE & Logger & cb;
+    var firstInit: undefined | ((sheet: ISheet) => boolean);
+    var errExclFirstLine: number, errExclLastLine: number;
+    var structuredClone: <T>(val: T) => T;
+    var context: ProxyModeHandler;
+    var isNaN: (n: unknown) => boolean;
+    var lastException: unknown;
+    var throwError: (err: unknown) => undefined;
+    var newError: (err: message) => unknown;
+    var stringify: (obj: unknown, indent?: boolean) => string | undefined;
+    var virtualCall: <T>(cb: () => T) => T;
+    var loggedCall: <T>(cb: () => T) => T;
+    /* eslint-enable no-var */
+  }
+}
 
 declare type ComponentType =
   | "component"
@@ -160,37 +166,38 @@ declare type EventType<T extends string = string> =
   | EventHolderDefaultEvents
   | EventHolderDefaultEvents
   | T
-  | `${| EventHolderDefaultEvents
-  | EventHolderDefaultEvents
-  | T}${EVENT_SEP}${string}`;
+  | `${
+      | EventHolderDefaultEvents
+      | EventHolderDefaultEvents
+      | T}${EVENT_SEP}${string}`;
 
 declare type WithValue = {
   value: LetsRole.Component["value"];
 };
 
-declare type LREEventTarget = Object &
+declare type LREEventTarget = object &
   Pick<LetsRole.Component, "id"> &
   Partial<WithValue>;
 
-declare type LREEventTargetWithValue = Object &
+declare type LREEventTargetWithValue = object &
   Pick<LetsRole.Component, "id"> &
   WithValue;
 
 declare interface IEventHolder<
-  AdditionalEvents extends string = EventHolderDefaultEvents
+  AdditionalEvents extends string = EventHolderDefaultEvents,
 > {
   id(): string | null;
 
   on(
     event: EventType<AdditionalEvents>,
     subComponent: LetsRole.ComponentID | EventHandler | undefined,
-    handler?: EventHandler
+    handler?: EventHandler,
   ): void;
 
   once(
     event: EventType<AdditionalEvents>,
     handlerOrId: LetsRole.ComponentID | EventHandler,
-    handler?: EventHandler
+    handler?: EventHandler,
   ): void;
 
   // Cancel the next callbacks of an event
@@ -205,7 +212,7 @@ declare interface IEventHolder<
 
   off(
     event: EventType<AdditionalEvents>,
-    delegateId?: LetsRole.ComponentID
+    delegateId?: LetsRole.ComponentID,
   ): void;
 
   trigger(event: EventType<AdditionalEvents>, ...args: unknown[]): void;
@@ -215,27 +222,33 @@ declare interface IEventHolder<
   linkEventTo(
     event: EventType<AdditionalEvents>,
     destination: EventHolder<any, any>,
-    triggeredEvent: string = event
+    triggeredEvent: string = event,
   ): void;
   unlinkEventTo(
     event: EventType<AdditionalEvents>,
     destination: EventHolder<any, any>,
-    triggeredEvent: string = event
+    triggeredEvent: string = event,
   ): void;
 
   propagateEventTo(
     destination: IEventHolder<any>,
-    events?: Array<EventType<any>>
+    events?: Array<EventType<any>>,
   );
   unpropagateEventTo(destination: IEventHolder<any>);
 }
 
+declare type DataId = string;
+
+declare type DataType = unknown;
+
+declare type DataStorage = Record<DataId, DataType>;
+
 declare interface IDataHolder {
   hasData(name: DataId): boolean;
-  data(name: DataId): any;
-  data(name: DataId, value: any = "", persistent = false): this;
+  data(name: DataId): DataType;
+  data(name: DataId, value: DataType = "", persistent = false): this | DataType;
   deleteData(name: DataId, persistent: boolean = false): this;
-  loadPersistent(): LetsRole.ViewData;
+  loadPersistent(): DataStorage;
 }
 
 declare type DataProviderDataId =
@@ -251,13 +264,13 @@ declare type DataProviderDataValue =
 declare type DataProviderWhereConditioner = (
   value: LetsRole.ComponentValue | LetsRole.TableRow,
   key: DataProviderDataId,
-  data: DataProviderDataValue
+  data: DataProviderDataValue,
 ) => boolean;
 
 declare interface IDataProvider {
   provider: boolean;
   providedValue<T extends DataProviderDataValue = DataProviderDataValue>(
-    _newValue?: T
+    _newValue?: T,
   ): T extends undefined ? DataProviderDataValue : void;
   sort(): IDataProvider;
   each(mapper: (val: DataProviderDataValue) => void): void;
@@ -279,7 +292,7 @@ declare interface ComponentBase {
 }
 
 declare type ComponentFinder<T = ComponentSearchResult> = (
-  id: string
+  id: string,
 ) => ComponentSearchResult | T;
 declare type ComponentSearchResult = IComponent | null;
 
@@ -296,9 +309,9 @@ declare interface IHasRaw<T = LetsRole.Sheet | LetsRole.Component> {
 
 declare interface IComponent
   extends ComponentContainer,
-  IEventHolder<any>,
-  IDataHolder,
-  IHasRaw {
+    IEventHolder,
+    IDataHolder,
+    IHasRaw {
   init(): this;
   repeater(repeater?: Repeater): Repeater | undefined;
   entry(entry?: Entry): Entry | undefined;
@@ -320,10 +333,19 @@ declare interface IComponent
   toggleClass(className: LetsRole.ClassName): this;
   value(): LetsRole.ComponentValue;
   value(newValue: unknown): void;
-  virtualValue(newValue?: TypeValue): void | TypeValue | null;
+  value(newValue?: unknown): void | LetsRole.ComponentValue;
+  virtualValue(): TypeValue | null;
+  virtualValue(newValue: TypeValue): void;
+  virtualValue(newValue?: TypeValue): TypeValue | null | void;
   rawValue(): TypeValue;
   text(replacement?: string): string | null | void;
-  visible(newValue?: boolean | ((...args: any[]) => any)): boolean;
+  visible(): boolean;
+  visible(
+    newValue: boolean | ((...args: LetsRole.ComponentValue[]) => boolean),
+  ): void;
+  visible(
+    newValue?: boolean | ((...args: LetsRole.ComponentValue[]) => boolean),
+  ): boolean | void;
   setChoices(choices: LetsRole.Choices): void;
   valueData(): LetsRole.TableRow | LetsRole.ComponentValue | null;
 }

@@ -1,6 +1,6 @@
 export const registerLreBindings = (
   modeHandler: ProxyModeHandler,
-  originalBindings: LetsRole.Bindings
+  originalBindings: LetsRole.Bindings,
 ): LetsRole.Bindings => {
   return {
     add: (name, componentId, viewId, dataCallback) =>

@@ -37,7 +37,7 @@ beforeEach(() => {
             name: "command",
             className: "TextInput",
             defaultValue: "2",
-          }
+          },
         ],
         className: "View",
       },
@@ -54,7 +54,7 @@ beforeEach(() => {
   sheet = new Sheet(
     proxySheet,
     new DataBatcher(modeHandlerMock, proxySheet),
-    modeHandlerMock
+    modeHandlerMock,
   );
   sheet.raw = jest.fn(() => proxySheet);
   jest.spyOn(sheet, "get");
@@ -99,7 +99,7 @@ describe("MultiChoice", () => {
       multiChoice,
       value[0],
       undefined,
-      null
+      null,
     );
     value = [...value, "2", "3"];
     mockSelectEvent.mockReset();
@@ -109,12 +109,12 @@ describe("MultiChoice", () => {
       multiChoice,
       [value[1], value[2]],
       { 2: "", 3: "" },
-      { 2: null, 3: null }
+      { 2: null, 3: null },
     );
   });
 
   test("Multichoice value change triggers select event", () => {
-    let value = ["1", "2"];
+    const value = ["1", "2"];
     rawMultiChoice.value(value);
     const mockUnselectEvent = jest.fn();
     multiChoice.on("unselect", mockUnselectEvent);
@@ -124,12 +124,12 @@ describe("MultiChoice", () => {
       multiChoice,
       [value[0], value[1]],
       { 1: "", 2: "" },
-      { 1: null, 2: null }
+      { 1: null, 2: null },
     );
   });
 
   test("Multichoice selection operations", () => {
-    let value = ["1", "2"];
+    const value = ["1", "2"];
     rawMultiChoice.value(value);
     const mockUnselectEvent = jest.fn();
     multiChoice.setChoices({
@@ -147,7 +147,7 @@ describe("MultiChoice", () => {
       multiChoice,
       [value[0], value[1]],
       { "1": "One", "2": "Two" },
-      { "1": null, "2": null }
+      { "1": null, "2": null },
     );
     expect(multiChoice.value()).toEqual([]);
     multiChoice.value(["1"]);
@@ -389,7 +389,7 @@ describe("MultiChoice", () => {
           cnt: 1,
           weight: data?.weight,
         };
-      }
+      },
     );
     rawMultiChoice.value(["1", "2", "3", "4", "6"]);
     expect(multiChoice.value()).toEqual(["1", "2", "3"]);

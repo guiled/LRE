@@ -12,7 +12,7 @@ import call from "./node/expression/call";
 import { objectassign } from "./node/expression/objectassign";
 
 class NoObjectSpreading extends Visitor {
-  #pushToArgs(args: Argument[], props: Property[], span: Span) {
+  #pushToArgs(args: Argument[], props: Property[], span: Span): void {
     if (props.length > 0) {
       args.push({
         expression: {
@@ -53,9 +53,10 @@ class NoObjectSpreading extends Visitor {
           span: n.span,
           callee: objectassign(n.span),
           args: assignArgs,
-        })
+        }),
       );
     }
+
     return super.visitObjectExpression(n);
   }
 

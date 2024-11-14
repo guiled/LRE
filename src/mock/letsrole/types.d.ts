@@ -1,4 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 namespace LetsRoleMock {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   declare type SystemDefinitions = Partial<{
     tables: Record<LetsRole.TableID, Array<LetsRole.TableRow>>;
     views: Array<ViewDefinitions>;
@@ -50,29 +52,30 @@ namespace LetsRoleMock {
     name?: LetsRole.Name;
     classes?: string | null;
     className:
-    | "Row"
-    | "Column"
-    | "Container"
-    | "Tab"
-    | "Icon"
-    | "Avatar"
-    | "Color"
-    | "Label"
-    | "NumberInput"
-    | "TextInput"
-    | "Textarea"
-    | "Checkbox"
-    | "Choice"
-    | "Repeater"
-    | "RepeaterElement"
-    /* @deprecated */
-    | "View"
-    | "_Unknown_";
-    collapsed?: boolean = false;
-    references?: Array<LetsRole.ComponentID> = [];
+      | "Row"
+      | "Column"
+      | "Container"
+      | "Tab"
+      | "Icon"
+      | "Avatar"
+      | "Color"
+      | "Label"
+      | "NumberInput"
+      | "TextInput"
+      | "Textarea"
+      | "Checkbox"
+      | "Choice"
+      | "Repeater"
+      | "RepeaterElement"
+      /* @deprecated */
+      | "View"
+      | "_Unknown_";
+    collapsed?: boolean;
+    references?: Array<LetsRole.ComponentID>;
     children?: Array<ComponentDefinitions>;
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   type ComponentClassName =
     | LetsRoleMock.CommonComponentDefinitions["className"]
     | "View"; // deprecated
@@ -98,7 +101,7 @@ namespace LetsRoleMock {
 
   declare type ContainerDefinitions = CommonComponentDefinitions & {
     className: "Container";
-    layout?: "horizontal" | "vertical" = "horizontal";
+    layout?: "horizontal" | "vertical";
   };
 
   declare type WithDefaultValueDefinitions = {

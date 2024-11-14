@@ -36,39 +36,40 @@ type ThisComponentEventTypes<T> =
 
 type ClassChangeApply = {
   loaded: () => void;
-  added: (...args: any[]) => any;
-  removed: (...args: any[]) => any;
+  added: Callback;
+  removed: Callback;
 };
 
 export class Component<
-  TypeValue extends LetsRole.ComponentValue = LetsRole.ComponentValue,
-  AdditionalEvents extends string = LetsRole.EventType
->
+    TypeValue extends LetsRole.ComponentValue = LetsRole.ComponentValue,
+    AdditionalEvents extends string = LetsRole.EventType,
+  >
   extends (Mixin(EventHolder, HasRaw<LetsRole.Component>, DataHolder) as new <
-    SubTypeEventHolder extends string
+    SubTypeEventHolder extends string,
   >(
-    ...args: any
+    ...args: unknown[]
   ) => IEventHolder<SubTypeEventHolder> &
     InstanceType<ReturnType<typeof HasRaw<LetsRole.Component>>> &
     InstanceType<ReturnType<typeof DataHolder>>)<
-      ThisComponentEventTypes<AdditionalEvents>
-    >
+    ThisComponentEventTypes<AdditionalEvents>
+  >
   implements
-  Omit<
-    LetsRole.Component<TypeValue>,
-    | "on"
-    | "off"
-    | "find"
-    | "value"
-    | "sheet"
-    | "parent"
-    | "virtualValue"
-    | "rawValue"
-    | "text"
-  >,
-  IComponent,
-  ComponentContainer,
-  ComponentCommon {
+    Omit<
+      LetsRole.Component<TypeValue>,
+      | "on"
+      | "off"
+      | "find"
+      | "value"
+      | "sheet"
+      | "parent"
+      | "virtualValue"
+      | "rawValue"
+      | "text"
+    >,
+    IComponent,
+    ComponentContainer,
+    ComponentCommon
+{
   component: boolean = true;
   #realId: string;
   #sheet: ISheet;
@@ -87,7 +88,7 @@ export class Component<
         /* eventHolder */ realId,
         (
           rawCmp: LetsRole.Component,
-          event: EventDef
+          event: EventDef,
         ): IEventHolder | undefined => {
           let idToFind: string | null = "";
 
@@ -104,24 +105,32 @@ export class Component<
         (
           event: EventDef,
           operation: "on" | "off",
-          rawDest?: LetsRole.Component
+          rawDest?: LetsRole.Component,
         ) => {
           if (RAW_EVENTS.includes(event.eventId)) {
             const currentRaw = rawDest ?? this.raw();
+
             if (
               currentRaw &&
               operation in currentRaw &&
               !!currentRaw[operation] &&
               typeof currentRaw[operation] === "function"
             ) {
-              const args: any[] = [event.eventId];
+              const args: [
+                ThisComponentEventTypes<AdditionalEvents>,
+                ...unknown[],
+              ] = [event.eventId];
+
               if (event.delegated && !!event.subComponent) {
                 args.push(event.subComponent);
               }
+
               if (operation === "on") {
                 args.push(event.rawHandler);
               }
-              currentRaw[operation].apply(currentRaw, args as any);
+
+              /* @ts-expect-error Dynamic coding */
+              currentRaw[operation].apply(currentRaw, args);
             }
           }
         },
@@ -150,6 +159,7 @@ export class Component<
     if (newType !== void 0) {
       this.#lreType = newType;
     }
+
     return this.#lreType;
   }
 
@@ -169,6 +179,7 @@ export class Component<
     if (arguments.length > 1) {
       return this.raw().setToolTip(text, placement);
     }
+
     return this.raw().setToolTip(text);
   }
   sheet(): ISheet {
@@ -180,18 +191,21 @@ export class Component<
     if (newParent) {
       this.#parent = newParent;
     }
+
     return this.#parent;
   }
   repeater(repeater?: Repeater): Repeater | undefined {
     if (repeater !== void 0) {
       this.#repeater = repeater;
     }
+
     return this.#repeater;
   }
   entry(entry?: Entry): Entry | undefined {
     if (entry !== void 0) {
       this.#entry = entry;
     }
+
     return this.#entry;
   }
   find(completeId: string): ComponentSearchResult {
@@ -248,7 +262,7 @@ export class Component<
     this.trigger(
       "class-updated",
       className,
-      this.#classChanges[className] === 1 ? "added" : "removed"
+      this.#classChanges[className] === 1 ? "added" : "removed",
     );
 
     return this;
@@ -257,7 +271,10 @@ export class Component<
   value(): TypeValue;
   value(newValue: DynamicSetValue<unknown>): void;
   @dynamicSetter
-  @extractDataProviders(function (this: any, dataProvider: IDataProvider) {
+  @extractDataProviders(function (
+    this: Component,
+    dataProvider: IDataProvider,
+  ) {
     this.#valueDataProvider = dataProvider;
   })
   value(newValue?: DynamicSetValue<unknown>): void | TypeValue {
@@ -265,7 +282,7 @@ export class Component<
       const oldValue = this.value();
 
       if (lre.__enableGroupedSetValue) {
-        let data: LetsRole.ViewData = {
+        const data: LetsRole.ViewData = {
           [this.realId()]: newValue as LetsRole.ComponentValue,
         };
         this.#sheet.setData(data);
@@ -278,6 +295,7 @@ export class Component<
       }
     } else {
       let val = this.#sheet.getPendingData(this.realId()) as TypeValue;
+
       if (typeof val === "undefined") {
         try {
           // this.raw().value();
@@ -291,6 +309,7 @@ export class Component<
       } else {
         context.logAccess("value", this.realId());
       }
+
       return lre.value(val) as TypeValue;
     }
   }
@@ -303,6 +322,7 @@ export class Component<
     if (lre.isObject(this.value())) {
       return;
     }
+
     return (
       this.#valueDataProvider?.getData(this.value() as DataProviderDataId) ||
       null
@@ -314,6 +334,7 @@ export class Component<
       this.raw().virtualValue(newValue!);
       return;
     }
+
     return lre.value(this.raw().virtualValue()) as TypeValue;
   }
   rawValue(): TypeValue {
@@ -327,18 +348,20 @@ export class Component<
       this.raw().text(replacement!);
       return;
     }
+
     return this.raw().text();
   }
 
   @dynamicSetter
   visible(newValue?: DynamicSetValue<boolean>): boolean {
     if (arguments.length > 0) {
-      if (!!newValue) {
+      if (newValue) {
         this.show();
       } else {
         this.hide();
       }
     }
+
     return this.raw().visible();
   }
   setChoices(choices: LetsRole.Choices): void {
@@ -367,12 +390,13 @@ export class Component<
         if (arguments.length === 0) {
           return this.value() as TypeValue;
         }
+
         this.value(newValue);
-      }.bind(this)
+      }.bind(this),
     );
   }
 
-  #saveClassChanges() {
+  #saveClassChanges(): void {
     if (this.#mustSaveClasses) {
       this.#sheet.persistingCmpClasses(this.#realId, this.#classChanges);
     }
@@ -381,8 +405,8 @@ export class Component<
   #applyClassChanges(
     _cmp: this,
     className: LetsRole.ClassName,
-    action: "added" | "removed" | "loaded"
-  ) {
+    action: "added" | "removed" | "loaded",
+  ): void {
     this.#classChangesApply ??= {
       loaded: () => {
         Object.keys(this.#classChanges).forEach(
@@ -390,7 +414,7 @@ export class Component<
             this.#classChangesApply![
               this.#classChanges[className] === 1 ? "added" : "removed"
             ](className);
-          }
+          },
         );
       },
       added: this.raw().addClass.bind(this.raw()),

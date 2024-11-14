@@ -40,7 +40,7 @@ beforeAll(() => {
             id: "name",
             className: "TextInput",
             name: "name",
-          }
+          },
         ],
       },
       {
@@ -51,9 +51,9 @@ beforeAll(() => {
             id: "name",
             className: "Label",
             name: "name",
-          }
+          },
         ],
-      }
+      },
     ],
   });
   initLetsRole(server);
@@ -69,7 +69,7 @@ beforeAll(() => {
   sheet = new Sheet(
     proxySheet,
     new DataBatcher(modeHandlerMock, proxySheet),
-    modeHandlerMock
+    modeHandlerMock,
   );
   jest.spyOn(sheet, "get");
   jest.spyOn(sheet, "componentExists");

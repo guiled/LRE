@@ -14,6 +14,7 @@ export class Context implements ProxyModeHandler {
       this.resetAccessLog();
       this.#data = {};
     }
+
     this.#mode = newMode;
 
     return this;
@@ -34,9 +35,11 @@ export class Context implements ProxyModeHandler {
     if (!this.#logEnabled) {
       return this;
     }
+
     if (!this.#log[type]) {
       this.#log[type] = [];
     }
+
     if (!this.#log[type]!.includes(value)) {
       this.#log[type]!.push(value);
     }
@@ -49,7 +52,7 @@ export class Context implements ProxyModeHandler {
   }
 
   getPreviousAccessLog(
-    type: ProxyModeHandlerLogType
+    type: ProxyModeHandlerLogType,
   ): Array<LetsRole.ComponentID> {
     return this.#prevLog[type] || [];
   }
@@ -60,14 +63,15 @@ export class Context implements ProxyModeHandler {
     return this;
   }
 
-  setContext(id: string, context: any): this {
+  setContext(id: string, context: LetsRole.ComponentValue): this {
     if (this.#mode === "virtual") {
       this.#data[id] = context;
     }
+
     return this;
   }
 
-  getContext<T = any>(id: string): T {
+  getContext<T = LetsRole.ComponentValue>(id: string): T {
     return this.#data[id] as T;
   }
 }

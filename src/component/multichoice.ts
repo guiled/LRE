@@ -11,7 +11,7 @@ type MinMaxCalculator = (
   label: LetsRole.Choices[LetsRole.ChoiceValue],
   id: LetsRole.ChoiceValue,
   data: DataProviderDataValue | undefined,
-  result: number | Record<string, number>
+  result: number | Record<string, number>,
 ) => number | Record<string, number>;
 
 type MinMaxLimit = number | Record<string, number>;
@@ -22,7 +22,7 @@ type OVER_UNDER = 1 | -1;
 const OVER: OVER_UNDER = 1;
 const UNDER: OVER_UNDER = -1;
 
-const defaultCalculator = () => 1;
+const defaultCalculator = (): number => 1;
 
 export class MultiChoice extends Choice<
   LetsRole.MultiChoiceValue,
@@ -38,7 +38,7 @@ export class MultiChoice extends Choice<
   constructor(
     raw: LetsRole.Component,
     sheet: ISheet,
-    realId: LetsRole.ComponentID
+    realId: LetsRole.ComponentID,
   ) {
     super(raw, sheet, realId);
     this.lreType("multichoice");
@@ -54,7 +54,7 @@ export class MultiChoice extends Choice<
   value(newValue?: DynamicSetValue<LetsRole.MultiChoiceValue>): void;
   @dynamicSetter
   value(
-    newValue?: DynamicSetValue<LetsRole.MultiChoiceValue>
+    newValue?: DynamicSetValue<LetsRole.MultiChoiceValue>,
   ): void | LetsRole.MultiChoiceValue {
     if (arguments.length > 0) {
       if (!Array.isArray(newValue)) {
@@ -62,17 +62,21 @@ export class MultiChoice extends Choice<
         this.clear();
         return;
       }
+
       const valueAsArray = this.#sanitizeValue(newValue);
       const setChoicesNeeded = this.#currentValue.some(
-        (v) => !valueAsArray.includes(v)
+        (v) => !valueAsArray.includes(v),
       );
       super.value(valueAsArray);
       this.sheet().sendPendingDataFor(this.realId());
+
       if (setChoicesNeeded) {
         this.refreshChoices();
       }
+
       this.#currentValue = valueAsArray;
     }
+
     return this.#sanitizeValue(super.value());
   }
 
@@ -84,16 +88,17 @@ export class MultiChoice extends Choice<
         .filter((v) => typeof v !== "undefined")
         .map(lre.value.bind(lre)) as LetsRole.MultiChoiceValue;
     }
+
     return [];
   }
 
-  #checkChanges(choice: MultiChoice) {
+  #checkChanges(choice: MultiChoice): void {
     const newValue = choice.value();
     const selected: LetsRole.MultiChoiceValue = newValue.filter(
-      (x) => !this.#currentValue.includes(x)
+      (x) => !this.#currentValue.includes(x),
     );
     const unselected: LetsRole.MultiChoiceValue = this.#currentValue.filter(
-      (x) => !newValue.includes(x)
+      (x) => !newValue.includes(x),
     );
     this.#handleSelectEvent("select", selected);
     this.#handleSelectEvent("unselect", unselected);
@@ -103,8 +108,8 @@ export class MultiChoice extends Choice<
 
   #handleSelectEvent(
     eventName: MultiChoiceEvents,
-    values: LetsRole.MultiChoiceValue
-  ) {
+    values: LetsRole.MultiChoiceValue,
+  ): void {
     if (values.length === 0) {
       return;
     }
@@ -112,7 +117,7 @@ export class MultiChoice extends Choice<
     const args: [
       MultiChoiceEvents,
       (string | Array<string>)?,
-      (DataProviderDataValue | Array<DataProviderDataValue>)?
+      (DataProviderDataValue | Array<DataProviderDataValue>)?,
     ] = [eventName];
 
     if (values.length === 1) {
@@ -134,9 +139,9 @@ export class MultiChoice extends Choice<
       args.push(data);
     }
 
-    this.trigger.apply(this, args);
+    this.trigger(...args);
 
-    each(values, (val) => {
+    each(values, (val: LetsRole.ChoiceValue) => {
       this.trigger(`${eventName}:${val}`);
     });
   }
@@ -150,28 +155,27 @@ export class MultiChoice extends Choice<
       LetsRole.ChoiceValue,
       LetsRole.ComponentValue | LetsRole.TableRow
     > = {};
-    each(values, (v) => {
+    each(values, (v: LetsRole.ChoiceValue) => {
       result[v] = this.getChoiceData(v);
     });
 
     return result;
   }
 
-  clear() {
+  clear(): void {
     this.value([]);
   }
-  selectNone() {
+  selectNone(): void {
     this.clear();
   }
-  unselectAll() {
+  unselectAll(): void {
     this.clear();
   }
 
-  selectAll() {
+  selectAll(): void {
     this.value(Object.keys(this.getChoices()));
   }
-
-  invert() {
+  invert(): void {
     const choices = this.getChoices();
     const val = this.value();
     this.value(Object.keys(choices).filter((v) => !val.includes(v)));
@@ -181,7 +185,7 @@ export class MultiChoice extends Choice<
     return new DirectDataProvider(
       () => {
         const result: LetsRole.ViewData = {};
-        each(this.value(), (v) => {
+        each(this.value(), (v: LetsRole.ChoiceValue) => {
           result[v] = this.label(v);
         });
 
@@ -189,7 +193,7 @@ export class MultiChoice extends Choice<
       },
       () => {
         return this.valueData();
-      }
+      },
     );
   }
 
@@ -197,9 +201,11 @@ export class MultiChoice extends Choice<
     return new DirectDataProvider(
       () => {
         const result: LetsRole.ViewData = {};
-        each(this.getChoices(), (_v, k) => {
-          if (!this.value().includes(k)) {
-            result[k] = this.label(k);
+        each(this.getChoices(), (_v: string, k: LetsRole.ChoiceValue) => {
+          if (!this.value().includes(k as unknown as LetsRole.ChoiceValue)) {
+            result[k as unknown as LetsRole.ChoiceValue] = this.label(
+              k as unknown as LetsRole.ChoiceValue,
+            );
           }
         });
 
@@ -210,14 +216,16 @@ export class MultiChoice extends Choice<
           LetsRole.ChoiceValue,
           LetsRole.ComponentValue | LetsRole.TableRow
         > = {};
-        each(this.getChoices(), (_v, k) => {
-          if (!this.value().includes(k)) {
-            result[k] = this.getChoiceData(k);
+        each(this.getChoices(), (_v: string, k: LetsRole.ChoiceValue) => {
+          if (!this.value().includes(k as unknown as LetsRole.ChoiceValue)) {
+            result[k as unknown as LetsRole.ChoiceValue] = this.getChoiceData(
+              k as unknown as LetsRole.ChoiceValue,
+            );
           }
         });
 
         return result;
-      }
+      },
     );
   }
 
@@ -225,10 +233,14 @@ export class MultiChoice extends Choice<
   maxChoiceNb(nb: MinMaxLimiter): void;
   maxChoiceNb(nb: MinMaxLimiter, calculator: MinMaxCalculator): void;
   @flaggedDynamicSetter([true, false])
-  maxChoiceNb(nb?: MinMaxLimiter, calculator?: MinMaxCalculator) {
+  maxChoiceNb(
+    nb?: MinMaxLimiter,
+    calculator?: MinMaxCalculator,
+  ): void | MinMaxLimit {
     if (arguments.length === 0) {
       return this.#getLimiterValue(this.#maxLimiter);
     }
+
     this.#maxLimiter = nb;
     this.#maxCalculator = calculator || defaultCalculator;
     this.on("update:__Lre__minmax", this.#checkLimit.bind(this));
@@ -238,32 +250,47 @@ export class MultiChoice extends Choice<
   minChoiceNb(nb: MinMaxLimiter): void;
   minChoiceNb(nb: MinMaxLimiter, calculator: MinMaxCalculator): void;
   @flaggedDynamicSetter([true, false])
-  minChoiceNb(nb?: MinMaxLimiter, calculator?: MinMaxCalculator) {
+  minChoiceNb(
+    nb?: MinMaxLimiter,
+    calculator?: MinMaxCalculator,
+  ): void | MinMaxLimit {
     if (arguments.length === 0) {
       return this.#getLimiterValue(this.#minLimiter);
     }
+
     this.#minLimiter = nb;
     this.#minCalculator = calculator || defaultCalculator;
   }
 
   #getLimiterValue(
-    limiter: MinMaxLimiter | undefined
+    limiter: MinMaxLimiter | undefined,
   ): MinMaxLimit | undefined {
     if (typeof limiter === "function") {
       return limiter();
     }
+
     return limiter;
   }
 
-  #checkLimit() {
+  #checkLimit(): void {
     let resultMin: ReturnType<MinMaxCalculator> = 0,
       resultMax: ReturnType<MinMaxCalculator> = 0;
     const choices = this.getChoices();
     const newValue = this.value();
 
-    each(newValue, (id) => {
-      resultMin = this.#calculate(choices, id, this.#minCalculator, resultMin);
-      resultMax = this.#calculate(choices, id, this.#maxCalculator, resultMax);
+    each(newValue, (id: LetsRole.ChoiceValue) => {
+      resultMin = this.#calculate(
+        choices,
+        id as LetsRole.ChoiceValue,
+        this.#minCalculator,
+        resultMin,
+      );
+      resultMax = this.#calculate(
+        choices,
+        id as LetsRole.ChoiceValue,
+        this.#maxCalculator,
+        resultMax,
+      );
     });
     const minValue = this.#getLimiterValue(this.#minLimiter);
     const maxValue = this.#getLimiterValue(this.#maxLimiter);
@@ -274,14 +301,14 @@ export class MultiChoice extends Choice<
         resultMin,
         newValue,
         this.#valuesSavedForMinMax,
-        UNDER
+        UNDER,
       ) ||
       this.#testExceedLimit(
         maxValue,
         resultMax,
         newValue,
         this.#valuesSavedForMinMax,
-        OVER
+        OVER,
       )
     ) {
       this.trigger("limit");
@@ -290,8 +317,9 @@ export class MultiChoice extends Choice<
       this.sheet().sendPendingDataFor(this.realId());
       this.enableEvent("update");
       this.cancelEvent("update");
-      return false;
+      return;
     }
+
     this.#valuesSavedForMinMax = newValue;
   }
 
@@ -299,7 +327,7 @@ export class MultiChoice extends Choice<
     choices: LetsRole.Choices,
     id: LetsRole.ChoiceValue,
     calculator: MinMaxCalculator,
-    acc: ReturnType<MinMaxCalculator>
+    acc: ReturnType<MinMaxCalculator>,
   ): ReturnType<MinMaxCalculator> {
     const value = calculator(choices[id], id, this.getChoiceData(id), acc);
 
@@ -316,13 +344,14 @@ export class MultiChoice extends Choice<
 
   #addToObjectProperties(
     dest: Record<string, number>,
-    value: Record<string, number>
+    value: Record<string, number>,
   ): Record<string, number> {
     const result = dest;
-    each(value, function (v, k) {
-      if (!result.hasOwnProperty(k)) {
-        result[k] = 0;
+    each(value, function (v: number, k: string) {
+      if (!Object.prototype.hasOwnProperty.call(result, k)) {
+        result[k as unknown as LetsRole.ChoiceValue] = 0;
       }
+
       result[k] += 1.0 * v;
     });
     return result;
@@ -333,7 +362,7 @@ export class MultiChoice extends Choice<
     result: ReturnType<MinMaxCalculator>,
     newValues: LetsRole.MultiChoiceValue,
     prevValues: LetsRole.MultiChoiceValue,
-    overUnder: OVER_UNDER
+    overUnder: OVER_UNDER,
   ): boolean {
     if (typeof limit === "undefined") {
       return false;
@@ -351,11 +380,14 @@ export class MultiChoice extends Choice<
   #objectExceedComparison(
     a: Record<string, number>,
     b: Record<string, number> | number,
-    overUnder: OVER_UNDER
+    overUnder: OVER_UNDER,
   ): boolean {
     return Object.keys(a).some(function (k) {
       if (lre.isObject(b)) {
-        return b.hasOwnProperty(k) && overUnder * b[k] > overUnder * a[k];
+        return (
+          Object.prototype.hasOwnProperty.call(b, k) &&
+          overUnder * b[k] > overUnder * a[k]
+        );
       } else {
         return overUnder * b > overUnder * a[k];
       }

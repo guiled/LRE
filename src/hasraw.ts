@@ -5,7 +5,9 @@ type HasRawConstructorParams<T> = {
 };
 
 export const HasRaw = <T = LetsRole.Sheet | LetsRole.Component>(
-  superclass: Newable = class {}
+  superclass: Newable = class {},
+  // defining a type here will break its implementation
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 ) =>
   class HasRaw extends superclass implements IHasRaw<T> {
     #raw: T | undefined;

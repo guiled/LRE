@@ -42,9 +42,9 @@ beforeAll(() => {
                     classes: "class1 class2",
                     defaultValue: initValue,
                   },
-                ]
+                ],
               },
-            ]
+            ],
           },
         ],
       },
@@ -52,7 +52,10 @@ beforeAll(() => {
   });
 });
 
-const initTestMocks = (isVirtual: boolean = false, cmpId = "test"): ComponentProxy => {
+const initTestMocks = (
+  isVirtual: boolean = false,
+  cmpId = "test",
+): ComponentProxy => {
   rawSheet = server.openView("main", "1234", {}, "Sheet 1");
   parent = rawSheet.get("parent_test");
   raw = rawSheet.get(cmpId);
@@ -65,7 +68,9 @@ const initTestMocks = (isVirtual: boolean = false, cmpId = "test"): ComponentPro
     virtualValues: {},
   }));
 
-  isVirtual && modeHandlerMock.setMode("virtual");
+  if (isVirtual) {
+    modeHandlerMock.setMode("virtual");
+  }
 
   return subject;
 };
@@ -89,7 +94,7 @@ const methodsWithNoParams: Array<keyof LetsRole.Component> = [
 
 const methodsWithParams: Array<[keyof LetsRole.Component, any]> = [
   ["find", ["toto"]],
-  ["on", ["update", () => { }]],
+  ["on", ["update", () => {}]],
   ["off", ["update"]],
   ["addClass", ["text-danger"]],
   ["removeClass", ["text-danger"]],
@@ -111,20 +116,20 @@ describe("Real mode", () => {
     "Proxy call %s calls raw method",
     (method) => {
       jest.spyOn(raw, method as any);
-      /* @ts-ignore */
+      /* @ts-expect-error Dynamic calls */
       subject[method].call(subject);
       expect(raw[method!]).toHaveBeenCalledTimes(1);
-    }
+    },
   );
 
   test.each(methodsWithParams)(
     "Proxy call %s calls raw method",
     (method, args) => {
       jest.spyOn(raw, method as any);
-      /* @ts-ignore */
+      /* @ts-expect-error Dynamic calls */
       subject[method].apply(subject, args);
       expect(raw[method]).toHaveBeenCalledTimes(1);
-    }
+    },
   );
 });
 
@@ -136,31 +141,31 @@ describe("Virtual mode", () => {
   });
 
   const methodsWithNoParamsBis = methodsWithNoParams.filter(
-    (m) => !["find", "parent"].includes(m)
+    (m) => !["find", "parent"].includes(m),
   );
 
   test.each(methodsWithNoParamsBis)(
     "Proxy call %s doesn't call raw method",
     (method) => {
       jest.spyOn(raw, method as any);
-      /* @ts-ignore */
+      /* @ts-expect-error Dynamic calls */
       subject[method].call(subject);
       expect(raw[method!]).not.toHaveBeenCalled();
-    }
+    },
   );
 
   const methodsWithParamsBis = methodsWithParams.filter(
-    (m) => !["find", "parent"].includes(m[0])
+    (m) => !["find", "parent"].includes(m[0]),
   );
 
   test.each(methodsWithParamsBis)(
     "Proxy call %s doesn't call raw method",
     (method, args) => {
       jest.spyOn(raw, method as any);
-      /* @ts-ignore */
+      /* @ts-expect-error Dynamic calls */
       subject[method].apply(subject, args);
       expect(raw[method!]).not.toHaveBeenCalled();
-    }
+    },
   );
 });
 
@@ -269,13 +274,13 @@ describe("Virtual mode changes are applied", () => {
     jest.spyOn(raw, "toggleClass");
     jest.spyOn(raw, "getClasses");
     expect(subject.getClasses().sort().join(",")).toMatch(
-      initClasses.sort().join(",")
+      initClasses.sort().join(","),
     );
     expect(raw.getClasses).not.toHaveBeenCalled();
 
     subject.addClass("added1");
     expect(subject.getClasses().sort().join(",")).toMatch(
-      ["added1", ...initClasses].sort().join(",")
+      ["added1", ...initClasses].sort().join(","),
     );
     expect(subject.hasClass("added1")).toBeTruthy();
     expect(raw.hasClass).not.toHaveBeenCalled();
@@ -283,7 +288,7 @@ describe("Virtual mode changes are applied", () => {
 
     subject.removeClass("added1");
     expect(subject.getClasses().sort().join(",")).toMatch(
-      initClasses.sort().join(",")
+      initClasses.sort().join(","),
     );
     expect(subject.hasClass("added1")).toBeFalsy();
     expect(raw.hasClass).not.toHaveBeenCalled();
@@ -291,12 +296,12 @@ describe("Virtual mode changes are applied", () => {
 
     subject.toggleClass("added1");
     expect(subject.getClasses().sort().join(",")).toMatch(
-      ["added1", ...initClasses].sort().join(",")
+      ["added1", ...initClasses].sort().join(","),
     );
     expect(raw.getClasses).not.toHaveBeenCalled();
     subject.toggleClass("added1");
     expect(subject.getClasses().sort().join(",")).toMatch(
-      initClasses.sort().join(",")
+      initClasses.sort().join(","),
     );
     expect(raw.getClasses).not.toHaveBeenCalled();
 
@@ -350,31 +355,31 @@ describe("Proxy logs", () => {
     "logs %s",
     (logType: any) => {
       expect(modeHandlerMock.logAccess).toHaveBeenCalledTimes(0);
-      /* @ts-ignore */
+      /* @ts-expect-error Dynamic calls */
       subject[logType]!();
       expect(modeHandlerMock.logAccess).toHaveBeenCalledTimes(1);
       expect((modeHandlerMock.logAccess as jest.Mock).mock.calls[0][0]).toBe(
-        logType
+        logType,
       );
       expect((modeHandlerMock.logAccess as jest.Mock).mock.calls[0][1]).toBe(
-        subject.id()
+        subject.id(),
       );
-    }
+    },
   );
 
   test.each(["hasClass", "getClasses"])(
     "Class access with %s",
     (method: any) => {
       expect(modeHandlerMock.logAccess).toHaveBeenCalledTimes(0);
-      /* @ts-ignore */
+      /* @ts-expect-error Dynamic calls */
       subject[method]!("toto");
       expect(modeHandlerMock.logAccess).toHaveBeenCalledTimes(1);
       expect((modeHandlerMock.logAccess as jest.Mock).mock.calls[0][0]).toBe(
-        "class"
+        "class",
       );
       expect((modeHandlerMock.logAccess as jest.Mock).mock.calls[0][1]).toBe(
-        subject.id()
+        subject.id(),
       );
-    }
+    },
   );
 });

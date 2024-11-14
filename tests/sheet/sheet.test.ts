@@ -4,16 +4,18 @@ import { LRE } from "../../src/lre";
 import { DataBatcher } from "../../src/sheet/databatcher";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
-import { initLetsRole, itHasWaitedEverything } from "../../src/mock/letsrole/letsrole.mock";
+import {
+  initLetsRole,
+  itHasWaitedEverything,
+} from "../../src/mock/letsrole/letsrole.mock";
 import { ViewMock } from "../../src/mock/letsrole/view.mock";
-
 
 const createLargeObject = (nbKeys: number): Record<string, number> =>
   Array(nbKeys)
     .fill(0, 0, nbKeys)
     .reduce<Record<string, number>>(
       (obj, _val, idx) => Object.assign(obj, { [`k-${idx}`]: idx }),
-      {}
+      {},
     );
 
 let server: ServerMock;
@@ -29,7 +31,7 @@ beforeEach(() => {
             id: "a",
             className: "Repeater",
             viewId: "vw1",
-            readViewId: "vw2"
+            readViewId: "vw2",
           },
           {
             id: "b",
@@ -48,18 +50,17 @@ beforeEach(() => {
             id: "cmp1",
             className: "Label",
           },
-        ]
+        ],
       },
       {
         id: "testedSheet",
         className: "View",
-        children: []
+        children: [],
       },
       {
         id: "vw1",
         className: "View",
-        children: [
-        ],
+        children: [],
       },
       {
         id: "vw2",
@@ -68,10 +69,10 @@ beforeEach(() => {
           {
             id: "c",
             className: "Label",
-          }
+          },
         ],
       },
-    ]
+    ],
   });
   global.lre = new LRE(modeHandlerMock);
   initLetsRole(server);
@@ -87,7 +88,7 @@ describe("Sheet basics", () => {
     sheet = new Sheet(
       raw,
       new DataBatcher(modeHandlerMock, raw),
-      modeHandlerMock
+      modeHandlerMock,
     );
   });
   test("Create from raw", () => {
@@ -138,8 +139,8 @@ describe("Sheet basics", () => {
     sheet.prompt(
       "title",
       "viewId",
-      () => { },
-      () => { }
+      () => {},
+      () => {},
     );
     expect(raw.prompt).toHaveBeenCalledTimes(1);
   });
@@ -161,7 +162,7 @@ describe("Sheet data handling", () => {
     sheet = new Sheet(
       raw,
       new DataBatcher(modeHandlerMock, raw),
-      modeHandlerMock
+      modeHandlerMock,
     );
   });
 
@@ -192,7 +193,7 @@ describe("Sheet data handling", () => {
       return data;
     });
     raw.setData = jest.fn((d: LetsRole.ViewData) => {
-      for (let i in d) {
+      for (const i in d) {
         data[i] = d[i];
       }
     });
@@ -274,12 +275,12 @@ describe("Sheet data handling", () => {
 describe("Sheet persisting data", () => {
   let sheet1: Sheet, sheet2: Sheet;
 
-  const initSheet = function (sheetId: string, realId: string) {
+  const initSheet = function (sheetId: string, realId: string): Sheet {
     const raw = server.openView(sheetId, realId);
     return new Sheet(
       raw,
       new DataBatcher(modeHandlerMock, raw),
-      modeHandlerMock
+      modeHandlerMock,
     );
   };
 
@@ -451,10 +452,12 @@ describe("Sheet clean data", () => {
   });
 
   test("Clean data", () => {
-    let data: LetsRole.ViewData = {
+    let data = {
       main: {
-        cmpData: {},
-        cmpClasses: {},
+        cmpData: {} as Partial<Record<LetsRole.ComponentID, LetsRole.ViewData>>,
+        cmpClasses: {} as Partial<
+          Record<LetsRole.ComponentID, Array<LetsRole.ClassName>>
+        >,
         initialized: false,
       },
     };
@@ -464,7 +467,7 @@ describe("Sheet clean data", () => {
     let sheet = new Sheet(
       raw,
       new DataBatcher(modeHandlerMock, raw),
-      modeHandlerMock
+      modeHandlerMock,
     );
     sheet.cleanCmpData();
     expect(sheet.getData()).toEqual(save);
@@ -483,7 +486,7 @@ describe("Sheet clean data", () => {
     sheet = new Sheet(
       raw,
       new DataBatcher(modeHandlerMock, raw),
-      modeHandlerMock
+      modeHandlerMock,
     );
     sheet.cleanCmpData();
     expect(sheet.getData()).toEqual(save);
@@ -495,15 +498,15 @@ describe("Sheet clean data", () => {
         cmpData: {
           ...large,
           a: { love: "test" },
-          "unknown1": { itWillBe: "deleted" },
+          unknown1: { itWillBe: "deleted" },
           "unknown2.b.c": { itWillBe: "deleted" },
           "a.unknown.c": { itWillBe: "deleted" },
           "a.b.unknown": { itWillBe: "deleted" },
         },
         cmpClasses: {
           ...large,
-          b: { love: "test" },
-          "aUnknown": ["cl1", "cl2"],
+          //b: { love: "test" },
+          aUnknown: ["cl1", "cl2"],
           "unknown.a.c": ["cl1", "cl2"],
           "b.unknown.c": ["cl1", "cl2"],
           "b.b.unknown": ["cl1", "cl2"],
@@ -512,7 +515,7 @@ describe("Sheet clean data", () => {
       },
     };
 
-    for (let o in large) {
+    for (const o in large) {
       server.dynamicAddComponentToView("main", {
         id: o,
         className: "Label",
@@ -521,32 +524,23 @@ describe("Sheet clean data", () => {
     }
 
     save = structuredClone(data);
-    let save2 = structuredClone(data);
+    const save2 = structuredClone(data);
     sheet = new Sheet(
       raw,
       new DataBatcher(modeHandlerMock, raw),
-      modeHandlerMock
+      modeHandlerMock,
     );
     sheet.cleanCmpData();
     expect(sheet.getData()).toEqual(save);
     itHasWaitedEverything();
-    /* @ts-ignore */
     delete save2.main!.cmpData!["unknown1"];
-    /* @ts-ignore */
     delete save2.main!.cmpData!["unknown.b.c"];
-    /* @ts-ignore */
     delete save2.main!.cmpData![`a.unknown.c`];
-    /* @ts-ignore */
     delete save2.main!.cmpData![`a.b.unknown`];
-    /* @ts-ignore */
     delete save2.main!.cmpData![`unknown2.b.c`];
-    /* @ts-ignore */
     delete save2.main!.cmpClasses!["aUnknown"];
-    /* @ts-ignore */
     delete save2.main!.cmpClasses!["unknown.a.c"];
-    /* @ts-ignore */
     delete save2.main!.cmpClasses![`b.unknown.c`];
-    /* @ts-ignore */
     delete save2.main!.cmpClasses![`b.b.unknown`];
     expect(sheet.getData()).toEqual(save2);
     expect(sheet.getData()).not.toEqual(save);
@@ -560,12 +554,16 @@ describe("Sheet get component", () => {
   let sheet1: Sheet;
   let raw: ViewMock;
 
-  const initSheet = function (sheetId: string, realId: string, data: any = undefined) {
+  const initSheet = function (
+    sheetId: string,
+    realId: string,
+    data: LetsRole.ViewData | undefined = undefined,
+  ): Sheet {
     raw = server.openView(sheetId, realId, data);
     return new Sheet(
       raw,
       new DataBatcher(modeHandlerMock, raw),
-      modeHandlerMock
+      modeHandlerMock,
     );
   };
 
@@ -660,28 +658,16 @@ describe("Sheet get component", () => {
     expect(sheet1.componentExists("a.z")).toBeFalsy();
     expect(sheet1.componentExists("a.z.y")).toBeFalsy();
     expect(sheet1.componentExists("a.z.y")).toBeFalsy();
-    expect(
-      sheet1.componentExists(`unknown.b.c`)
-    ).toBeFalsy();
-    expect(
-      sheet1.componentExists(`a.unknown.c`)
-    ).toBeFalsy();
-    expect(
-      sheet1.componentExists(`a.b.unknown`)
-    ).toBeFalsy();
+    expect(sheet1.componentExists(`unknown.b.c`)).toBeFalsy();
+    expect(sheet1.componentExists(`a.unknown.c`)).toBeFalsy();
+    expect(sheet1.componentExists(`a.b.unknown`)).toBeFalsy();
     expect(sheet1.componentExists("nullCmp")).toBeFalsy();
     expect(sheet1.componentExists(`nullCmp.b.c`)).toBeFalsy();
     expect(sheet1.componentExists(`a.nullCmp.c`)).toBeFalsy();
     expect(sheet1.componentExists(`a.b.nullCmp`)).toBeFalsy();
-    expect(
-      sheet1.componentExists(`unexisting.b.c`)
-    ).toBeFalsy();
-    expect(
-      sheet1.componentExists(`a.unexisting.c`)
-    ).toBeFalsy();
-    expect(
-      sheet1.componentExists(`a.b.unexisting`)
-    ).toBeFalsy();
+    expect(sheet1.componentExists(`unexisting.b.c`)).toBeFalsy();
+    expect(sheet1.componentExists(`a.unexisting.c`)).toBeFalsy();
+    expect(sheet1.componentExists(`a.b.unexisting`)).toBeFalsy();
 
     expect(errorLogSpy).toHaveBeenCalledTimes(0);
   });
@@ -709,12 +695,12 @@ describe("Sheet get component", () => {
     const knownChildren = sheet1.knownChildren(rep);
 
     expect(
-      foundCmp.every((cmp) => knownChildren.some((child) => child === cmp))
+      foundCmp.every((cmp) => knownChildren.some((child) => child === cmp)),
     );
     expect(
       knownChildren.every((children) =>
-        foundCmp.some((cmp) => children === cmp)
-      )
+        foundCmp.some((cmp) => children === cmp),
+      ),
     );
   });
 

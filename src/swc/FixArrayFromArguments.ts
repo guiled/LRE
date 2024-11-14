@@ -29,6 +29,7 @@ class FixArrayFromArguments extends Visitor {
         ],
       };
     }
+
     return super.visitCallExpression(n);
   }
 
@@ -46,7 +47,7 @@ class FixArrayFromArguments extends Visitor {
 
   #isIdentifier(
     n: Expression | MemberExpression["property"],
-    value: string
+    value: string,
   ): boolean {
     return n.type === "Identifier" && n.value === value;
   }

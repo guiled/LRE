@@ -15,7 +15,7 @@ export type Call_Param = {
 
 export default (
   { span, callee, args = [], typeArguments }: Call_Param,
-  optional: boolean = false
+  optional: boolean = false,
 ): CallExpression | OptionalChainingExpression => {
   if (optional) {
     return {
@@ -31,6 +31,7 @@ export default (
       },
     };
   }
+
   return {
     type: "CallExpression",
     span: span || (callee as HasSpan).span,
