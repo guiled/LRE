@@ -665,9 +665,9 @@ describe("Sheet get component", () => {
     expect(sheet1.componentExists(`nullCmp.b.c`)).toBeFalsy();
     expect(sheet1.componentExists(`a.nullCmp.c`)).toBeFalsy();
     expect(sheet1.componentExists(`a.b.nullCmp`)).toBeFalsy();
-    expect(sheet1.componentExists(`unexisting.b.c`)).toBeFalsy();
-    expect(sheet1.componentExists(`a.unexisting.c`)).toBeFalsy();
-    expect(sheet1.componentExists(`a.b.unexisting`)).toBeFalsy();
+    expect(sheet1.componentExists(`nonexisting.b.c`)).toBeFalsy();
+    expect(sheet1.componentExists(`a.nonexisting.c`)).toBeFalsy();
+    expect(sheet1.componentExists(`a.b.nonexisting`)).toBeFalsy();
 
     expect(errorLogSpy).toHaveBeenCalledTimes(0);
   });

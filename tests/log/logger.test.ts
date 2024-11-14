@@ -64,6 +64,20 @@ describe("Test all log method", () => {
     logger.trace("this is a trace");
     expect(global.log).toHaveBeenCalledTimes(3);
     logger.log("this is a log");
+    expect(global.log).toHaveBeenCalledTimes(3);
+  });
+
+  test("Check log errors, warnings and trace… so all", () => {
+    const logger = new Logger();
+    logger.setLogLevel("all");
+    expect(global.log).toHaveBeenCalledTimes(0);
+    logger.error("this is an error");
+    expect(global.log).toHaveBeenCalledTimes(1);
+    logger.warn("this is a warning");
+    expect(global.log).toHaveBeenCalledTimes(2);
+    logger.trace("this is a trace");
+    expect(global.log).toHaveBeenCalledTimes(3);
+    logger.log("this is a log");
     expect(global.log).toHaveBeenCalledTimes(4);
   });
 });

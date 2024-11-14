@@ -343,7 +343,6 @@ export class Group
     return (
       typeof cmp === "object" &&
       !!cmp &&
-      Object.hasOwn(cmp, "lreType") &&
       typeof (cmp as IComponent).lreType === "function"
     );
   }

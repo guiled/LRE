@@ -153,7 +153,7 @@ export class Sheet
       (k) => !newStoreStateKeys.includes(k),
     );
     keysToDelete.forEach((k) => {
-      if (Object.prototype.hasOwnProperty.call(this.#storedState, "k")) {
+      if (Object.prototype.hasOwnProperty.call(this.#storedState, k)) {
         delete this.#storedState![k];
       }
     });
