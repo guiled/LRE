@@ -352,22 +352,49 @@ export class ViewMock implements LetsRole.Sheet {
     });
   }
 
-  isInsideEditingRepeaterEntry(realId: LetsRole.ComponentID): boolean {
-    let result = false;
-    this.#getParentsRealIds(realId)
-      .reverse()
-      .some((id) => {
-        const cmp = this.get(id);
+  getContainingEntryId(
+    realId: LetsRole.ComponentID,
+  ): LetsRole.ComponentID | false {
+    let result: LetsRole.ComponentID | false = false;
+    const arr = this.#getParentsRealIds(realId);
+    arr.reverse().some((id) => {
+      const cmp = this.get(id);
 
-        if (cmp.getType() === "RepeaterElement") {
-          result = this.getEntryState(id) === "write";
-          return true;
-        }
+      if (cmp.getType() === "RepeaterElement") {
+        result = id;
+        return true;
+      }
 
-        return false;
-      });
+      return false;
+    });
 
     return result;
+  }
+
+  isInsideEditingRepeaterEntry(realId: LetsRole.ComponentID): boolean {
+    const entryId = this.getContainingEntryId(realId);
+
+    if (!entryId) {
+      return false;
+    }
+
+    return this.getEntryState(entryId) === "write";
+  }
+
+  isInsideRepeater(realId: LetsRole.ComponentID): boolean {
+    const parts: Array<LetsRole.ComponentID | LetsRole.Index> =
+      realId.split(".");
+
+    if (parts.length < 2) {
+      return false;
+    }
+
+    const rootDef = this.#findIdInDefinition(
+      this.#getDefinitions().children,
+      parts[0],
+    );
+
+    return rootDef?.className === "Repeater";
   }
 
   loadComponentValue(
@@ -492,13 +519,13 @@ export class ViewMock implements LetsRole.Sheet {
 
     if (!["click", "change"].includes(event)) return;
 
-    const id = realId.substring(realId.lastIndexOf(".") + 1);
     // event delegation
-    let parent = this.findParent(id);
+    let parent: ComponentMock | FailingComponent = this.findParent(realId);
 
     while (parent.id()) {
       const parentEvent =
         this.#componentDelegatedEvents[parent.realId()]?.[event] || {};
+      const id = realId.substring(realId.lastIndexOf(".") + 1);
 
       for (const selector in parentEvent) {
         if (selector[0] === ".") {
@@ -511,6 +538,8 @@ export class ViewMock implements LetsRole.Sheet {
           parentEvent[selector](this.get(realId));
         }
       }
+
+      this.triggerComponentEvent(parent.realId(), event);
 
       parent = this.findParent(parent.id()!);
     }
@@ -546,6 +575,10 @@ export class ViewMock implements LetsRole.Sheet {
   }
 
   findParent(id: LetsRole.ComponentID): ComponentMock | FailingComponent {
+    if (this.isInsideRepeater(id)) {
+      return this.findParentInRepeater(id);
+    }
+
     const def = this.#traverseDefinition(
       [this.#getDefinitions()],
       (definition) => !!definition.children?.some((child) => child.id === id),
@@ -556,6 +589,47 @@ export class ViewMock implements LetsRole.Sheet {
     }
 
     return new ComponentMock(this, def.id, def, null);
+  }
+
+  findParentInRepeater(id: string): ComponentMock | FailingComponent {
+    const parts = id.split(".");
+    const repeaterId = this.getContainingRepeater(id)!;
+
+    const lvlInRepeater = parts.length % 2;
+
+    let parentId: LetsRole.ComponentID;
+
+    if (lvlInRepeater === 1) {
+      const entryId = this.getContainingEntryId(id) as LetsRole.ComponentID;
+      const view = this.getEntryView(entryId, repeaterId);
+      parentId = view.findParent(parts[parts.length - 1]).id() || entryId;
+    } else {
+      parentId = repeaterId;
+    }
+
+    return this.get(parentId);
+  }
+
+  private getEntryView(entryId: string, repeaterId: string): ViewMock {
+    const entryState = this.getEntryState(entryId);
+    let vwId;
+    const repeaterDef = this.#findIdInDefinition(
+      this.#getDefinitions().children,
+      repeaterId,
+    ) as LetsRoleMock.RepeaterDefinitions;
+
+    if (entryState === "write") {
+      vwId = repeaterDef.viewId;
+    } else {
+      vwId = repeaterDef.readViewId;
+    }
+
+    if (!vwId) {
+      throw new Error(`Repeater ${repeaterId} has an empty view id`);
+    }
+
+    const view = this.#server.openView(vwId, entryId, {});
+    return view;
   }
 
   setEntryState(realId: string, newState: EntryState): void {
@@ -683,6 +757,7 @@ export class ViewMock implements LetsRole.Sheet {
         true,
       );
       this.setEntryState(realId + "." + newEntryId, "write");
+      this.triggerComponentEvent(realId, "click");
     }
   }
 
@@ -717,6 +792,7 @@ export class ViewMock implements LetsRole.Sheet {
     this.setData({
       [repeaterRealId]: this.getData()[repeaterRealId],
     });
+    this.triggerComponentEvent(entryRealId, "click");
   }
 
   repeaterClickOnRemove(entryRealId: LetsRole.ComponentID): void {
@@ -749,6 +825,7 @@ export class ViewMock implements LetsRole.Sheet {
     this.setData({
       [repeaterRealId]: repValue,
     });
+    this.triggerComponentEvent(entryRealId, "click");
   }
 
   repeaterClickOnEdit(entryRealId: LetsRole.ComponentID): void {
@@ -781,6 +858,7 @@ export class ViewMock implements LetsRole.Sheet {
     }
 
     this.setEntryState(entryRealId, "write");
+    this.triggerComponentEvent(entryRealId, "click");
   }
 
   findChoiceDefs(): LetsRoleMock.ComponentDefinitions | null {

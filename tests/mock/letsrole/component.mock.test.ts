@@ -563,7 +563,9 @@ describe("Repeaters", () => {
 
   test("Change in a repeater edit view triggers update events", () => {
     const fnOnRepeater = jest.fn();
+    const fnClickOnRepeater = jest.fn();
     repeaterOk.on("update", fnOnRepeater);
+    repeaterOk.on("click", fnClickOnRepeater);
 
     const otherSheet = server.openView(sheet.id(), sheet.getSheetId(), {});
     const repeaterOkOther = otherSheet.get("rep2") as ComponentMock;
@@ -573,6 +575,7 @@ describe("Repeaters", () => {
     sheet.repeaterClickOnAdd(repeaterOk.realId());
 
     expect(fnOnRepeater).not.toHaveBeenCalled();
+    expect(fnClickOnRepeater).toHaveBeenCalledTimes(1);
     expect(fnOnRepeaterOther).toHaveBeenCalledTimes(1);
 
     fnOnRepeater.mockClear();
@@ -602,7 +605,9 @@ describe("Repeaters", () => {
 
   test("Repeater entry validation, edition or deletion triggers events", () => {
     const fnOnRepeater = jest.fn();
+    const fnClickOnRepeater = jest.fn();
     repeaterOk.on("update", fnOnRepeater);
+    repeaterOk.on("click", fnClickOnRepeater);
 
     const otherSheet = server.openView(sheet.id(), sheet.getSheetId(), {});
     const repeaterOkOther = otherSheet.get("rep2") as ComponentMock;
@@ -610,6 +615,8 @@ describe("Repeaters", () => {
     repeaterOkOther.on("update", fnOnRepeaterOther);
 
     sheet.repeaterClickOnAdd(repeaterOk.realId());
+
+    expect(fnClickOnRepeater).toHaveBeenCalledTimes(1);
 
     const values = repeaterOk.value() as LetsRole.RepeaterValue;
     const keys = Object.keys(values!);
@@ -624,6 +631,7 @@ describe("Repeaters", () => {
     sheet.repeaterClickOnDone(entryId);
 
     expect(fnOnRepeater).toHaveBeenCalledTimes(1);
+    expect(fnClickOnRepeater).toHaveBeenCalledTimes(2);
     expect(fnOnRepeaterOther).toHaveBeenCalledTimes(1);
     expect(repeaterOk.value()).toEqual({
       [keys[0]]: {
@@ -642,7 +650,12 @@ describe("Repeaters", () => {
     expect(() => sheet.repeaterClickOnDone(entryId)).toThrow();
     expect(() => sheet.repeaterClickOnRemove(entryId)).toThrow();
 
+    expect(fnClickOnRepeater).toHaveBeenCalledTimes(2);
+
     sheet.repeaterClickOnEdit(entryId);
+
+    expect(fnClickOnRepeater).toHaveBeenCalledTimes(3);
+
     otherSheet.repeaterClickOnEdit(entryId);
 
     input = repeaterOk.find(keys[0]).find("input");
@@ -670,6 +683,7 @@ describe("Repeaters", () => {
 
     sheet.repeaterClickOnRemove(entryId);
     expect(fnOnRepeater).toHaveBeenCalledTimes(1);
+    expect(fnClickOnRepeater).toHaveBeenCalledTimes(4);
     expect(fnOnRepeaterOther).toHaveBeenCalledTimes(1);
     expect(repeaterOk.value()).toEqual({});
   });
