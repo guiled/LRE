@@ -41,6 +41,12 @@ beforeAll(() => {
             className: "TextInput",
             name: "name",
           },
+          {
+            id: "chc",
+            className: "Choice",
+            name: "choice",
+            tableId: "tbl",
+          },
         ],
       },
       {
@@ -55,6 +61,22 @@ beforeAll(() => {
         ],
       },
     ],
+    tables: {
+      tbl: [
+        {
+          id: "1",
+          name: "test",
+        },
+        {
+          id: "2",
+          name: "test2",
+        },
+        {
+          id: "3",
+          name: "test3",
+        },
+      ],
+    },
   });
   initLetsRole(server);
   global.lre = new LRE(modeHandlerMock);
@@ -118,6 +140,27 @@ describe("Repeater events", () => {
     handler.mockClear();
     values["1"].name = "test1";
     rawRepeater.value({ ...values });
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  test("Initedit event is correctly launched for new entries", () => {
+    const handler = jest.fn();
+    repeater.on("initedit", handler);
+    expect(handler).toHaveBeenCalledTimes(0);
+    rawSheet.repeaterClickOnAdd(repeater.id()!);
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  test("Initedit event is correctly launched for existing entries", () => {
+    const handler = jest.fn();
+    repeater.on("initedit", handler);
+    repeater.value({
+      "1": {
+        name: "test",
+      },
+    });
+    expect(handler).toHaveBeenCalledTimes(0);
+    rawSheet.repeaterClickOnEdit(repeater.id()! + "." + "1");
     expect(handler).toHaveBeenCalledTimes(1);
   });
 });
