@@ -124,6 +124,15 @@ describe("ComponentMock behavior", () => {
     expect(cb).not.toHaveBeenCalled();
   });
 
+  test("click and change bubbling behavior", () => {
+    const cb = jest.fn();
+    componentContainer.on("click", cb);
+    componentSubLabel.trigger("click");
+    expect(cb).toHaveBeenCalledTimes(1);
+    sheet.componentChangedManually(componentSubLabel.id()!, 42);
+    expect(cb).toHaveBeenCalledTimes(1);
+  });
+
   test("value changed events", () => {
     const cbUpdate = jest.fn();
     const cbChange = jest.fn();
@@ -198,13 +207,11 @@ describe("ComponentMock behavior", () => {
     expect(componentContainer.hasClass("toto")).toBeFalsy();
     componentContainer.addClass("toto");
     componentContainer.addClass("toto");
-    expect(componentContainer.getClasses().reduce(countClass("toto"), 0)).toBe(
-      2,
-    );
+    let classes = componentContainer.getClasses();
+    expect(classes.reduce(countClass("toto"), 0)).toBe(2);
     componentContainer.removeClass("toto");
-    expect(componentContainer.getClasses().reduce(countClass("toto"), 0)).toBe(
-      0,
-    );
+    classes = componentContainer.getClasses();
+    expect(classes.reduce(countClass("toto"), 0)).toBe(0);
   });
 
   test("hide/show behavior", () => {
@@ -351,6 +358,207 @@ describe("FailingComponent behavior", () => {
 
   test("getType behavior", () => {
     expect(failingComponent.getType()).toBe("_Unknown_");
+  });
+});
+
+describe("ComponentMock event bubbling behavior", () => {
+  let sheet: ViewMock;
+  let server: ServerMock;
+  let componentContainer: ComponentMock;
+  let componentSub: ComponentMock;
+  let componentLabel: ComponentMock;
+  const system: LetsRoleMock.SystemDefinitions = {
+    views: [
+      {
+        id: "main",
+        name: "main",
+        className: "View",
+        children: [
+          {
+            id: "container",
+            name: "ah",
+            className: "Container",
+            children: [
+              {
+                id: "sub",
+                name: "ah",
+                className: "Container",
+                classes: "classOnSub",
+                children: [
+                  {
+                    id: "label",
+                    name: "oh",
+                    className: "Label",
+                    classes: "classOnLabel",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  beforeEach(() => {
+    server = new ServerMock(system);
+    sheet = server.openView("main", "123", {});
+    componentContainer = sheet.get("container") as ComponentMock;
+    componentSub = sheet.get("sub") as ComponentMock;
+    componentLabel = sheet.get("label") as ComponentMock;
+  });
+
+  test("delegated click events are bubbled in the good order", () => {
+    const clickContainer = jest.fn();
+    const clickSub = jest.fn();
+    const clickLabel = jest.fn();
+
+    componentContainer.on("click", clickContainer);
+    componentSub.on("click", clickSub);
+    componentLabel.on("click", clickLabel);
+
+    componentLabel.trigger("click");
+    expect(clickContainer).toHaveBeenCalledTimes(1);
+    expect(clickSub).toHaveBeenCalledTimes(1);
+    expect(clickLabel).toHaveBeenCalledTimes(1);
+    expect(clickLabel.mock.invocationCallOrder[0]).toBeLessThan(
+      clickSub.mock.invocationCallOrder[0],
+    );
+    expect(clickSub.mock.invocationCallOrder[0]).toBeLessThan(
+      clickContainer.mock.invocationCallOrder[0],
+    );
+    jest.clearAllMocks();
+
+    componentSub.trigger("click");
+    expect(clickContainer).toHaveBeenCalledTimes(1);
+    expect(clickSub).toHaveBeenCalledTimes(1);
+    expect(clickLabel).toHaveBeenCalledTimes(0);
+    expect(clickSub.mock.invocationCallOrder[0]).toBeLessThan(
+      clickContainer.mock.invocationCallOrder[0],
+    );
+  });
+
+  test("Events (direct or delegated) are launched in order of declaration", () => {
+    const clickContainer = jest.fn();
+    const clickDelegated = jest.fn();
+    const clickDirect = jest.fn();
+
+    componentContainer.on("click", ".classOnLabel", clickDelegated);
+    componentLabel.on("click", clickDirect);
+    componentContainer.on("click", clickContainer);
+
+    componentLabel.trigger("click");
+    expect(clickContainer).toHaveBeenCalledTimes(1);
+    expect(clickDirect).toHaveBeenCalledTimes(1);
+    expect(clickDelegated).toHaveBeenCalledTimes(1);
+    expect(clickDirect.mock.invocationCallOrder[0]).toBeLessThan(
+      clickDelegated.mock.invocationCallOrder[0],
+    );
+    expect(clickDelegated.mock.invocationCallOrder[0]).toBeLessThan(
+      clickContainer.mock.invocationCallOrder[0],
+    );
+  });
+
+  test("Complete event test sequence", () => {
+    const clickContainer = jest.fn();
+    const clickSub = jest.fn();
+    const clickLabel = jest.fn();
+
+    componentContainer.on("click", clickContainer);
+    componentSub.on("click", clickSub);
+    componentLabel.on("click", clickLabel);
+
+    const clickLabelDelegatedByIdOnContainer = jest.fn();
+    const clickLabelDelegatedByIdOnSub = jest.fn();
+
+    componentContainer.on("click", "label", clickLabelDelegatedByIdOnContainer);
+    componentSub.on("click", "label", clickLabelDelegatedByIdOnSub);
+
+    const clickLabelDelegatedByClassOnContainer = jest.fn();
+    const clickLabelDelegatedByClassOnSub = jest.fn();
+
+    componentContainer.on(
+      "click",
+      ".classOnLabel",
+      clickLabelDelegatedByClassOnContainer,
+    );
+    componentSub.on("click", ".classOnLabel", clickLabelDelegatedByClassOnSub);
+
+    const clickSubDelegatedByClassOnContainer = jest.fn();
+    const clickSubDelegatedByIdOnContainer = jest.fn();
+
+    componentContainer.on(
+      "click",
+      ".classOnSub",
+      clickSubDelegatedByClassOnContainer,
+    );
+    componentContainer.on("click", "sub", clickSubDelegatedByIdOnContainer);
+
+    componentContainer.trigger("click");
+    expect(clickContainer).toHaveBeenCalledTimes(1);
+    expect(clickSub).toHaveBeenCalledTimes(0);
+    expect(clickLabel).toHaveBeenCalledTimes(0);
+    expect(clickLabelDelegatedByIdOnContainer).toHaveBeenCalledTimes(0);
+    expect(clickLabelDelegatedByIdOnSub).toHaveBeenCalledTimes(0);
+    expect(clickLabelDelegatedByClassOnContainer).toHaveBeenCalledTimes(0);
+    expect(clickLabelDelegatedByClassOnSub).toHaveBeenCalledTimes(0);
+    expect(clickSubDelegatedByClassOnContainer).toHaveBeenCalledTimes(0);
+    expect(clickSubDelegatedByIdOnContainer).toHaveBeenCalledTimes(0);
+
+    jest.clearAllMocks();
+
+    componentSub.trigger("click");
+    expect(clickContainer).toHaveBeenCalledTimes(1);
+    expect(clickSub).toHaveBeenCalledTimes(1);
+    expect(clickLabel).toHaveBeenCalledTimes(0);
+    expect(clickLabelDelegatedByIdOnContainer).toHaveBeenCalledTimes(0);
+    expect(clickLabelDelegatedByIdOnSub).toHaveBeenCalledTimes(0);
+    expect(clickLabelDelegatedByClassOnContainer).toHaveBeenCalledTimes(0);
+    expect(clickLabelDelegatedByClassOnSub).toHaveBeenCalledTimes(0);
+    expect(clickSubDelegatedByClassOnContainer).toHaveBeenCalledTimes(1);
+    expect(clickSubDelegatedByIdOnContainer).toHaveBeenCalledTimes(1);
+
+    expect(clickSub.mock.invocationCallOrder[0]).toBeLessThan(
+      clickContainer.mock.invocationCallOrder[0],
+    );
+    expect(clickContainer.mock.invocationCallOrder[0]).toBeLessThan(
+      clickSubDelegatedByClassOnContainer.mock.invocationCallOrder[0],
+    );
+    expect(
+      clickSubDelegatedByClassOnContainer.mock.invocationCallOrder[0],
+    ).toBeLessThan(
+      clickSubDelegatedByIdOnContainer.mock.invocationCallOrder[0],
+    );
+
+    jest.clearAllMocks();
+    componentLabel.trigger("click");
+    expect(clickContainer).toHaveBeenCalledTimes(1);
+    expect(clickSub).toHaveBeenCalledTimes(1);
+    expect(clickLabel).toHaveBeenCalledTimes(1);
+    expect(clickLabelDelegatedByIdOnContainer).toHaveBeenCalledTimes(1);
+    expect(clickLabelDelegatedByIdOnSub).toHaveBeenCalledTimes(1);
+    expect(clickLabelDelegatedByClassOnContainer).toHaveBeenCalledTimes(1);
+    expect(clickLabelDelegatedByClassOnSub).toHaveBeenCalledTimes(1);
+    expect(clickSubDelegatedByClassOnContainer).toHaveBeenCalledTimes(0);
+    expect(clickSubDelegatedByIdOnContainer).toHaveBeenCalledTimes(0);
+
+    [
+      clickLabel,
+      clickSub,
+      clickLabelDelegatedByIdOnSub,
+      clickLabelDelegatedByClassOnSub,
+      clickContainer,
+      clickLabelDelegatedByIdOnContainer,
+      clickLabelDelegatedByClassOnContainer,
+    ].reduce((previousValue: jest.Mock | null, currentValue: jest.Mock) => {
+      if (previousValue) {
+        expect(currentValue.mock.invocationCallOrder[0]).toBeGreaterThan(
+          previousValue.mock.invocationCallOrder[0],
+        );
+      }
+
+      return currentValue;
+    }, null);
   });
 });
 

@@ -7,6 +7,8 @@ import { ServerMock } from "./server.mock";
 
 type EntryState = "read" | "write";
 
+const NOT_DELEGATED = "-";
+
 const charForId = "abcdefghijklmnopqrstuvwxyz";
 
 const CommonComponentClasses = ["widget"];
@@ -35,6 +37,12 @@ const ComponentClasses: Partial<
   _Unknown_: ["none"],
 };
 
+const bubblingEvents = ["click", "change"];
+type EventDef = {
+  selector: LetsRole.Selector;
+  callback: LetsRole.EventCallback;
+};
+
 export class ViewMock implements LetsRole.Sheet {
   #server: ServerMock;
   #definitionId: LetsRole.ViewID;
@@ -42,16 +50,7 @@ export class ViewMock implements LetsRole.Sheet {
   #properName: LetsRole.Name;
   #componentEvents: Record<
     LetsRole.ComponentID,
-    Partial<Record<LetsRole.EventType, LetsRole.EventCallback>>
-  > = {};
-  #componentDelegatedEvents: Record<
-    LetsRole.ComponentID,
-    Partial<
-      Record<
-        LetsRole.EventType,
-        Record<LetsRole.Selector, LetsRole.EventCallback>
-      >
-    >
+    Partial<Record<LetsRole.EventType, Array<EventDef>>>
   > = {};
   #realView: ViewMock | null = null;
   #idPrefix: LetsRole.ComponentID = "";
@@ -440,25 +439,24 @@ export class ViewMock implements LetsRole.Sheet {
     callback: LetsRole.EventCallback,
     delegation: false | LetsRole.Selector,
   ): void {
-    if (delegation) {
-      if (this.#componentDelegatedEvents[realId] === void 0) {
-        this.#componentDelegatedEvents[realId] = {};
-      }
-
-      if (this.#componentDelegatedEvents[realId][event] === void 0) {
-        this.#componentDelegatedEvents[realId][event] = {};
-      }
-
-      this.#componentDelegatedEvents[realId][event]![delegation] = callback;
-
-      return;
+    if (!delegation) {
+      delegation = NOT_DELEGATED;
     }
 
     if (this.#componentEvents[realId] === void 0) {
       this.#componentEvents[realId] = {};
     }
 
-    this.#componentEvents[realId][event] = callback;
+    if (this.#componentEvents[realId][event] === void 0) {
+      this.#componentEvents[realId][event] = [];
+    }
+
+    this.unsetEventToComponent(realId, event, delegation);
+
+    this.#componentEvents[realId][event]!.push({
+      selector: delegation,
+      callback,
+    });
   }
 
   unsetEventToComponent(
@@ -466,43 +464,42 @@ export class ViewMock implements LetsRole.Sheet {
     event: LetsRole.EventType,
     delegation: false | LetsRole.Selector,
   ): void {
-    if (delegation) {
-      if (this.#componentDelegatedEvents[realId] === void 0) {
-        return;
-      }
-
-      if (this.#componentDelegatedEvents[realId][event] === void 0) {
-        return;
-      }
-
-      delete this.#componentDelegatedEvents[realId][event]![delegation];
-
-      return;
+    if (!delegation) {
+      delegation = NOT_DELEGATED;
     }
 
     if (this.#componentEvents[realId] === void 0) {
       return;
     }
 
-    delete this.#componentEvents[realId][event];
+    if (this.#componentEvents[realId][event] === void 0) {
+      return;
+    }
+
+    this.#componentEvents[realId][event] = this.#componentEvents[realId][
+      event
+    ]!.filter((delegated) => delegated.selector !== delegation);
   }
 
   triggerComponentEvent(
     realId: LetsRole.ComponentID,
     event: LetsRole.EventType,
   ): void {
+    let cmp: ComponentMock | FailingComponent;
+
     if (event === "update" && realId.includes(".")) {
       if (this.isInsideEditingRepeaterEntry(realId)) {
-        const callback = this.#componentEvents[realId]?.[event];
+        const callback = this.#getDirectEvent(realId, event);
 
         if (callback) {
+          cmp ??= this.get(realId);
           callback(this.get(realId));
         }
       } else {
         const repRealId = this.getContainingRepeater(realId);
 
         if (repRealId) {
-          const callback = this.#componentEvents[repRealId]?.[event];
+          const callback = this.#getDirectEvent(repRealId, event);
 
           if (callback) {
             callback(this.get(repRealId));
@@ -510,39 +507,64 @@ export class ViewMock implements LetsRole.Sheet {
         }
       }
     } else {
-      const callback = this.#componentEvents[realId]?.[event];
-
-      if (callback) {
-        callback(this.get(realId));
-      }
+      this.#runDirectEvent(realId, event);
     }
 
-    if (!["click", "change"].includes(event)) return;
+    if (!bubblingEvents.includes(event)) return;
 
     // event delegation
     let parent: ComponentMock | FailingComponent = this.findParent(realId);
 
     while (parent.id()) {
-      const parentEvent =
-        this.#componentDelegatedEvents[parent.realId()]?.[event] || {};
+      const parentEvent = this.#getEvents(parent.realId(), event);
       const id = realId.substring(realId.lastIndexOf(".") + 1);
 
-      for (const selector in parentEvent) {
-        if (selector[0] === ".") {
-          const className = selector.substring(1);
+      parentEvent.forEach((eventDef) => {
+        if (id === eventDef.selector) {
+          cmp ??= this.get(realId);
+          eventDef.callback(cmp);
+        } else if (eventDef.selector[0] === ".") {
+          const className = eventDef.selector.substring(1);
 
           if (this.componentHasClass(realId, className)) {
-            parentEvent[selector](this.get(realId));
+            cmp ??= this.get(realId);
+            eventDef.callback(cmp);
           }
-        } else if (id === selector) {
-          parentEvent[selector](this.get(realId));
+        } else if (eventDef.selector === NOT_DELEGATED) {
+          eventDef.callback(parent);
         }
-      }
-
-      this.triggerComponentEvent(parent.realId(), event);
+      });
 
       parent = this.findParent(parent.id()!);
     }
+  }
+
+  #runDirectEvent(
+    realId: LetsRole.ComponentID,
+    event: LetsRole.EventType,
+  ): void {
+    const callback = this.#getDirectEvent(realId, event);
+
+    if (callback) {
+      callback(this.get(realId));
+    }
+  }
+
+  #getEvents(
+    realId: LetsRole.ComponentID,
+    event: LetsRole.EventType,
+  ): Array<EventDef> {
+    return this.#componentEvents[realId]?.[event] || [];
+  }
+
+  #getDirectEvent(
+    realId: LetsRole.ComponentID,
+    event: LetsRole.EventType,
+  ): LetsRole.EventCallback | null {
+    return (
+      this.#getEvents(realId, event).find((e) => e.selector === NOT_DELEGATED)
+        ?.callback || null
+    );
   }
 
   getContainingRepeater(
