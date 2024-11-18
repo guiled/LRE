@@ -351,6 +351,7 @@ export class FailingExistingComponent extends FailingComponent {
   }
 }
 
+// ts-unused-exports:disable-next-line
 export class FailingOuterExistingComponent extends FailingExistingComponent {
   constructor(sheet: ViewMock, realId: LetsRole.ComponentID) {
     super(sheet, realId);

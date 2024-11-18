@@ -3,6 +3,7 @@
  * https://jestjs.io/docs/configuration
  */
 
+// ts-unused-exports:disable-next-line
 export default {
   // All imported modules in your tests should be mocked automatically
   // automock: false,

@@ -12,8 +12,8 @@ import call from "./node/expression/call";
 import identifier from "./node/identifier";
 import assignment from "./node/expression/assignment";
 import member from "./node/expression/member";
-import binary from "./node/expression/binary";
 import parenthesis from "./node/expression/parenthesis";
+import or from "./node/expression/binary/or";
 
 class NoThrowStatement extends Visitor {
   #lastExceptionIdentifier(span: Span): Identifier {
@@ -63,7 +63,7 @@ class NoThrowStatement extends Visitor {
               span: handler.param.span,
               object: parenthesis({
                 span: handler.param.span,
-                expression: binary({
+                expression: or({
                   left: this.#lastExceptionIdentifier(handler.span),
                   right: call({
                     callee: identifier({
@@ -85,7 +85,6 @@ class NoThrowStatement extends Visitor {
                       },
                     ],
                   }),
-                  operator: "||",
                 }),
               }),
               property: identifier({

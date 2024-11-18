@@ -2,7 +2,8 @@ import { BinaryExpression, Expression } from "@swc/core";
 import and from "./binary/and";
 import call, { Call_Param } from "./call";
 
-export default function ({ span, callee }: Call_Param): BinaryExpression {
+// ts-unused-exports:disable-next-line
+export function protectedcall({ span, callee }: Call_Param): BinaryExpression {
   let protector: Expression;
 
   if (callee.type === "MemberExpression") {

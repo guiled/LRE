@@ -25,7 +25,7 @@ import call from "./node/expression/call";
 
 const ARGS = "_arg";
 
-export function hasPropWithValue(o: ObjectPattern): boolean {
+function hasPropWithValue(o: ObjectPattern): boolean {
   return !!o.properties.find((p: ObjectPatternProperty): boolean => {
     let obj: ObjectPatternProperty | Pattern = p;
 
@@ -53,7 +53,7 @@ export function hasPropWithValue(o: ObjectPattern): boolean {
   });
 }
 
-export function hasArrayItemWithValue(a: ArrayPattern): boolean {
+function hasArrayItemWithValue(a: ArrayPattern): boolean {
   return !!a.elements.find((e): boolean => {
     return !!e && e.type === "AssignmentPattern";
   });

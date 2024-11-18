@@ -1,7 +1,7 @@
 // Thanks to https://github.com/jcalz  https://stackoverflow.com/a/76585028/762461
 class _ {}
 
-export type MixinFunction = {
+type MixinFunction = {
   <A1 extends any[], R1>(ctor1: Mixable<A1, R1>): new (...args: any) => R1;
   <A1 extends any[], R1, A2 extends any[], R2>(
     ctor1: Mixable<A1, R1>,

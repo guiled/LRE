@@ -94,6 +94,7 @@ class KeepInstanceOf extends Visitor {
   }
 }
 
+// ts-unused-exports:disable-next-line
 export default function keepInstanceOf() {
   return (program: Program) => new KeepInstanceOf().visitProgram(program);
 }
