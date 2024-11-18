@@ -16,7 +16,7 @@
     "colors": "^1.4.0",
     "cspell": "^8.8.4",
     "diff": "^7.0.0",
-    "esbuild": "^0.21.5",
+    "esbuild": "^0.24.0",
     "eslint": "^9.4.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
@@ -32,12 +32,15 @@
     "typescript": "^5.1.3",
     "typescript-eslint": "^8.12.2"
   },
+  "config": {
+    "outLREFile": "build/lre.js"
+  },
   "scripts": {
     "test": "jest",
     "testswc": "npx tsx test.ts",
-    "count_output": "echo \"Number of lines in build/lre.js $(cat build/lre.js | wc -l) ($(cat build/lre.js | wc -c) caracters)\"",
-    "build": "f() { tsx build.ts $@ && yarn count_output; }; f",
-    "buildcopy": "f() { tsx build.ts $@ && (cat build/lre.js | pbcopy); }; f",
+    "count_output": "echo \"Number of lines in $npm_package_config_outLREFile $(cat $npm_package_config_outLREFile | wc -l) ($(cat $npm_package_config_outLREFile | wc -c) caracters)\"",
+    "build": "f() { tsx build.ts $npm_package_config_outLREFile $@ && node --check $npm_package_config_outLREFile && yarn count_output; }; f",
+    "buildcopy": "f() { tsx build.ts $npm_package_config_outLREFile $@  && node --check $npm_package_config_outLREFile && (cat$npm_package_config_outLREFile | pbcopy); }; f",
     "cspell": "npx cspell --no-progress --no-summary --gitignore .",
     "testsilent": "jest --reporters jest-silent-reporter --collectCoverage=false",
     "tscheck": "tsc --noEmit",

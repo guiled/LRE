@@ -5,6 +5,7 @@ import fs from "fs";
 import { formatLRECode } from "./builder/formatLRECode";
 import { assembleLRECode } from "./builder/assemble";
 
+const OUTPUT_FILE: string = process.argv[2] || "build/lre.js";
 const DEBUG_BUILD: boolean = process.argv.includes("debug");
 
 const swcPlugin: esbuild.Plugin = {
@@ -33,7 +34,7 @@ esbuild
     bundle: true,
     minify: false,
     platform: "neutral",
-    outfile: "build/lre.tmp.0.js",
+    outfile: OUTPUT_FILE + ".0.tmp.js",
     plugins: [swcPlugin],
     format: "iife",
     define: {
@@ -45,12 +46,12 @@ esbuild
       delete noVoid0Plugin.jsc.minify;
     }
 
-    return transformFile("build/lre.tmp.0.js", noVoid0Plugin);
+    return transformFile(OUTPUT_FILE + ".0.tmp.js", noVoid0Plugin);
   })
   .then((result) => result.code.trim())
   .then((code) => {
     code = assembleLRECode(code);
-    fs.writeFileSync("build/lre.tmp.1.js", code);
+    fs.writeFileSync(OUTPUT_FILE + ".1.tmp.js", code);
     return code;
   })
   .then((code) => {
@@ -59,7 +60,7 @@ esbuild
     }
 
     return fs.writeFileSync(
-      "build/lre.js",
+      OUTPUT_FILE,
       `//region LRE ${process.env.npm_package_version} ${Date.now()}
 ${code}
 //endregion LRE ${process.env.npm_package_version}
