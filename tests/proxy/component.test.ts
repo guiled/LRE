@@ -14,7 +14,7 @@ const initValue = "42";
 const initClasses = ["class1", "class2"];
 const initText = "42";
 
-beforeAll(() => {
+beforeEach(() => {
   server = new ServerMock({
     views: [
       {
