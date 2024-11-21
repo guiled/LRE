@@ -19,7 +19,7 @@ let server: ServerMock;
 describe("Component factory", () => {
   let rawCmp: LetsRole.Component, sheet: Sheet;
   let rawSheet: LetsRole.Sheet;
-  beforeAll(() => {
+  beforeEach(() => {
     server = new ServerMock({
       views: [
         {

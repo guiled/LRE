@@ -150,7 +150,7 @@ const newCmp = jest.fn((id: string): ComponentSearchResult => {
   return cmp;
 });
 
-beforeAll(() => {
+beforeEach(() => {
   cache = new ComponentCache(modeHandlerMock, newCmp);
 });
 

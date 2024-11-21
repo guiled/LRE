@@ -13,7 +13,7 @@ let repeater: Repeater;
 let server: ServerMock;
 let rawSheet: ViewMock;
 let sheet: Sheet;
-beforeAll(() => {
+beforeEach(() => {
   server = new ServerMock({
     views: [
       {

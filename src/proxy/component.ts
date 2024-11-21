@@ -25,12 +25,12 @@ class ComponentProxy
   #initVirtualComponent(cmp: LetsRole.Component): LetsRole.Component {
     const id = cmp.id()!;
     const context = this.#getVirtualContext();
-    let hidden: boolean | undefined;
 
     context.sheetData[id] = cmp.value();
     context.cmpClasses[id] = cmp.getClasses();
     context.cmpTexts[id] = cmp.text();
     context.virtualValues[id] = cmp.virtualValue();
+    context.visible[id] = cmp.visible?.() ?? true;
 
     const cmpProxy = {
       ...cmp,
@@ -41,11 +41,11 @@ class ComponentProxy
       on: disabledMethod,
       off: disabledMethod,
       hide: () => {
-        hidden = true;
+        context.visible[id] = false;
         context.cmpClasses[id].push("d-none");
       },
       show: () => {
-        hidden = false;
+        context.visible[id] = true;
         const idx = context.cmpClasses[id].indexOf("d-none");
         context.cmpClasses[id].splice(idx, 1);
       },
@@ -86,8 +86,7 @@ class ComponentProxy
 
         return context.cmpTexts[id];
       },
-      visible: (): boolean =>
-        hidden === void 0 ? this._realDest.visible() : !hidden,
+      visible: (): boolean => !!context.visible[id],
       setChoices: disabledMethod,
       setToolTip: disabledMethod,
       value: (newValue?: any) => {

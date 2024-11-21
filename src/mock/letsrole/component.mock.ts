@@ -92,32 +92,46 @@ export class ComponentMock<
   }
 
   hide(): void {
-    this.addClass("d-none");
+    this.#addClass("d-none");
   }
 
   show(): void {
-    this.removeClass("d-none");
+    this.#removeClass("d-none");
+  }
+
+  #addClass(className: LetsRole.ClassName): void {
+    this.#sheet.addComponentClass(this.realId(), className);
   }
 
   addClass(className: LetsRole.ClassName): void {
-    this.#sheet.addComponentClass(this.realId(), className);
+    this.#addClass(className);
   }
-  removeClass(className: LetsRole.ClassName): void {
+
+  #removeClass(className: LetsRole.ClassName): void {
     this.#sheet.removeComponentClass(this.realId(), className);
   }
+
+  removeClass(className: LetsRole.ClassName): void {
+    this.#removeClass(className);
+  }
+
   getClasses(): LetsRole.ClassName[] {
     return this.#sheet.getComponentClass(this.realId());
   }
 
-  hasClass(className: LetsRole.ClassName): boolean {
+  #hasClass(className: LetsRole.ClassName): boolean {
     return this.#sheet.componentHasClass(this.realId(), className);
   }
 
+  hasClass(className: LetsRole.ClassName): boolean {
+    return this.#hasClass(className);
+  }
+
   toggleClass(className: LetsRole.ClassName): void {
-    if (this.hasClass(className)) {
-      this.removeClass(className);
+    if (this.#hasClass(className)) {
+      this.#removeClass(className);
     } else {
-      this.addClass(className);
+      this.#addClass(className);
     }
   }
 
@@ -193,7 +207,7 @@ export class ComponentMock<
   }
 
   visible(): boolean {
-    return !this.hasClass("d-none");
+    return !this.#hasClass("d-none");
   }
 
   setChoices(_choices: LetsRole.Choices): void {

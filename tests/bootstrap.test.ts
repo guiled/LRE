@@ -3,7 +3,7 @@ import { LRE } from "../src/lre";
 import { ServerMock } from "../src/mock/letsrole/server.mock";
 import { initLetsRole } from "../src/mock/letsrole/letsrole.mock";
 
-beforeAll(() => {
+beforeEach(() => {
   initLetsRole(new ServerMock({}));
   global.lre = null as unknown as LRE;
   global.lastException = null;

@@ -6,6 +6,7 @@ export type SheetContext = {
   sheetData: LetsRole.ViewData;
   virtualValues: LetsRole.ViewData;
   cmpTexts: Record<string, string | null>;
+  visible: Record<string, boolean>;
 };
 
 export class SheetProxy
@@ -23,6 +24,7 @@ export class SheetProxy
         cmpClasses: {},
         cmpTexts: {},
         virtualValues: {},
+        visible: {},
       });
 
       const getContext = (): SheetContext => {

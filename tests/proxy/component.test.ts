@@ -66,6 +66,7 @@ const initTestMocks = (
     cmpTexts: {},
     sheetData: {},
     virtualValues: {},
+    visible: {},
   }));
 
   if (isVirtual) {
@@ -136,7 +137,7 @@ describe("Real mode", () => {
 describe("Virtual mode", () => {
   let subject: ComponentProxy;
 
-  beforeAll(() => {
+  beforeEach(() => {
     subject = initTestMocks(true);
   });
 
@@ -147,6 +148,7 @@ describe("Virtual mode", () => {
   test.each(methodsWithNoParamsBis)(
     "Proxy call %s doesn't call raw method",
     (method) => {
+      subject.getDest();
       jest.spyOn(raw, method as any);
       /* @ts-expect-error Dynamic calls */
       subject[method].call(subject);
@@ -161,6 +163,7 @@ describe("Virtual mode", () => {
   test.each(methodsWithParamsBis)(
     "Proxy call %s doesn't call raw method",
     (method, args) => {
+      subject.getDest();
       jest.spyOn(raw, method as any);
       /* @ts-expect-error Dynamic calls */
       subject[method].apply(subject, args);
