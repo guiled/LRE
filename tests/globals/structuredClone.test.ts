@@ -21,6 +21,11 @@ describe("structuredClone polyfill test", () => {
     });
   });
 
+  test("structuredClone handles null and undefined", () => {
+    expect(lreStructuredClone(null)).toBeNull();
+    expect(lreStructuredClone(undefined)).toBeUndefined();
+  });
+
   test("structuredClone is recursive", () => {
     const obj = {
       a: [1, 2],
