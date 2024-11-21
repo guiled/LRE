@@ -1,11 +1,5 @@
 const isObj = (val: unknown): val is Record<string, unknown> => {
-  if (typeof val !== "object") return false;
-
-  if (Array.isArray(val)) return false;
-
-  if (Object.getOwnPropertySymbols(val).length > 0) return false;
-
-  return true;
+  return val !== null && typeof val === "object" && !Array.isArray(val);
 };
 
 export const structuredClone = function <T>(val: T): T {
