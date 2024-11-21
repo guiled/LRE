@@ -359,4 +359,9 @@ declare type ComponentValueWithData<T = LetsRole.ComponentValue> = {
   data: LetsRole.ViewData;
 };
 
-declare type DynamicSetValue<T> = T | IDataProvider | ((...args: any[]) => T);
+declare type DynamicSetValue<T> =
+  | T
+  | IDataProvider
+  | IComponent
+  | IGroup
+  | ((...args: any[]) => T);

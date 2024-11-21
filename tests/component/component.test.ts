@@ -501,6 +501,18 @@ describe("Component visible setter", () => {
     expect(cmp.hide).toHaveBeenCalledTimes(0);
     expect(cmp.show).toHaveBeenCalledTimes(0);
   });
+
+  test("Visible set with a component", () => {
+    jest.spyOn(cmp, "hide");
+    jest.spyOn(cmp, "show");
+
+    const chk = sheet.get("chk")!;
+    chk.value(false);
+
+    expect(cmp.visible()).toBeTruthy();
+    cmp.visible(chk);
+    expect(cmp.visible()).toBeFalsy();
+  });
 });
 
 describe("Component simple event handling", () => {

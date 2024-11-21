@@ -353,6 +353,7 @@ export class Component<
   }
 
   @dynamicSetter
+  @extractDataProviders()
   visible(newValue?: DynamicSetValue<boolean>): boolean {
     if (arguments.length > 0) {
       if (newValue) {
