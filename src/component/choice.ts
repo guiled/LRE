@@ -238,9 +238,12 @@ export class Choice<
     }
 
     if (Array.isArray(tableOrCb)) {
-      const choices: LetsRole.Choices = {};
+      const choices: ChoicesWithData = {};
       tableOrCb.forEach((row) => {
-        choices[row.id] = row[label];
+        choices[row.id] = {
+          value: row[label],
+          data: row,
+        };
       });
       this.setChoices(choices);
     } else if (

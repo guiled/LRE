@@ -215,6 +215,40 @@ describe("choice populate", () => {
       b: "3",
       lbl: "theChoiceB",
     });
+    ch.value("b");
+    expect(ch.valueData()).toStrictEqual({
+      id: "b",
+      a: "2",
+      b: "3",
+      lbl: "theChoiceB",
+    });
+    expect(ch.row()).toStrictEqual({
+      id: "b",
+      a: "2",
+      b: "3",
+      lbl: "theChoiceB",
+    });
+  });
+
+  test("populate with array", () => {
+    const ch = new Choice(rawSheet.get("chA"), sheet, "chA");
+    ch.populate(
+      [
+        { id: "a", lbl: "theChoiceA", a: "1", b: "2" },
+        { id: "b", lbl: "theChoiceB", a: "2", b: "3" },
+      ],
+      "lbl",
+    );
+    expect(ch.getChoices()).toStrictEqual({
+      a: "theChoiceA",
+      b: "theChoiceB",
+    });
+    expect(ch.getChoiceData("b")).toStrictEqual({
+      id: "b",
+      lbl: "theChoiceB",
+      a: "2",
+      b: "3",
+    });
   });
 
   test("populate with table object", () => {
