@@ -51,20 +51,21 @@ function getPaddedCodeWithUselessCode(
     } else {
       let randomPartIndex: number;
       let cnt = 0;
+      const maxTries = 10;
 
       // this part prevent to add a comment like /**/ just after a / (division operator)
       do {
         randomPartIndex = Math.floor(Math.random() * tmpResult.length);
         cnt++;
-      } while (cnt < 10 && tmpResult[randomPartIndex].match(/\//));
+      } while (cnt < maxTries && tmpResult[randomPartIndex].match(/\//));
 
-      if (cnt >= 10) {
+      if (cnt >= maxTries) {
         tmpResult[randomPartIndex] += " ";
         remainingLength--;
       }
 
       if (remainingLength === 4) {
-        tmpResult[Math.floor(Math.random() * tmpResult.length)] += "/**/";
+        tmpResult[randomPartIndex] += "/**/";
       } else {
         const uselessCode =
           "/*" +
@@ -72,7 +73,7 @@ function getPaddedCodeWithUselessCode(
             .toString(36)
             .substring(2, 2 + Math.min(5, remainingLength - 4)) +
           "*/";
-        tmpResult[Math.floor(Math.random() * tmpResult.length)] += uselessCode;
+        tmpResult[randomPartIndex] += uselessCode;
       }
     }
 
