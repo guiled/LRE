@@ -24,11 +24,10 @@ declare namespace LetsRole {
   export type ClassSelector = `.${ClassName}`;
 
   export type BaseComponentValue = undefined | null | number | string | boolean;
-  export type RepeaterValue =
-    | {
-        [key: Index]: ViewData;
-      }
-    | undefined;
+  export type RepeaterDefinedValue = {
+    [key: Index]: ViewData;
+  };
+  export type RepeaterValue = RepeaterDefinedValue | undefined;
   export type ChoiceValue = string;
   export type ChoiceValues = Array<string>;
   export type MultiChoiceValue = Array<ChoiceValue>;

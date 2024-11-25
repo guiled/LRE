@@ -5,6 +5,7 @@ import { ComponentFactory } from "../../src/component/factory";
 import { Icon } from "../../src/component/icon";
 import { Label } from "../../src/component/label";
 import { MultiChoice } from "../../src/component/multichoice";
+import { Repeater } from "../../src/component/repeater";
 import { LRE } from "../../src/lre";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { Sheet } from "../../src/sheet";
@@ -192,6 +193,7 @@ describe("Component factory", () => {
         sheet as ComponentContainer<ComponentSearchResult>,
       ),
     ).toBeInstanceOf(Icon);
+
     const label = rawSheet.get("lbl");
     expect(
       ComponentFactory.create(
@@ -199,6 +201,15 @@ describe("Component factory", () => {
         sheet as ComponentContainer<ComponentSearchResult>,
       ),
     ).toBeInstanceOf(Label);
+
+    const rep = rawSheet.get("rep1");
+    expect(
+      ComponentFactory.create(
+        rep,
+        sheet as ComponentContainer<ComponentSearchResult>,
+      ),
+    ).toBeInstanceOf(Repeater);
+
     const container1 = rawSheet.get("widgetContainer");
     expect(
       ComponentFactory.create(

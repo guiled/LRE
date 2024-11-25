@@ -1,3 +1,8 @@
+import { DirectDataProvider } from "../dataprovider";
+import {
+  dynamicSetter,
+  extractDataProviders,
+} from "../globals/decorators/dynamicSetter";
 import { Component, REP_ID_SEP } from "./component";
 import { Entry } from "./entry";
 
@@ -13,6 +18,12 @@ type RepeaterEvents =
   | "entrychange";
 
 type DefinedRepeaterValue = Exclude<LetsRole.RepeaterValue, undefined>;
+
+type RepeaterEachCallback = (
+  entry: ComponentSearchResult,
+  data: LetsRole.ViewData,
+  entryId: LetsRole.Index,
+) => void;
 
 export class Repeater extends Component<
   LetsRole.RepeaterValue,
@@ -91,7 +102,7 @@ export class Repeater extends Component<
           entry.data("initialized", true);
           entry.data("saved", false);
           entry.data(
-            "children",
+            "_lreChildren",
             this.sheet()
               .knownChildren(entry)
               .map((c) => c.realId()),
@@ -109,7 +120,7 @@ export class Repeater extends Component<
       ) {
         entry.data("saved", false);
         entry.data(
-          "children",
+          "_lreChildren",
           this.sheet()
             .knownChildren(entry)
             .map((c) => c.realId()),
@@ -195,9 +206,9 @@ export class Repeater extends Component<
             entry.addClass("lre_initread");
           }
 
-          if (entry.hasData("children")) {
+          if (entry.hasData("_lreChildren")) {
             let oldChildren: Array<LetsRole.ComponentID> = entry.data(
-              "children",
+              "_lreChildren",
             ) as Array<LetsRole.ComponentID>;
 
             if (!Array.isArray(oldChildren)) {
@@ -213,6 +224,7 @@ export class Repeater extends Component<
                 this.sheet().forget(realId);
               }
             });
+            entry.data("_lreChildren", addedChildren);
           }
         }
       },
@@ -245,6 +257,132 @@ export class Repeater extends Component<
       this.realId() + REP_ID_SEP + id,
       silent,
     ) as ComponentSearchResult;
+  }
+
+  provider(): IDataProvider {
+    return new DirectDataProvider(
+      () => {
+        return this.value();
+      },
+      () => {
+        return this.valueData();
+      },
+    );
+  }
+
+  each(columnOrCb: RepeaterEachCallback): void;
+  each(columnOrCb: string, callback: RepeaterEachCallback): void;
+  each(
+    columnOrCb: string | RepeaterEachCallback,
+    cbOnColumn?: RepeaterEachCallback,
+  ): void {
+    let callback: RepeaterEachCallback, cmpId: LetsRole.ComponentID;
+
+    if (typeof columnOrCb === "function") {
+      callback = columnOrCb;
+      cmpId = "";
+    } else if (
+      typeof columnOrCb === "string" &&
+      typeof cbOnColumn === "function"
+    ) {
+      callback = cbOnColumn;
+      cmpId = REP_ID_SEP + columnOrCb;
+    }
+
+    const val = this.value();
+
+    if (val === null || (!Array.isArray(val) && typeof val !== "object")) {
+      return;
+    }
+
+    each(val, (entryData: LetsRole.ViewData, entryId: LetsRole.Index) =>
+      callback(this.find(entryId + cmpId), entryData, entryId),
+    );
+  }
+
+  map(
+    callback: (d: LetsRole.ViewData, k: LetsRole.Index) => LetsRole.ViewData,
+  ): LetsRole.RepeaterDefinedValue {
+    const val = this.value();
+    const result: LetsRole.RepeaterValue = {};
+    each(val || {}, function (d: LetsRole.ViewData, k: LetsRole.Index) {
+      result[k] = callback(d, k);
+    });
+    return result;
+  }
+
+  setSorter(
+    cmp: ComponentSearchResult | IGroup | string,
+    column: string,
+  ): void {
+    if (typeof cmp === "string") {
+      cmp = this.sheet().get(cmp);
+    }
+
+    if (!cmp) return;
+
+    cmp.addClass("clickable");
+    (cmp as Component).on("click:_lreSetSorter", (cmp: Component) => {
+      const order = (cmp.data("order") || "desc") === "desc" ? "asc" : "desc";
+      cmp.data("order", order, true);
+      let inf = -1,
+        sup = 1;
+
+      if (order === "desc") {
+        inf = 1;
+        sup = -1;
+      }
+
+      const values = this.value() || {};
+      const keys = Object.keys(values);
+
+      if (keys.length === 0) {
+        return;
+      }
+
+      const getVal = (key: LetsRole.Index): LetsRole.ComponentValue => {
+        if (
+          values[key] &&
+          Object.prototype.hasOwnProperty.call(values[key], column)
+        ) {
+          return values[key][column];
+        } else {
+          const col = this.find(key + "." + column, true);
+
+          if (col && col.id() && col.exists()) {
+            return col.value();
+          }
+        }
+
+        return "";
+      };
+
+      const sorter = function (
+        key1: LetsRole.Index,
+        key2: LetsRole.Index,
+      ): number {
+        const val1 = getVal(key1) as string;
+        const val2 = getVal(key2) as string;
+
+        return val1 < val2 ? inf : val1 > val2 ? sup : 0;
+      };
+
+      const newValues: LetsRole.ViewData = {};
+      keys.sort(sorter).forEach(function (k) {
+        newValues[k] = values[k];
+      });
+      this.value(newValues);
+    });
+  }
+
+  @dynamicSetter
+  @extractDataProviders()
+  readOnly(readOnly: DynamicSetValue<boolean> = true): boolean | void {
+    if (readOnly) {
+      this.addClass("no-add").addClass("no-edit");
+    } else {
+      this.removeClass("no-add").removeClass("no-edit");
+    }
   }
 
   // add() {
