@@ -19,6 +19,10 @@
     {
       "rule": "@stylistic/padding-line-between-statements",
       "severity": "off"
+    },
+    {
+      "rule": "no-empty",
+      "severity": "off"
     }
   ]
 }
