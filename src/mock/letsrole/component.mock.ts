@@ -150,6 +150,8 @@ export class ComponentMock<
         this.#definitions.className === "Textarea"
       ) {
         defaultValue = (this.#definitions.defaultValue || "") as T;
+      } else if (this.#definitions.className === "Checkbox") {
+        defaultValue = false as T;
       }
 
       return this.#sheet.loadComponentValue(this.#realId, defaultValue) as T;

@@ -909,3 +909,76 @@ describe("Repeaters", () => {
     "If an edit view contains a choice with a list A of choices, editing an entry with a choice from list B will empty the value of the choice !!!",
   );
 });
+
+describe("Checkbox mock", () => {
+  let server: ServerMock;
+  let sheet: ViewMock;
+  let rawCheckbox: LetsRole.Component;
+  beforeEach(() => {
+    server = new ServerMock({
+      views: [
+        {
+          id: "main",
+          className: "View",
+          children: [
+            {
+              id: "checkbox",
+              className: "Checkbox",
+            },
+          ],
+        },
+      ],
+    });
+    sheet = server.openView("main", "123", {});
+    rawCheckbox = sheet.get("checkbox");
+  });
+
+  test("Checkbox default value is false", () => {
+    expect(rawCheckbox.value()).toStrictEqual(false);
+    sheet.setData({
+      checkbox: true,
+    });
+    expect(rawCheckbox.value()).toStrictEqual(true);
+  });
+
+  test("Checkbox change its value when clicked", () => {
+    expect(rawCheckbox.value()).toStrictEqual(false);
+    sheet.triggerComponentEvent("checkbox", "click");
+    expect(rawCheckbox.value()).toStrictEqual(true);
+    sheet.triggerComponentEvent("checkbox", "click");
+    expect(rawCheckbox.value()).toStrictEqual(false);
+  });
+
+  test("Checkbox click event sequence", () => {
+    let clickValue: boolean | null = null;
+    let updateValue: boolean | null = null;
+    const click = jest.fn((chk) => {
+      clickValue = chk.value();
+    });
+    const update = jest.fn((chk) => {
+      updateValue = chk.value();
+    });
+    rawCheckbox.on("click", click);
+    rawCheckbox.on("update", update);
+    expect(rawCheckbox.value()).toStrictEqual(false);
+    sheet.triggerComponentEvent("checkbox", "click");
+    expect(rawCheckbox.value()).toStrictEqual(true);
+    expect(click).toHaveBeenCalledTimes(1);
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(click.mock.invocationCallOrder[0]).toBeLessThan(
+      update.mock.invocationCallOrder[0],
+    );
+    expect(clickValue).toStrictEqual(false);
+    expect(updateValue).toStrictEqual(true);
+
+    sheet.triggerComponentEvent("checkbox", "click");
+    expect(rawCheckbox.value()).toStrictEqual(false);
+    expect(clickValue).toStrictEqual(true);
+    expect(updateValue).toStrictEqual(false);
+    expect(click).toHaveBeenCalledTimes(2);
+    expect(update).toHaveBeenCalledTimes(2);
+    expect(click.mock.invocationCallOrder[1]).toBeLessThan(
+      update.mock.invocationCallOrder[1],
+    );
+  });
+});

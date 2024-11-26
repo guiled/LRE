@@ -508,6 +508,18 @@ export class ViewMock implements LetsRole.Sheet {
       }
     } else {
       this.#runDirectEvent(realId, event);
+
+      const defs = this.#findIdInDefinition(
+        this.#getDefinitions().children,
+        realId,
+      );
+
+      if (event === "click" && defs?.className === "Checkbox") {
+        const value = this.loadComponentValue(realId);
+        this.setData({
+          [realId]: !value,
+        });
+      }
     }
 
     if (!bubblingEvents.includes(event)) return;
