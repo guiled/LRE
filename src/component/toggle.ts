@@ -74,7 +74,7 @@ export class Toggle<
       });
 
       if (typeof newVal !== "undefined") {
-        this.#setTogglingValue.call(this, defaultValue);
+        this.#setTogglingValue.call(this, newVal);
       }
     }
 
