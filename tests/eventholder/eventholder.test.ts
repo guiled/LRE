@@ -14,6 +14,7 @@ class Dummy extends EventHolder<TestedEvents>() {
   constructor(
     protected _raw: LetsRole.Component,
     subRaw?: LetsRole.Component,
+    eventCanBeRan: (eventName: EventType<TestedEvents>) => boolean = () => true,
   ) {
     super(
       _raw.id()!,
@@ -44,6 +45,7 @@ class Dummy extends EventHolder<TestedEvents>() {
           }
         }
       },
+      eventCanBeRan,
     );
     this.__id = _raw.id()!;
   }
@@ -625,8 +627,28 @@ describe("Handle on change event trigger", () => {
 
   beforeEach(() => {
     rawCmp = vw.get("lbl") as ComponentMock;
-    rawCmp.value(1);
-    subject = new Dummy(rawCmp);
+    let val: LetsRole.ComponentValue = 1;
+    rawCmp.value(val);
+    subject = new Dummy(
+      rawCmp,
+      undefined,
+      (
+        eventName: EventType<TestedEvents>,
+        manuallyTriggered: boolean = false,
+      ) => {
+        if (eventName === "update") {
+          const newVal = rawCmp.value();
+          const result =
+            manuallyTriggered ||
+            (eventName === "update" &&
+              JSON.stringify(val) !== JSON.stringify(newVal));
+          val = newVal;
+          return result;
+        }
+
+        return true;
+      },
+    );
   });
 
   test("Update is triggered only when value changed", () => {

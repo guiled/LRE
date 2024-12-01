@@ -31,6 +31,11 @@ type EventPropagationLink = {
   events: Array<EventType<any>>;
 };
 
+type EventRunnableChecker<Events extends string> = (
+  eventName: EventType<Events>,
+  manuallyTriggered?: boolean,
+) => boolean;
+
 const excludedEventId: Array<EventType<any>> = [
   "eventhandler-added",
   "eventhandler-removed",
@@ -62,9 +67,10 @@ export const EventHolder = <
       >;
     }> = {};
     #canceledEvents: Array<EventType<AdditionalEvents>> = [];
-    #lastUpdateEventValue: LetsRole.ComponentValue = null;
+    // #lastUpdateEventValue: LetsRole.ComponentValue = null;
     #attachToRaw: AttachToRawCallback<AdditionalEvents> | undefined;
     #links: Array<EventPropagationLink> = [];
+    #eventCanBeRan: EventRunnableChecker<AdditionalEvents>;
 
     constructor(
       holderId: string,
@@ -72,6 +78,7 @@ export const EventHolder = <
       attachToRaw:
         | AttachToRawCallback<AdditionalEvents>
         | undefined = undefined,
+      eventCanBeRan?: EventRunnableChecker<AdditionalEvents>,
     ) {
       super();
 
@@ -80,6 +87,7 @@ export const EventHolder = <
       this.#holderId = holderId;
       this.#getTarget = targetGetter;
       this.#attachToRaw = attachToRaw;
+      this.#eventCanBeRan = eventCanBeRan || (() => true);
     }
 
     id(): string {
@@ -167,59 +175,25 @@ export const EventHolder = <
 
     #runEvents(
       eventName: EventType<AdditionalEvents>,
-      manuallyTriggered = false,
     ): LetsRole.EventCallback<LREEventTarget> {
       return (rawTarget: LREEventTarget, ...args: unknown[]): void => {
         const { eventId, handlers } =
           this.#getEventIdAndHandlersFromEventName(eventName);
-        const currentValue = this.#getCurrentValue(rawTarget);
 
         if (!this.isEventEnabled(eventId)) {
-          if (eventId === "update")
-            this.#saveLastUpdateEventValue(currentValue);
           return;
         }
 
         const cmp =
           this.#getTarget?.(rawTarget, this.#events[eventId]!) || this;
 
-        if (this.#isValueAvailable(rawTarget) && eventId === "update") {
-          if (
-            !manuallyTriggered &&
-            (currentValue === this.#lastUpdateEventValue ||
-              lre.deepEqual(currentValue, this.#lastUpdateEventValue))
-          ) {
-            return;
-          }
-
-          this.#saveLastUpdateEventValue(currentValue);
+        if (!this.#eventCanBeRan(eventId)) {
+          return;
         }
 
         this.#runHandlers(eventId, handlers, cmp, ...args);
         this.#propagateToLinks(eventName, ...args);
       };
-    }
-
-    #getCurrentValue(rawTarget: LREEventTarget): LetsRole.ComponentValue {
-      let result = undefined;
-
-      try {
-        if (this.#isValueAvailable(rawTarget)) {
-          result = rawTarget.value();
-        }
-      } catch (e) {}
-
-      return result;
-    }
-
-    #isValueAvailable(
-      rawTarget: LREEventTarget,
-    ): rawTarget is LREEventTargetWithValue {
-      return !!rawTarget && !!rawTarget.value;
-    }
-
-    #saveLastUpdateEventValue(value: LetsRole.ComponentValue): void {
-      this.#lastUpdateEventValue = structuredClone(value);
     }
 
     #triggerThisEvent(
@@ -432,15 +406,9 @@ export const EventHolder = <
     trigger(eventName: EventType<AdditionalEvents>, ...args: unknown[]): void {
       const { eventId, handlers } =
         this.#getEventIdAndHandlersFromEventName(eventName);
-      const isHandlerRan = this.#runHandlers(eventId, handlers, this, ...args);
 
-      if (
-        !isHandlerRan &&
-        eventId === "update" &&
-        this.#isValueAvailable(this)
-      ) {
-        this.#saveLastUpdateEventValue(this.value());
-      }
+      this.#eventCanBeRan(eventId);
+      this.#runHandlers(eventId, handlers, this, ...args);
 
       this.#propagateToLinks(eventName, ...args);
     }

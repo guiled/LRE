@@ -410,15 +410,23 @@ describe("Component get and set value", () => {
     const valSet = jest.fn(() => {
       return cmp2.value();
     });
-    expect(() => cmp1.value(valSet)).not.toThrow();
+
+    expect(() => {
+      cmp1.value(valSet);
+    }).not.toThrow();
     expect(valSet).toHaveBeenCalledTimes(1);
+
+    valSet.mockClear();
     expect(cmp1.value()).toBe(1313);
-    expect(valSet).toHaveBeenCalledTimes(1);
+    expect(valSet).not.toHaveBeenCalled();
+
     itHasWaitedEnough();
-    expect(valSet).toHaveBeenCalledTimes(1);
+    expect(valSet).not.toHaveBeenCalled();
+
     cmp2.value(4243);
-    expect(valSet).toHaveBeenCalledTimes(2);
+    expect(valSet).toHaveBeenCalledTimes(1);
     expect(cmp1.value()).toBe(cmp2.value());
+
     itHasWaitedEnough();
     const cmp3 = sheet.get("cmp3")!;
     cmp3.value("oh");

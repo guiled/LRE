@@ -85,7 +85,8 @@ export class Component<
   constructor(raw: LetsRole.Component, sheet: ISheet, realId: string) {
     super([
       [
-        /* eventHolder */ realId,
+        /* eventHolder */
+        realId,
         (
           rawCmp: LetsRole.Component,
           event: EventDef,
@@ -134,6 +135,26 @@ export class Component<
             }
           }
         },
+        (() => {
+          let lastUpdateValue: TypeValue;
+
+          return (
+            eventName: ThisComponentEventTypes<AdditionalEvents>,
+            manuallyTriggered: boolean = false,
+          ): boolean => {
+            if (eventName === "update") {
+              const newValue = this.value();
+              const isUnchanged =
+                lastUpdateValue === newValue ||
+                lre.deepEqual(newValue, lastUpdateValue);
+
+              lastUpdateValue = newValue;
+              return !isUnchanged || manuallyTriggered;
+            }
+
+            return true;
+          };
+        })(),
       ],
       [
         /* HasRaw */ {
@@ -279,7 +300,7 @@ export class Component<
   })
   value(newValue?: DynamicSetValue<unknown>): void | TypeValue {
     if (arguments.length > 0) {
-      const oldValue = this.value();
+      const oldValue = this.#getValue();
 
       if (lre.__enableGroupedSetValue) {
         const data: LetsRole.ViewData = {
@@ -294,24 +315,27 @@ export class Component<
         this.trigger("update");
       }
     } else {
-      let val = this.#sheet.getPendingData(this.realId()) as TypeValue;
-
-      if (typeof val === "undefined") {
-        try {
-          // this.raw().value();
-          val = this.raw().value() as TypeValue;
-        } catch (e) {
-          lre.trace("Unknown error. Please communicate about it" + e);
-        }
-        //} else if (this.#lreType === "repeater") {
-        // a repeater with a pending value set, we must set it immediately when we need it because it has impact on existing elements
-        //sheet.sendPendingDataFor(this.realId());
-      } else {
-        context.logAccess("value", this.realId());
-      }
-
-      return lre.value(val) as TypeValue;
+      return this.#getValue();
     }
+  }
+
+  #getValue(): TypeValue {
+    let val = this.#sheet.getPendingData(this.realId()) as TypeValue;
+
+    if (typeof val === "undefined") {
+      try {
+        val = this.raw().value() as TypeValue;
+      } catch (e) {
+        lre.trace("Unknown error. Please communicate about it" + e);
+      }
+      //} else if (this.#lreType === "repeater") {
+      // a repeater with a pending value set, we must set it immediately when we need it because it has impact on existing elements
+      //sheet.sendPendingDataFor(this.realId());
+    } else {
+      context.logAccess("value", this.realId());
+    }
+
+    return lre.value(val) as TypeValue;
   }
 
   valueProvider(): IDataProvider | undefined {
@@ -319,14 +343,13 @@ export class Component<
   }
 
   valueData(): LetsRole.TableRow | LetsRole.ComponentValue | null {
-    if (lre.isObject(this.value())) {
+    const val = this.value();
+
+    if (lre.isObject(val)) {
       return;
     }
 
-    return (
-      this.#valueDataProvider?.getData(this.value() as DataProviderDataId) ||
-      null
-    );
+    return this.#valueDataProvider?.getData(val as DataProviderDataId) || null;
   }
 
   virtualValue(newValue?: TypeValue): void | null | TypeValue {
