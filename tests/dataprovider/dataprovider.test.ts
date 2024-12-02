@@ -97,6 +97,59 @@ describe("Data provider sort", () => {
       a: "43",
     });
   });
+
+  test("Sort with function", () => {
+    const data = {
+      a: { a: "42", b: "1" },
+      b: { a: "4", b: "2" },
+      c: { a: "24", b: "3" },
+      d: { a: "24", b: "4" },
+    };
+    const dataGetter = jest.fn((_a: any) => data as any);
+    const dp = new DirectDataProvider(dataGetter);
+
+    const sorter = (a: any, b: any): number => {
+      return Number(a.a) - Number(b.a);
+    };
+
+    const sorted = dp.sort(sorter);
+    expect(sorted.provider).toBeTruthy();
+    expect(sorted.providedValue()).toStrictEqual({
+      b: { a: "4", b: "2" },
+      c: { a: "24", b: "3" },
+      d: { a: "24", b: "4" },
+      a: { a: "42", b: "1" },
+    });
+  });
+
+  test("SortBy", () => {
+    const data = {
+      a: { a: "10", b: "1" },
+      b: { a: "4", b: "2" },
+      c: { a: "2", b: "3" },
+      d: { a: "1", b: "6" },
+    };
+    const dataGetter = jest.fn((_a: any) => data as any);
+    const dp = new DirectDataProvider(dataGetter);
+    const cols = dp.select("a");
+
+    const sorter: DataProviderComputer = (
+      a: any,
+      _key: any,
+      data: any,
+    ): number => {
+      return Number(a.a) + Number(data.b);
+    };
+
+    const sorted = cols.sortBy(sorter);
+    expect(sorted.provider).toBeTruthy();
+    expect(sorted.providedValue()).toStrictEqual({
+      c: "2",
+      b: "4",
+      d: "1",
+      a: "10",
+    });
+  });
 });
 
 describe("DataProvider each", () => {

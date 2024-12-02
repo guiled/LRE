@@ -261,11 +261,13 @@ declare type DataProviderDataValue =
   | LetsRole.TableRow
   | LetsRole.ComponentValue;
 
-declare type DataProviderWhereConditioner = (
-  value: LetsRole.ComponentValue | LetsRole.TableRow,
-  key: DataProviderDataId,
-  data: DataProviderDataValue,
-) => boolean;
+declare type DataProviderCallback<ReturnType> = (
+  value: DataProviderDataValue,
+  key?: DataProviderDataId,
+  data?: DataProviderDataValue,
+) => ReturnType;
+declare type DataProviderWhereConditioner = DataProviderCallback<boolean>;
+declare type DataProviderComputer = DataProviderCallback<string | number>;
 
 declare interface IDataProvider {
   provider: boolean;
@@ -273,6 +275,7 @@ declare interface IDataProvider {
     _newValue?: T,
   ): T extends undefined ? DataProviderDataValue : void;
   sort(): IDataProvider;
+  sortBy(sorterWithData: DataProviderComputer): IDataProvider;
   each(mapper: (val: DataProviderDataValue) => void): void;
   select(column: LetsRole.ComponentID): IDataProvider;
   getData(id: DataProviderDataId): DataProviderDataValue;

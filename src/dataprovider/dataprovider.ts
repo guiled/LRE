@@ -6,8 +6,15 @@ type ValueGetterSetter<
   newValue?: T,
 ) => T extends undefined ? LetsRole.ComponentValue | LetsRole.TableRow : void;
 
-type Sorter<T = unknown> = (a: T, b: T) => number;
-const defaultSorter: Sorter = ((a: number, b: number) =>
+type Sorter = (
+  a: DataProviderDataValue,
+  b: DataProviderDataValue,
+  keyA?: DataProviderDataId,
+  keyB?: DataProviderDataId,
+  dataA?: DataProviderDataValue,
+  dataB?: DataProviderDataValue,
+) => number;
+const defaultSorter: Sorter = ((a: number | string, b: number | string) =>
   a < b ? -1 : a > b ? 1 : 0) as Sorter;
 
 // giving a type to the function will break the Mixin usage
@@ -41,22 +48,40 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
       if (typeof sorterOrString === "string") {
         const field: string = sorterOrString;
-        sorter = ((a: Record<string, unknown>, b: Record<string, unknown>) =>
-          defaultSorter(a[field], b[field])) as Sorter;
+        sorter = ((
+          a: Record<string, DataProviderDataValue>,
+          b: Record<string, DataProviderDataValue>,
+        ) => defaultSorter(a[field], b[field])) as Sorter;
       } else {
         sorter = sorterOrString;
       }
 
+      return this.#sortData(sorter);
+    }
+
+    sortBy(sorterWithData: DataProviderComputer): IDataProvider {
+      return this.#sortData((a, b, ka, kb, dataA, dataB) =>
+        defaultSorter(
+          sorterWithData(a, ka, dataA),
+          sorterWithData(b, kb, dataB),
+        ),
+      );
+    }
+
+    #sortData(sorter: Sorter): IDataProvider {
       return new DirectDataProvider(
         this.#handleSet(() => {
           const data = this.#valueCb();
 
           if (Array.isArray(data)) {
-            return data.toSorted(sorter);
+            return data.toSorted((a, b) => sorter(a, b));
           } else if (lre.isObject(data)) {
             return Object.entries(data)
-              .sort(([, a]: [unknown, unknown], [, b]: [unknown, unknown]) =>
-                sorter(a, b),
+              .sort(
+                (
+                  [ka, a]: [DataProviderDataId, DataProviderDataValue],
+                  [kb, b]: [DataProviderDataId, DataProviderDataValue],
+                ) => sorter(a, b, ka, kb, this.getData(ka), this.getData(kb)),
               )
               .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
           }
