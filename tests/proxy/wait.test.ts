@@ -2,6 +2,7 @@ import { registerLreWait } from "../../src/proxy/wait";
 import { newMockedWait } from "../../src/mock/letsrole/wait.mock";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 
+const context = modeHandlerMock();
 const mockedWaitDefs = newMockedWait();
 global.wait = mockedWaitDefs.wait;
 
@@ -10,12 +11,12 @@ describe("Wait proxy", () => {
 
   beforeEach(() => {
     cb = jest.fn();
-    modeHandlerMock.setMode("real");
+    context.setMode("real");
   });
 
   test("runs normally in real mode", () => {
-    modeHandlerMock.setMode("real");
-    const subject = registerLreWait(modeHandlerMock, wait);
+    context.setMode("real");
+    const subject = registerLreWait(context, wait);
     expect(wait).not.toHaveBeenCalled();
     subject(100, cb);
     expect(cb).not.toHaveBeenCalled();
@@ -25,8 +26,8 @@ describe("Wait proxy", () => {
   });
 
   test("wait is not called in real mode", () => {
-    modeHandlerMock.setMode("virtual");
-    const subject = registerLreWait(modeHandlerMock, wait);
+    context.setMode("virtual");
+    const subject = registerLreWait(context, wait);
     expect(wait).not.toHaveBeenCalled();
     subject(100, cb);
     expect(cb).not.toHaveBeenCalled();

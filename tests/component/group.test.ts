@@ -5,10 +5,8 @@ import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
 import { initLetsRole } from "../../src/mock/letsrole/letsrole.mock";
-import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 let sheet: Sheet;
-global.lre = new LRE(modeHandlerMock);
 
 beforeEach(() => {
   const server = new ServerMock({
@@ -76,6 +74,7 @@ beforeEach(() => {
     ],
   });
   initLetsRole(server);
+  global.lre = new LRE(context);
   const rawSheet = server.openView("main", "123", {
     a: {
       b: {
@@ -86,17 +85,13 @@ beforeEach(() => {
     cmp2: "val2",
     cmp3: "val3",
   });
-  sheet = new Sheet(
-    rawSheet,
-    new DataBatcher(modeHandlerMock, rawSheet),
-    modeHandlerMock,
-  );
-  jest.spyOn(sheet, "get");
-  jest.spyOn(lre, "error");
+  sheet = new Sheet(rawSheet, new DataBatcher(context, rawSheet), context);
+  lre.sheets.add(sheet);
 });
 
 describe("Component group is like a component", () => {
   test("Group construction", () => {
+    jest.spyOn(sheet, "get");
     const group: Group = new Group(context, "group1", sheet);
     expect(sheet.get).not.toHaveBeenCalled();
     expect(group.count()).toBe(0);
@@ -202,6 +197,7 @@ describe("Component group basics", () => {
     expect(group.count()).toBe(0);
   });
   test("Add / remove components", () => {
+    jest.spyOn(sheet, "get");
     const group: Group = new Group(context, "group1", sheet, ["cmp1"]);
 
     const updateCb = jest.fn();
@@ -276,6 +272,7 @@ describe("Component group basics", () => {
   });
 
   test("Large group", () => {
+    jest.spyOn(sheet, "get");
     const group: Group = new Group(context, "group1", sheet, [
       "cmp1",
       "cmp2",
@@ -302,7 +299,7 @@ describe("Component group basics", () => {
     "Group add / remove throws error with $desc",
     ({ val: invalidAddedElement }) => {
       const group: Group = new Group(context, "group1", sheet);
-      (lre.error as jest.Mock).mockClear();
+      jest.spyOn(lre, "error");
       /* @ts-expect-error Intended error to test */
       expect(() => group.add(invalidAddedElement)).toThrow();
 
@@ -411,7 +408,7 @@ describe("Event attached to group are attached to all items", () => {
 
 describe("Group get values", () => {
   test("Get/Set Values", () => {
-    const group = new Group(context, "group2", sheet, ["cmp1", "cmp2", "cmp3"]);
+    const group = sheet.group("group2", ["cmp1", "cmp2", "cmp3"]);
     expect(group.providedValue()).toMatchObject({
       cmp1: "val1",
       cmp2: "val2",
@@ -545,13 +542,14 @@ describe("Group get values", () => {
 
 describe("Group and context", () => {
   test("Group value is logged, not components", () => {
-    const grp = new Group(context, "grp", sheet, ["a", "b", "c"]);
+    const grp = sheet.group("grp", ["a", "b", "c"]);
     context.setMode("virtual");
     grp.providedValue();
     context.setMode("real");
-    context.resetAccessLog();
     const accessLog = context.getPreviousAccessLog("value");
-    expect(accessLog).toContain("grp");
+    expect(accessLog.map((l) => l.join("-"))).toContain(
+      sheet.getSheetId() + "-grp",
+    );
     expect(accessLog).not.toContain("a");
     expect(accessLog).not.toContain("b");
     expect(accessLog).not.toContain("c");

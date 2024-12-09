@@ -1,19 +1,17 @@
-import { DirectDataProvider } from "../../src/dataprovider";
 import { LRE } from "../../src/lre";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { initLetsRole } from "../../src/mock/letsrole/letsrole.mock";
-import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 beforeEach(() => {
   initLetsRole(new ServerMock({}));
-  global.lre = new LRE(modeHandlerMock);
+  global.lre = new LRE(context);
 });
 
 describe("Data provider basics", () => {
   test("Get value", () => {
     const data = "42";
     const dataGetter = jest.fn((_a: any) => data as any);
-    const dp = new DirectDataProvider(dataGetter);
+    const dp = lre.dataProvider("test", dataGetter);
     expect(dp.providedValue()).toBe(data);
     expect(dataGetter).toHaveBeenCalled();
   });
@@ -23,7 +21,7 @@ describe("Data provider sort", () => {
   test("Sort single value", () => {
     const data = "42";
     const dataGetter = jest.fn((_a: any) => data as any);
-    const dp = new DirectDataProvider(dataGetter);
+    const dp = lre.dataProvider("test", dataGetter);
     const sorted = dp.sort();
     expect(sorted.provider).toBeTruthy();
     expect(sorted.providedValue()).toBe(data);
@@ -32,7 +30,7 @@ describe("Data provider sort", () => {
   test("Sort array", () => {
     const data = ["42", "4", "24", "24"];
     const dataGetter = jest.fn((_a: any) => data as any);
-    const dp = new DirectDataProvider(dataGetter);
+    const dp = lre.dataProvider("test", dataGetter);
     const sorted = dp.sort();
     expect(sorted.provider).toBeTruthy();
     expect(sorted.providedValue()).toStrictEqual(["24", "24", "4", "42"]);
@@ -41,7 +39,7 @@ describe("Data provider sort", () => {
   test("Sort array of object", () => {
     const data = [{ a: "42" }, { a: "4" }, { a: "24" }, { a: "24" }];
     const dataGetter = jest.fn((_a: any) => data as any);
-    const dp = new DirectDataProvider(dataGetter);
+    const dp = lre.dataProvider("test", dataGetter);
     const sorted = dp.sort("a");
     expect(sorted.provider).toBeTruthy();
     expect(sorted.providedValue()).toStrictEqual([
@@ -61,7 +59,7 @@ describe("Data provider sort", () => {
 
       return data as any;
     });
-    const dp = new DirectDataProvider(dataGetter);
+    const dp = lre.dataProvider("test", dataGetter);
     const sorted = dp.sort();
     expect(sorted.provider).toBeTruthy();
     sorted.providedValue({
@@ -84,7 +82,7 @@ describe("Data provider sort", () => {
 
       return data as any;
     });
-    const dp = new DirectDataProvider(dataGetter);
+    const dp = lre.dataProvider("test", dataGetter);
     const sorted = dp.sort();
     expect(sorted.provider).toBeTruthy();
     sorted.providedValue({
@@ -106,7 +104,7 @@ describe("Data provider sort", () => {
       d: { a: "24", b: "4" },
     };
     const dataGetter = jest.fn((_a: any) => data as any);
-    const dp = new DirectDataProvider(dataGetter);
+    const dp = lre.dataProvider("test", dataGetter);
 
     const sorter = (a: any, b: any): number => {
       return Number(a.a) - Number(b.a);
@@ -130,7 +128,7 @@ describe("Data provider sort", () => {
       d: { a: "1", b: "6" },
     };
     const dataGetter = jest.fn((_a: any) => data as any);
-    const dp = new DirectDataProvider(dataGetter);
+    const dp = lre.dataProvider("test", dataGetter);
     const cols = dp.select("a");
 
     const sorter: DataProviderComputer = (
@@ -157,7 +155,7 @@ describe("DataProvider each", () => {
     const dataGetter = jest.fn((_a: any) => {
       return undefined;
     });
-    const dp = new DirectDataProvider(dataGetter);
+    const dp = lre.dataProvider("test", dataGetter);
 
     const fn = jest.fn();
 
@@ -170,7 +168,7 @@ describe("DataProvider each", () => {
     const dataGetter = jest.fn((_a: any) => {
       return data as any;
     });
-    const dp = new DirectDataProvider(dataGetter);
+    const dp = lre.dataProvider("test", dataGetter);
 
     const fn = jest.fn();
 
@@ -184,7 +182,7 @@ describe("DataProvider each", () => {
     const dataGetter = jest.fn((_a: any) => {
       return data as any;
     });
-    const dp = new DirectDataProvider(dataGetter);
+    const dp = lre.dataProvider("test", dataGetter);
 
     const fn = jest.fn();
 
@@ -204,7 +202,7 @@ describe("DataProvider each", () => {
 
       return data as any;
     });
-    const dp = new DirectDataProvider(dataGetter);
+    const dp = lre.dataProvider("test", dataGetter);
 
     const fn = jest.fn();
 
@@ -231,7 +229,7 @@ describe("DataProvider select a column", () => {
 
       return data as any;
     });
-    const dp = new DirectDataProvider(dataGetter);
+    const dp = lre.dataProvider("test", dataGetter);
 
     const result = dp.select("a");
     expect(result.provider).toBeTruthy();
@@ -250,16 +248,18 @@ describe("Dataprovider getData", () => {
     const dataGetter = jest.fn((_a: any) => {
       return data as any;
     });
-    const dp = new DirectDataProvider(dataGetter);
+    const dp = lre.dataProvider("test", dataGetter);
 
     expect(dp.getData("1")).toBe(data);
 
     data = [42, "13", 24];
+    dp.refresh();
     expect(dp.getData(1)).toStrictEqual("13");
     expect(dp.getData("2")).toStrictEqual(24);
     expect(dp.getData([0, "2"])).toStrictEqual({ 0: 42, 2: 24 });
 
     data = { a: "42", b: "13", c: "24" };
+    dp.refresh();
     expect(dp.getData("a")).toStrictEqual("42");
     expect(dp.getData("b")).toStrictEqual("13");
     expect(dp.getData(["a", "b"])).toStrictEqual({ a: "42", b: "13" });
@@ -274,7 +274,7 @@ describe("Dataprovider getData", () => {
     const dataGetter = jest.fn((_a: any) => {
       return data as any;
     });
-    const dp = new DirectDataProvider(dataGetter);
+    const dp = lre.dataProvider("test", dataGetter);
 
     const result = dp.select("a");
     expect(result.provider).toBeTruthy();
@@ -294,7 +294,7 @@ describe("DataProvider filter and where", () => {
     const dataGetter = jest.fn((_a: any) => {
       return data as any;
     });
-    const dp = new DirectDataProvider(dataGetter);
+    const dp = lre.dataProvider("test", dataGetter);
     const filtered = dp.filter((v: any, _k) => {
       return 1 * v?.b < 10;
     });
@@ -314,7 +314,7 @@ describe("DataProvider filter and where", () => {
     const dataGetter = jest.fn((_a: any) => {
       return data as any;
     });
-    const dp = new DirectDataProvider(dataGetter);
+    const dp = lre.dataProvider("test", dataGetter);
     let result = dp.select("a").where("1");
     expect(result.provider).toBeTruthy();
     expect(result.providedValue()).toStrictEqual({
@@ -339,21 +339,34 @@ describe("DataProvider get single value", () => {
     const dataGetter = jest.fn((_a: any) => {
       return data as any;
     });
-    const dp = new DirectDataProvider(dataGetter);
-    const result = dp.select("a").where((_v, _k, data: any) => {
+    const dp = lre.dataProvider("test", dataGetter);
+    expect(dataGetter).toHaveBeenCalledTimes(0);
+    const select = dp.select("a");
+    expect(dataGetter).toHaveBeenCalledTimes(0);
+    const result = select.where((_v, _k, data: any) => {
       return data.b === "2";
     });
     expect(result.provider).toBeTruthy();
+    expect(dataGetter).toHaveBeenCalledTimes(0);
+
     expect(result.getData()).toStrictEqual({ a: "1", b: "2", c: "3" });
+    expect(dataGetter).toHaveBeenCalledTimes(1);
     expect(result.singleValue()).toBe("1");
     expect(result.singleId()).toBe("2");
-    data["2"]["a"] = "42";
-    expect(result.singleValue()).toBe("42");
+
+    const result2 = select.where((_v, _k, data: any) => {
+      return data.b === "5";
+    });
+    expect(result2.getData()).toStrictEqual({ a: "4", b: "5", c: "6" });
+    expect(dataGetter).toHaveBeenCalledTimes(1);
+
+    //data["2"]["a"] = "42";
+    //expect(result.singleValue()).toBe("42");
   });
 });
 
 describe("DataProvider count", () => {
-  test("Count|length data provider result", () => {
+  test("Count | length data provider result", () => {
     const data: any = {
       "1": { a: "42", b: "13", c: "24" },
       "2": { a: "1", b: "2", c: "3" },
@@ -362,13 +375,14 @@ describe("DataProvider count", () => {
     const dataGetter = jest.fn((_a: any) => {
       return data as any;
     });
-    const dp = new DirectDataProvider(dataGetter);
+    const dp = lre.dataProvider("test", dataGetter);
     expect(dp.count()).toBe(3);
     const filtered = dp.select("a").where((_v, _k, data: any) => {
       return data.b === "2";
     });
     expect(filtered.count()).toBe(1);
     data["4"] = { a: "420", b: "2", c: "240" };
+    filtered.refresh();
     expect(filtered.count()).toBe(2);
     expect(filtered.where("no").length()).toBe(0);
   });

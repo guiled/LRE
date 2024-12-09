@@ -4,7 +4,6 @@ import {
   initLetsRole,
   rollBuilderMock,
 } from "../../src/mock/letsrole/letsrole.mock";
-import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 describe("RollBuilder proxy", () => {
   let subject: typeof RollBuilder;
@@ -20,7 +19,7 @@ describe("RollBuilder proxy", () => {
       ],
     });
     initLetsRole(server);
-    subject = registerLreRollBuilder(modeHandlerMock, RollBuilder);
+    subject = registerLreRollBuilder(context, RollBuilder);
     sheet = server.openView("main", "123");
   });
 
@@ -44,7 +43,7 @@ describe("RollBuilder proxy", () => {
   });
 
   test("works in virtual", () => {
-    modeHandlerMock.setMode("virtual");
+    context.setMode("virtual");
     const rb = new subject(sheet);
     expect(rb).not.toBe(RollBuilder);
     expect(rb.title("title")).toBe(rb);

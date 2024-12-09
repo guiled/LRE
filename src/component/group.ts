@@ -35,6 +35,7 @@ export class Group
       /* EventHolder */ [id],
       /* DataHolder */ [sheet, id],
       /* DataProvider */ [
+        context,
         (...args: unknown[]) =>
           this.value(...(args as [LetsRole.ComponentValue?])),
       ],
@@ -240,7 +241,7 @@ export class Group
   value(): LetsRole.ViewData;
   value(_newValue: LetsRole.ComponentValue): void;
   value(_newValue?: LetsRole.ComponentValue): void | LetsRole.ViewData {
-    this.#context.logAccess("value", this.#id);
+    this.#context.logAccess("value", [this.#sheet.getSheetId(), this.#id]);
     this.#context.disableAccessLog();
     const result = this.#getSet.apply(
       this,

@@ -9,6 +9,7 @@ import { modeHandlerMock } from "./mock/modeHandler.mock";
 jest.mock("../src/log");
 global.lre = new Logger() as ILRE & Logger & cb;
 
+const context = modeHandlerMock();
 const { wait, itHasWaitedEverything } = newMockedWait();
 global.wait = wait;
 lre.wait = wait;
@@ -18,7 +19,7 @@ describe("LRE tests", () => {
   let spyOnMathRandom: jest.SpyInstance;
 
   beforeEach(() => {
-    subject = new LRE(modeHandlerMock);
+    subject = new LRE(context);
     lre.deepMerge = subject.deepMerge;
     lre.isObject = subject.isObject;
     spyOnMathRandom = jest.spyOn(global.Math, "random").mockReturnValue(1);
@@ -192,7 +193,7 @@ describe("LRE wait", () => {
   let subject: LRE;
 
   beforeEach(() => {
-    subject = new LRE(modeHandlerMock);
+    subject = new LRE(context);
   });
 
   test("calls native wait", () => {
@@ -218,7 +219,7 @@ describe("LRE autonum", () => {
   let subject: LRE;
 
   beforeEach(() => {
-    subject = new LRE(modeHandlerMock);
+    subject = new LRE(context);
   });
 
   test.each([
@@ -251,7 +252,7 @@ describe("LRE global methods", () => {
   let subject: LRE;
 
   beforeEach(() => {
-    subject = new LRE(modeHandlerMock);
+    subject = new LRE(context);
   });
 
   test.each([

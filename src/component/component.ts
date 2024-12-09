@@ -9,7 +9,6 @@ import {
   dynamicSetter,
   extractDataProviders,
 } from "../globals/decorators/dynamicSetter";
-import { DirectDataProvider } from "../dataprovider";
 
 export const REP_ID_SEP = ".";
 
@@ -332,7 +331,7 @@ export class Component<
       // a repeater with a pending value set, we must set it immediately when we need it because it has impact on existing elements
       //sheet.sendPendingDataFor(this.realId());
     } else {
-      context.logAccess("value", this.realId());
+      context.logAccess("value", [this.#sheet.getSheetId(), this.realId()]);
     }
 
     return lre.value(val) as TypeValue;
@@ -409,7 +408,8 @@ export class Component<
   }
 
   dataProvider(): IDataProvider | undefined {
-    return new DirectDataProvider(
+    return lre.dataProvider(
+      this.realId(),
       function (this: Component<TypeValue>, newValue?: TypeValue) {
         if (arguments.length === 0) {
           return this.value() as TypeValue;

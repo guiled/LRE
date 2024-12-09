@@ -2,7 +2,6 @@ import { Component } from "../../src/component";
 import { ClassChanges, Sheet } from "../../src/sheet/index";
 import { LRE } from "../../src/lre";
 import { DataBatcher } from "../../src/sheet/databatcher";
-import { modeHandlerMock } from "../mock/modeHandler.mock";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import {
   initLetsRole,
@@ -74,8 +73,8 @@ beforeEach(() => {
       },
     ],
   });
-  global.lre = new LRE(modeHandlerMock);
   initLetsRole(server);
+  global.lre = new LRE(context);
 });
 
 describe("Sheet basics", () => {
@@ -85,11 +84,7 @@ describe("Sheet basics", () => {
     raw = server.openView(sheetId, "4242", {});
     jest.spyOn(raw, "getData");
     jest.spyOn(raw, "getVariable");
-    sheet = new Sheet(
-      raw,
-      new DataBatcher(modeHandlerMock, raw),
-      modeHandlerMock,
-    );
+    sheet = new Sheet(raw, new DataBatcher(context, raw), context);
   });
   test("Create from raw", () => {
     expect(sheet.lreType()).toEqual("sheet");
@@ -159,11 +154,7 @@ describe("Sheet data handling", () => {
 
   beforeEach(() => {
     raw = server.openView(sheetId, "4242", {});
-    sheet = new Sheet(
-      raw,
-      new DataBatcher(modeHandlerMock, raw),
-      modeHandlerMock,
-    );
+    sheet = new Sheet(raw, new DataBatcher(context, raw), context);
   });
 
   test("Test sheet mock", () => {
@@ -277,11 +268,7 @@ describe("Sheet persisting data", () => {
 
   const initSheet = function (sheetId: string, realId: string): Sheet {
     const raw = server.openView(sheetId, realId);
-    return new Sheet(
-      raw,
-      new DataBatcher(modeHandlerMock, raw),
-      modeHandlerMock,
-    );
+    return new Sheet(raw, new DataBatcher(context, raw), context);
   };
 
   beforeEach(() => {
@@ -464,11 +451,7 @@ describe("Sheet clean data", () => {
     raw.getData = jest.fn(() => data);
     raw.setData = jest.fn((d) => (data = { ...data, ...d }));
     let save = structuredClone(data);
-    let sheet = new Sheet(
-      raw,
-      new DataBatcher(modeHandlerMock, raw),
-      modeHandlerMock,
-    );
+    let sheet = new Sheet(raw, new DataBatcher(context, raw), context);
     sheet.cleanCmpData();
     expect(sheet.getData()).toEqual(save);
     itHasWaitedEverything();
@@ -483,11 +466,7 @@ describe("Sheet clean data", () => {
       },
     };
     save = structuredClone(data);
-    sheet = new Sheet(
-      raw,
-      new DataBatcher(modeHandlerMock, raw),
-      modeHandlerMock,
-    );
+    sheet = new Sheet(raw, new DataBatcher(context, raw), context);
     sheet.cleanCmpData();
     expect(sheet.getData()).toEqual(save);
     itHasWaitedEverything();
@@ -525,11 +504,7 @@ describe("Sheet clean data", () => {
 
     save = structuredClone(data);
     const save2 = structuredClone(data);
-    sheet = new Sheet(
-      raw,
-      new DataBatcher(modeHandlerMock, raw),
-      modeHandlerMock,
-    );
+    sheet = new Sheet(raw, new DataBatcher(context, raw), context);
     sheet.cleanCmpData();
     expect(sheet.getData()).toEqual(save);
     itHasWaitedEverything();
@@ -560,11 +535,7 @@ describe("Sheet get component", () => {
     data: LetsRole.ViewData | undefined = undefined,
   ): Sheet {
     raw = server.openView(sheetId, realId, data);
-    return new Sheet(
-      raw,
-      new DataBatcher(modeHandlerMock, raw),
-      modeHandlerMock,
-    );
+    return new Sheet(raw, new DataBatcher(context, raw), context);
   };
 
   beforeEach(() => {

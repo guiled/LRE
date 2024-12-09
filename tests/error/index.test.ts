@@ -4,7 +4,9 @@ import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 jest.mock("../../src/lre");
 
-global.lre = new LRE(modeHandlerMock);
+const context = modeHandlerMock();
+
+global.lre = new LRE(context);
 global.errExclFirstLine = 100;
 global.errExclLastLine = 150;
 

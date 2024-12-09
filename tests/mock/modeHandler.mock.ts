@@ -1,31 +1,46 @@
-let mode: ProxyMode = "real";
+export const modeHandlerMock = (): ProxyModeHandler => {
+  let mode: ProxyMode = "real";
 
-let logs: ContextLog = {};
-let prevLogs: ContextLog = {};
+  let logs: Partial<ContextLog> = {};
+  let prevLogs: Partial<ContextLog> = {};
+  const contexts: Array<Partial<ContextLog>> = [];
 
-export const modeHandlerMock: ProxyModeHandler = {
-  getMode: () => {
-    return mode;
-  },
-  setMode: (newMode: ProxyMode) => {
-    mode = newMode;
-    return modeHandlerMock;
-  },
-  disableAccessLog: () => modeHandlerMock,
-  enableAccessLog: () => modeHandlerMock,
-  getAccessLog: (_type) => (logs[_type] ??= []),
-  getPreviousAccessLog: (_type) => prevLogs[_type] ?? [],
-  logAccess: (_type, _value) => {
-    logs[_type] ??= [];
-    if (!logs[_type]!.includes(_value)) logs[_type]!.push(_value);
-    return modeHandlerMock;
-  },
-  resetAccessLog: () => {
-    prevLogs = logs;
-    logs = {};
-    return modeHandlerMock;
-  },
+  const result: ProxyModeHandler = {
+    getMode: () => {
+      return mode;
+    },
+    setMode: (newMode: ProxyMode) => {
+      mode = newMode;
+      return result;
+    },
+    disableAccessLog: () => result,
+    enableAccessLog: () => result,
+    getAccessLog: <T extends keyof ContextLog>(type: T) => (logs[type] ??= []),
+    getPreviousAccessLog: <T extends keyof ContextLog>(type: T) =>
+      prevLogs[type] ?? [],
+    logAccess: (_type, _value) => {
+      logs[_type] ??= [];
+      if (!logs[_type]!.includes(_value as IDataProvider & ContextLogRecord))
+        logs[_type]!.push(_value as IDataProvider & ContextLogRecord);
+      return result;
+    },
 
-  setContext: (_id: string, _context: any) => modeHandlerMock,
-  getContext: (_id: string) => ({}) as any,
+    setContext: (_id: string, _context: any) => result,
+    getContext: (_id: string) => ({}) as any,
+    pushLogContext(): ProxyModeHandler {
+      contexts.push(logs);
+      logs = {};
+
+      return this;
+    },
+
+    popLogContext(): ProxyModeHandler {
+      prevLogs = logs;
+      logs = contexts.pop() || {};
+
+      return this;
+    },
+  };
+
+  return result;
 };

@@ -46,7 +46,7 @@ const initLetsRole = (server: ServerMock): void => {
   global.Tables = server.getMockOfTables();
   global.loggedCall = loggedCall;
   global.virtualCall = virtualCall;
-  global.context = modeHandlerMock;
+  global.context = modeHandlerMock();
 };
 
 export {

@@ -9,7 +9,6 @@ import {
   initLetsRole,
   itHasWaitedEverything,
 } from "../../src/mock/letsrole/letsrole.mock";
-import { modeHandlerMock } from "../mock/modeHandler.mock";
 import { Entry } from "../../src/component/entry";
 import { Component } from "../../src/component";
 
@@ -98,20 +97,17 @@ beforeEach(() => {
     },
   });
   initLetsRole(server);
-  global.lre = new LRE(modeHandlerMock);
-  modeHandlerMock.setMode("real");
+  global.lre = new LRE(context);
+  context.setMode("real");
   lre.autoNum(false);
   rawSheet = server.openView("main", "123", {
     rep: {},
     cmd: "2",
   });
-  const proxySheet = new SheetProxy(modeHandlerMock, rawSheet);
+  const proxySheet = new SheetProxy(context, rawSheet);
 
-  sheet = new Sheet(
-    proxySheet,
-    new DataBatcher(modeHandlerMock, proxySheet),
-    modeHandlerMock,
-  );
+  sheet = new Sheet(proxySheet, new DataBatcher(context, proxySheet), context);
+  lre.sheets.add(sheet);
   jest.spyOn(sheet, "get");
   jest.spyOn(sheet, "componentExists");
   jest.spyOn(sheet, "knownChildren");
@@ -429,4 +425,9 @@ describe("Repeater setSorter", () => {
     rawSheet.triggerComponentEvent("cmp", "click");
     expect(repeater.value()).toMatchObject({});
   });
+});
+
+describe("Repeater add and remove", () => {
+  test.todo("Add an entry");
+  test.todo("Remove an entry");
 });

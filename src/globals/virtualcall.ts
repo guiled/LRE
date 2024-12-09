@@ -1,9 +1,9 @@
 export const loggedCall = <T>(cb: () => T): T => {
-  context.resetAccessLog();
+  context.pushLogContext();
 
   const result: T = cb();
 
-  context.resetAccessLog();
+  context.popLogContext();
 
   return result;
 };

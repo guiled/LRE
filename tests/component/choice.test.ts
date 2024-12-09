@@ -1,5 +1,4 @@
 import { Choice, ChoicesWithData } from "../../src/component/choice";
-import { DirectDataProvider } from "../../src/dataprovider";
 import { LRE } from "../../src/lre";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { Sheet } from "../../src/sheet";
@@ -9,7 +8,6 @@ import {
   initLetsRole,
   itHasWaitedEverything,
 } from "../../src/mock/letsrole/letsrole.mock";
-import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 let raw: LetsRole.Component;
 let rawSheet: LetsRole.Sheet;
@@ -54,17 +52,14 @@ beforeEach(() => {
     },
   });
   initLetsRole(server);
-  global.lre = new LRE(modeHandlerMock);
+  global.lre = new LRE(context);
   Tables = new LreTables(Tables);
 
   rawSheet = server.openView("main", "12345", {
     chA: "a",
   });
-  sheet = new Sheet(
-    rawSheet,
-    new DataBatcher(modeHandlerMock, rawSheet),
-    modeHandlerMock,
-  );
+  sheet = new Sheet(rawSheet, new DataBatcher(context, rawSheet), context);
+  lre.sheets.add(sheet);
   raw = rawSheet.get("ch");
 });
 
@@ -172,10 +167,11 @@ describe("Set choice dynamically", () => {
   test("Set Choices from data provider", () => {
     const a = "42";
     const b = "13";
-    const p = new DirectDataProvider(() => ({
+    const data = {
       a,
       b,
-    }));
+    };
+    const p = lre.dataProvider("test", () => data);
 
     const ch = new Choice(rawSheet.get("chA"), sheet, "chA");
     ch.setChoices(p);
@@ -183,6 +179,20 @@ describe("Set choice dynamically", () => {
       a,
       b,
     });
+    data.a = "43";
+    expect(ch.getChoices()).toStrictEqual({
+      a: "42",
+      b: "13",
+    });
+    p.refresh();
+    expect(ch.getChoices()).toStrictEqual({
+      a: "43",
+      b: "13",
+    });
+  });
+
+  test("Set Choices from group", () => {
+    const ch = new Choice(rawSheet.get("chA"), sheet, "chA");
     const cmp1 = sheet.get("cmp1")!;
     const cmp2 = sheet.get("cmp2")!;
     cmp1.value("1");

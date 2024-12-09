@@ -1,11 +1,12 @@
 import { LRE } from "../../src/lre";
 import { EventDef, EventHolder } from "../../src/eventholder/index";
-import { modeHandlerMock } from "../mock/modeHandler.mock";
 import { ComponentMock } from "../../src/mock/letsrole/component.mock";
 import { ViewMock } from "../../src/mock/letsrole/view.mock";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
+import { modeHandlerMock } from "../mock/modeHandler.mock";
 
-global.lre = new LRE(modeHandlerMock);
+const context = modeHandlerMock();
+global.lre = new LRE(context);
 
 type TestedEvents = "test" | "unused" | "click" | "update";
 

@@ -1,7 +1,6 @@
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { registerLreBindings } from "../../src/proxy/bindings";
 import { initLetsRole } from "../../src/mock/letsrole/letsrole.mock";
-import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 describe("Bindings proxy", () => {
   let subject: LetsRole.Bindings;
@@ -17,7 +16,7 @@ describe("Bindings proxy", () => {
       ],
     });
     initLetsRole(server);
-    subject = registerLreBindings(modeHandlerMock, Bindings);
+    subject = registerLreBindings(context, Bindings);
     (Bindings.add as jest.Mock).mockClear();
     (Bindings.clear as jest.Mock).mockClear();
     (Bindings.remove as jest.Mock).mockClear();
@@ -39,7 +38,7 @@ describe("Bindings proxy", () => {
   });
 
   test("does nothing in virtual mode", () => {
-    modeHandlerMock.setMode("virtual");
+    context.setMode("virtual");
     subject.add("bindingName", "componentId", "viewId", () => ({}));
     expect(Bindings.add).not.toHaveBeenCalled();
     subject.clear("componentId");

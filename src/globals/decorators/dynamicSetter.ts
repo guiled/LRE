@@ -22,9 +22,7 @@ const logEvent: Array<LogEventDefinition> = [
 
 type DynamicArgType = "value" | "provider" | "callback" | "component";
 
-type ComponentAttachedToComponent = Partial<
-  Record<ProxyModeHandlerLogType, Array<LetsRole.ComponentID>>
->;
+type DynamicSetterHolder = ComponentCommon | IDataProvider;
 
 const isDataProvider = (input: any): input is IDataProvider => {
   return !!input.provider;
@@ -42,7 +40,7 @@ const traceDynamicSetter = (
 };
 
 export const extractDataProviders = function <
-  This extends ComponentCommon,
+  This extends DynamicSetterHolder,
   Return,
   Args extends any[],
 >(...callbacks: Array<(...args: any[]) => any>) {
@@ -71,7 +69,7 @@ export const extractDataProviders = function <
 };
 
 export const flaggedDynamicSetter = function <
-  This extends ComponentCommon,
+  This extends DynamicSetterHolder,
   Return,
   Args extends any[],
 >(
@@ -90,7 +88,7 @@ export const flaggedDynamicSetter = function <
       (this: This, ...args: Args) => Return
     >,
   ) {
-    const eventLogs: ComponentAttachedToComponent = {};
+    const eventLogs: Partial<ContextLog> = {};
 
     const replacementMethod = function (this: This, ...args: Args): Return {
       if (arguments.length > 0) {
@@ -104,6 +102,8 @@ export const flaggedDynamicSetter = function <
 
         args.forEach((newValue, idx) => {
           if (argFlags[idx] === false) {
+            argTypes.push("value");
+          } else if (typeof newValue === "undefined") {
             argTypes.push("value");
           } else if (isDataProvider(newValue)) {
             argTypes.push("provider");
@@ -140,7 +140,6 @@ export const flaggedDynamicSetter = function <
                   providedBy:
                     newValue.valueProvider() || newValue.dataProvider(),
                 });
-                //argsForTarget.push(loggedCall(newValue.value.bind(newValue)));
               } else {
                 argsForTarget.push(args[i]);
               }
@@ -149,6 +148,7 @@ export const flaggedDynamicSetter = function <
                 this,
                 eventLogs,
                 newSetter,
+                context.name as string,
               );
               Object.assign(eventLogs, newEventLogs);
             });
@@ -171,55 +171,81 @@ export const flaggedDynamicSetter = function <
 
 export const dynamicSetter = flaggedDynamicSetter();
 
-const removeOldEventLogHandlers = function <This extends ComponentCommon>(
+const removeOldEventLogHandlers = function <This extends DynamicSetterHolder>(
   this: This,
-  eventLogs: ComponentAttachedToComponent,
-  context: ClassMethodDecoratorContext,
+  eventLogs: Partial<ContextLog>,
+  decoratorContext: ClassMethodDecoratorContext,
 ): void {
   let deleted: boolean = false;
   logEvent.forEach((t) => {
     const eventId = getEventId.call(this, t) as EventType<EventHolderEvents>;
-    eventLogs[t.logType]?.forEach((realId) => {
-      deleted = true;
-      this.sheet().get(realId)?.off(eventId);
-    });
+    eventLogs[t.logType]?.forEach(
+      (accessedValue: ContextLogRecord | IDataProvider) => {
+        deleted = true;
+
+        if (Array.isArray(accessedValue)) {
+          const [sheetRealID, realId] = accessedValue;
+          lre.sheets.get(sheetRealID).get(realId)?.off(eventId);
+        } else {
+          accessedValue.unsubscribeRefresh(eventId);
+        }
+      },
+    );
     delete eventLogs[t.logType];
+  });
+  eventLogs.provider?.forEach((provider: IDataProvider) => {
+    deleted = true;
+    provider.unsubscribeRefresh(
+      this.realId() + "-" + (decoratorContext.name as string),
+    );
   });
 
   if (deleted) {
     lre.trace(
-      `Remove dynamic setter for ${this.realId()} on ${context.name as string}`,
+      `Remove dynamic setter for ${this.realId()} on ${decoratorContext.name as string}`,
     );
   }
 };
 
-const getEventId = function <This extends ComponentCommon>(
+const getEventId = function <This extends DynamicSetterHolder>(
   this: This,
   def: LogEventDefinition,
 ): EventType {
   return [def.event, def.logType, this.realId()].join(EVENT_SEP);
 };
 
-const handleAccessLog = function <This extends ComponentCommon>(
+const handleAccessLog = function <This extends DynamicSetterHolder>(
   this: This,
   eventLogs: any,
   newSetter: () => any,
+  destName: string,
 ): void {
   logEvent.forEach((t) => {
-    const oldAccessLog: LetsRole.ComponentID[] = eventLogs[t.logType] || [];
-    const newAccessLog: LetsRole.ComponentID[] = context
+    const oldAccessLog: ContextLogByType = eventLogs[t.logType] || [];
+    const newAccessLog: ContextLogByType = context
       .getPreviousAccessLog(t.logType)
-      .filter((l) => !oldAccessLog.includes(l));
+      .filter(
+        (newLog) =>
+          !oldAccessLog.some(
+            (oldLog) => oldLog[1] === newLog[1] && oldLog[0] === newLog[0],
+          ),
+      );
 
     const eventId = getEventId.call(this, t) as EventType<EventHolderEvents>;
-    newAccessLog.forEach((realId) => {
-      this.sheet().get(realId)!.on(eventId, newSetter);
+    newAccessLog.forEach((accessedValue: ContextLogRecord) => {
+      const [sheetRealID, realId] = accessedValue;
+      lre.sheets.get(sheetRealID).get(realId)?.on(eventId, newSetter);
     });
 
     if (newAccessLog.length > 0) {
       eventLogs[t.logType] = [...oldAccessLog, ...newAccessLog];
     }
   });
+  context
+    .getPreviousAccessLog("provider")
+    .forEach((provider: IDataProvider) => {
+      provider.subscribeRefresh(this.realId() + "-" + destName, newSetter);
+    });
 
   return eventLogs;
 };
@@ -244,5 +270,5 @@ export const getDataProvidersFromArgs = function <T extends Array<any>>(
 };
 
 const isProvidedValue = (input: any): input is ProvidedValue => {
-  return !!input.providedBy;
+  return !!input?.providedBy;
 };

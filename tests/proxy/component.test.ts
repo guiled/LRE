@@ -1,7 +1,7 @@
+import { initLetsRole } from "../../src/mock/letsrole/letsrole.mock";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { ComponentProxy } from "../../src/proxy/component";
 import { SheetProxy } from "../../src/proxy/sheet";
-import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 jest.mock("../../src/sheet");
 
@@ -50,6 +50,7 @@ beforeEach(() => {
       },
     ],
   });
+  initLetsRole(server);
 });
 
 const initTestMocks = (
@@ -59,9 +60,9 @@ const initTestMocks = (
   rawSheet = server.openView("main", "1234", {}, "Sheet 1");
   parent = rawSheet.get("parent_test");
   raw = rawSheet.get(cmpId);
-  sheetProxy = new SheetProxy(modeHandlerMock, rawSheet);
+  sheetProxy = new SheetProxy(context, rawSheet);
 
-  const subject = new ComponentProxy(modeHandlerMock, raw, sheetProxy, () => ({
+  const subject = new ComponentProxy(context, raw, sheetProxy, () => ({
     cmpClasses: {},
     cmpTexts: {},
     sheetData: {},
@@ -70,7 +71,7 @@ const initTestMocks = (
   }));
 
   if (isVirtual) {
-    modeHandlerMock.setMode("virtual");
+    context.setMode("virtual");
   }
 
   return subject;
@@ -351,20 +352,18 @@ describe("Proxy logs", () => {
     subject.getDest();
     jest.spyOn(raw, "value");
     jest.spyOn(raw, "getClasses");
-    jest.spyOn(modeHandlerMock, "logAccess");
+    jest.spyOn(context, "logAccess");
   });
 
   test.each(["value", "rawValue", "virtualValue", "text", "visible"])(
     "logs %s",
     (logType: any) => {
-      expect(modeHandlerMock.logAccess).toHaveBeenCalledTimes(0);
+      expect(context.logAccess).toHaveBeenCalledTimes(0);
       /* @ts-expect-error Dynamic calls */
       subject[logType]!();
-      expect(modeHandlerMock.logAccess).toHaveBeenCalledTimes(1);
-      expect((modeHandlerMock.logAccess as jest.Mock).mock.calls[0][0]).toBe(
-        logType,
-      );
-      expect((modeHandlerMock.logAccess as jest.Mock).mock.calls[0][1]).toBe(
+      expect(context.logAccess).toHaveBeenCalledTimes(1);
+      expect((context.logAccess as jest.Mock).mock.calls[0][0]).toBe(logType);
+      expect((context.logAccess as jest.Mock).mock.calls[0][1][1]).toBe(
         subject.id(),
       );
     },
@@ -373,14 +372,12 @@ describe("Proxy logs", () => {
   test.each(["hasClass", "getClasses"])(
     "Class access with %s",
     (method: any) => {
-      expect(modeHandlerMock.logAccess).toHaveBeenCalledTimes(0);
+      expect(context.logAccess).toHaveBeenCalledTimes(0);
       /* @ts-expect-error Dynamic calls */
       subject[method]!("toto");
-      expect(modeHandlerMock.logAccess).toHaveBeenCalledTimes(1);
-      expect((modeHandlerMock.logAccess as jest.Mock).mock.calls[0][0]).toBe(
-        "class",
-      );
-      expect((modeHandlerMock.logAccess as jest.Mock).mock.calls[0][1]).toBe(
+      expect(context.logAccess).toHaveBeenCalledTimes(1);
+      expect((context.logAccess as jest.Mock).mock.calls[0][0]).toBe("class");
+      expect((context.logAccess as jest.Mock).mock.calls[0][1][1]).toBe(
         subject.id(),
       );
     },

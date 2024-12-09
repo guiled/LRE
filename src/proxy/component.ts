@@ -164,12 +164,18 @@ class ComponentProxy
   }
 
   getClasses(): LetsRole.ClassName[] {
-    this._proxyModeHandler.logAccess("class", this.getDest().id()!);
+    this._proxyModeHandler.logAccess("class", [
+      this.#sheet.getSheetId(),
+      this.getDest().id()!,
+    ]);
     return this.getDest().getClasses();
   }
 
   hasClass(className: LetsRole.ClassName): boolean {
-    this._proxyModeHandler.logAccess("class", this.getDest().id()!);
+    this._proxyModeHandler.logAccess("class", [
+      this.#sheet.getSheetId(),
+      this.getDest().id()!,
+    ]);
     return this.getDest().hasClass(className);
   }
 
@@ -182,12 +188,18 @@ class ComponentProxy
       return;
     }
 
-    this._proxyModeHandler.logAccess("virtualValue", this.getDest().id()!);
+    this._proxyModeHandler.logAccess("virtualValue", [
+      this.#sheet.getSheetId(),
+      this.getDest().id()!,
+    ]);
     return this.getDest().virtualValue();
   }
 
   rawValue(): LetsRole.ComponentValue {
-    this._proxyModeHandler.logAccess("rawValue", this.getDest().id()!);
+    this._proxyModeHandler.logAccess("rawValue", [
+      this.#sheet.getSheetId(),
+      this.getDest().id()!,
+    ]);
     return this.getDest().rawValue();
   }
 
@@ -197,12 +209,18 @@ class ComponentProxy
       return;
     }
 
-    this._proxyModeHandler.logAccess("text", this.getDest().id()!);
+    this._proxyModeHandler.logAccess("text", [
+      this.#sheet.getSheetId(),
+      this.getDest().id()!,
+    ]);
     return this.getDest().text();
   }
 
   visible(): boolean {
-    this._proxyModeHandler.logAccess("visible", this.getDest().id()!);
+    this._proxyModeHandler.logAccess("visible", [
+      this.#sheet.getSheetId(),
+      this.getDest().id()!,
+    ]);
     return this.getDest().visible();
   }
 
@@ -220,7 +238,10 @@ class ComponentProxy
       return;
     }
 
-    this._proxyModeHandler.logAccess("value", this.getDest().id()!);
+    this._proxyModeHandler.logAccess("value", [
+      this.#sheet.getSheetId(),
+      this.getDest().id()!,
+    ]);
     return this.getDest().value();
   }
   sheet(): LetsRole.Sheet {

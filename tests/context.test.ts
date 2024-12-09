@@ -33,7 +33,10 @@ describe("Context access logs", () => {
       const subject = new Context();
       expect(subject.getAccessLog(logType)).toStrictEqual([]);
       expect(subject.getPreviousAccessLog(logType)).toStrictEqual([]);
-      const logMessage = "This is log type " + logType;
+      const logMessage: [string, string] = [
+        "123",
+        "This is log type " + logType,
+      ];
       expect(subject.logAccess(logType, logMessage)).toBe(subject);
       expect(subject.getAccessLog(logType)).toStrictEqual([logMessage]);
     },
@@ -41,8 +44,10 @@ describe("Context access logs", () => {
 
   test("Reset access log", () => {
     const subject = new Context();
-    allLogTypes.forEach((logType) => subject.logAccess(logType, "Message"));
-    subject.resetAccessLog();
+    allLogTypes.forEach((logType) =>
+      subject.logAccess(logType, ["123", "Message"]),
+    );
+    subject.popLogContext();
     allLogTypes.forEach((logType) =>
       expect(subject.getAccessLog(logType)).toStrictEqual([]),
     );
@@ -50,22 +55,27 @@ describe("Context access logs", () => {
 
   test("Disable log access", () => {
     const subject = new Context();
-    subject.logAccess("value", "a");
+    subject.logAccess("value", ["123", "a"]);
     subject.disableAccessLog();
-    subject.logAccess("value", "b");
+    subject.logAccess("value", ["123", "b"]);
     subject.enableAccessLog();
-    subject.logAccess("value", "c");
-    expect(subject.getAccessLog("value")).toStrictEqual(["a", "c"]);
+    subject.logAccess("value", ["123", "c"]);
+    expect(subject.getAccessLog("value")).toStrictEqual([
+      ["123", "a"],
+      ["123", "c"],
+    ]);
   });
 
   test("Access log is reset mode switch", () => {
     const subject = new Context();
-    allLogTypes.forEach((logType) => subject.logAccess(logType, "Message"));
+    allLogTypes.forEach((logType) =>
+      subject.logAccess(logType, ["123", "Message"]),
+    );
     allLogTypes.forEach((logType) =>
       expect(subject.getAccessLog(logType)).not.toStrictEqual([]),
     );
     subject.setMode("real");
-    const saveLogs: ContextLog = {};
+    const saveLogs: Partial<ContextLog> = {};
     allLogTypes.forEach((logType) => {
       saveLogs[logType] = subject.getAccessLog(logType);
       expect(saveLogs[logType]).not.toStrictEqual([]);
@@ -75,7 +85,9 @@ describe("Context access logs", () => {
       expect(subject.getAccessLog(logType)).toStrictEqual([]);
       expect(subject.getPreviousAccessLog(logType)).toBe(saveLogs[logType]);
     });
-    allLogTypes.forEach((logType) => subject.logAccess(logType, "Message"));
+    allLogTypes.forEach((logType) =>
+      subject.logAccess(logType, ["123", "Message"]),
+    );
     allLogTypes.forEach((logType) =>
       expect(subject.getAccessLog(logType)).not.toStrictEqual([]),
     );

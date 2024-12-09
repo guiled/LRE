@@ -1,6 +1,5 @@
 import { Component } from "../../src/component";
 import { MultiChoice } from "../../src/component/multichoice";
-import { DirectDataProvider } from "../../src/dataprovider";
 import { LRE } from "../../src/lre";
 import { ComponentMock } from "../../src/mock/letsrole/component.mock";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
@@ -8,9 +7,7 @@ import { SheetProxy } from "../../src/proxy/sheet";
 import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
 import { initLetsRole } from "../../src/mock/letsrole/letsrole.mock";
-import { modeHandlerMock } from "../mock/modeHandler.mock";
-
-global.lre = new LRE(modeHandlerMock);
+import { ComponentProxy } from "../../src/proxy/component";
 
 let rawSheet: LetsRole.Sheet;
 let sheet: Sheet;
@@ -18,10 +15,9 @@ let sheet: Sheet;
 let server: ServerMock;
 
 let rawMultiChoice: ComponentMock;
+let proxyMultiChoice: ComponentProxy;
 let multiChoice: MultiChoice;
 beforeEach(() => {
-  modeHandlerMock.setMode("real");
-  lre.autoNum(false);
   server = new ServerMock({
     views: [
       {
@@ -44,24 +40,24 @@ beforeEach(() => {
     ],
   });
   initLetsRole(server);
-
+  global.lre = new LRE(context);
+  context.setMode("real");
+  lre.autoNum(false);
   rawSheet = server.openView("main", "123", {
     multi: [],
     cmd: "2",
   });
-  const proxySheet = new SheetProxy(modeHandlerMock, rawSheet);
+  const proxySheet = new SheetProxy(context, rawSheet);
 
-  sheet = new Sheet(
-    proxySheet,
-    new DataBatcher(modeHandlerMock, proxySheet),
-    modeHandlerMock,
-  );
+  sheet = new Sheet(proxySheet, new DataBatcher(context, proxySheet), context);
+  lre.sheets.add(sheet);
   sheet.raw = jest.fn(() => proxySheet);
   jest.spyOn(sheet, "get");
   jest.spyOn(sheet, "componentExists");
   jest.spyOn(sheet, "knownChildren");
-  rawMultiChoice = rawSheet.get("multi") as ComponentMock;
-  multiChoice = new MultiChoice(rawMultiChoice, sheet, "multi");
+  multiChoice = sheet.get("multi") as MultiChoice;
+  proxyMultiChoice = multiChoice.raw() as ComponentProxy;
+  rawMultiChoice = proxyMultiChoice.getDest() as ComponentMock;
 });
 
 describe("MultiChoice", () => {
@@ -168,14 +164,14 @@ describe("MultiChoice", () => {
   });
 
   test("Multichoice checked() and unchecked() return providers", () => {
-    const data = new DirectDataProvider(() => {
+    const data = lre.dataProvider("test", () => {
       return {
-        1: { id: "1", lbl: "One", nb: 10 },
-        2: { id: "2", lbl: "Two", nb: 20 },
-        3: { id: "3", lbl: "Three", nb: 30 },
-        4: { id: "4", lbl: "Four", nb: 40 },
-        5: { id: "5", lbl: "Five", nb: 50 },
-        6: { id: "6", lbl: "Six", nb: 60 },
+        a: { id: "1", lbl: "One", nb: 10 },
+        b: { id: "2", lbl: "Two", nb: 20 },
+        c: { id: "3", lbl: "Three", nb: 30 },
+        d: { id: "4", lbl: "Four", nb: 40 },
+        e: { id: "5", lbl: "Five", nb: 50 },
+        f: { id: "6", lbl: "Six", nb: 60 },
       };
     });
     multiChoice.setChoices(data.select("lbl"));
@@ -185,36 +181,36 @@ describe("MultiChoice", () => {
     expect(unchecked.provider).toBeTruthy();
     expect(checked.providedValue()).toEqual({});
     expect(unchecked.providedValue()).toEqual({
-      1: "One",
-      2: "Two",
-      3: "Three",
-      4: "Four",
-      5: "Five",
-      6: "Six",
+      a: "One",
+      b: "Two",
+      c: "Three",
+      d: "Four",
+      e: "Five",
+      f: "Six",
     });
-    multiChoice.value(["1"]);
-    expect(checked.providedValue()).toEqual({ 1: "One" });
+    multiChoice.value(["a"]);
+    expect(checked.providedValue()).toEqual({ a: "One" });
     expect(unchecked.providedValue()).toEqual({
-      2: "Two",
-      3: "Three",
-      4: "Four",
-      5: "Five",
-      6: "Six",
+      b: "Two",
+      c: "Three",
+      d: "Four",
+      e: "Five",
+      f: "Six",
     });
-    multiChoice.value(["1", "3"]);
-    expect(checked.providedValue()).toEqual({ 1: "One", 3: "Three" });
+    multiChoice.value(["a", "c"]);
+    expect(checked.providedValue()).toEqual({ a: "One", c: "Three" });
     expect(unchecked.providedValue()).toEqual({
-      2: "Two",
-      4: "Four",
-      5: "Five",
-      6: "Six",
+      b: "Two",
+      d: "Four",
+      e: "Five",
+      f: "Six",
     });
-    expect(checked.getData("1")).toStrictEqual({
+    expect(checked.getData("a")).toStrictEqual({
       id: "1",
       lbl: "One",
       nb: 10,
     });
-    expect(unchecked.getData("2")).toStrictEqual({
+    expect(unchecked.getData("b")).toStrictEqual({
       id: "2",
       lbl: "Two",
       nb: 20,
@@ -222,7 +218,8 @@ describe("MultiChoice", () => {
   });
 
   test("Limit min and max choices with numbers", () => {
-    const data = new DirectDataProvider(() => {
+    multiChoice.on("click:other", jest.fn());
+    const data = lre.dataProvider("test", () => {
       return {
         1: { id: "1", lbl: "One", nb: 10 },
         2: { id: "2", lbl: "Two", nb: 20 },
@@ -234,6 +231,7 @@ describe("MultiChoice", () => {
     });
     multiChoice.setChoices(data.select("lbl"));
     rawMultiChoice.value([]);
+    multiChoice.on("click", jest.fn());
     multiChoice.maxChoiceNb(2);
     rawMultiChoice.value(["1"]);
     expect(multiChoice.value()).toEqual(["1"]);
@@ -252,7 +250,7 @@ describe("MultiChoice", () => {
   });
 
   test("Limit min and max choices with providers", () => {
-    const data = new DirectDataProvider(() => {
+    const data = lre.dataProvider("test", () => {
       return {
         1: { id: "1", lbl: "One", nb: 10 },
         2: { id: "2", lbl: "Two", nb: 20 },
@@ -266,9 +264,10 @@ describe("MultiChoice", () => {
     multiChoice.setChoices(data.select("lbl"));
     const rawCmd = rawSheet.get("cmd");
     const cmp = sheet.get("cmd") as Component;
-    modeHandlerMock.resetAccessLog();
     multiChoice.maxChoiceNb(cmp);
-    expect(modeHandlerMock.getPreviousAccessLog("value")).toContain("cmd");
+    expect(
+      context.getPreviousAccessLog("value").map((l) => l.join("-")),
+    ).toContain(sheet.getSheetId() + "-cmd");
     const updateEvent = jest.fn();
     multiChoice.on("update", updateEvent);
 
@@ -318,7 +317,7 @@ describe("MultiChoice", () => {
   });
 
   test("Multichoice triggers limit event", () => {
-    const data = new DirectDataProvider(() => {
+    const data = lre.dataProvider("test", () => {
       return {
         1: { id: "1", lbl: "One", nb: 10 },
         2: { id: "2", lbl: "Two", nb: 20 },
@@ -346,7 +345,7 @@ describe("MultiChoice", () => {
   });
 
   test("Limit multichoice with object as condition", () => {
-    const data = new DirectDataProvider(() => {
+    const data = lre.dataProvider("test", () => {
       return {
         1: { id: "1", lbl: "One", nb: 2, weight: 30 },
         2: { id: "2", lbl: "Two", nb: 2, weight: 10 },

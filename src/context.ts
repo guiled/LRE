@@ -1,7 +1,8 @@
 export class Context implements ProxyModeHandler {
   #mode: ProxyMode = "real";
-  #log: ContextLog = {};
-  #prevLog: ContextLog = {};
+  #contexts: Array<Partial<ContextLog>> = [];
+  #log: Partial<ContextLog> = {};
+  #prevLog: Partial<ContextLog> = {};
   #data: LetsRole.ViewData = {};
   #logEnabled: boolean = true;
 
@@ -11,7 +12,7 @@ export class Context implements ProxyModeHandler {
 
   setMode(newMode: ProxyMode): this {
     if (this.#mode !== newMode) {
-      this.resetAccessLog();
+      this.#resetAccessLog();
       this.#data = {};
     }
 
@@ -31,7 +32,10 @@ export class Context implements ProxyModeHandler {
     return this;
   }
 
-  logAccess(type: ProxyModeHandlerLogType, value: string): this {
+  logAccess<T extends keyof ContextLog>(
+    type: T,
+    value: ContextLog[T][number],
+  ): this {
     if (!this.#logEnabled) {
       return this;
     }
@@ -40,24 +44,50 @@ export class Context implements ProxyModeHandler {
       this.#log[type] = [];
     }
 
-    if (!this.#log[type]!.includes(value)) {
-      this.#log[type]!.push(value);
+    const logs: ContextLog[T] = this.#log[type] || [];
+
+    if (
+      !logs.some((l) => {
+        if (this.#isLogRecord(l) && this.#isLogRecord(value)) {
+          return l[0] === value[0] && l[1] === value[1];
+        }
+
+        return l == value;
+      })
+    ) {
+      (logs as ContextLogByType).push(value as ContextLogRecord);
     }
 
     return this;
   }
 
-  getAccessLog(type: ProxyModeHandlerLogType): Array<LetsRole.ComponentID> {
+  #isLogRecord(log: unknown): log is ContextLogRecord {
+    return Array.isArray(log);
+  }
+
+  getAccessLog<T extends keyof ContextLog>(type: T): ContextLog[T] {
     return this.#log[type] || [];
   }
 
-  getPreviousAccessLog(
-    type: ProxyModeHandlerLogType,
-  ): Array<LetsRole.ComponentID> {
+  getPreviousAccessLog<T extends keyof ContextLog>(type: T): ContextLog[T] {
     return this.#prevLog[type] || [];
   }
 
-  resetAccessLog(): this {
+  pushLogContext(): this {
+    this.#contexts.push(this.#log);
+    this.#log = {};
+
+    return this;
+  }
+
+  popLogContext(): this {
+    this.#prevLog = this.#log;
+    this.#log = this.#contexts.pop() || {};
+
+    return this;
+  }
+
+  #resetAccessLog(): this {
     this.#prevLog = this.#log;
     this.#log = {};
     return this;

@@ -2,7 +2,6 @@ import { ComponentCache } from "../../src/component/cache";
 import { LRE } from "../../src/lre";
 import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
-import { modeHandlerMock } from "../mock/modeHandler.mock";
 import {
   initLetsRole,
   itHasWaitedEverything,
@@ -91,7 +90,7 @@ beforeEach(() => {
     ],
   });
   initLetsRole(server);
-  global.lre = new LRE(modeHandlerMock);
+  global.lre = new LRE(context);
   lre.wait = wait;
   rawSheet = server.openView("sheet", "realId", {
     rep: {
@@ -129,11 +128,7 @@ beforeEach(() => {
       },
     },
   });
-  sheet = new Sheet(
-    rawSheet,
-    new DataBatcher(modeHandlerMock, rawSheet),
-    modeHandlerMock,
-  );
+  sheet = new Sheet(rawSheet, new DataBatcher(context, rawSheet), context);
 });
 
 const newCmp = jest.fn((id: string): ComponentSearchResult => {
@@ -151,7 +146,7 @@ const newCmp = jest.fn((id: string): ComponentSearchResult => {
 });
 
 beforeEach(() => {
-  cache = new ComponentCache(modeHandlerMock, newCmp);
+  cache = new ComponentCache(context, newCmp);
 });
 
 describe("Component cache set/get/unset/inCache", () => {
@@ -208,7 +203,7 @@ describe("Component cache set/get/unset/inCache", () => {
 describe("Component cache forget/remember", () => {
   beforeEach(() => {
     newCmp.mockClear();
-    cache = new ComponentCache(modeHandlerMock, newCmp);
+    cache = new ComponentCache(context, newCmp);
   });
 
   test("forget/remember", () => {

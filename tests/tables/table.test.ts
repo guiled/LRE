@@ -2,7 +2,6 @@ import { LRE } from "../../src/lre";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { Table } from "../../src/tables/table";
 import { initLetsRole } from "../../src/mock/letsrole/letsrole.mock";
-import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 beforeEach(() => {
   initLetsRole(
@@ -21,7 +20,7 @@ beforeEach(() => {
       },
     }),
   );
-  global.lre = new LRE(modeHandlerMock);
+  global.lre = new LRE(context);
 });
 
 describe("Table test", () => {

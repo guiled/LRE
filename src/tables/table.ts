@@ -35,6 +35,7 @@ export class Table
         },
       ],
       [
+        undefined,
         () => {
           const result: { [key: LetsRole.TableValue]: LetsRole.TableRow } = {};
           this.each((row: LetsRole.TableRow) => {

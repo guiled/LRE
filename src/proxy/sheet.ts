@@ -80,7 +80,7 @@ export class SheetProxy
   }
 
   get(id: LetsRole.ComponentID): LetsRole.Component {
-    this._proxyModeHandler.logAccess("cmp", id);
+    this._proxyModeHandler.logAccess("cmp", [this.getSheetId(), id]);
     return new ComponentProxy(
       this._proxyModeHandler,
       this._realDest.get(id),

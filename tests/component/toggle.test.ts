@@ -6,7 +6,6 @@ import {
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
-import { modeHandlerMock } from "../mock/modeHandler.mock";
 import { LRE } from "../../src/lre";
 import { ViewMock } from "../../src/mock/letsrole/view.mock";
 
@@ -60,12 +59,8 @@ beforeEach(() => {
   });
   initLetsRole(server);
   rawSheet = server.openView("main", "12345");
-  global.lre = new LRE(modeHandlerMock);
-  sheet = new Sheet(
-    rawSheet,
-    new DataBatcher(modeHandlerMock, rawSheet),
-    modeHandlerMock,
-  );
+  global.lre = new LRE(context);
+  sheet = new Sheet(rawSheet, new DataBatcher(context, rawSheet), context);
 });
 
 describe("Toggle", () => {
@@ -434,8 +429,8 @@ describe("Toggle", () => {
     const rawSheet2 = server.openView("main", "12345");
     const sheet2 = new Sheet(
       rawSheet2,
-      new DataBatcher(modeHandlerMock, rawSheet2),
-      modeHandlerMock,
+      new DataBatcher(context, rawSheet2),
+      context,
     );
     const toggle2 = sheet2.get("toggle") as Toggle;
     toggle2.toggling(
@@ -468,8 +463,8 @@ describe("Toggle", () => {
     const rawSheet2 = server.openView("main", "12345");
     const sheet2 = new Sheet(
       rawSheet2,
-      new DataBatcher(modeHandlerMock, rawSheet2),
-      modeHandlerMock,
+      new DataBatcher(context, rawSheet2),
+      context,
     );
     const toggle2 = sheet2.get("toggle") as Toggle;
     toggle2.toggling(

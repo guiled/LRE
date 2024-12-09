@@ -10,7 +10,6 @@ import {
   itHasWaitedEverything,
 } from "../../src/mock/letsrole/letsrole.mock";
 import { DataBatcher } from "../../src/sheet/databatcher";
-import { modeHandlerMock } from "../mock/modeHandler.mock";
 import { Choice } from "../../src/component/choice";
 import { LreTables } from "../../src/tables";
 import { SheetProxy } from "../../src/proxy/sheet";
@@ -32,8 +31,6 @@ const cmpText = "42";
 let server: ServerMock;
 
 beforeEach(() => {
-  modeHandlerMock.setMode("real");
-  modeHandlerMock.resetAccessLog();
   server = new ServerMock({
     views: [
       {
@@ -107,7 +104,8 @@ beforeEach(() => {
     },
   });
   initLetsRole(server);
-  global.lre = new LRE(modeHandlerMock);
+  context.setMode("real");
+  global.lre = new LRE(context);
   lre.autoNum(false);
 
   rawSheet = server.openView("main", "123", {
@@ -119,13 +117,10 @@ beforeEach(() => {
     },
   });
 
-  const proxySheet = new SheetProxy(modeHandlerMock, rawSheet);
+  const proxySheet = new SheetProxy(context, rawSheet);
 
-  sheet = new Sheet(
-    proxySheet,
-    new DataBatcher(modeHandlerMock, proxySheet),
-    modeHandlerMock,
-  );
+  sheet = new Sheet(proxySheet, new DataBatcher(context, proxySheet), context);
+  lre.sheets.add(sheet);
   sheet.raw = jest.fn(() => proxySheet);
   jest.spyOn(sheet, "get");
   jest.spyOn(sheet, "componentExists");
@@ -338,8 +333,8 @@ describe("Persistent data are sync between sheets", () => {
 
     const sheet2 = new Sheet(
       rawSheet2,
-      new DataBatcher(modeHandlerMock, rawSheet2),
-      modeHandlerMock,
+      new DataBatcher(context, rawSheet2),
+      context,
     );
     const cmp2 = sheet2.get("rep.123.b")!;
     /* @ts-expect-error Intended error */
@@ -549,14 +544,14 @@ describe("Component events on sub component", () => {
 describe("Component behavior with context", () => {
   test("Context has component ref when value is get", () => {
     const cmpProxy = sheet.get(cmpId)!;
-    expect(modeHandlerMock.getAccessLog("value")).toHaveLength(0);
+    expect(context.getAccessLog("value")).toHaveLength(0);
     cmpProxy.value();
-    expect(modeHandlerMock.getAccessLog("value")).toHaveLength(1);
-    expect(modeHandlerMock.getAccessLog("value")[0]).toStrictEqual(cmpId);
+    expect(context.getAccessLog("value")).toHaveLength(1);
+    expect(context.getAccessLog("value")[0][1]).toStrictEqual(cmpId);
     cmpProxy.value(42);
-    modeHandlerMock.resetAccessLog();
-    expect(modeHandlerMock.getAccessLog("value")).toHaveLength(0);
+    context.popLogContext();
+    expect(context.getAccessLog("value")).toHaveLength(0);
     cmpProxy.value();
-    expect(modeHandlerMock.getAccessLog("value")).toHaveLength(1);
+    expect(context.getAccessLog("value")).toHaveLength(1);
   });
 });

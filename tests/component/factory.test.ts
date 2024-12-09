@@ -7,14 +7,13 @@ import { Label } from "../../src/component/label";
 import { MultiChoice } from "../../src/component/multichoice";
 import { Repeater } from "../../src/component/repeater";
 import { LRE } from "../../src/lre";
+import { initLetsRole } from "../../src/mock/letsrole/letsrole.mock";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
-import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 jest.mock("../../src/lre");
 
-global.lre = new LRE(modeHandlerMock);
 let server: ServerMock;
 
 describe("Component factory", () => {
@@ -122,14 +121,12 @@ describe("Component factory", () => {
         },
       ],
     });
+    initLetsRole(server);
+    global.lre = new LRE(context);
     rawSheet = server.openView("main", "123", {
       rep1: { entry1: { txt: "hello", lbl: "Hello Read" } },
     });
-    sheet = new Sheet(
-      rawSheet,
-      new DataBatcher(modeHandlerMock, rawSheet),
-      modeHandlerMock,
-    );
+    sheet = new Sheet(rawSheet, new DataBatcher(context, rawSheet), context);
     rawCmp = rawSheet.get("cmp1");
   });
   test("Simple components", () => {

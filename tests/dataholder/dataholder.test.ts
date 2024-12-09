@@ -3,12 +3,13 @@ import { Sheet } from "../../src/sheet";
 import { LRE } from "../../src/lre";
 import { newMockedWait } from "../../src/mock/letsrole/wait.mock";
 import { DataBatcher } from "../../src/sheet/databatcher";
-import { modeHandlerMock } from "../mock/modeHandler.mock";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
+import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 const { wait, itHasWaitedEverything } = newMockedWait();
 global.wait = wait;
-global.lre = new LRE(modeHandlerMock);
+const context = modeHandlerMock();
+global.lre = new LRE(context);
 
 describe("Dataholder", () => {
   let sheet1: Sheet;
@@ -18,11 +19,7 @@ describe("Dataholder", () => {
 
   const initSheet = function (sheetId: string, realId: string): Sheet {
     const raw = server.openView(sheetId, realId, {});
-    return new Sheet(
-      raw,
-      new DataBatcher(modeHandlerMock, raw),
-      modeHandlerMock,
-    );
+    return new Sheet(raw, new DataBatcher(context, raw), context);
   };
 
   beforeEach(() => {

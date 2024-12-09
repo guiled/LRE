@@ -2,17 +2,20 @@ import { loggedCall, virtualCall } from "../../src/globals/virtualcall";
 import { LRE } from "../../src/lre";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 
-global.context = modeHandlerMock;
+global.context = modeHandlerMock();
 jest.mock("../../src/lre");
 
 describe("Logged call", () => {
   test("logged call runs the callback with clean logs", () => {
-    jest.spyOn(context, "resetAccessLog");
+    jest.spyOn(context, "pushLogContext");
+    jest.spyOn(context, "popLogContext");
     const cb = jest.fn();
-    expect(context.resetAccessLog).not.toHaveBeenCalled();
+    expect(context.pushLogContext).not.toHaveBeenCalled();
+    expect(context.popLogContext).not.toHaveBeenCalled();
     expect(cb).not.toHaveBeenCalled();
     loggedCall(cb);
-    expect(context.resetAccessLog).toHaveBeenCalled();
+    expect(context.pushLogContext).toHaveBeenCalled();
+    expect(context.popLogContext).toHaveBeenCalled();
     expect(cb).toHaveBeenCalled();
   });
 
@@ -65,18 +68,18 @@ describe("Virtual call", () => {
   });
 
   test("catches errors", () => {
-    global.lre = new LRE(modeHandlerMock);
+    global.lre = new LRE(context);
     let modeDuringVirtualCall = "";
     const cb = jest.fn(() => {
-      modeDuringVirtualCall = modeHandlerMock.getMode();
+      modeDuringVirtualCall = context.getMode();
       /* @ts-expect-error Intended error */
       null();
     });
-    expect(modeHandlerMock.getMode()).toBe("real");
+    expect(context.getMode()).toBe("real");
     expect(lre.error).not.toHaveBeenCalled();
     expect(() => virtualCall(cb)).not.toThrow();
     expect(lre.error).toHaveBeenCalled();
-    expect(modeHandlerMock.getMode()).toBe("real");
+    expect(context.getMode()).toBe("real");
     expect(modeDuringVirtualCall).not.toBe("real");
   });
 });

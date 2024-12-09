@@ -1,10 +1,12 @@
 declare type BasicObject<T = any> = { [key: string]: T };
 
 declare interface ILRE {
+  sheets: SheetCollection;
   deepMerge(target: any, ...sources: any[]): any;
   deepEqual(x: any, y: any): boolean;
   numToAlpha(n: number): string;
   alphaToNum(s: string): number;
+  getRandomId(): string;
   wait(delay: number, cb: () => void, name: string = "");
   autoNum(v: boolean = true): void;
   value<T = any>(n: T): number | T;
@@ -20,6 +22,12 @@ declare interface ILRE {
   isUseableAsIndex(value: any): value is number | string | bigint;
   __debug: boolean;
   __enableGroupedSetValue: boolean;
+  dataProvider(
+    id: string,
+    valueCb: ValueGetterSetter,
+    originalValueCb: ValueGetterSetter = valueCb,
+    sourceRefresh?: () => void,
+  ): IDataProvider;
 }
 
 declare interface ISheet extends LetsRole.Sheet, ComponentContainer<IGroup> {
@@ -67,26 +75,27 @@ declare type ProxyModeHandlerLogType =
   | "data"
   | "cmp";
 
-declare type ContextLog = Partial<
-  Record<ProxyModeHandlerLogType, Array<LetsRole.ComponentID>>
->;
+declare type ContextLogRecord = [LetsRole.SheetRealID, LetsRole.ComponentID];
+declare type ContextLogByType = Array<ContextLogRecord>;
+declare type ContextLog = Record<ProxyModeHandlerLogType, ContextLogByType> & {
+  provider: Array<IDataProvider>;
+};
 
 declare interface ProxyModeHandler {
-  setMode: (newMode: ProxyMode) => this;
+  setMode: (newMode: ProxyMode) => ProxyModeHandler;
   getMode: () => ProxyMode;
-  resetAccessLog: () => this;
-  disableAccessLog: () => this;
-  enableAccessLog: () => this;
-  logAccess: (
-    type: ProxyModeHandlerLogType,
-    value: LetsRole.ComponentID,
-  ) => this;
-  getAccessLog: (type: ProxyModeHandlerLogType) => Array<LetsRole.ComponentID>;
-  getPreviousAccessLog: (
-    type: ProxyModeHandlerLogType,
-  ) => Array<LetsRole.ComponentID>;
-  setContext: (id: string, context: any) => this;
+  disableAccessLog: () => ProxyModeHandler;
+  enableAccessLog: () => ProxyModeHandler;
+  logAccess: <T extends keyof ContextLog>(
+    type: T,
+    value: ContextLog[T][number],
+  ) => ProxyModeHandler;
+  getAccessLog: <T extends keyof ContextLog>(type: T) => ContextLog[T];
+  getPreviousAccessLog: <T extends keyof ContextLog>(type: T) => ContextLog[T];
+  setContext: (id: string, context: any) => ProxyModeHandler;
   getContext: <T = any>(id: string) => T;
+  pushLogContext: () => ProxyModeHandler;
+  popLogContext: () => ProxyModeHandler;
 }
 declare type ProxyMode = "real" | "virtual";
 
@@ -98,7 +107,7 @@ declare interface Logger {
   setLogLevel(level: keyof typeof LogLevel): void;
 }
 
-type cb = (thisArg: any, argArray?: any) => (rawSheet: LetsRole.Sheet) => void;
+type cb = (thisArg?: any, argArray?: any) => (rawSheet: LetsRole.Sheet) => void;
 
 declare module "lre" {
   global {
@@ -274,17 +283,23 @@ declare interface IDataProvider {
   providedValue<T extends DataProviderDataValue = DataProviderDataValue>(
     _newValue?: T,
   ): T extends undefined ? DataProviderDataValue : void;
-  sort(): IDataProvider;
+  refresh(): void;
+  sort(sorterOrString?: Sorter | string): IDataProvider;
   sortBy(sorterWithData: DataProviderComputer): IDataProvider;
   each(mapper: (val: DataProviderDataValue) => void): void;
   select(column: LetsRole.ComponentID): IDataProvider;
-  getData(id: DataProviderDataId): DataProviderDataValue;
+  getData(
+    id: DataProviderDataId | Array<number | string>,
+  ): DataProviderDataValue;
   filter(condition: DataProviderWhereConditioner);
   where(condition: DataProviderDataValue | DataProviderWhereConditioner);
   singleValue(): DataProviderDataValue;
   singleId(): DataProviderDataId;
   count(): number;
   length(): number;
+  realId(): string;
+  subscribeRefresh(id: string, refresh: () => void): void;
+  unsubscribeRefresh(id: string): void;
 }
 
 declare interface ComponentBase {
@@ -354,6 +369,11 @@ declare interface IComponent
 }
 
 declare interface IGroup extends IComponent, IDataProvider, IEventHolder {
+  add(cmp: LetsRole.ComponentID | IComponent): this;
+  remove(cmp: LetsRole.ComponentID | IComponent): this;
+  includes(cmp: LetsRole.ComponentID | IComponent): boolean;
+  contains(cmp: LetsRole.ComponentID | IComponent): boolean;
+  has(cmp: LetsRole.ComponentID | IComponent): boolean;
   text(_replacement?: LetsRole.ViewData | undefined): void | LetsRole.ViewData;
 }
 

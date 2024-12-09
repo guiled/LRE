@@ -1,3 +1,4 @@
+import { DirectDataProvider, ValueGetterSetter } from "./dataprovider";
 import { Logger } from "./log";
 import { SheetProxy } from "./proxy/sheet";
 import { Sheet } from "./sheet";
@@ -6,8 +7,6 @@ import { DataBatcher } from "./sheet/databatcher";
 
 firstInit = undefined;
 let firstLaunchDone: boolean = false;
-
-type cb = (thisArg: any, argArray?: any) => (rawSheet: LetsRole.Sheet) => void;
 
 type BasicObject<T = any> = { [key: string]: T };
 
@@ -235,5 +234,20 @@ export class LRE extends Logger implements ILRE {
     }
 
     return value;
+  }
+
+  dataProvider(
+    id: string,
+    valueCb: ValueGetterSetter,
+    originalValueCb?: ValueGetterSetter,
+    sourceRefresh?: () => void,
+  ): IDataProvider {
+    return new DirectDataProvider(
+      id,
+      this.#context,
+      valueCb,
+      originalValueCb,
+      sourceRefresh,
+    );
   }
 }

@@ -8,7 +8,6 @@ import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { SheetProxy } from "../../src/proxy/sheet";
 import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
-import { modeHandlerMock } from "../mock/modeHandler.mock";
 import { ViewMock } from "../../src/mock/letsrole/view.mock";
 
 let server: ServerMock;
@@ -37,17 +36,14 @@ beforeEach(() => {
     ],
   });
   initLetsRole(server);
-  global.lre = new LRE(modeHandlerMock);
-  modeHandlerMock.setMode("real");
+  global.lre = new LRE(context);
+  context.setMode("real");
   rawSheet = server.openView("main", "12345");
   rawCheckbox = rawSheet.get("checkbox");
-  sheetProxy = new SheetProxy(modeHandlerMock, rawSheet);
+  sheetProxy = new SheetProxy(context, rawSheet);
 
-  sheet = new Sheet(
-    sheetProxy,
-    new DataBatcher(modeHandlerMock, sheetProxy),
-    modeHandlerMock,
-  );
+  sheet = new Sheet(sheetProxy, new DataBatcher(context, sheetProxy), context);
+  lre.sheets.add(sheet);
 });
 
 describe("Checkbox basics", () => {

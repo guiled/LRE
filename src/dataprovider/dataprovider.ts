@@ -1,11 +1,20 @@
+import {
+  dynamicSetter,
+  extractDataProviders,
+} from "../globals/decorators/dynamicSetter";
 import { Mixin } from "../mixin";
 
-type ValueGetterSetter<
+export type ValueGetterSetter<
   T extends LetsRole.ComponentValue | LetsRole.TableRow | undefined = undefined,
 > = (
   newValue?: T,
 ) => T extends undefined ? LetsRole.ComponentValue | LetsRole.TableRow : void;
 
+/*type FlatDataRow = {
+  id: DataProviderDataId;
+  val: DataProviderDataValue;
+} & Record<string, DataProviderDataValue>;
+*/
 type Sorter = (
   a: DataProviderDataValue,
   b: DataProviderDataValue,
@@ -23,24 +32,90 @@ export const DataProvider = (superclass: Newable = class {}) =>
   class DataProvider extends superclass implements IDataProvider {
     public provider = true;
     #valueCb: ValueGetterSetter;
-    #originalValueCb: ValueGetterSetter;
+    #originalValueCb: ValueGetterSetter | undefined;
+    #currentValue: ReturnType<ValueGetterSetter> | undefined;
+    #originalValue: ReturnType<ValueGetterSetter> | undefined;
+    #sourceRefresh: undefined | (() => void);
+    #destRefresh: Record<string, () => void> = {};
+    #context: ProxyModeHandler | undefined;
 
     constructor(
+      context: ProxyModeHandler | undefined,
       valueCb: ValueGetterSetter,
-      originalValueCb: ValueGetterSetter = valueCb,
+      originalValueCb?: ValueGetterSetter,
+      sourceRefresh?: () => void,
     ) {
       super();
+      this.#context = context;
       this.#valueCb = valueCb;
       this.#originalValueCb = originalValueCb;
+      this.#sourceRefresh = sourceRefresh;
+    }
+
+    @dynamicSetter
+    @extractDataProviders()
+    #setCurrentValue(
+      value: DynamicSetValue<ReturnType<ValueGetterSetter>>,
+    ): ReturnType<ValueGetterSetter> {
+      if (!lre.deepEqual(this.#currentValue, value)) {
+        this.#currentValue = value as ReturnType<ValueGetterSetter>;
+        this.refreshDerived();
+      }
+
+      return this.#currentValue;
+    }
+
+    #getCurrentValue(): ReturnType<ValueGetterSetter> {
+      return this.#currentValue ?? this.#setCurrentValue(this.#valueCb);
+    }
+
+    @dynamicSetter
+    @extractDataProviders()
+    #setOriginalValue(
+      value: DynamicSetValue<ReturnType<ValueGetterSetter>>,
+    ): ReturnType<ValueGetterSetter> {
+      this.#originalValue = (value ??
+        this.#getCurrentValue()) as ReturnType<ValueGetterSetter>;
+
+      return this.#originalValue;
+    }
+
+    #getOriginalValue(): ReturnType<ValueGetterSetter> {
+      if (!this.#originalValue) {
+        if (this.#originalValueCb) {
+          return this.#setOriginalValue(this.#originalValueCb);
+        }
+
+        this.#originalValue = this.#getCurrentValue();
+      }
+
+      return this.#originalValue;
+    }
+
+    realId(): string {
+      return "dp-" + lre.getRandomId();
     }
 
     providedValue<T extends LetsRole.ComponentValue | undefined = undefined>(
       _newValue?: T,
     ): ReturnType<ValueGetterSetter<T>> {
-      return this.#handleSet(this.#valueCb).apply(
-        this,
-        Array.from(arguments) as [undefined],
-      ) as ReturnType<ValueGetterSetter<T>>;
+      const getSet = this.#handleSet(this.#getCurrentValue.bind(this));
+
+      if (arguments.length === 0) {
+        return getSet.call(this) as ReturnType<ValueGetterSetter<T>>;
+      } else {
+        return getSet.apply(this, Array.from(arguments) as []) as ReturnType<
+          ValueGetterSetter<T>
+        >;
+      }
+    }
+
+    refresh(): void {
+      this.#sourceRefresh?.();
+      this.#currentValue = undefined;
+      this.#originalValue = undefined;
+      this.#getCurrentValue();
+      this.#getOriginalValue();
     }
 
     sort(sorterOrString: Sorter | string = defaultSorter): IDataProvider {
@@ -69,27 +144,24 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     #sortData(sorter: Sorter): IDataProvider {
-      return new DirectDataProvider(
-        this.#handleSet(() => {
-          const data = this.#valueCb();
+      return this.#newProvider("sort", () => {
+        const data = this.#getCurrentValue();
 
-          if (Array.isArray(data)) {
-            return data.toSorted((a, b) => sorter(a, b));
-          } else if (lre.isObject(data)) {
-            return Object.entries(data)
-              .sort(
-                (
-                  [ka, a]: [DataProviderDataId, DataProviderDataValue],
-                  [kb, b]: [DataProviderDataId, DataProviderDataValue],
-                ) => sorter(a, b, ka, kb, this.getData(ka), this.getData(kb)),
-              )
-              .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
-          }
+        if (Array.isArray(data)) {
+          return data.toSorted((a, b) => sorter(a, b));
+        } else if (lre.isObject(data)) {
+          return Object.entries(data)
+            .sort(
+              (
+                [ka, a]: [DataProviderDataId, DataProviderDataValue],
+                [kb, b]: [DataProviderDataId, DataProviderDataValue],
+              ) => sorter(a, b, ka, kb, this.getData(ka), this.getData(kb)),
+            )
+            .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+        }
 
-          return data;
-        }),
-        this.#originalValueCb,
-      );
+        return data;
+      });
     }
 
     #handleSet<T extends LetsRole.ComponentValue | undefined = undefined>(
@@ -97,6 +169,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
     ): ValueGetterSetter<T> {
       return ((...args: [undefined] | []): ReturnType<ValueGetterSetter<T>> => {
         if (args.length === 0) {
+          this.#context?.logAccess?.("provider", this);
           return valueCb();
         }
 
@@ -110,7 +183,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
         key: DataProviderDataId,
       ) => void,
     ): void {
-      const values = this.#valueCb();
+      const values = this.#getCurrentValue();
 
       if (typeof values === "undefined") return;
 
@@ -124,50 +197,43 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     select(column: string): IDataProvider {
-      return new DirectDataProvider(
-        this.#handleSet(() => {
-          const result: Record<
-            string,
-            LetsRole.TableRow | LetsRole.ComponentValue
-          > = {};
+      return this.#newProvider("select", () => {
+        const result: Record<
+          string,
+          LetsRole.TableRow | LetsRole.ComponentValue
+        > = {};
 
-          this.each((v, k) => {
-            if (typeof v === "undefined") return;
-            else if (Array.isArray(v)) {
-              result[k] = v.includes(column);
-            } else if (
-              v &&
-              lre.isObject(v) &&
-              !lre.isAvatarValue(v) &&
-              Object.prototype.hasOwnProperty.call(v, column)
-            ) {
-              result[k] = v[column] as LetsRole.ComponentValue;
-            } else {
-              result[k] = undefined;
-            }
-          });
-
-          if (
-            Object.prototype.hasOwnProperty.call(result, "") &&
-            Object.keys(result).length === 1
+        this.each((v, k) => {
+          if (typeof v === "undefined") return;
+          else if (Array.isArray(v)) {
+            result[k] = v.includes(column);
+          } else if (
+            v &&
+            lre.isObject(v) &&
+            !lre.isAvatarValue(v) &&
+            Object.prototype.hasOwnProperty.call(v, column)
           ) {
-            return result[""];
+            result[k] = v[column] as LetsRole.ComponentValue;
+          } else {
+            result[k] = undefined;
           }
+        });
 
-          return result;
-        }),
-        this.#originalValueCb,
-      );
+        if (
+          Object.prototype.hasOwnProperty.call(result, "") &&
+          Object.keys(result).length === 1
+        ) {
+          return result[""];
+        }
+
+        return result;
+      });
     }
 
     getData(
-      id?:
-        | LetsRole.ComponentID
-        | LetsRole.ColumnId
-        | LetsRole.ComponentValue
-        | Array<number | string>,
+      id?: DataProviderDataId | Array<number | string>,
     ): LetsRole.TableRow | LetsRole.ComponentValue {
-      const originalValues = this.#originalValueCb();
+      const originalValues = this.#getOriginalValue();
 
       if (typeof id === "undefined") {
         if (Array.isArray(originalValues) && originalValues.length === 1) {
@@ -177,7 +243,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
           lre.isObject(originalValues) &&
           !lre.isAvatarValue(originalValues)
         ) {
-          const values = this.#valueCb() || {};
+          const values = this.#getCurrentValue() || {};
           const valueKeys = Object.keys(values);
 
           if (valueKeys.length === 1) {
@@ -224,23 +290,20 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     filter(condition: DataProviderWhereConditioner): IDataProvider {
-      return new DirectDataProvider(
-        this.#handleSet(() => {
-          const result: Record<
-            string,
-            LetsRole.TableRow | LetsRole.ComponentValue
-          > = {};
+      return this.#newProvider("filter", () => {
+        const result: Record<
+          string,
+          LetsRole.TableRow | LetsRole.ComponentValue
+        > = {};
 
-          this.each((v, k) => {
-            if (condition(v, k, this.getData(k))) {
-              result[k] = v;
-            }
-          });
+        this.each((v, k) => {
+          if (condition(v, k, this.getData(k))) {
+            result[k] = v;
+          }
+        });
 
-          return result;
-        }),
-        this.#originalValueCb,
-      );
+        return result;
+      });
     }
 
     where(
@@ -258,7 +321,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     count(): number {
-      const values = this.#valueCb();
+      const values = this.#getCurrentValue();
 
       if (Array.isArray(values)) {
         return values.length;
@@ -274,7 +337,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     singleValue(): DataProviderDataValue {
-      const values = this.#valueCb();
+      const values = this.#getCurrentValue();
 
       if (Array.isArray(values)) {
         return values[0];
@@ -286,7 +349,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     singleId(): DataProviderDataId {
-      const values = this.#valueCb();
+      const values = this.#getCurrentValue();
 
       if (Array.isArray(values)) {
         if (
@@ -303,19 +366,74 @@ export const DataProvider = (superclass: Newable = class {}) =>
         return 0;
       }
     }
+
+    #newProvider(id: string, valueCb: ValueGetterSetter): IDataProvider {
+      const provider = new DirectDataProvider(
+        id,
+        this.#context,
+        this.#handleSet(valueCb),
+        this.#getOriginalValue.bind(this),
+        this.refresh.bind(this),
+      );
+      this.subscribeRefresh(
+        provider.realId(),
+        provider.providedValue.bind(provider),
+      );
+
+      return provider;
+    }
+
+    subscribeRefresh(id: string, refresh: () => void): void {
+      this.#destRefresh[id] = refresh;
+    }
+
+    unsubscribeRefresh(id: string): void {
+      delete this.#destRefresh[id];
+    }
+
+    refreshDerived(): void {
+      Object.values(this.#destRefresh).forEach((refresh) => refresh());
+    }
+
+    /*toArray(): Array<DataProviderDataValue> {
+      const values = this.#getCurrentValue();
+
+      if (Array.isArray(values)) {
+        return values;
+      } else if (lre.isObject(values)) {
+        return Object.values(values);
+      } else {
+        return [values];
+      }
+    }*/
   };
 
 export class DirectDataProvider extends Mixin(DataProvider) {
+  #id: string;
   constructor(
+    id: string,
+    context: ProxyModeHandler | undefined,
     valueCb: ValueGetterSetter,
-    originalValueCb: ValueGetterSetter = valueCb,
+    originalValueCb?: ValueGetterSetter,
+    sourceRefresh?: () => void,
   ) {
-    const dataProviderArgs = [valueCb];
+    const dataProviderArgs: Partial<
+      ConstructorParameters<ReturnType<typeof DataProvider>>
+    > = [context, valueCb];
 
-    if (arguments.length > 1) {
+    if (arguments.length > 2) {
       dataProviderArgs.push(originalValueCb);
     }
 
+    if (arguments.length > 3) {
+      dataProviderArgs.push(sourceRefresh!);
+    }
+
     super([dataProviderArgs]);
+    this.#id = super.realId() + "-" + id;
+  }
+
+  realId(): string {
+    return this.#id;
   }
 }

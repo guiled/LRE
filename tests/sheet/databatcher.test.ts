@@ -1,7 +1,6 @@
 import { DataBatcher } from "../../src/sheet/databatcher";
 import { LRE } from "../../src/lre";
 import { SheetProxy } from "../../src/proxy/sheet";
-import { modeHandlerMock } from "../mock/modeHandler.mock";
 import {
   initLetsRole,
   itHasWaitedEnough,
@@ -9,11 +8,13 @@ import {
 } from "../../src/mock/letsrole/letsrole.mock";
 import { ViewMock } from "../../src/mock/letsrole/view.mock";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
+import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 let server: ServerMock;
+const context = modeHandlerMock();
 
 beforeEach(() => {
-  modeHandlerMock.setMode("real");
+  context.setMode("real");
   server = new ServerMock({
     views: [
       {
@@ -24,7 +25,7 @@ beforeEach(() => {
     ],
   });
   initLetsRole(server);
-  global.lre = new LRE(modeHandlerMock);
+  global.lre = new LRE(context);
   lre.wait = global.wait;
 });
 
@@ -34,7 +35,7 @@ describe("DataBatcher instantiation", () => {
 
   beforeEach(() => {
     sheet = server.openView("main", "123");
-    dataBatcher = new DataBatcher(modeHandlerMock, sheet);
+    dataBatcher = new DataBatcher(context, sheet);
   });
 
   it("has raw method", () => {
@@ -49,7 +50,7 @@ describe("DataBatcher async send data", () => {
   beforeEach(() => {
     sheet = server.openView("main", "123");
     jest.spyOn(sheet, "setData");
-    dataBatcher = new DataBatcher(modeHandlerMock, sheet);
+    dataBatcher = new DataBatcher(context, sheet);
   });
 
   it("delayed data send and getPendingData", () => {
@@ -200,14 +201,14 @@ describe("Handle virtual and real modes", () => {
 
   beforeEach(() => {
     sheet = server.openView("main", "123");
-    sheetProxy = new SheetProxy(modeHandlerMock, sheet);
+    sheetProxy = new SheetProxy(context, sheet);
     jest.spyOn(sheetProxy, "setData");
-    dataBatcher = new DataBatcher(modeHandlerMock, sheetProxy);
+    dataBatcher = new DataBatcher(context, sheetProxy);
     jest.spyOn(sheet, "setData");
   });
 
   test("Virtual mode", () => {
-    modeHandlerMock.setMode("virtual");
+    context.setMode("virtual");
     const pendingCallback = jest.fn();
     const processedCallback = jest.fn();
     dataBatcher.on("pending", pendingCallback);

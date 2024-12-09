@@ -1,4 +1,3 @@
-import { DirectDataProvider } from "../dataprovider";
 import {
   dynamicSetter,
   flaggedDynamicSetter,
@@ -182,7 +181,8 @@ export class MultiChoice extends Choice<
   }
 
   checked(): IDataProvider {
-    return new DirectDataProvider(
+    return lre.dataProvider(
+      this.realId() + "-checked",
       () => {
         const result: LetsRole.ViewData = {};
         each(this.value(), (v: LetsRole.ChoiceValue) => {
@@ -198,7 +198,8 @@ export class MultiChoice extends Choice<
   }
 
   unchecked(): IDataProvider {
-    return new DirectDataProvider(
+    return lre.dataProvider(
+      this.realId() + "-unchecked",
       () => {
         const result: LetsRole.ViewData = {};
         each(this.getChoices(), (_v: string, k: LetsRole.ChoiceValue) => {
@@ -260,6 +261,8 @@ export class MultiChoice extends Choice<
 
     this.#minLimiter = nb;
     this.#minCalculator = calculator || defaultCalculator;
+
+    this.on("update:__Lre__minmax", this.#checkLimit.bind(this));
   }
 
   #getLimiterValue(

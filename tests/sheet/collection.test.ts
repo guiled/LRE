@@ -7,7 +7,8 @@ import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 jest.mock("../../src/lre");
 
-global.lre = new LRE(modeHandlerMock);
+const context = modeHandlerMock();
+global.lre = new LRE(context);
 
 describe("Sheet collection", () => {
   let sheet1: Sheet, sheet2: Sheet;
@@ -16,11 +17,7 @@ describe("Sheet collection", () => {
 
   const initSheet = function (sheetId: string, realId: string): Sheet {
     const raw = server.openView(sheetId, realId);
-    return new Sheet(
-      raw,
-      new DataBatcher(modeHandlerMock, raw),
-      modeHandlerMock,
-    );
+    return new Sheet(raw, new DataBatcher(context, raw), context);
   };
 
   beforeEach(() => {

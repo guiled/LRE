@@ -1,4 +1,3 @@
-import { DirectDataProvider } from "../dataprovider";
 import {
   dynamicSetter,
   extractDataProviders,
@@ -260,7 +259,8 @@ export class Repeater extends Component<
   }
 
   provider(): IDataProvider {
-    return new DirectDataProvider(
+    return lre.dataProvider(
+      this.realId(),
       () => {
         return this.value();
       },
