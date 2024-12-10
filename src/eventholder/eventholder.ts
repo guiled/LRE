@@ -189,12 +189,15 @@ export const EventHolder = <
           return;
         }
 
-        const cmp =
-          this.#getTarget?.(rawTarget, this.#events[eventId]!) || this;
+        // This variable is necessary to avoid an infinite loop in let's role system builder v1
+        const canBeRan = this.#eventCanBeRan(eventId);
 
-        if (!this.#eventCanBeRan(eventId)) {
+        if (!canBeRan) {
           return;
         }
+
+        const cmp =
+          this.#getTarget?.(rawTarget, this.#events[eventId]!) || this;
 
         this.#runHandlers(eventId, handlers, cmp, ...args);
         this.#propagateToLinks(eventName, ...args);
