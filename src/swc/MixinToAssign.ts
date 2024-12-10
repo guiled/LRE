@@ -34,6 +34,8 @@ import returnstmt from "./node/statement/returnstmt";
 import expression from "./node/expression";
 import { objectexpression } from "./node/expression/objectexpression";
 import { arrayfromarguments } from "./node/expression/arrayfromarguments";
+import binary from "./node/expression/binary";
+import numericliteral from "./node/literal/numericliteral";
 
 class MixinToAssign extends Visitor {
   #mixinClasses: Argument[] | undefined;
@@ -70,8 +72,12 @@ class MixinToAssign extends Visitor {
     const span = n.span;
     const _a = identifier({ span, value: "_a" });
     const _mixins = identifier({ span, value: "_mixins" });
+    const _acc = identifier({ span, value: "_acc" });
     const _m = identifier({ span, value: "_m" });
     const _idx = identifier({ span, value: "_idx" });
+    const _reversed = identifier({ span, value: "rev" });
+    const prev = identifier({ span, value: "prev" });
+    const resParent = identifier({ span, value: "resParent" });
     let superFound = false;
     const parentMixin = identifier({
       span,
@@ -79,7 +85,7 @@ class MixinToAssign extends Visitor {
     });
     const parentMixins = identifier({
       span,
-      value: "_parents",
+      value: "_super",
     });
     n.body.stmts = n.body?.stmts.map<Statement>(
       (stmt: Statement): Statement => {
@@ -109,10 +115,7 @@ class MixinToAssign extends Visitor {
               stmts: [
                 onevariable({
                   span,
-                  id: identifier({
-                    span,
-                    value: "prev",
-                  }),
+                  id: prev,
                   init: objectassign(span, [
                     { expression: objectexpression({}, span) },
                     { expression: thisexpression({ span }) },
@@ -120,20 +123,29 @@ class MixinToAssign extends Visitor {
                 }),
                 onevariable({
                   span,
-                  id: identifier({
-                    span,
-                    value: "resParent",
-                  }),
+                  id: _reversed,
                   init: call({
                     callee: member({
                       object: _mixins,
-                      property: identifier({ span, value: "map" }),
+                      property: identifier({ span, value: "reverse" }),
+                    }),
+                    args: [],
+                  }),
+                }),
+                onevariable({
+                  span,
+                  id: resParent,
+                  init: call({
+                    callee: member({
+                      object: _reversed,
+                      property: identifier({ span, value: "reduce" }),
                     }),
                     args: [
                       expression(
                         func({
                           span,
                           params: [
+                            paramidentifier({ span, param: _acc }),
                             paramidentifier({ span, param: _m }),
                             paramidentifier({ span, param: _idx }),
                           ],
@@ -169,7 +181,24 @@ class MixinToAssign extends Visitor {
                                                 property: {
                                                   type: "Computed",
                                                   span,
-                                                  expression: _idx,
+                                                  expression: binary({
+                                                    operator: "-",
+                                                    left: binary({
+                                                      operator: "-",
+                                                      left: member({
+                                                        object: _mixins,
+                                                        property: identifier({
+                                                          span,
+                                                          value: "length",
+                                                        }),
+                                                      }),
+                                                      right: numericliteral({
+                                                        span,
+                                                        value: 1,
+                                                      }),
+                                                    }),
+                                                    right: _idx,
+                                                  }),
                                                 },
                                               }),
                                             ),
@@ -187,18 +216,19 @@ class MixinToAssign extends Visitor {
                               expression: call({
                                 callee: objectassign(span),
                                 args: [
-                                  expression(thisexpression({ span })),
+                                  expression(_acc),
                                   expression(parentMixin),
                                 ],
                               }),
                             },
                             returnstmt({
                               span,
-                              argument: parentMixin,
+                              argument: _acc,
                             }),
                           ],
                         }),
                       ),
+                      { expression: objectexpression({}, span) },
                     ],
                   }),
                 }),
@@ -207,20 +237,13 @@ class MixinToAssign extends Visitor {
                   span,
                   expression: objectassign(span, [
                     { expression: thisexpression({ span }) },
-                    {
-                      expression: identifier({
-                        span,
-                        value: "prev",
-                      }),
-                    },
+                    { expression: resParent },
+                    { expression: prev },
                   ]),
                 },
                 returnstmt({
                   span,
-                  argument: identifier({
-                    span,
-                    value: "resParent",
-                  }),
+                  argument: resParent,
                 }),
               ],
             }),

@@ -843,6 +843,21 @@ class ClassToFunction extends Visitor {
             id: this.superIdentifierInCtor,
             newexpr,
           });
+        } else if (
+          stmt.type === "VariableDeclaration" &&
+          stmt.declarations.some(
+            (declaration) =>
+              declaration.id.type === "Identifier" &&
+              declaration.id.value === PARENT_IN_CTOR,
+          )
+        ) {
+          this.superIdentifierInCtor = stmt.declarations.find(
+            (declaration) =>
+              declaration.id.type === "Identifier" &&
+              declaration.id.value === PARENT_IN_CTOR,
+          )!.id as Identifier;
+          this.#ctorStates.hasSuperCtor = true;
+          newStmts.push(stmt);
         } else {
           newStmts.push(stmt);
         }
