@@ -31,8 +31,14 @@ By calling `lre()` your sheet and script will have some new features. Please rea
 LRE's goal is to facilitate Let's Rôle system coding of some common works that need to do scripts. It was firstly made to make repeaters easier to handle, and prevent value changes to be ignored by the servers (there's a rate limit of `component.value('anything')` calls). Last but not least, it avoids the inconvenience of some small bugs that can make script coding harder.
 
 - no more value change blocked
+- no more `parseInt()` or number conversion every where in your code
+- get rid of all the `update` events
+- like with computed parameter, write how a field is computed instead of writing what a field changes in a sheet
+- Get in logs the line that raised an error in the script
 - specific easy to use custom events for Repeaters
-- LRE bypass a bug with repeaters in crafts
+- LRE avoids a bug with repeaters in crafts
+- It fixes a bug with multiple choice value changes by script
+- more than one handler for an event type on a component.
 
 ## Systems that use LRE
 
