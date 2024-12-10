@@ -113,9 +113,11 @@ export class ComponentCache {
     silent: boolean = false,
   ): CacheableTypes | null {
     if (this.inCache(realId)) {
+      lre.trace(`Get component ${realId} from cache`);
       return this.#components[realId];
     }
 
+    lre.trace(`Get component ${realId} from sheet`);
     this.#context.disableAccessLog();
     const cmp = this.#getter(realId, silent);
     this.#context.enableAccessLog();

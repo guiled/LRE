@@ -118,8 +118,11 @@ export const EventHolder = <
         const fcn = handlers[hId];
 
         if (!this.isEventEnabled(eventId)) {
+          lre.trace(`Event ${eventId} is disabled`);
           return true;
         }
+
+        lre.trace(`Run handler ${this.#holderId}:${eventId}:${hId}`);
 
         try {
           isHandlerRan = true;
@@ -177,10 +180,12 @@ export const EventHolder = <
       eventName: EventType<AdditionalEvents>,
     ): LetsRole.EventCallback<LREEventTarget> {
       return (rawTarget: LREEventTarget, ...args: unknown[]): void => {
+        lre.trace(`Run events ${this.#holderId}:${eventName}`);
         const { eventId, handlers } =
           this.#getEventIdAndHandlersFromEventName(eventName);
 
         if (!this.isEventEnabled(eventId)) {
+          lre.trace(`Event ${eventName} is disabled`);
           return;
         }
 
@@ -286,9 +291,9 @@ export const EventHolder = <
       }
 
       lre.trace(
-        `${logText} for event ${eventName} ${handlerId} on ${
+        `${logText} ${
           this.#holderId + (subComponent ? ">" + subComponent : "")
-        }. Count : ${cnt}`,
+        }:${eventName}:${handlerId}. Count : ${cnt}`,
       );
     }
 

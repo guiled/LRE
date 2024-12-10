@@ -168,8 +168,11 @@ export class Component<
     ]);
     this.#realId = realId;
     this.#sheet = sheet;
-    this.on("data-updated:__lre__", this.loadPersistent.bind(this));
-    this.on("class-updated:__lre__", this.#applyClassChanges.bind(this));
+    this.on(
+      "data-updated:__lre__:loadPersistent",
+      this.loadPersistent.bind(this),
+    );
+    this.on("class-updated:__lre__:apply", this.#applyClassChanges.bind(this));
   }
 
   init(): this {
