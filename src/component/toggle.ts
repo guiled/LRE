@@ -27,6 +27,11 @@ export class Toggle<
   #saveTogglingData: boolean = false;
   #hadClickableClass: boolean = false;
 
+  // constructor only for builder compatibility
+  constructor(raw: LetsRole.Component, sheet: ISheet, realId: string) {
+    super(raw, sheet, realId);
+  }
+
   toggling(
     data: TogglingDataMap | Record<TogglingValue, string>,
     defaultValue?: TogglingValue,
