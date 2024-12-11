@@ -60,7 +60,8 @@ declare namespace LetsRole {
 
   export type ViewID = string;
   export type SheetID = string;
-  export type SheetRealID = string;
+  export type SheetRealIdDefined = string;
+  export type SheetRealID = SheetRealIdDefined | undefined; // undefined is for prompt view
   export type ComponentID = string;
   export type ComponentInRepeaterID = `${string}.${string}`;
   export type VariableID = string;

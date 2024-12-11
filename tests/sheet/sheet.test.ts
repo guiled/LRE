@@ -71,6 +71,16 @@ beforeEach(() => {
           },
         ],
       },
+      {
+        id: "viewId",
+        className: "View",
+        children: [
+          {
+            id: "d",
+            className: "Label",
+          },
+        ],
+      },
     ],
   });
   initLetsRole(server);
@@ -377,7 +387,7 @@ describe("Sheet persisting data", () => {
       ...newData1,
       ...newData2,
     });
-    const newRawSheet1 = server.openView(sheet1.id(), sheet1.getSheetId());
+    const newRawSheet1 = server.openView(sheet1.id(), sheet1.getSheetId()!);
     sheet1.refreshRaw(newRawSheet1);
     const newData3 = {
       ...newData1,

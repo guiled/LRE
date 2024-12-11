@@ -775,7 +775,7 @@ describe("Repeaters", () => {
     repeaterOk.on("update", fnOnRepeater);
     repeaterOk.on("click", fnClickOnRepeater);
 
-    const otherSheet = server.openView(sheet.id(), sheet.getSheetId(), {});
+    const otherSheet = server.openView(sheet.id(), sheet.getSheetId()!, {});
     const repeaterOkOther = otherSheet.get("rep2") as ComponentMock;
     const fnOnRepeaterOther = jest.fn();
     repeaterOkOther.on("update", fnOnRepeaterOther);
@@ -817,7 +817,7 @@ describe("Repeaters", () => {
     repeaterOk.on("update", fnOnRepeater);
     repeaterOk.on("click", fnClickOnRepeater);
 
-    const otherSheet = server.openView(sheet.id(), sheet.getSheetId(), {});
+    const otherSheet = server.openView(sheet.id(), sheet.getSheetId()!, {});
     const repeaterOkOther = otherSheet.get("rep2") as ComponentMock;
     const fnOnRepeaterOther = jest.fn();
     repeaterOkOther.on("update", fnOnRepeaterOther);

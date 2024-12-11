@@ -1,12 +1,14 @@
 import { Sheet } from "./sheet";
 
 export class SheetCollection {
-  #sheets: Record<LetsRole.SheetID, Sheet> = {};
+  #sheets: Record<LetsRole.SheetRealIdDefined, Sheet> = {};
 
   add(s: Sheet): void {
-    if (s.getSheetId()) {
-      lre.log(`sheet stored ${s.getSheetId()}`);
-      this.#sheets[s.getSheetId()] = s;
+    const sheetId = s.getSheetId();
+
+    if (sheetId) {
+      lre.log(`sheet stored ${sheetId}`);
+      this.#sheets[sheetId] = s;
     }
   }
 

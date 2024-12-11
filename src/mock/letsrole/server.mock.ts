@@ -4,8 +4,8 @@ import { ViewMock } from "./view.mock";
 export class ServerMock {
   #views: LetsRoleMock.ViewDefinitions[];
   #viewVariables: Record<LetsRole.ViewID, Record<string, number>> = {};
-  #viewData: Record<LetsRole.SheetRealID, LetsRole.ViewData> = {};
-  #openedSheets: Record<LetsRole.SheetRealID, Array<ViewMock>> = {};
+  #viewData: Record<LetsRole.SheetRealIdDefined, LetsRole.ViewData> = {};
+  #openedSheets: Record<LetsRole.SheetRealIdDefined, Array<ViewMock>> = {};
 
   #tables: Record<string, LetsRole.TableRow[]>;
 
@@ -23,24 +23,33 @@ export class ServerMock {
   ): ViewMock {
     this.getViewDefinitions(viewId);
 
-    if (data === void 0) {
-      if (this.#viewData[viewSheetId] === void 0) {
-        data = {};
-      } else {
-        data = this.#viewData[viewSheetId];
+    if (viewSheetId) {
+      if (data === void 0) {
+        if (this.#viewData[viewSheetId] === void 0) {
+          data = {};
+        } else {
+          data = this.#viewData[viewSheetId];
+        }
       }
+
+      this.#viewData[viewSheetId] = structuredClone(data);
     }
 
-    this.#viewData[viewSheetId] = structuredClone(data);
     const newView = new ViewMock(this, viewId, viewSheetId, properName);
 
-    if (
-      !Object.prototype.hasOwnProperty.call(this.#openedSheets, viewSheetId)
-    ) {
-      this.#openedSheets[viewSheetId] = [];
+    if (viewSheetId) {
+      if (
+        !Object.prototype.hasOwnProperty.call(this.#openedSheets, viewSheetId)
+      ) {
+        this.#openedSheets[viewSheetId] = [];
+      }
+
+      this.#openedSheets[viewSheetId].push(newView);
     }
 
-    this.#openedSheets[viewSheetId].push(newView);
+    if (global.init) {
+      global.init(newView);
+    }
 
     return newView;
   }
@@ -63,6 +72,8 @@ export class ServerMock {
     data: LetsRole.ViewData,
     noUpdateEvent: boolean | ViewMock = false,
   ): void {
+    if (!viewSheetId) return;
+
     const newData = structuredClone(this.#viewData[viewSheetId] || {});
 
     for (const [key, value] of Object.entries(data)) {
@@ -102,6 +113,8 @@ export class ServerMock {
   }
 
   loadViewData(viewSheetId: LetsRole.SheetRealID): LetsRole.ViewData {
+    if (!viewSheetId) return {};
+
     return structuredClone(this.#viewData[viewSheetId]) || {};
   }
 

@@ -67,7 +67,7 @@ export class SheetProxy
     return this.getDest().id();
   }
 
-  getSheetId(): string {
+  getSheetId(): LetsRole.SheetRealID {
     return this.getDest().getSheetId();
   }
 

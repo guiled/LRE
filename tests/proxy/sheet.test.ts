@@ -27,6 +27,23 @@ beforeEach(() => {
         className: "View",
         name: "theSheet",
       },
+      {
+        id: "viewId",
+        children: [
+          {
+            id: "cmp1",
+            className: "Label",
+            text: "101",
+          },
+          {
+            id: "cmp2",
+            className: "Label",
+            text: "102",
+          },
+        ],
+        className: "View",
+        name: "theSheet",
+      },
     ],
     viewVariables: {
       main: {

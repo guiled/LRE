@@ -293,7 +293,7 @@ export class Sheet
   realId(): string {
     return this.raw().id();
   }
-  getSheetId(): string {
+  getSheetId(): LetsRole.SheetRealID {
     return this.raw().getSheetId();
   }
   name(): string {

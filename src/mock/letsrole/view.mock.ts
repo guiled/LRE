@@ -257,10 +257,12 @@ export class ViewMock implements LetsRole.Sheet {
 
   prompt(
     _title: string,
-    _view: LetsRole.ViewID,
+    view: LetsRole.ViewID,
     _callback: (result: LetsRole.ViewData) => void,
-    _callbackInit: (promptView: LetsRole.Sheet) => void,
+    callbackInit: (promptView: LetsRole.Sheet) => void,
   ): void {
+    const promptView = this.#server.openView(view, undefined);
+    callbackInit(promptView);
     return;
   }
 
