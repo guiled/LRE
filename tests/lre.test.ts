@@ -5,6 +5,7 @@ import { ServerMock } from "../src/mock/letsrole/server.mock";
 import { Sheet } from "../src/sheet";
 import { newMockedWait } from "../src/mock/letsrole/wait.mock";
 import { modeHandlerMock } from "./mock/modeHandler.mock";
+import { initLetsRole } from "../src/mock/letsrole/letsrole.mock";
 
 jest.mock("../src/log");
 global.lre = new Logger() as ILRE & Logger & cb;
@@ -224,6 +225,7 @@ describe("LRE autonum", () => {
 
   test.each([
     /* put undefined to specify that the input is not changed */
+    [42, undefined],
     ["a", undefined],
     ["1", 1],
     ["2.34", 2.34],
@@ -245,6 +247,12 @@ describe("LRE autonum", () => {
     expect(subject.value(init)).toBe(init);
     subject.autoNum();
     expect(subject.value(init)).toBe(result ?? init);
+    subject.autoNum(false);
+    expect(subject.value(init)).toBe(init);
+
+    if (result !== undefined) {
+      expect(subject.value(init)).not.toBe(result);
+    }
   });
 });
 
@@ -341,5 +349,80 @@ describe("LRE global methods", () => {
     [true, false],
   ])("Value %s is object empty", (init, result) => {
     expect(subject.isObjectEmpty(init)).toBe(result);
+  });
+
+  test.each([
+    [undefined, false],
+    [null, false],
+    ["", true],
+    ["non plus", true],
+    [0, true],
+    [{}, false],
+    [[], false],
+    [{ a: 1 }, false],
+    [[1], false],
+    [1, true],
+    [true, false],
+  ])("Value %s is useable as index", (init, result) => {
+    expect(subject.isUseableAsIndex(init)).toBe(result);
+  });
+});
+
+describe("LRE launch", () => {
+  let server: ServerMock;
+  beforeEach(() => {
+    server = new ServerMock({
+      views: [
+        {
+          id: "main",
+          children: [],
+          className: "View",
+        },
+      ],
+    });
+  });
+
+  test("LRE is callable", () => {
+    const subject = new LRE(context);
+    expect(() =>
+      subject.apply(subject, [server.openView("main", "13")]),
+    ).not.toThrow();
+  });
+
+  test("LRE first launch is launched once", () => {
+    const cb = jest.fn();
+    const subject = new LRE(context, cb);
+    subject.apply(subject, [server.openView("main", "13")]);
+    subject.apply(subject, [server.openView("main", "14")]);
+    expect(cb).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("LRE create a data provider with context", () => {
+  test("dataProvider returns a DataProvider", () => {
+    initLetsRole(
+      new ServerMock({
+        views: [
+          {
+            id: "main",
+            children: [],
+            className: "View",
+          },
+        ],
+      }),
+    );
+    const subject = new LRE(context);
+    global.lre = subject;
+    const data = { a: 1, b: 2 };
+    const cb = jest.fn(() => data);
+    const randomNumber = "123";
+    const dpId = "test";
+    lre.getRandomId = jest.fn(() => randomNumber);
+
+    const dataProvider = subject.dataProvider(dpId, cb);
+
+    expect(dataProvider.provider).toStrictEqual(true);
+    expect(dataProvider.realId()).toStrictEqual(`dp-${randomNumber}-${dpId}`);
+    expect(dataProvider.providedValue()).toStrictEqual(data);
   });
 });
