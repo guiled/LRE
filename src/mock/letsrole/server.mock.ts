@@ -6,6 +6,10 @@ export class ServerMock {
   #viewVariables: Record<LetsRole.ViewID, Record<string, number>> = {};
   #viewData: Record<LetsRole.SheetRealIdDefined, LetsRole.ViewData> = {};
   #openedSheets: Record<LetsRole.SheetRealIdDefined, Array<ViewMock>> = {};
+  #openedPrompts: Record<
+    LetsRole.SheetID,
+    (result: LetsRole.ViewData) => void
+  > = {};
 
   #tables: Record<string, LetsRole.TableRow[]>;
 
@@ -147,5 +151,34 @@ export class ServerMock {
         return this.getTable(id);
       },
     };
+  }
+
+  openPrompt(
+    viewId: LetsRole.SheetID,
+    resultCallback: (result: LetsRole.ViewData) => void,
+  ): ViewMock {
+    if (this.promptAlreadyOpened(viewId)) {
+      throw new Error(`Prompt ${viewId} already opened`);
+    }
+
+    this.#openedPrompts[viewId] = resultCallback;
+
+    return this.openView(viewId, undefined);
+  }
+
+  closePrompt(viewId: LetsRole.SheetID): void {
+    delete this.#openedPrompts[viewId];
+  }
+
+  promptAlreadyOpened(viewId: LetsRole.SheetID): boolean {
+    return Object.prototype.hasOwnProperty.call(this.#openedPrompts, viewId);
+  }
+
+  validatePrompt(view: LetsRole.Sheet): void {
+    if (!this.promptAlreadyOpened(view.id())) {
+      throw new Error(`Prompt ${view.id()} not opened`);
+    }
+
+    this.#openedPrompts[view.id()](view.getData());
   }
 }

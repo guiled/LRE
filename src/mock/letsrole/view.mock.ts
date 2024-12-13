@@ -61,6 +61,7 @@ export class ViewMock implements LetsRole.Sheet {
     LetsRole.ComponentID,
     LetsRole.ComponentValue
   > = {};
+  #localData: LetsRole.ViewData = {};
 
   constructor(
     server: ServerMock,
@@ -258,11 +259,14 @@ export class ViewMock implements LetsRole.Sheet {
   prompt(
     _title: string,
     view: LetsRole.ViewID,
-    _callback: (result: LetsRole.ViewData) => void,
+    resultCallback: (result: LetsRole.ViewData) => void,
     callbackInit: (promptView: LetsRole.Sheet) => void,
   ): void {
-    const promptView = this.#server.openView(view, undefined);
-    callbackInit(promptView);
+    try {
+      const promptView = this.#server.openPrompt(view, resultCallback);
+      callbackInit(promptView);
+    } catch (e) {}
+
     return;
   }
 
@@ -282,11 +286,15 @@ export class ViewMock implements LetsRole.Sheet {
     data: LetsRole.ViewData,
     noUpdateEvent: boolean = false,
   ): void {
-    this.#server.saveViewData(
-      this.#sheetId,
-      data,
-      noUpdateEvent ? this : noUpdateEvent,
-    );
+    if (this.#sheetId) {
+      this.#server.saveViewData(
+        this.#sheetId,
+        data,
+        noUpdateEvent ? this : noUpdateEvent,
+      );
+    } else {
+      this.#localData = { ...this.#localData, ...data };
+    }
   }
 
   getData(): LetsRole.ViewData {
@@ -296,7 +304,11 @@ export class ViewMock implements LetsRole.Sheet {
   // This method is created in order to be used internally
   // and prevent a jest.spyOn getData triggered
   #getData(): LetsRole.ViewData {
-    return this.#server.loadViewData(this.#sheetId);
+    if (this.#sheetId) {
+      return this.#server.loadViewData(this.#sheetId);
+    } else {
+      return structuredClone(this.#localData);
+    }
   }
 
   #findIdInDefinition(
