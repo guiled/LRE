@@ -3,10 +3,16 @@ import { transformFile, transformSync } from "@swc/core";
 import { transformForLR, noVoid0Plugin } from "./transpile.conf";
 import fs from "fs";
 import { formatLRECode } from "./builder/formatLRECode";
-import { assembleLRECode } from "./builder/assemble";
+import { assembleLRECode, encloseInRegion } from "./builder/assemble";
 
-const OUTPUT_FILE: string = process.argv[2] || "build/lre.js";
 const DEBUG_BUILD: boolean = process.argv.includes("debug");
+let OUTPUT_FILE: string = process.argv[2] || "build/lre.js";
+
+if (DEBUG_BUILD) {
+  const fileNameParts = OUTPUT_FILE.split(".");
+  fileNameParts.splice(-1, 0, "debug");
+  OUTPUT_FILE = fileNameParts.join(".");
+}
 
 const swcPlugin: esbuild.Plugin = {
   name: "swcPlugin",
@@ -30,7 +36,7 @@ const swcPlugin: esbuild.Plugin = {
 esbuild
   .build({
     entryPoints: ["src/index.ts"],
-    target: "es2022",
+    target: "es2024",
     bundle: true,
     minify: false,
     platform: "neutral",
@@ -59,11 +65,5 @@ esbuild
       code = formatLRECode(code, true);
     }
 
-    return fs.writeFileSync(
-      OUTPUT_FILE,
-      `//region LRE ${process.env.npm_package_version} ${Date.now()}
-${code}
-//endregion LRE ${process.env.npm_package_version}
-`,
-    );
+    return fs.writeFileSync(OUTPUT_FILE, encloseInRegion(code));
   });

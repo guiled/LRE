@@ -15,3 +15,9 @@ export const assembleLRECode = (code: string): string => {
     code.substring(insertAtEndCode),
   ].join("");
 };
+
+export const encloseInRegion = (code: string): string =>
+  `//region LRE ${process.env.npm_package_version} ${Date.now()}
+${code}
+//endregion LRE ${process.env.npm_package_version}
+`;
