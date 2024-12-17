@@ -1,7 +1,13 @@
 declare type BasicObject<T = any> = { [key: string]: T };
 
+declare interface ISheetCollection {
+  add(s: Sheet): void;
+  each(f: (v: Sheet, k?: LetsRole.SheetID) => any): void;
+  get(sheetId: LetsRole.SheetID): Sheet | undefined;
+}
+
 declare interface ILRE {
-  sheets: SheetCollection;
+  sheets: ISheetCollection;
   deepMerge(target: any, ...sources: any[]): any;
   deepEqual(x: any, y: any): boolean;
   numToAlpha(n: number): string;
@@ -75,7 +81,10 @@ declare type ProxyModeHandlerLogType =
   | "data"
   | "cmp";
 
-declare type ContextLogRecord = [LetsRole.SheetRealID, LetsRole.ComponentID];
+declare type ContextLogRecord =
+  | [LetsRole.SheetRealIdDefined, LetsRole.ComponentID]
+  | IEventHolder; // these could be removed when sheet can e identified as DiceResult, prompt, craft…
+//  | IGroup; // these could be removed when sheet can e identified as DiceResult, prompt, craft…
 declare type ContextLogByType = Array<ContextLogRecord>;
 declare type ContextLog = Record<ProxyModeHandlerLogType, ContextLogByType> & {
   provider: Array<IDataProvider>;

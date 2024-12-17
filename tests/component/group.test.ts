@@ -547,7 +547,7 @@ describe("Group and context", () => {
     grp.providedValue();
     context.setMode("real");
     const accessLog = context.getPreviousAccessLog("value");
-    expect(accessLog.map((l) => l.join("-"))).toContain(
+    expect(accessLog.map((l) => (l as Array<string>).join("-"))).toContain(
       sheet.getSheetId() + "-grp",
     );
     expect(accessLog).not.toContain("a");

@@ -80,7 +80,15 @@ export class SheetProxy
   }
 
   get(id: LetsRole.ComponentID): LetsRole.Component {
-    this._proxyModeHandler.logAccess("cmp", [this.getSheetId(), id]);
+    const sheetId = this.getSheetId();
+
+    // For the moment this part is not used
+    // It will be when it will be necessary to get async data from cmp
+    // And make this data in synchronous mode
+    if (sheetId) {
+      this._proxyModeHandler.logAccess("cmp", [sheetId, id]);
+    }
+
     return new ComponentProxy(
       this._proxyModeHandler,
       this._realDest.get(id),

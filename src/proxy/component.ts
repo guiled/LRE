@@ -8,6 +8,12 @@ class ComponentProxy
 {
   #sheet: SheetProxy;
   #getVirtualContext: () => SheetContext;
+  // This property should not exist, but I'm unable to use the sheet collection
+  // in order to get the proxied component when it is in sheet with sheetId = undefined
+  // like a prompt or a dice result.
+  // I cannot add to collection a sheet like prompt and dice result because they can be too many
+  // and there is not way to get an "sheet destroy" event
+  #getDest: (() => IComponent) | undefined;
 
   constructor(
     proxyModeHandler: ProxyModeHandler,
@@ -164,18 +170,12 @@ class ComponentProxy
   }
 
   getClasses(): LetsRole.ClassName[] {
-    this._proxyModeHandler.logAccess("class", [
-      this.#sheet.getSheetId(),
-      this.getDest().id()!,
-    ]);
+    this.#logAccess("class");
     return this.getDest().getClasses();
   }
 
   hasClass(className: LetsRole.ClassName): boolean {
-    this._proxyModeHandler.logAccess("class", [
-      this.#sheet.getSheetId(),
-      this.getDest().id()!,
-    ]);
+    this.#logAccess("class");
     return this.getDest().hasClass(className);
   }
 
@@ -188,18 +188,12 @@ class ComponentProxy
       return;
     }
 
-    this._proxyModeHandler.logAccess("virtualValue", [
-      this.#sheet.getSheetId(),
-      this.getDest().id()!,
-    ]);
+    this.#logAccess("virtualValue");
     return this.getDest().virtualValue();
   }
 
   rawValue(): LetsRole.ComponentValue {
-    this._proxyModeHandler.logAccess("rawValue", [
-      this.#sheet.getSheetId(),
-      this.getDest().id()!,
-    ]);
+    this.#logAccess("rawValue");
     return this.getDest().rawValue();
   }
 
@@ -209,18 +203,12 @@ class ComponentProxy
       return;
     }
 
-    this._proxyModeHandler.logAccess("text", [
-      this.#sheet.getSheetId(),
-      this.getDest().id()!,
-    ]);
+    this.#logAccess("text");
     return this.getDest().text();
   }
 
   visible(): boolean {
-    this._proxyModeHandler.logAccess("visible", [
-      this.#sheet.getSheetId(),
-      this.getDest().id()!,
-    ]);
+    this.#logAccess("visible");
     return this.getDest().visible();
   }
 
@@ -238,17 +226,26 @@ class ComponentProxy
       return;
     }
 
-    this._proxyModeHandler.logAccess("value", [
-      this.#sheet.getSheetId(),
-      this.getDest().id()!,
-    ]);
+    this.#logAccess("value");
     return this.getDest().value();
   }
   sheet(): LetsRole.Sheet {
     return this.#sheet as LetsRole.Sheet;
   }
-}
 
-//const ComponentProxy = CmpProxy;
+  setDestGetter(getDest: () => IComponent): void {
+    this.#getDest = getDest;
+  }
+
+  #logAccess(type: keyof ContextLog): void {
+    const sheetId = this.#sheet.getSheetId();
+
+    if (sheetId) {
+      this._proxyModeHandler.logAccess(type, [sheetId, this.getDest().id()!]);
+    } else if (this.#getDest) {
+      this._proxyModeHandler.logAccess(type, this.#getDest());
+    }
+  }
+}
 
 export { ComponentProxy };

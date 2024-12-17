@@ -1,7 +1,7 @@
 import { Component } from ".";
 import {
   dynamicSetter,
-  getDataProvidersFromArgs,
+  extractDataProviders,
 } from "../globals/decorators/dynamicSetter";
 import { Table } from "../tables/table";
 
@@ -66,14 +66,12 @@ export class Choice<
   }
 
   @dynamicSetter
+  @extractDataProviders(function (this: Choice, dataProvider: IDataProvider) {
+    this.#choiceDataProvider = dataProvider;
+  })
   setChoices(
     choices: DynamicSetValue<LetsRole.Choices | ChoicesWithData>,
   ): void {
-    const dataProviders =
-      getDataProvidersFromArgs<[LetsRole.Choices | ChoicesWithData]>(arguments);
-    choices = dataProviders[0][0];
-    const choiceDataProvider = dataProviders[1][0];
-
     const currentValue: LetsRole.ChoiceValue =
       this.value() as LetsRole.ChoiceValue;
     const newChoices: LetsRole.Choices = {};
@@ -114,7 +112,6 @@ export class Choice<
 
     this.#choices = newChoices;
     this.#choiceData = newChoiceData;
-    this.#choiceDataProvider = choiceDataProvider;
     this.#setChoicesToComponent();
     this.trigger("update", this);
   }
@@ -217,6 +214,9 @@ export class Choice<
   }
 
   @dynamicSetter
+  @extractDataProviders(function (this: Choice, dataProvider: IDataProvider) {
+    this.#choiceDataProvider = dataProvider;
+  })
   populate(
     tableOrCb: DynamicSetValue<
       string | Array<LetsRole.TableRow> | LetsRole.Choices
@@ -224,15 +224,6 @@ export class Choice<
     label: string = "id",
     optional: boolean = false,
   ): void {
-    const dataProviders =
-      getDataProvidersFromArgs<
-        [string | Array<LetsRole.TableRow> | LetsRole.Choices, string, boolean]
-      >(arguments);
-    tableOrCb = dataProviders[0][0];
-    label = dataProviders[0][1] ?? label;
-    optional = dataProviders[0][2] ?? optional;
-    const choiceDataProvider = dataProviders[1][0];
-
     if (arguments.length >= 2) {
       this.optional(optional);
     }
@@ -271,7 +262,6 @@ export class Choice<
         }
       });
       this.setChoices(choices);
-      this.#choiceDataProvider = choiceDataProvider;
     } else if (typeof tableOrCb === "string") {
       const table = Tables.get(tableOrCb) as Table | null;
       if (!table) return;

@@ -547,7 +547,9 @@ describe("Component behavior with context", () => {
     expect(context.getAccessLog("value")).toHaveLength(0);
     cmpProxy.value();
     expect(context.getAccessLog("value")).toHaveLength(1);
-    expect(context.getAccessLog("value")[0][1]).toStrictEqual(cmpId);
+    expect(
+      (context.getAccessLog("value")[0] as Array<string>)[1],
+    ).toStrictEqual(cmpId);
     cmpProxy.value(42);
     context.popLogContext();
     expect(context.getAccessLog("value")).toHaveLength(0);

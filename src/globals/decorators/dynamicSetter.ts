@@ -186,8 +186,8 @@ const removeOldEventLogHandlers = function <This extends DynamicSetterHolder>(
         if (Array.isArray(accessedValue)) {
           const [sheetRealID, realId] = accessedValue;
           lre.sheets.get(sheetRealID).get(realId)?.off(eventId);
-        } else {
-          accessedValue.unsubscribeRefresh(eventId);
+        } else if (!isDataProvider(accessedValue)) {
+          accessedValue.off(eventId);
         }
       },
     );
@@ -227,14 +227,25 @@ const handleAccessLog = function <This extends DynamicSetterHolder>(
       .filter(
         (newLog) =>
           !oldAccessLog.some(
-            (oldLog) => oldLog[1] === newLog[1] && oldLog[0] === newLog[0],
+            (oldLog) =>
+              (Array.isArray(oldLog) &&
+                Array.isArray(newLog) &&
+                oldLog[1] === newLog[1] &&
+                oldLog[0] === newLog[0]) ||
+              (!isDataProvider(oldLog) &&
+                !isDataProvider(newLog) &&
+                oldLog === newLog),
           ),
       );
 
     const eventId = getEventId.call(this, t) as EventType<EventHolderEvents>;
     newAccessLog.forEach((accessedValue: ContextLogRecord) => {
-      const [sheetRealID, realId] = accessedValue;
-      lre.sheets.get(sheetRealID).get(realId)?.on(eventId, newSetter);
+      if (Array.isArray(accessedValue)) {
+        const [sheetRealID, realId] = accessedValue;
+        lre.sheets.get(sheetRealID).get(realId)?.on(eventId, newSetter);
+      } else if (!isDataProvider(accessedValue)) {
+        accessedValue.on(eventId, newSetter);
+      }
     });
 
     if (newAccessLog.length > 0) {
@@ -250,7 +261,7 @@ const handleAccessLog = function <This extends DynamicSetterHolder>(
   return eventLogs;
 };
 
-export const getDataProvidersFromArgs = function <T extends Array<any>>(
+const getDataProvidersFromArgs = function <T extends Array<any>>(
   args: IArguments | Array<any>,
 ): [T, Array<IDataProvider | undefined>] {
   const values: T = [] as unknown as T;

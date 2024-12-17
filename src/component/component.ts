@@ -9,6 +9,7 @@ import {
   dynamicSetter,
   extractDataProviders,
 } from "../globals/decorators/dynamicSetter";
+import { ComponentProxy } from "../proxy/component";
 
 export const REP_ID_SEP = ".";
 
@@ -166,6 +167,11 @@ export class Component<
       ],
       [/* DataHolder*/ sheet, realId],
     ]);
+
+    if (Object.prototype.hasOwnProperty.call(raw, "setDestGetter")) {
+      (raw as ComponentProxy).setDestGetter(() => this);
+    }
+
     this.#realId = realId;
     this.#sheet = sheet;
     this.on(
@@ -334,7 +340,13 @@ export class Component<
       // a repeater with a pending value set, we must set it immediately when we need it because it has impact on existing elements
       //sheet.sendPendingDataFor(this.realId());
     } else {
-      context.logAccess("value", [this.#sheet.getSheetId(), this.realId()]);
+      const sheetId = this.#sheet.getSheetId();
+
+      if (!sheetId) {
+        context.logAccess("value", this);
+      } else {
+        context.logAccess("value", [sheetId, this.realId()]);
+      }
     }
 
     return lre.value(val) as TypeValue;

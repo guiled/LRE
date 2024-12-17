@@ -241,7 +241,14 @@ export class Group
   value(): LetsRole.ViewData;
   value(_newValue: LetsRole.ComponentValue): void;
   value(_newValue?: LetsRole.ComponentValue): void | LetsRole.ViewData {
-    this.#context.logAccess("value", [this.#sheet.getSheetId(), this.#id]);
+    const sheetId = this.#sheet.getSheetId();
+
+    if (sheetId) {
+      this.#context.logAccess("value", [sheetId, this.#id]);
+    } else {
+      this.#context.logAccess("value", this);
+    }
+
     this.#context.disableAccessLog();
     const result = this.#getSet.apply(
       this,

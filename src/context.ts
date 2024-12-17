@@ -52,7 +52,7 @@ export class Context implements ProxyModeHandler {
           return l[0] === value[0] && l[1] === value[1];
         }
 
-        return l == value;
+        return l === value;
       })
     ) {
       (logs as ContextLogByType).push(value as ContextLogRecord);
@@ -61,7 +61,7 @@ export class Context implements ProxyModeHandler {
     return this;
   }
 
-  #isLogRecord(log: unknown): log is ContextLogRecord {
+  #isLogRecord(log: unknown): log is Array<string> {
     return Array.isArray(log);
   }
 

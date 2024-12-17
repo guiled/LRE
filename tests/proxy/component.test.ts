@@ -1,7 +1,11 @@
+import { Component } from "../../src/component";
+import { LRE } from "../../src/lre";
 import { initLetsRole } from "../../src/mock/letsrole/letsrole.mock";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { ComponentProxy } from "../../src/proxy/component";
 import { SheetProxy } from "../../src/proxy/sheet";
+import { Sheet } from "../../src/sheet";
+import { DataBatcher } from "../../src/sheet/databatcher";
 
 jest.mock("../../src/sheet");
 
@@ -48,6 +52,17 @@ beforeEach(() => {
           },
         ],
       },
+      {
+        id: "prompt",
+        className: "View",
+        children: [
+          {
+            id: "lbl",
+            className: "Label",
+            text: "This is a label",
+          },
+        ],
+      },
     ],
   });
   initLetsRole(server);
@@ -56,11 +71,12 @@ beforeEach(() => {
 const initTestMocks = (
   isVirtual: boolean = false,
   cmpId = "test",
+  sheet?: SheetProxy,
 ): ComponentProxy => {
   rawSheet = server.openView("main", "1234", {}, "Sheet 1");
   parent = rawSheet.get("parent_test");
   raw = rawSheet.get(cmpId);
-  sheetProxy = new SheetProxy(context, rawSheet);
+  sheetProxy = sheet ?? new SheetProxy(context, rawSheet);
 
   const subject = new ComponentProxy(context, raw, sheetProxy, () => ({
     cmpClasses: {},
@@ -382,4 +398,30 @@ describe("Proxy logs", () => {
       );
     },
   );
+
+  test("Proxy log with view in prompt", () => {
+    global.lre = new LRE(context);
+    const prompt = server.openView("prompt", undefined);
+    const sheetProxy = new SheetProxy(context, prompt);
+    const lbl = prompt.get("lbl");
+    const lblProxy = new ComponentProxy(context, lbl, sheetProxy, () => ({
+      cmpClasses: {},
+      cmpTexts: {},
+      sheetData: {},
+      virtualValues: {},
+      visible: {},
+    }));
+    jest.spyOn(context, "logAccess");
+    const cmp = new Component(
+      lblProxy,
+      new Sheet(sheetProxy, new DataBatcher(context, sheetProxy), context),
+      "lbl",
+    );
+    lblProxy.setDestGetter(() => cmp);
+
+    lblProxy.value();
+    expect(context.logAccess).toHaveBeenCalledTimes(1);
+    const log = context.getAccessLog("value");
+    expect(log.some((l) => l === cmp)).toBeTruthy();
+  });
 });

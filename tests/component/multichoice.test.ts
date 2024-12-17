@@ -266,7 +266,9 @@ describe("MultiChoice", () => {
     const cmp = sheet.get("cmd") as Component;
     multiChoice.maxChoiceNb(cmp);
     expect(
-      context.getPreviousAccessLog("value").map((l) => l.join("-")),
+      context
+        .getPreviousAccessLog("value")
+        .map((l) => (l as Array<string>).join("-")),
     ).toContain(sheet.getSheetId() + "-cmd");
     const updateEvent = jest.fn();
     multiChoice.on("update", updateEvent);

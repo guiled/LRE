@@ -1,6 +1,6 @@
 import { Sheet } from "./sheet";
 
-export class SheetCollection {
+export class SheetCollection implements ISheetCollection {
   #sheets: Record<LetsRole.SheetRealIdDefined, Sheet> = {};
 
   add(s: Sheet): void {
