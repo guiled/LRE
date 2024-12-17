@@ -65,7 +65,7 @@ export class ServerMock {
       );
 
     if (viewDefinitions === void 0) {
-      throw new Error(`Unknown view ${viewId}`);
+      throw new Error(`Unknown view : ${viewId}`);
     }
 
     return structuredClone(viewDefinitions);
