@@ -14,3 +14,9 @@ function def(args, idx, val) {
   return args.length < idx + 1 || typeof args[idx] === "undefined"
     ? val : args[idx];
 }
+
+function ct(name) {
+  return {
+    name: name,
+  };
+}

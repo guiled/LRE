@@ -71,8 +71,12 @@ type PrivateMethodToFunctionStatement = VariableDeclaration & {
 };
 
 type MethodToFunctionStatement =
-  | PublicMethodToFunctionStatement
-  | PrivateMethodToFunctionStatement;
+  | VariableDeclaration
+  | (ExpressionStatement & {
+      expression: AssignmentExpression & {
+        operator: "=";
+      };
+    });
 
 type PublicPropertyToVariable = ExpressionStatement & {
   expression: AssignmentExpression & {
@@ -161,8 +165,17 @@ class ClassToFunction extends Visitor {
     return res;
   }
 
-  #methodToFunction(n: ClassMethod | PrivateMethod): MethodToFunctionStatement {
-    const f: FunctionExpression = {
+  #methodToFunction(
+    n: ClassMethod | PrivateMethod,
+  ): Array<MethodToFunctionStatement> {
+    if (n.key.type === "Computed") {
+      throw new Error("Computed method key are not supported yet");
+    }
+
+    const result: Array<MethodToFunctionStatement> = [];
+    const span = n.span;
+
+    let assignmentRight: CallExpression | FunctionExpression = {
       type: "FunctionExpression",
       params: n.function.params,
       decorators: [],
@@ -172,18 +185,26 @@ class ClassToFunction extends Visitor {
       async: false,
     };
 
-    if (n.key.type === "PrivateName") {
-      return onevariable({
-        span: { ...n.span, ctxt: n.span.ctxt + 1 },
-        id: this.#transformPrivateIdentifier(n.key.id),
-        kind: "const",
-        init: f,
-      }) as PrivateMethodToFunctionStatement;
-    }
+    if (n.function.decorators?.length) {
+      const contextCreationCall = call({
+        span,
+        callee: identifier({
+          span,
+          value: "ct",
+        }),
+        args: [
+          {
+            expression: stringliteral({
+              span,
+              value:
+                n.key.type === "PrivateName"
+                  ? n.key.id.value
+                  : (n.key.value as string),
+            }),
+          },
+        ],
+      });
 
-    let assignmentRight: CallExpression | FunctionExpression = f;
-
-    if (n.function.decorators) {
       n.function.decorators.reverse().forEach((decorator) => {
         assignmentRight = call({
           callee: decorator.expression,
@@ -192,39 +213,41 @@ class ClassToFunction extends Visitor {
               expression: assignmentRight,
             },
             {
-              expression: objectexpression({
-                name:
-                  n.key.type === "Computed"
-                    ? (n.key.expression as ExpressionWithSpan)
-                    : n.key.type === "Identifier"
-                      ? stringliteral({
-                          span: n.key.span,
-                          value: n.key.value,
-                        })
-                      : n.key,
-              }),
+              expression: contextCreationCall,
             },
           ],
         }) as CallExpression;
       });
     }
 
-    return {
-      type: "ExpressionStatement",
-      span: n.span,
-      expression: {
-        type: "AssignmentExpression",
+    if (n.key.type === "PrivateName") {
+      result.push(
+        onevariable({
+          span: { ...n.span, ctxt: n.span.ctxt + 1 },
+          id: this.#transformPrivateIdentifier(n.key.id),
+          kind: "const",
+          init: assignmentRight,
+        }),
+      );
+    } else {
+      result.push({
+        type: "ExpressionStatement",
         span: n.span,
-        operator: "=",
-        left: {
-          type: "MemberExpression",
+        expression: {
+          type: "AssignmentExpression",
           span: n.span,
-          object: thisexpression({ span: n.span }),
-          property: n.key as Identifier,
+          operator: "=",
+          left: member({
+            span,
+            object: thisexpression({ span: n.span }),
+            property: n.key as Identifier,
+          }),
+          right: assignmentRight,
         },
-        right: assignmentRight,
-      },
-    };
+      });
+    }
+
+    return result;
   }
 
   #ConstructorToFunction(n: Constructor): Statement[] {
@@ -507,9 +530,9 @@ class ClassToFunction extends Visitor {
         !!n.function.body
       ) {
         if (n.isStatic) {
-          staticMethods.push(this.#methodToFunction(n));
+          staticMethods.push(...this.#methodToFunction(n));
         } else {
-          methods.push(this.#methodToFunction(n));
+          methods.push(...this.#methodToFunction(n));
         }
       } else if (n.type === "PrivateProperty" || n.type === "ClassProperty") {
         if (n.isStatic) {
@@ -616,11 +639,11 @@ class ClassToFunction extends Visitor {
     return classFunction;
   }
 
-  #transformPrivateIdentifier(i: Identifier): Identifier {
+  #transformPrivateIdentifier(i: Identifier, prefix: string = ""): Identifier {
     return {
       ...i,
       span: spannewctxt(i.span),
-      value: "__" + i.value,
+      value: "__" + prefix + i.value,
     };
   }
 
