@@ -8,6 +8,7 @@ import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
 import { LRE } from "../../src/lre";
 import { ViewMock } from "../../src/mock/letsrole/view.mock";
+import { DirectDataProvider } from "../../src/dataprovider";
 
 let server: ServerMock;
 let rawSheet: ViewMock;
@@ -494,6 +495,31 @@ describe("Toggle", () => {
 
     toggle.refreshRaw();
     itHasWaitedEverything();
+    expect(toggle.value()).toStrictEqual("on");
+  });
+
+  test("Toggle based on data provider", () => {
+    const toggle = sheet.get("toggle") as Toggle;
+    const data: Record<string, string> = {
+      on: "text1",
+      off: "text2",
+    };
+    const fn = jest.fn(() => data);
+    const dp = new DirectDataProvider("source", context, fn);
+    toggle.toggling(dp);
+    expect(toggle.value()).toStrictEqual("on");
+    rawSheet.triggerComponentEvent("toggle", "click");
+    expect(toggle.value()).toStrictEqual("off");
+    rawSheet.triggerComponentEvent("toggle", "click");
+    expect(toggle.value()).toStrictEqual("on");
+    data.between = "text3";
+    dp.refresh();
+    expect(toggle.value()).toStrictEqual("on");
+    rawSheet.triggerComponentEvent("toggle", "click");
+    expect(toggle.value()).toStrictEqual("off");
+    rawSheet.triggerComponentEvent("toggle", "click");
+    expect(toggle.value()).toStrictEqual("between");
+    rawSheet.triggerComponentEvent("toggle", "click");
     expect(toggle.value()).toStrictEqual("on");
   });
 });

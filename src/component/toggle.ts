@@ -1,3 +1,7 @@
+import {
+  dynamicSetter,
+  extractDataProviders,
+} from "../globals/decorators/dynamicSetter";
 import { Component } from "./component";
 
 type TogglingValue = string | number;
@@ -32,6 +36,8 @@ export class Toggle<
     super(raw, sheet, realId);
   }
 
+  @dynamicSetter
+  @extractDataProviders()
   toggling(
     data: TogglingDataMap | Record<TogglingValue, string>,
     defaultValue?: TogglingValue,
