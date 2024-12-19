@@ -34,6 +34,10 @@ declare interface ILRE {
     originalValueCb: ValueGetterSetter = valueCb,
     sourceRefresh?: () => void,
   ): IDataProvider;
+  each<T extends LetsRole.EachValue = LetsRole.EachValue>(
+    value: T,
+    cb: LetsRole.EachCallback<T, unknown>,
+  ): T;
 }
 
 declare interface ISheet extends LetsRole.Sheet, ComponentContainer<IGroup> {

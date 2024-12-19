@@ -277,23 +277,24 @@ declare namespace LetsRole {
 
   export type RollBuilder = new (...args: unknown[]) => RollBuilderInstance;
 
-  export type EachCallback<T extends Array<unknown> | Record<string, unknown>> =
+  export type EachValue = Array<unknown> | Record<string, unknown>;
+  export type EachCallback<
+    T extends Array<unknown> | Record<string, unknown>,
+    U = void,
+  > =
     T extends Array<infer V>
-      ? (d: V, i: number) => void
+      ? (d: V, i?: number) => void
       : (
           d: T extends undefined ? unknown : T[keyof T],
-          k: T extends undefined ? unknown : keyof T,
-        ) => void;
+          k?: T extends undefined ? unknown : keyof T,
+        ) => U;
 }
 declare module "letsrole" {
   global {
     /* eslint-disable no-var */
     var log: (input: unknown) => void;
     var wait: (delay: number, callback: Callback) => void;
-    var each: <T extends Array<unknown> | Record<string, unknown>>(
-      data: T,
-      callback: EachCallback<T>,
-    ) => void;
+    var each: <T extends EachValue>(data: T, callback: EachCallback<T>) => void;
     var init: InitCallback;
     var Tables: Tables;
 

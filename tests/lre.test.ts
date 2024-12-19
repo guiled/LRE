@@ -1,19 +1,29 @@
 import { Error } from "../src/error";
-import { Logger } from "../src/log";
 import { LRE } from "../src/lre";
 import { ServerMock } from "../src/mock/letsrole/server.mock";
 import { Sheet } from "../src/sheet";
 import { newMockedWait } from "../src/mock/letsrole/wait.mock";
-import { modeHandlerMock } from "./mock/modeHandler.mock";
 import { initLetsRole } from "../src/mock/letsrole/letsrole.mock";
 
 jest.mock("../src/log");
-global.lre = new Logger() as ILRE & Logger & cb;
 
-const context = modeHandlerMock();
 const { wait, itHasWaitedEverything } = newMockedWait();
-global.wait = wait;
-lre.wait = wait;
+
+let server: ServerMock;
+
+beforeEach(() => {
+  server = new ServerMock({
+    views: [
+      {
+        id: "main",
+        children: [],
+        className: "View",
+      },
+    ],
+  });
+  initLetsRole(server);
+  global.wait = wait;
+});
 
 describe("LRE tests", () => {
   let subject: LRE;
@@ -21,8 +31,6 @@ describe("LRE tests", () => {
 
   beforeEach(() => {
     subject = new LRE(context);
-    lre.deepMerge = subject.deepMerge;
-    lre.isObject = subject.isObject;
     spyOnMathRandom = jest.spyOn(global.Math, "random").mockReturnValue(1);
   });
 
@@ -85,39 +93,30 @@ describe("LRE tests", () => {
   });
 
   test("LRE call as a function", () => {
-    const cb: jest.Mock = jest.fn();
+    const sheetInit: jest.Mock = jest.fn();
     global.firstInit = jest.fn();
-
-    const server = new ServerMock({
-      views: [
-        {
-          id: "main",
-          children: [],
-          className: "View",
-        },
-      ],
-    });
+    global.lre = subject;
 
     const sheet1 = server.openView("main", "13");
     const sheet2 = server.openView("main", "", undefined, "theSheet");
 
-    const init = subject.apply(subject, [cb]);
+    const init = subject.apply(subject, [sheetInit]);
 
-    expect(cb).toHaveBeenCalledTimes(0);
+    expect(sheetInit).toHaveBeenCalledTimes(0);
     init(sheet1);
-    expect(cb).toHaveBeenCalledTimes(0);
+    expect(sheetInit).toHaveBeenCalledTimes(0);
     expect(global.firstInit).toHaveBeenCalledTimes(0);
     itHasWaitedEverything();
-    expect(cb).toHaveBeenCalledTimes(1);
-    expect(cb.mock.calls[0][0]).toBeInstanceOf(Sheet);
+    expect(sheetInit).toHaveBeenCalledTimes(1);
+    expect(sheetInit.mock.calls[0][0]).toBeInstanceOf(Sheet);
     expect(global.firstInit).toHaveBeenCalledTimes(1);
     expect((global.firstInit as jest.Mock).mock.calls[0][0]).toBeInstanceOf(
       Sheet,
     );
     init(sheet2);
     itHasWaitedEverything();
-    expect(cb).toHaveBeenCalledTimes(2);
-    expect(cb.mock.calls[1][0]).toBeInstanceOf(Sheet);
+    expect(sheetInit).toHaveBeenCalledTimes(2);
+    expect(sheetInit.mock.calls[1][0]).toBeInstanceOf(Sheet);
 
     const cbErr: jest.Mock = jest.fn(() => {
       throw new Error("arf");
@@ -210,9 +209,9 @@ describe("LRE wait", () => {
     /* @ts-expect-error The next error is deliberate */
     const cb = (): void => null();
     subject.wait(100, cb, "hop");
-    (lre.error as jest.Mock).mockClear();
+    jest.spyOn(subject, "error");
     expect(itHasWaitedEverything).not.toThrow();
-    expect(lre.error).toHaveBeenCalled();
+    expect(subject.error).toHaveBeenCalled();
   });
 });
 
@@ -368,20 +367,18 @@ describe("LRE global methods", () => {
   });
 });
 
-describe("LRE launch", () => {
-  let server: ServerMock;
-  beforeEach(() => {
-    server = new ServerMock({
-      views: [
-        {
-          id: "main",
-          children: [],
-          className: "View",
-        },
-      ],
-    });
+describe("LRE each", () => {
+  test("lre.each is like let's role each but return the modified object", () => {
+    const lre = new LRE(context);
+    const obj = { a: 1, b: 2, c: 3 };
+    const cb = jest.fn((v) => v + 1);
+    const res = lre.each(obj, cb);
+    expect(cb).toHaveBeenCalledTimes(3);
+    expect(res).toStrictEqual({ a: 2, b: 3, c: 4 });
   });
+});
 
+describe("LRE launch", () => {
   test("LRE is callable", () => {
     const subject = new LRE(context);
     expect(() =>
@@ -400,17 +397,6 @@ describe("LRE launch", () => {
 
 describe("LRE create a data provider with context", () => {
   test("dataProvider returns a DataProvider", () => {
-    initLetsRole(
-      new ServerMock({
-        views: [
-          {
-            id: "main",
-            children: [],
-            className: "View",
-          },
-        ],
-      }),
-    );
     const subject = new LRE(context);
     global.lre = subject;
     const data = { a: 1, b: 2 };

@@ -212,7 +212,7 @@ export class LRE extends Logger implements ILRE {
         try {
           cb();
         } catch (e) {
-          lre.error(`[Wait:${waitName} Unhandled error : ${e}`);
+          this.error(`[Wait:${waitName} Unhandled error : ${e}`);
         }
       });
     }
@@ -249,5 +249,17 @@ export class LRE extends Logger implements ILRE {
       originalValueCb,
       sourceRefresh,
     );
+  }
+
+  each<T extends LetsRole.EachValue = LetsRole.EachValue>(
+    value: T,
+    cb: LetsRole.EachCallback<T, unknown>,
+  ): T {
+    const result: T = (Array.isArray(value) ? [] : {}) as T;
+
+    // @ts-expect-error The type here can be easily and clearly fixed
+    each(value, (v: T[keyof T], k: keyof T) => (result[k] = cb(v, k)));
+
+    return result;
   }
 }
