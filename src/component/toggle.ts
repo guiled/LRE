@@ -200,7 +200,7 @@ export class Toggle<
   }
 
   #changeTogglingData(oldData: TogglingData, newData: TogglingData): void {
-    wait(0, () => {
+    lre.wait(0, () => {
       const sheet = this.sheet();
 
       const showflex = (id: LetsRole.ComponentID): unknown =>
