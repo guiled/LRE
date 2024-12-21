@@ -19,8 +19,11 @@ export class TableMock implements LetsRole.Table {
     callback?: (row: LetsRole.TableRow) => void,
   ): void {
     if (typeof count === "number" && callback) {
+      const rows = [...this.#rows];
+
       for (let i = 0; i < count; i++) {
-        const row = this.#rows[Math.floor(Math.random() * this.#rows.length)];
+        const idx = Math.floor(Math.random() * rows.length);
+        const row = rows.splice(idx, 1)[0];
         callback(row);
       }
 

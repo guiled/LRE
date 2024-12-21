@@ -33,6 +33,7 @@ describe("Table", () => {
   test("each executes a callback", () => {
     const fn = jest.fn();
     table.each(fn);
+
     expect(fn).toHaveBeenCalledTimes(3);
     expect(fn.mock.calls[0][0]).toStrictEqual(defs.tables!.table1[0]);
     expect(fn.mock.calls[1][0]).toStrictEqual(defs.tables!.table1[1]);
@@ -40,8 +41,10 @@ describe("Table", () => {
   });
 
   test("random executes a callback", () => {
+    jest.spyOn(global.Math, "random").mockReturnValue(0);
     const fn = jest.fn();
     table.random(fn);
+
     expect(fn).toHaveBeenCalledTimes(1);
 
     expect(
@@ -50,6 +53,19 @@ describe("Table", () => {
 
     const fn2 = jest.fn();
     table.random(2, fn2);
+
     expect(fn2).toHaveBeenCalledTimes(2);
+    expect(fn2.mock.calls[0][0]).toStrictEqual(defs.tables!.table1[0]);
+    expect(fn2.mock.calls[1][0]).toStrictEqual(defs.tables!.table1[1]);
+
+    jest.clearAllMocks();
+    jest.spyOn(global.Math, "random").mockReturnValue(0.9999);
+    table.random(2, fn2);
+
+    expect(fn2).toHaveBeenCalledTimes(2);
+    expect(fn2.mock.calls[0][0]).toStrictEqual(defs.tables!.table1[2]);
+    expect(fn2.mock.calls[1][0]).toStrictEqual(defs.tables!.table1[1]);
+
+    jest.spyOn(global.Math, "random").mockRestore();
   });
 });
