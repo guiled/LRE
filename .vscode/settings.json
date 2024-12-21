@@ -21,7 +21,15 @@
       "severity": "off"
     },
     {
+      "rule": "@stylistic/lines-between-class-members",
+      "severity": "off"
+    },
+    {
       "rule": "no-empty",
+      "severity": "off"
+    },
+    {
+      "rule": "jest/padding-around-all",
       "severity": "off"
     }
   ]
