@@ -5,6 +5,7 @@ import {
   initLetsRole,
   itHasWaitedEnough,
   itHasWaitedEverything,
+  terminateLetsRole,
 } from "../../src/mock/letsrole/letsrole.mock";
 import { ViewMock } from "../../src/mock/letsrole/view.mock";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
@@ -27,6 +28,12 @@ beforeEach(() => {
   initLetsRole(server);
   global.lre = new LRE(context);
   lre.wait = global.wait;
+});
+
+afterEach(() => {
+  // @ts-expect-error intentional deletion
+  delete global.lre;
+  terminateLetsRole();
 });
 
 describe("DataBatcher instantiation", () => {
@@ -60,11 +67,14 @@ describe("DataBatcher async send data", () => {
       fortyThree: 43,
     };
     dataBatcher.setData(data);
+
     expect(sheet.setData).not.toHaveBeenCalled();
     expect(dataBatcher.getPendingData("fortyTwo")).toStrictEqual(42);
     expect(dataBatcher.getPendingData("fortyTour")).toBeUndefined();
     expect(dataBatcher.getPendingData()).toEqual(data);
+
     itHasWaitedEverything();
+
     expect(sheet.setData).toHaveBeenCalled();
     expect((sheet.setData as jest.Mock).mock.calls[0][0]).toEqual(data);
   });
@@ -78,11 +88,16 @@ describe("DataBatcher async send data", () => {
     const processedCallback = jest.fn();
     dataBatcher.on("pending", pendingCallback);
     dataBatcher.on("processed", processedCallback);
+
     expect(pendingCallback).not.toHaveBeenCalled();
+
     dataBatcher.setData(data);
+
     expect(pendingCallback).toHaveBeenCalledTimes(1);
     expect(processedCallback).not.toHaveBeenCalled();
+
     itHasWaitedEverything();
+
     expect(processedCallback).toHaveBeenCalledTimes(1);
   });
 
@@ -90,12 +105,17 @@ describe("DataBatcher async send data", () => {
     dataBatcher.setData({
       fortyTwo: 42,
     });
+
     expect(sheet.setData).not.toHaveBeenCalled();
+
     dataBatcher.setData({
       fortyThree: 43,
     });
+
     expect(sheet.setData).not.toHaveBeenCalled();
+
     itHasWaitedEverything();
+
     expect(sheet.setData).toHaveBeenCalled();
     expect((sheet.setData as jest.Mock).mock.calls[0][0]).toEqual({
       fortyTwo: 42,
@@ -119,10 +139,15 @@ describe("DataBatcher async send data", () => {
 
     const data = { ...data1, ...data2 };
     dataBatcher.setData(data);
+
     expect(sheet.setData).toHaveBeenCalledTimes(0);
+
     itHasWaitedEnough();
+
     expect(sheet.setData).toHaveBeenCalledTimes(1);
+
     itHasWaitedEnough();
+
     expect(sheet.setData).toHaveBeenCalledTimes(2);
     expect(
       Object.keys((sheet.setData as jest.Mock).mock.calls[0][0]),
@@ -138,12 +163,19 @@ describe("DataBatcher async send data", () => {
       fortyThree: 43,
     };
     dataBatcher.setData(data);
+
     expect(sheet.setData).not.toHaveBeenCalled();
+
     dataBatcher.sendPendingDataFor("fortyFour");
+
     expect(sheet.setData).toHaveBeenCalledTimes(0);
+
     dataBatcher.sendPendingDataFor("fortyTwo");
+
     expect(sheet.setData).toHaveBeenCalledTimes(1);
+
     itHasWaitedEverything();
+
     expect(sheet.setData).toHaveBeenCalledTimes(1);
     expect((sheet.setData as jest.Mock).mock.calls[0][0]).toEqual(data);
   });
@@ -154,12 +186,15 @@ describe("DataBatcher async send data", () => {
       fortyThree: 43,
     };
     dataBatcher.setData(data);
+
     expect(sheet.setData).not.toHaveBeenCalled();
     expect(sheet.setData).toHaveBeenCalledTimes(0);
+
     dataBatcher.setData({
       fortyTwo: 44,
     });
     itHasWaitedEverything();
+
     expect(sheet.setData).toHaveBeenCalledTimes(1);
     expect((sheet.setData as jest.Mock).mock.calls[0][0]).toEqual({
       fortyTwo: 44,
@@ -176,6 +211,7 @@ describe("DataBatcher async send data", () => {
     dataBatcher.setData({
       a: "any",
     });
+
     expect(lre.error).toHaveBeenCalled();
   });
 
@@ -188,8 +224,11 @@ describe("DataBatcher async send data", () => {
     dataBatcher.setData({
       a: "any",
     });
+
     expect(lre.error).not.toHaveBeenCalled();
+
     itHasWaitedEverything();
+
     expect(lre.error).toHaveBeenCalled();
   });
 });
@@ -218,6 +257,7 @@ describe("Handle virtual and real modes", () => {
       cmp2: 43,
     };
     dataBatcher.setData(data);
+
     expect(pendingCallback).toHaveBeenCalled();
     expect(processedCallback).toHaveBeenCalled();
     expect(sheetProxy.setData).toHaveBeenCalled();

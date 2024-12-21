@@ -4,7 +4,10 @@ import { ComponentMock } from "../../src/mock/letsrole/component.mock";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
-import { initLetsRole } from "../../src/mock/letsrole/letsrole.mock";
+import {
+  initLetsRole,
+  terminateLetsRole,
+} from "../../src/mock/letsrole/letsrole.mock";
 
 let sheet: Sheet;
 
@@ -89,10 +92,17 @@ beforeEach(() => {
   lre.sheets.add(sheet);
 });
 
+afterEach(() => {
+  // @ts-expect-error intentional deletion
+  delete global.lre;
+  terminateLetsRole();
+});
+
 describe("Component group is like a component", () => {
   test("Group construction", () => {
     jest.spyOn(sheet, "get");
     const group: Group = new Group(context, "group1", sheet);
+
     expect(sheet.get).not.toHaveBeenCalled();
     expect(group.count()).toBe(0);
     expect(group.id()).toBe("group1");
@@ -130,6 +140,7 @@ describe("Component group is like a component", () => {
         jest.spyOn(cmp1, method);
         jest.spyOn(cmp2, method);
         group[method]();
+
         expect(cmp1[method]).toHaveBeenCalled();
         expect(cmp2[method]).toHaveBeenCalled();
       },
@@ -145,11 +156,14 @@ describe("Component group is like a component", () => {
     jest.spyOn(cmp1, "setToolTip");
     jest.spyOn(cmp2, "setToolTip");
     group.setToolTip("test");
+
     expect(cmp1.setToolTip).toHaveBeenCalledTimes(1);
     expect(cmp2.setToolTip).toHaveBeenCalledTimes(1);
     expect((cmp1.setToolTip as jest.Mock).mock.calls[0].length).toBe(1);
     expect((cmp1.setToolTip as jest.Mock).mock.calls[0][0]).toBe("test");
+
     group.setToolTip("test", "right");
+
     expect(cmp1.setToolTip).toHaveBeenCalledTimes(2);
     expect(cmp2.setToolTip).toHaveBeenCalledTimes(2);
     expect((cmp1.setToolTip as jest.Mock).mock.calls[1].length).toBe(2);
@@ -160,6 +174,7 @@ describe("Component group is like a component", () => {
     sheet.get("a.b")!.lreType("entry");
     const subCmp = sheet.get("a.b.c")! as IComponent;
     group.add(subCmp);
+
     expect(group.find("cmp1")).toBe(cmp1);
     expect(group.get("cmp2")).toBe(cmp2);
     expect(group.find("a.b.c")).toBe(subCmp);
@@ -174,6 +189,7 @@ describe("Component group is like a component", () => {
     jest.spyOn(cmp1, "toggleClass");
     jest.spyOn(cmp2, "toggleClass");
     jest.spyOn(subCmp, "toggleClass");
+
     expect(group.addClass("test")).toBe(group);
     expect(group.hasClass("test")).toBeTruthy();
     expect(group.hasClass("unique")).toBeFalsy();
@@ -194,13 +210,16 @@ describe("Component group is like a component", () => {
 describe("Component group basics", () => {
   test("New group is empty", () => {
     const group: Group = new Group(context, "group1", sheet);
+
     expect(group.count()).toBe(0);
   });
+
   test("Add / remove components", () => {
     jest.spyOn(sheet, "get");
     const group: Group = new Group(context, "group1", sheet, ["cmp1"]);
 
     const updateCb = jest.fn();
+
     expect(sheet.get).toHaveBeenCalledTimes(1);
     expect(group.count()).toBe(1);
     expect(group.includes("cmp1")).toBeTruthy();
@@ -212,9 +231,11 @@ describe("Component group basics", () => {
     group.on("add", addCb);
     group.on("remove", removeCb);
     group.on("update", updateCb);
+
     expect(updateCb).toHaveBeenCalledTimes(0);
 
     group.add("cmp2");
+
     expect(sheet.get).toHaveBeenCalledTimes(2);
     expect(group.count()).toBe(2);
     expect(updateCb).toHaveBeenCalledTimes(1);
@@ -222,13 +243,16 @@ describe("Component group basics", () => {
 
     const cmp3 = sheet.get("cmp3")! as IComponent;
     (sheet.get as jest.Mock).mockClear();
+
     expect(group.includes("cmp3")).toBeFalsy();
     expect(group.contains("cmp3")).toBeFalsy();
     expect(group.has("cmp3")).toBeFalsy();
     expect(group.includes(cmp3)).toBeFalsy();
     expect(group.contains(cmp3)).toBeFalsy();
     expect(group.has(cmp3)).toBeFalsy();
+
     group.add(cmp3);
+
     expect(updateCb).toHaveBeenCalledTimes(2);
     expect(sheet.get).toHaveBeenCalledTimes(0);
     expect(group.count()).toBe(3);
@@ -243,25 +267,32 @@ describe("Component group basics", () => {
     (sheet.get as jest.Mock).mockClear();
     updateCb.mockClear();
     group.add("cmp3");
+
     expect(group.count()).toBe(3);
     expect(updateCb).toHaveBeenCalledTimes(0);
     expect(addCb).toHaveBeenCalledTimes(2);
 
     expect(removeCb).toHaveBeenCalledTimes(0);
+
     group.remove(cmp3);
+
     expect(group.count()).toBe(2);
     expect(updateCb).toHaveBeenCalledTimes(1);
     expect(removeCb).toHaveBeenCalledTimes(1);
+
     group.remove(cmp3);
+
     expect(removeCb).toHaveBeenCalledTimes(1);
 
     group.remove("cmp2");
+
     expect(group.count()).toBe(1);
     expect(removeCb).toHaveBeenCalledTimes(2);
     expect(updateCb).toHaveBeenCalledTimes(2);
 
     updateCb.mockClear();
     group.add("unknown");
+
     expect(group.count()).toBe(1);
     expect(updateCb).toHaveBeenCalledTimes(0);
 
@@ -278,6 +309,7 @@ describe("Component group basics", () => {
       "cmp2",
       "cmp3",
     ]);
+
     expect(group.count()).toBe(3);
     expect(sheet.get).toHaveBeenCalledTimes(3);
   });
@@ -300,10 +332,12 @@ describe("Component group basics", () => {
     ({ val: invalidAddedElement }) => {
       const group: Group = new Group(context, "group1", sheet);
       jest.spyOn(lre, "error");
+
       /* @ts-expect-error Intended error to test */
       expect(() => group.add(invalidAddedElement)).toThrow();
 
       (lre.error as jest.Mock).mockClear();
+
       /* @ts-expect-error Intended error to test */
       expect(group.includes(invalidAddedElement)).toBeFalsy();
       expect(lre.error).toHaveBeenCalled();
@@ -311,6 +345,7 @@ describe("Component group basics", () => {
       (lre.error as jest.Mock).mockClear();
       /* @ts-expect-error Intended error to test */
       group.remove(invalidAddedElement);
+
       expect(lre.error).toHaveBeenCalled();
     },
   );
@@ -323,22 +358,28 @@ describe("Event attached to group are attached to all items", () => {
     group.on("update", updateFn);
     const cmp1: ComponentMock = sheet.raw().get("cmp1") as ComponentMock;
     const cmp2: ComponentMock = sheet.raw().get("cmp2") as ComponentMock;
+
     expect(updateFn).not.toHaveBeenCalled();
 
     cmp1.trigger("update");
+
     expect(updateFn).toHaveBeenCalledTimes(1);
+
     cmp2.trigger("update");
+
     expect(updateFn).toHaveBeenCalledTimes(2);
 
     const cmp3: ComponentMock = sheet.raw().get("cmp3") as ComponentMock;
     group.add("cmp3");
     updateFn.mockClear();
     cmp3.trigger("update");
+
     expect(updateFn).toHaveBeenCalledTimes(1);
 
     group.remove("cmp2");
     updateFn.mockClear();
     cmp2.value(4242);
+
     expect(updateFn).toHaveBeenCalledTimes(0);
   });
 
@@ -353,13 +394,16 @@ describe("Event attached to group are attached to all items", () => {
     const cmp1: ComponentMock = sheet.raw().get("cmp1") as ComponentMock;
 
     expect(clickFn).not.toHaveBeenCalled();
+
     cmp1.trigger("click");
+
     expect(clickFn).toHaveBeenCalled();
 
     clickFn.mockClear();
     const clickFn2 = jest.fn();
     group.on("click:label", clickFn2);
     cmp1.trigger("click");
+
     expect(clickFn).not.toHaveBeenCalled();
     expect(clickFn2).toHaveBeenCalled();
 
@@ -367,6 +411,7 @@ describe("Event attached to group are attached to all items", () => {
     clickFn2.mockClear();
     group.off("click:label");
     cmp1.trigger("click");
+
     expect(clickFn).not.toHaveBeenCalled();
     expect(clickFn2).not.toHaveBeenCalled();
 
@@ -374,18 +419,24 @@ describe("Event attached to group are attached to all items", () => {
     group.once("click:try", clickFn);
     cmp1.trigger("click");
     cmp1.trigger("click");
+
     expect(clickFn).toHaveBeenCalledTimes(1);
 
     clickFn.mockClear();
     group.on("click", clickFn);
     cmp1.trigger("click");
+
     expect(clickFn).toHaveBeenCalledTimes(1);
+
     group.disableEvent("click");
     cmp1.trigger("click");
     cmp1.trigger("click");
+
     expect(clickFn).toHaveBeenCalledTimes(1);
+
     group.enableEvent("click");
     cmp1.trigger("click");
+
     expect(clickFn).toHaveBeenCalledTimes(2);
   });
 
@@ -397,11 +448,13 @@ describe("Event attached to group are attached to all items", () => {
     group.add("cmp1");
     const cmp1: ComponentMock = sheet.raw().get("cmp1") as ComponentMock;
     cmp1.trigger("click");
+
     expect(clickFn).toHaveBeenCalled();
 
     clickFn.mockClear();
     group.remove("cmp1");
     cmp1.trigger("click");
+
     expect(clickFn).not.toHaveBeenCalled();
   });
 });
@@ -409,27 +462,35 @@ describe("Event attached to group are attached to all items", () => {
 describe("Group get values", () => {
   test("Get/Set Values", () => {
     const group = sheet.group("group2", ["cmp1", "cmp2", "cmp3"]);
+
     expect(group.providedValue()).toMatchObject({
       cmp1: "val1",
       cmp2: "val2",
       cmp3: "val3",
     });
+
     group.providedValue({
       cmp1: "val11",
     });
+
     expect(sheet.get("cmp1")!.value()).toBe("val11");
+
     const cmp4 = sheet.get("cmp4")!;
     group.providedValue({
       cmp4: "val4",
     });
+
     expect(cmp4.value()).not.toBe("val4");
+
     group.add("cmp4");
     group.providedValue({
       cmp4: "val4",
     });
+
     expect(cmp4.value()).toBe("val4");
 
     group.providedValue("Hello");
+
     expect(sheet.get("cmp1")!.value()).toBe("Hello");
     expect(sheet.get("cmp2")!.value()).toBe("Hello");
     expect(sheet.get("cmp3")!.value()).toBe("Hello");
@@ -438,6 +499,7 @@ describe("Group get values", () => {
 
   test("Get/Set virtual values and rawValue", () => {
     const group = new Group(context, "group2", sheet, ["cmp1", "cmp2", "cmp3"]);
+
     expect(group.virtualValue()).toMatchObject({
       cmp1: null,
       cmp2: null,
@@ -448,51 +510,67 @@ describe("Group get values", () => {
       cmp2: "val2",
       cmp3: "val3",
     });
+
     group.virtualValue({
       cmp1: "val11",
     });
+
     expect(sheet.get("cmp1")!.virtualValue()).toBe("val11");
+
     const cmp4 = sheet.get("cmp4")!;
     group.virtualValue({
       cmp4: "val4",
     });
+
     expect(cmp4.virtualValue()).not.toBe("val4");
+
     group.add("cmp4");
     group.virtualValue({
       cmp4: "val4",
     });
+
     expect(cmp4.virtualValue()).toBe("val4");
   });
 
   test("Get/Set Texts", () => {
     const group = new Group(context, "group2", sheet, ["cmp1", "cmp2", "cmp3"]);
+
     expect(group.text()).toMatchObject({
       cmp1: "txt1",
       cmp2: "txt2",
       cmp3: "txt3",
     });
+
     group.text({
       cmp1: "txt11",
     });
+
     expect(sheet.get("cmp1")!.text()).toBe("txt11");
+
     const cmp4 = sheet.get("cmp4")!;
     group.text({
       cmp4: "txt4",
     });
+
     expect(cmp4.text()).not.toBe("txt4");
+
     group.add("cmp4");
     group.text({
       cmp4: "txt4",
     });
+
     expect(cmp4.text()).toBe("txt4");
   });
 
   test("getClasses gives classes that are on ALL components", () => {
     const group = new Group(context, "group2", sheet, ["cmp1", "cmp2", "cmp3"]);
+
     expect(group.getClasses().sort()).toEqual(
       ["a", "b", "form-control", "text-input", "widget"].sort(),
     );
+
     sheet.get("cmp1")!.addClass("d");
+
     expect(group.getClasses().sort()).toEqual(
       ["a", "b", "d", "form-control", "text-input", "widget"].sort(),
     );
@@ -500,22 +578,31 @@ describe("Group get values", () => {
 
   test("visible get / set", () => {
     const group = new Group(context, "group2", sheet, ["cmp1", "cmp2", "cmp3"]);
+
     expect(group.visible()).toBeTruthy();
+
     sheet.get("cmp1")!.hide();
+
     expect(group.visible()).toBeFalsy();
+
     sheet.get("cmp2")!.hide();
     sheet.get("cmp1")!.show();
+
     expect(group.visible()).toBeFalsy();
+
     sheet.get("cmp2")!.show();
+
     expect(group.visible()).toBeTruthy();
 
     group.visible({
       cmp1: false,
     });
+
     expect(sheet.get("cmp1")!.visible()).toBeFalsy();
     expect(group.visible()).toBeFalsy();
 
     group.visible(true);
+
     expect(sheet.get("cmp1")!.visible()).toBeTruthy();
     expect(group.visible()).toBeTruthy();
 
@@ -524,15 +611,20 @@ describe("Group get values", () => {
     group.visible(function () {
       return !!chk.value();
     });
+
     expect(group.visible()).toBeFalsy();
     expect(sheet.get("cmp1")!.visible()).toBeFalsy();
+
     chk.value(true);
+
     expect(group.visible()).toBeTruthy();
     expect(sheet.get("cmp1")!.visible()).toBeTruthy();
     expect(sheet.get("cmp2")!.visible()).toBeTruthy();
     expect(sheet.get("cmp3")!.visible()).toBeTruthy();
+
     group.remove("cmp1");
     chk.value(false);
+
     expect(group.visible()).toBeFalsy();
     expect(sheet.get("cmp1")!.visible()).toBeTruthy();
     expect(sheet.get("cmp2")!.visible()).toBeFalsy();
@@ -547,6 +639,7 @@ describe("Group and context", () => {
     grp.providedValue();
     context.setMode("real");
     const accessLog = context.getPreviousAccessLog("value");
+
     expect(accessLog.map((l) => (l as Array<string>).join("-"))).toContain(
       sheet.getSheetId() + "-grp",
     );

@@ -6,6 +6,7 @@ import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import {
   initLetsRole,
   itHasWaitedEverything,
+  terminateLetsRole,
 } from "../../src/mock/letsrole/letsrole.mock";
 import { ViewMock } from "../../src/mock/letsrole/view.mock";
 
@@ -87,15 +88,23 @@ beforeEach(() => {
   global.lre = new LRE(context);
 });
 
+afterEach(() => {
+  // @ts-expect-error intentional deletion
+  delete global.lre;
+  terminateLetsRole();
+});
+
 describe("Sheet basics", () => {
   const sheetId = "main";
   let raw: LetsRole.Sheet, sheet: Sheet;
+
   beforeEach(() => {
     raw = server.openView(sheetId, "4242", {});
     jest.spyOn(raw, "getData");
     jest.spyOn(raw, "getVariable");
     sheet = new Sheet(raw, new DataBatcher(context, raw), context);
   });
+
   test("Create from raw", () => {
     expect(sheet.lreType()).toEqual("sheet");
 
@@ -119,12 +128,14 @@ describe("Sheet basics", () => {
 
   test("getVariable calls raw method", () => {
     sheet.getVariable("foo");
+
     expect(raw.getVariable).toHaveBeenCalledTimes(1);
   });
 
   test("getSheetId calls raw method", () => {
     jest.spyOn(raw, "getSheetId");
     const res = sheet.getSheetId();
+
     expect(res).toEqual("4242");
     expect(raw.getSheetId).toHaveBeenCalledTimes(1);
     expect(sheet.getSheetAlphaId()).toBe("Bde");
@@ -135,6 +146,7 @@ describe("Sheet basics", () => {
     jest.spyOn(raw, "properName");
     sheet.name();
     sheet.properName();
+
     expect(raw.name).toHaveBeenCalledTimes(1);
     expect(raw.properName).toHaveBeenCalledTimes(1);
   });
@@ -147,11 +159,13 @@ describe("Sheet basics", () => {
       () => {},
       () => {},
     );
+
     expect(raw.prompt).toHaveBeenCalledTimes(1);
   });
 
   test("id() and readId() calls", () => {
     jest.spyOn(raw, "id");
+
     expect(sheet.id()).toEqual(sheetId);
     expect(sheet.realId()).toEqual(sheetId);
     expect(raw.id).toHaveBeenCalledTimes(2);
@@ -170,13 +184,17 @@ describe("Sheet data handling", () => {
   test("Test sheet mock", () => {
     jest.spyOn(server, "showError");
     raw.setData(createLargeObject(30));
+
     expect(server.showError).toHaveBeenCalled();
 
     (server.showError as jest.Mock).mockClear();
     const validObject = createLargeObject(20);
+
     expect(server.showError).not.toHaveBeenCalled();
     expect(() => raw.setData(validObject)).not.toThrow();
+
     const raw2 = server.openView(sheetId, "4242");
+
     expect(raw2.getData()).toEqual(validObject);
   });
 
@@ -198,11 +216,14 @@ describe("Sheet data handling", () => {
         data[i] = d[i];
       }
     });
+
     expect(pendingCb).not.toHaveBeenCalled();
+
     sheet.setData({
       a: 11,
       d: 4,
     });
+
     expect(pendingCb).toHaveBeenCalledTimes(1);
     expect(raw.setData).not.toHaveBeenCalled();
     expect(processedCb).not.toHaveBeenCalled();
@@ -214,26 +235,36 @@ describe("Sheet data handling", () => {
     });
     expect(raw.getData).toHaveBeenCalled();
     expect(sheet.getPendingData("a")).toStrictEqual(11);
+
     itHasWaitedEverything();
+
     expect(raw.setData).toHaveBeenCalled();
     expect(pendingCb).toHaveBeenCalledTimes(1);
     expect(processedCb).toHaveBeenCalled();
+
     processedCb.mockClear();
 
     const newRaw = server.openView(sheetId, "4242", {});
     const prevRaw = sheet.raw();
+
     expect(newRaw).not.toBe(prevRaw);
+
     sheet.refreshRaw(newRaw);
+
     expect(sheet.raw()).toBe(newRaw);
     expect(sheet.raw()).not.toBe(prevRaw);
     expect(pendingCb).toHaveBeenCalledTimes(1);
+
     sheet.setData({
       a: 11,
       d: 4,
     });
+
     expect(pendingCb).toHaveBeenCalledTimes(2);
     expect(processedCb).not.toHaveBeenCalled();
+
     itHasWaitedEverything();
+
     expect(processedCb).toHaveBeenCalled();
     expect(pendingCb).toHaveBeenCalledTimes(2);
   });
@@ -241,6 +272,7 @@ describe("Sheet data handling", () => {
   test("No error when sending too much data", () => {
     jest.spyOn(raw, "setData");
     sheet.setData(createLargeObject(35));
+
     expect(raw.setData).not.toHaveBeenCalled();
     expect(itHasWaitedEverything).not.toThrow();
     expect(raw.setData).toHaveBeenCalled();
@@ -263,6 +295,7 @@ describe("Sheet data handling", () => {
     raw.getData = jest.fn(() => {
       return data;
     });
+
     expect(sheet.getData("a")).toStrictEqual(1);
     expect(sheet.getData("rep")).toStrictEqual(repValue);
     expect(sheet.getData("rep.a")).toStrictEqual(repValue.a);
@@ -285,51 +318,77 @@ describe("Sheet persisting data", () => {
     sheet1 = initSheet("main", "4242");
     sheet2 = initSheet("main", "4242");
   });
+
   test("Persisting data shared between sheets", () => {
     sheet1.persistingData("test", 42);
+
     expect(sheet1.persistingData("test")).toStrictEqual(42);
+
     itHasWaitedEverything();
     const testSheet = initSheet("main", "4242");
+
     expect(testSheet.persistingData("test")).toStrictEqual(42);
+
     sheet2.persistingData("test", 43);
+
     expect(sheet1.persistingData("test")).toStrictEqual(42);
+
     itHasWaitedEverything();
+
     expect(sheet1.persistingData("test")).toStrictEqual(43);
+
     sheet1.persistingData("test", 44);
     sheet2.persistingData("test2", 54);
+
     expect(sheet1.persistingData("test")).toStrictEqual(44);
     expect(sheet2.persistingData("test2")).toStrictEqual(54);
     expect(sheet1.persistingData("test2")).toBeUndefined();
     expect(sheet2.persistingData("test")).toStrictEqual(43);
+
     itHasWaitedEverything();
+
     expect(sheet1.persistingData("test")).toStrictEqual(44);
     expect(sheet2.persistingData("test2")).toStrictEqual(54);
     expect(sheet1.persistingData("test2")).toStrictEqual(54);
     expect(sheet2.persistingData("test")).toStrictEqual(44);
 
     sheet1.deletePersistingData("test2");
+
     expect(sheet1.persistingData("test2")).toBeUndefined();
+
     itHasWaitedEverything();
+
     expect(sheet2.persistingData("test2")).toBeUndefined();
 
     sheet2.persistingData("test2", 55);
+
     expect(sheet1.persistingData("test2")).toBeUndefined();
     expect(sheet2.persistingData("test2")).toStrictEqual(55);
+
     itHasWaitedEverything();
+
     expect(sheet1.persistingData("test2")).toStrictEqual(55);
     expect(sheet2.persistingData("test2")).toStrictEqual(55);
+
     sheet1.deletePersistingData("test2");
     sheet2.persistingData("test2", 56);
+
     expect(sheet1.persistingData("test2")).toBeUndefined();
     expect(sheet2.persistingData("test2")).toStrictEqual(56);
+
     itHasWaitedEverything();
+
     expect(sheet1.persistingData("test2")).toBeUndefined();
     expect(sheet2.persistingData("test2")).toBeUndefined();
+
     sheet1.persistingData("test3", 3);
     sheet2.deletePersistingData("test3");
+
     expect(sheet1.persistingData("test3")).toStrictEqual(3);
     expect(sheet2.persistingData("test3")).toBeUndefined();
+
     itHasWaitedEverything();
+
     expect(sheet1.persistingData("test3")).toStrictEqual(3);
     expect(sheet2.persistingData("test3")).toStrictEqual(3);
 
@@ -339,6 +398,7 @@ describe("Sheet persisting data", () => {
     sheet1.deletePersistingData("cmpData");
     sheet1.deletePersistingData("cmpClasses");
     sheet1.deletePersistingData("initialized");
+
     expect(sheet1.persistingData("cmpData")).toBe(persistingCmpData);
     expect(sheet1.persistingData("cmpClasses")).toBe(persistingCmpClasses);
     expect(sheet1.persistingData("initialized")).toBe(persistingInitialized);
@@ -347,10 +407,14 @@ describe("Sheet persisting data", () => {
   test("isInitialized", () => {
     expect(sheet1.isInitialized()).toBeFalsy();
     expect(sheet2.isInitialized()).toBeFalsy();
+
     sheet1.persistingData("initialized", true);
+
     expect(sheet1.isInitialized()).toBeTruthy();
     expect(sheet2.isInitialized()).toBeFalsy();
+
     itHasWaitedEverything();
+
     expect(sheet2.isInitialized()).toBeTruthy();
   });
 
@@ -361,11 +425,14 @@ describe("Sheet persisting data", () => {
     };
     const v = sheet1.persistingCmpData("123", newData);
     jest.spyOn(sheet1.raw(), "setData");
+
     expect(sheet1.raw().setData).not.toHaveBeenCalled();
     expect(itHasWaitedEverything).not.toThrow();
     expect(sheet1.raw().setData).toHaveBeenCalled();
     expect(v).toEqual(newData);
+
     const v2 = sheet2.persistingCmpData("123");
+
     expect(v2).toEqual(newData);
 
     const newData1 = {
@@ -376,9 +443,12 @@ describe("Sheet persisting data", () => {
       ...newData,
       v4: 4,
     };
+
     expect(sheet1.persistingCmpData("123", newData1)).toEqual(newData1);
     expect(sheet2.persistingCmpData("123", newData2)).toEqual(newData2);
+
     itHasWaitedEverything();
+
     expect(sheet1.persistingCmpData("123")).toEqual({
       ...newData1,
       ...newData2,
@@ -387,6 +457,7 @@ describe("Sheet persisting data", () => {
       ...newData1,
       ...newData2,
     });
+
     const newRawSheet1 = server.openView(sheet1.id(), sheet1.getSheetId()!);
     sheet1.refreshRaw(newRawSheet1);
     const newData3 = {
@@ -412,30 +483,38 @@ describe("Sheet persisting data", () => {
         v3: 42,
       },
     };
+
     expect(sheet1.persistingCmpData("123", newData3)).toEqual(newData3);
     expect(sheet2.persistingCmpData("123", newData4)).toEqual(newData4);
+
     itHasWaitedEverything();
+
     expect(sheet1.persistingCmpData("123")).toEqual(result);
     expect(sheet2.persistingCmpData("123")).toEqual(result);
   });
 
   test("Persisting cmp classes", () => {
     const c: ClassChanges = { class1: 1 };
+
     expect(sheet1.persistingCmpClasses("123", c)).toEqual(c);
     expect(sheet1.persistingCmpClasses("123")).toEqual(c);
     expect(sheet2.persistingCmpClasses("123")).not.toEqual(c);
     expect(itHasWaitedEverything).not.toThrow();
     expect(sheet2.persistingCmpClasses("123")).toEqual(c);
+
     const c1: ClassChanges = { class1: -1, class1b: 1 };
     const c2: ClassChanges = { class2: 1 };
     sheet1.persistingCmpClasses("123", c1);
     sheet2.persistingCmpClasses("123", c2);
+
     expect(itHasWaitedEverything).not.toThrow();
+
     // no need today to merge the two arrays of classes
     const result: ClassChanges = {
       ...c1,
       ...c2,
     };
+
     expect(sheet1.persistingCmpClasses("123")).toEqual(result);
     expect(sheet2.persistingCmpClasses("123")).toEqual(result);
   });
@@ -463,9 +542,13 @@ describe("Sheet clean data", () => {
     let save = structuredClone(data);
     let sheet = new Sheet(raw, new DataBatcher(context, raw), context);
     sheet.cleanCmpData();
+
     expect(sheet.getData()).toEqual(save);
+
     itHasWaitedEverything();
+
     expect(sheet.getData()).toEqual(save);
+
     data = {
       main: {
         cmpData: {
@@ -478,9 +561,13 @@ describe("Sheet clean data", () => {
     save = structuredClone(data);
     sheet = new Sheet(raw, new DataBatcher(context, raw), context);
     sheet.cleanCmpData();
+
     expect(sheet.getData()).toEqual(save);
+
     itHasWaitedEverything();
+
     expect(sheet.getData()).toEqual(save);
+
     const large = createLargeObject(30);
     data = {
       main: {
@@ -516,7 +603,9 @@ describe("Sheet clean data", () => {
     const save2 = structuredClone(data);
     sheet = new Sheet(raw, new DataBatcher(context, raw), context);
     sheet.cleanCmpData();
+
     expect(sheet.getData()).toEqual(save);
+
     itHasWaitedEverything();
     delete save2.main!.cmpData!["unknown1"];
     delete save2.main!.cmpData!["unknown.b.c"];
@@ -527,9 +616,12 @@ describe("Sheet clean data", () => {
     delete save2.main!.cmpClasses!["unknown.a.c"];
     delete save2.main!.cmpClasses![`b.unknown.c`];
     delete save2.main!.cmpClasses![`b.b.unknown`];
+
     expect(sheet.getData()).toEqual(save2);
     expect(sheet.getData()).not.toEqual(save);
+
     itHasWaitedEverything();
+
     expect(sheet.getData()).toEqual(save2);
     expect(sheet.getData()).not.toEqual(save);
   });
@@ -569,6 +661,7 @@ describe("Sheet get component", () => {
   test("Get component is cached", () => {
     const cmp1 = sheet1.get("abcd");
     const cmp2 = sheet1.get("abcd");
+
     expect(cmp1).toStrictEqual(cmp2);
     expect(cmp1).toBeInstanceOf(Component);
   });
@@ -576,6 +669,7 @@ describe("Sheet get component", () => {
   test("Find and get are the same", () => {
     const cmp1 = sheet1.get("abcd");
     const cmp2 = sheet1.find("abcd");
+
     expect(cmp1).toStrictEqual(cmp2);
     expect(cmp1).toBeInstanceOf(Component);
   });
@@ -587,29 +681,45 @@ describe("Sheet get component", () => {
 
   test("Non existing component search", () => {
     const errorLogSpy = jest.spyOn(lre, "error");
+
     expect(sheet1.get("unknown")).toBeNull();
     expect(errorLogSpy).toHaveBeenCalled();
+
     errorLogSpy.mockClear();
+
     expect(sheet1.get(`unknown.b.c`)).toBeNull();
     expect(errorLogSpy).toHaveBeenCalled();
+
     errorLogSpy.mockClear();
+
     expect(sheet1.get(`rep.unknown.c`)).toBeNull();
     expect(errorLogSpy).toHaveBeenCalled();
+
     errorLogSpy.mockClear();
+
     expect(sheet1.get(`rep.b.unknown`)).toBeNull();
     expect(errorLogSpy).toHaveBeenCalled();
+
     errorLogSpy.mockClear();
+
     expect(sheet1.get("nullCmp")).toBeNull();
     expect(errorLogSpy).toHaveBeenCalled();
+
     errorLogSpy.mockClear();
+
     expect(sheet1.get(`nullCmp.b.c`)).toBeNull();
     expect(errorLogSpy).toHaveBeenCalled();
+
     errorLogSpy.mockClear();
+
     expect(sheet1.get(`rep.nullCmp.c`)).toBeNull();
     expect(errorLogSpy).toHaveBeenCalled();
+
     errorLogSpy.mockClear();
+
     expect(sheet1.get(`rep.b.nullCmp`)).toBeNull();
     expect(errorLogSpy).toHaveBeenCalled();
+
     errorLogSpy.mockClear();
 
     expect(sheet1.get("unknown", true)).toBeNull();
@@ -625,6 +735,7 @@ describe("Sheet get component", () => {
     expect(sheet1.componentExists("a")).toBeTruthy();
     expect(sheet1.componentExists("nullCmp")).toBeFalsy();
     expect(sheet1.componentExists("unknown")).toBeFalsy();
+
     sheet1.raw().getData = jest.fn(() => {
       return {
         a: {
@@ -634,6 +745,7 @@ describe("Sheet get component", () => {
         },
       };
     });
+
     expect(sheet1.componentExists("a.b")).toBeTruthy();
     expect(sheet1.componentExists("a.b.c")).toBeTruthy();
     expect(sheet1.componentExists("a.z")).toBeFalsy();
@@ -655,16 +767,25 @@ describe("Sheet get component", () => {
 
   test("Sheet remember/forget component", () => {
     jest.spyOn(raw, "get");
+
     expect(raw.get).toHaveBeenCalledTimes(0);
+
     sheet1.remember("abc");
+
     expect(raw.get).toHaveBeenCalledTimes(0);
+
     itHasWaitedEverything();
+
     expect(raw.get).toHaveBeenCalledTimes(1);
+
     sheet1.get("abc");
+
     expect(raw.get).toHaveBeenCalledTimes(1);
+
     sheet1.forget("abc");
     itHasWaitedEverything();
     sheet1.get("abc");
+
     expect(raw.get).toHaveBeenCalledTimes(2);
   });
 
@@ -687,15 +808,20 @@ describe("Sheet get component", () => {
 
   test("Sheet get group", () => {
     const grp = sheet1.group(`grpUnknown`);
+
     expect(grp.lreType()).toBe("group");
+
     let grp2;
+
     expect(() => (grp2 = sheet1.group("cmp1"))).toThrow();
     expect(grp2).toBeUndefined();
 
     const grp3 = sheet1.group(`grpUnknown`);
+
     expect(grp3).toBe(grp);
 
     const grp4 = sheet1.get(`grpUnknown`);
+
     expect(grp4).toBe(grp);
   });
 });

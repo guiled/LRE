@@ -7,6 +7,7 @@ import { LreTables } from "../../src/tables";
 import {
   initLetsRole,
   itHasWaitedEverything,
+  terminateLetsRole,
 } from "../../src/mock/letsrole/letsrole.mock";
 
 let raw: LetsRole.Component;
@@ -63,22 +64,32 @@ beforeEach(() => {
   raw = rawSheet.get("ch");
 });
 
+afterEach(() => {
+  // @ts-expect-error intentional deletion
+  delete global.lre;
+  terminateLetsRole();
+});
+
 describe("Choice basic", () => {
   test("label", () => {
     const choice = new Choice(rawSheet.get("chA"), sheet, "chA");
+
     expect(choice.label()).toBe("theChoiceA");
   });
 
   test("setChoices", () => {
     jest.spyOn(raw, "setChoices");
     const choice = new Choice(raw, sheet, "ch");
+
     expect(choice.value()).toBeNull();
     expect(raw.setChoices).not.toHaveBeenCalled();
+
     const newChoices = {
       a: "1",
       b: "2",
     };
     choice.setChoices(newChoices);
+
     expect(raw.setChoices).toHaveBeenCalledWith(newChoices);
   });
 
@@ -98,9 +109,11 @@ describe("Choice basic", () => {
     choice.on("valunselect:1", valunselect1);
     choice.on("valunselect:2", valunselect2);
     choice.on("valclick", valclick);
+
     expect(choice.value()).toBeNull();
 
     choice.value(1);
+
     expect(select).toHaveBeenCalledWith(choice, 1);
   });
 });
@@ -109,12 +122,14 @@ describe("Choice get and set choices", () => {
   test("empty getChoices gives a message", () => {
     const ch = new Choice(raw, sheet, "ch");
     jest.spyOn(lre, "warn");
+
     expect(ch.getChoices()).toStrictEqual({});
     expect(lre.warn).toHaveBeenCalled();
   });
 
   test("set choice is error protected", () => {
     const ch = new Choice(rawSheet.get("chA"), sheet, "chA");
+
     expect(ch.getChoices()).toStrictEqual({});
     expect(() =>
       ch.setChoices({
@@ -122,8 +137,10 @@ describe("Choice get and set choices", () => {
         b: "2",
       }),
     ).not.toThrow();
+
     ch.value("a");
     itHasWaitedEverything();
+
     expect(ch.value()).toBe("a");
     expect(() =>
       ch.setChoices({
@@ -147,9 +164,13 @@ describe("Set choice dynamically", () => {
         2: cmp2.value() as string,
       };
     });
+
     expect(ch.getChoices()).toStrictEqual({ 1: "a", 2: "b" });
+
     cmp1.value("c");
+
     expect(ch.getChoices()).toStrictEqual({ 1: "c", 2: "b" });
+
     const data1 = { a: 1 };
     const data2 = { b: 2 };
     ch.setChoices((): ChoicesWithData => {
@@ -159,8 +180,11 @@ describe("Set choice dynamically", () => {
       };
     });
     ch.value(2);
+
     expect(ch.choiceData()).toStrictEqual(data2);
+
     ch.value(1);
+
     expect(ch.choiceData()).toStrictEqual(data1);
   });
 
@@ -175,16 +199,21 @@ describe("Set choice dynamically", () => {
 
     const ch = new Choice(rawSheet.get("chA"), sheet, "chA");
     ch.setChoices(p);
+
     expect(ch.getChoices()).toStrictEqual({
       a,
       b,
     });
+
     data.a = "43";
+
     expect(ch.getChoices()).toStrictEqual({
       a: "42",
       b: "13",
     });
+
     p.refresh();
+
     expect(ch.getChoices()).toStrictEqual({
       a: "43",
       b: "13",
@@ -199,11 +228,14 @@ describe("Set choice dynamically", () => {
     cmp2.value(2);
     const g = sheet.group("_nonexisting_", ["cmp1", "cmp2"]);
     ch.setChoices(g);
+
     expect(ch.getChoices()).toStrictEqual({
       cmp1: "1",
       cmp2: 2,
     });
+
     cmp1.value("42");
+
     expect(ch.getChoices()).toStrictEqual({
       cmp1: "42",
       cmp2: 2,
@@ -215,6 +247,7 @@ describe("choice populate", () => {
   test("populate with table name", () => {
     const ch = new Choice(rawSheet.get("chA"), sheet, "chA");
     ch.populate("theTable", "a");
+
     expect(ch.getChoices()).toStrictEqual({
       a: "1",
       b: "2",
@@ -225,7 +258,9 @@ describe("choice populate", () => {
       b: "3",
       lbl: "theChoiceB",
     });
+
     ch.value("b");
+
     expect(ch.valueData()).toStrictEqual({
       id: "b",
       a: "2",
@@ -249,6 +284,7 @@ describe("choice populate", () => {
       ],
       "lbl",
     );
+
     expect(ch.getChoices()).toStrictEqual({
       a: "theChoiceA",
       b: "theChoiceB",
@@ -265,6 +301,7 @@ describe("choice populate", () => {
     const ch = new Choice(rawSheet.get("chA"), sheet, "chA");
     const table = (Tables as LreTables).get("theTable")!;
     ch.populate(table, "a");
+
     expect(ch.getChoices()).toStrictEqual({
       a: "1",
       b: "2",
@@ -285,6 +322,7 @@ describe("choice populate", () => {
         b: "2",
       };
     });
+
     expect(ch.getChoices()).toStrictEqual({
       a: "1",
       b: "2",
@@ -295,9 +333,11 @@ describe("choice populate", () => {
 
 describe("set choices with optional", () => {
   let rawChoice: LetsRole.Component;
+
   beforeEach(() => {
     rawChoice = rawSheet.get("chA");
   });
+
   test("setChoices with optional", () => {
     jest.spyOn(rawChoice, "setChoices");
     const ch = new Choice(rawChoice, sheet, "chA");
@@ -306,6 +346,7 @@ describe("set choices with optional", () => {
       a: "1",
       b: "2",
     });
+
     expect(rawChoice.setChoices).toHaveBeenCalledWith({
       "": "",
       a: "1",
@@ -324,6 +365,7 @@ describe("set choices with optional", () => {
       a: "1",
       b: "2",
     });
+
     expect(rawChoice.setChoices).toHaveBeenCalledWith({
       a: "1",
       b: "2",
@@ -332,9 +374,11 @@ describe("set choices with optional", () => {
       a: "1",
       b: "2",
     });
+
     (rawChoice.setChoices as jest.Mock).mockClear();
     const defaultLabel = "no choice";
     ch.optional(true, defaultLabel);
+
     expect(rawChoice.setChoices).toHaveBeenCalledWith({
       "": defaultLabel,
       a: "1",

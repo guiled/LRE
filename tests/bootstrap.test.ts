@@ -1,7 +1,13 @@
 import { bootstrap } from "../src/bootstrap";
 import { LRE } from "../src/lre";
 import { ServerMock } from "../src/mock/letsrole/server.mock";
-import { initLetsRole } from "../src/mock/letsrole/letsrole.mock";
+import {
+  initLetsRole,
+  terminateLetsRole,
+} from "../src/mock/letsrole/letsrole.mock";
+
+const saveIsNaN = global.isNaN;
+const saveStructuredClone = global.structuredClone;
 
 beforeEach(() => {
   initLetsRole(new ServerMock({}));
@@ -33,14 +39,26 @@ beforeEach(() => {
   // }
 });
 
+afterEach(() => {
+  // @ts-expect-error intentional deletion
+  delete global.lre;
+  delete global.lastException;
+  global.isNaN = saveIsNaN;
+  global.structuredClone = saveStructuredClone;
+  delete global.Tables;
+  terminateLetsRole();
+});
+
 describe("LRE bootstrap", () => {
   test("Launch correctly", () => {
     expect(global.isNaN).toBeNull();
     expect(global.lre).not.toBeInstanceOf(LRE);
     expect(global.structuredClone).toBeNull();
+
     const oldWait = global.wait;
     //const realConsole = console;
     bootstrap();
+
     expect(global.lre).toBeInstanceOf(LRE);
     expect(global.isNaN).not.toBeNull();
     expect(global.structuredClone).not.toBeNull();
@@ -48,7 +66,9 @@ describe("LRE bootstrap", () => {
     expect(global.isNaN(global as unknown as number)).toBeTruthy();
 
     expect(global.wait).toBe(oldWait);
+
     global.lre!.apply(global.lre, [() => {}]);
+
     expect(global.wait).not.toBe(oldWait);
 
     const c = {
@@ -61,6 +81,7 @@ describe("LRE bootstrap", () => {
       d: ["a", 2],
     };
     const d = structuredClone(c);
+
     expect(d).not.toBe(c);
     expect(d).toEqual(c);
   });

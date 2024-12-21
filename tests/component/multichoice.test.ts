@@ -6,7 +6,10 @@ import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { SheetProxy } from "../../src/proxy/sheet";
 import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
-import { initLetsRole } from "../../src/mock/letsrole/letsrole.mock";
+import {
+  initLetsRole,
+  terminateLetsRole,
+} from "../../src/mock/letsrole/letsrole.mock";
 import { ComponentProxy } from "../../src/proxy/component";
 
 let rawSheet: LetsRole.Sheet;
@@ -17,6 +20,7 @@ let server: ServerMock;
 let rawMultiChoice: ComponentMock;
 let proxyMultiChoice: ComponentProxy;
 let multiChoice: MultiChoice;
+
 beforeEach(() => {
   server = new ServerMock({
     views: [
@@ -60,6 +64,12 @@ beforeEach(() => {
   rawMultiChoice = proxyMultiChoice.getDest() as ComponentMock;
 });
 
+afterEach(() => {
+  // @ts-expect-error intentional deletion
+  delete global.lre;
+  terminateLetsRole();
+});
+
 describe("MultiChoice", () => {
   test("Multichoice has the good type", () => {
     expect(multiChoice.lreType()).toBe("multichoice");
@@ -68,8 +78,11 @@ describe("MultiChoice", () => {
   test("Multichoice values are converted to number", () => {
     const value = ["1", "2", "3", "a"];
     rawMultiChoice.value(value);
+
     expect(multiChoice.value()).toEqual(value);
+
     lre.autoNum(true);
+
     expect(multiChoice.value()).toEqual([1, 2, 3, "a"]);
     expect(multiChoice.value()).not.toEqual(["1", "2", "3", "a"]);
   });
@@ -78,9 +91,12 @@ describe("MultiChoice", () => {
     multiChoice.value(["1", "2"]);
     jest.spyOn(rawMultiChoice, "setChoices");
     jest.spyOn(rawSheet, "setData");
+
     expect(rawSheet.setData).toHaveBeenCalledTimes(0);
     expect(rawMultiChoice.setChoices).toHaveBeenCalledTimes(0);
+
     multiChoice.value(["1"]);
+
     expect(rawSheet.setData).toHaveBeenCalledTimes(1);
     expect(rawMultiChoice.setChoices).toHaveBeenCalledTimes(1);
   });
@@ -90,6 +106,7 @@ describe("MultiChoice", () => {
     const mockSelectEvent = jest.fn();
     multiChoice.on("select", mockSelectEvent);
     rawMultiChoice.value(value);
+
     expect(mockSelectEvent).toHaveBeenCalledTimes(1);
     expect(mockSelectEvent).toHaveBeenCalledWith(
       multiChoice,
@@ -97,9 +114,11 @@ describe("MultiChoice", () => {
       undefined,
       null,
     );
+
     value = [...value, "2", "3"];
     mockSelectEvent.mockReset();
     rawMultiChoice.value(value);
+
     expect(mockSelectEvent).toHaveBeenCalledTimes(1);
     expect(mockSelectEvent).toHaveBeenCalledWith(
       multiChoice,
@@ -115,6 +134,7 @@ describe("MultiChoice", () => {
     const mockUnselectEvent = jest.fn();
     multiChoice.on("unselect", mockUnselectEvent);
     rawMultiChoice.value([]);
+
     expect(mockUnselectEvent).toHaveBeenCalledTimes(1);
     expect(mockUnselectEvent).toHaveBeenCalledWith(
       multiChoice,
@@ -138,6 +158,7 @@ describe("MultiChoice", () => {
     });
     multiChoice.on("unselect", mockUnselectEvent);
     multiChoice.clear();
+
     expect(mockUnselectEvent).toHaveBeenCalledTimes(1);
     expect(mockUnselectEvent).toHaveBeenCalledWith(
       multiChoice,
@@ -146,20 +167,32 @@ describe("MultiChoice", () => {
       { "1": null, "2": null },
     );
     expect(multiChoice.value()).toEqual([]);
+
     multiChoice.value(["1"]);
     multiChoice.selectNone();
+
     expect(multiChoice.value()).toEqual([]);
+
     multiChoice.value(["1"]);
     multiChoice.unselectAll();
+
     expect(multiChoice.value()).toEqual([]);
+
     multiChoice.selectAll();
+
     expect(multiChoice.value()).toEqual(["1", "2", "3", "4", "5", "6"]);
+
     multiChoice.invert();
+
     expect(multiChoice.value()).toEqual([]);
+
     multiChoice.invert();
+
     expect(multiChoice.value()).toEqual(["1", "2", "3", "4", "5", "6"]);
+
     rawMultiChoice.value(["1", "3", "5"]);
     multiChoice.invert();
+
     expect(multiChoice.value()).toEqual(["2", "4", "6"]);
   });
 
@@ -177,6 +210,7 @@ describe("MultiChoice", () => {
     multiChoice.setChoices(data.select("lbl"));
     const checked = multiChoice.checked();
     const unchecked = multiChoice.unchecked();
+
     expect(checked.provider).toBeTruthy();
     expect(unchecked.provider).toBeTruthy();
     expect(checked.providedValue()).toEqual({});
@@ -188,7 +222,9 @@ describe("MultiChoice", () => {
       e: "Five",
       f: "Six",
     });
+
     multiChoice.value(["a"]);
+
     expect(checked.providedValue()).toEqual({ a: "One" });
     expect(unchecked.providedValue()).toEqual({
       b: "Two",
@@ -197,7 +233,9 @@ describe("MultiChoice", () => {
       e: "Five",
       f: "Six",
     });
+
     multiChoice.value(["a", "c"]);
+
     expect(checked.providedValue()).toEqual({ a: "One", c: "Three" });
     expect(unchecked.providedValue()).toEqual({
       b: "Two",
@@ -234,18 +272,29 @@ describe("MultiChoice", () => {
     multiChoice.on("click", jest.fn());
     multiChoice.maxChoiceNb(2);
     rawMultiChoice.value(["1"]);
+
     expect(multiChoice.value()).toEqual(["1"]);
+
     rawMultiChoice.value(["1", "2"]);
+
     expect(multiChoice.value()).toEqual(["1", "2"]);
+
     rawMultiChoice.value(["1", "2", "3"]);
+
     expect(multiChoice.value()).toEqual(["1", "2"]);
+
     multiChoice.value(["1", "2", "3", "4"]);
+
     expect(multiChoice.value()).toEqual(["1", "2"]);
+
     multiChoice.maxChoiceNb(3);
     multiChoice.minChoiceNb(2);
     multiChoice.value(["1", "2", "3"]);
+
     expect(multiChoice.value()).toEqual(["1", "2", "3"]);
+
     rawMultiChoice.value(["1"]);
+
     expect(multiChoice.value()).toEqual(["1", "2", "3"]);
   });
 
@@ -265,56 +314,84 @@ describe("MultiChoice", () => {
     const rawCmd = rawSheet.get("cmd");
     const cmp = sheet.get("cmd") as Component;
     multiChoice.maxChoiceNb(cmp);
+
     expect(
       context
         .getPreviousAccessLog("value")
         .map((l) => (l as Array<string>).join("-")),
     ).toContain(sheet.getSheetId() + "-cmd");
+
     const updateEvent = jest.fn();
     multiChoice.on("update", updateEvent);
 
     rawMultiChoice.value(["1"]);
+
     expect(updateEvent).toHaveBeenCalledTimes(1);
+
     updateEvent.mockReset();
+
     expect(multiChoice.value()).toEqual(["1"]);
 
     rawMultiChoice.value(["1", "2"]);
+
     expect(updateEvent).toHaveBeenCalledTimes(1);
+
     updateEvent.mockReset();
+
     expect(multiChoice.value()).toEqual(["1", "2"]);
 
     rawMultiChoice.value(["1", "2", "3"]);
+
     expect(multiChoice.value()).toEqual(["1", "2"]);
     expect(rawMultiChoice.value()).toEqual(["1", "2"]);
     expect(updateEvent).toHaveBeenCalledTimes(0);
+
     updateEvent.mockReset();
 
     rawCmd.value("3");
     rawMultiChoice.value(["1", "2", "3"]);
+
     expect(updateEvent).toHaveBeenCalledTimes(1);
+
     updateEvent.mockReset();
+
     expect(multiChoice.value()).toEqual(["1", "2", "3"]);
+
     multiChoice.maxChoiceNb(50, (_lbl, _id, data: any, _prev) => {
       return data?.nb;
     });
     rawMultiChoice.value(["1", "2", "3", "4"]);
+
     expect(multiChoice.value()).toEqual(["1", "2", "3"]);
 
     multiChoice.minChoiceNb(() => (cmp.value() as number) - 1);
     rawMultiChoice.value(["1", "2"]);
+
     expect(multiChoice.value()).toEqual(["1", "2"]);
+
     rawMultiChoice.value(["1"]);
+
     expect(multiChoice.value()).toEqual(["1", "2"]);
+
     rawCmd.value(2);
     rawMultiChoice.value(["1"]);
+
     expect(multiChoice.value()).toEqual(["1"]);
+
     rawMultiChoice.value([]);
+
     expect(multiChoice.value()).toEqual(["1"]);
+
     rawCmd.value(3);
+
     expect(multiChoice.value()).toEqual(["1"]);
+
     rawMultiChoice.value([]);
+
     expect(multiChoice.value()).toEqual(["1"]);
+
     rawMultiChoice.value(["1", "2"]);
+
     expect(multiChoice.value()).toEqual(["1", "2"]);
   });
 
@@ -335,14 +412,23 @@ describe("MultiChoice", () => {
     multiChoice.minChoiceNb(1);
     const limitEvent = jest.fn();
     multiChoice.on("limit", limitEvent);
+
     expect(limitEvent).not.toHaveBeenCalled();
+
     rawMultiChoice.value(["1"]);
+
     expect(limitEvent).not.toHaveBeenCalled();
+
     rawMultiChoice.value([]);
+
     expect(limitEvent).toHaveBeenCalledTimes(1);
+
     rawMultiChoice.value(["1", "2"]);
+
     expect(limitEvent).toHaveBeenCalledTimes(1);
+
     rawMultiChoice.value(["1", "2", "3"]);
+
     expect(limitEvent).toHaveBeenCalledTimes(2);
   });
 
@@ -365,10 +451,12 @@ describe("MultiChoice", () => {
 
     // doesn't exceed the limit
     rawMultiChoice.value(["1", "2"]);
+
     expect(multiChoice.value()).toEqual(["1", "2"]);
 
     // exceeds the limit
     rawMultiChoice.value(["1", "2", "3"]);
+
     expect(multiChoice.value()).toEqual(["1", "2"]);
 
     // new limit
@@ -380,6 +468,7 @@ describe("MultiChoice", () => {
 
     // doesn't exceed the limit
     rawMultiChoice.value(["1", "2", "3"]);
+
     expect(multiChoice.value()).toEqual(["1", "2", "3"]);
 
     // composed limit
@@ -393,12 +482,15 @@ describe("MultiChoice", () => {
       },
     );
     rawMultiChoice.value(["1", "2", "3", "4", "6"]);
+
     expect(multiChoice.value()).toEqual(["1", "2", "3"]);
 
     rawMultiChoice.value(["1", "2", "3", "4", "5"]);
+
     expect(multiChoice.value()).toEqual(["1", "2", "3", "4", "5"]);
 
     rawMultiChoice.value(["1", "2", "3", "4", "5", "7"]);
+
     expect(multiChoice.value()).toEqual(["1", "2", "3", "4", "5"]);
   });
 });

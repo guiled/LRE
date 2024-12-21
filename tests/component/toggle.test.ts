@@ -2,6 +2,7 @@ import { Toggle } from "../../src/component/toggle";
 import {
   initLetsRole,
   itHasWaitedEverything,
+  terminateLetsRole,
 } from "../../src/mock/letsrole/letsrole.mock";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { Sheet } from "../../src/sheet";
@@ -64,11 +65,19 @@ beforeEach(() => {
   sheet = new Sheet(rawSheet, new DataBatcher(context, rawSheet), context);
 });
 
+afterEach(() => {
+  // @ts-expect-error intentional deletion
+  delete global.lre;
+  terminateLetsRole();
+});
+
 describe("Toggle", () => {
   test("toggling on label", () => {
     const toggle = sheet.get("toggle") as Toggle;
+
     expect(toggle).toBeInstanceOf(Toggle);
     expect(toggle.value()).toStrictEqual("");
+
     toggle.toggling(
       {
         on: "text1",
@@ -76,19 +85,26 @@ describe("Toggle", () => {
       },
       "off",
     );
+
     expect(toggle.hasClass("clickable")).toStrictEqual(true);
     expect(toggle.value()).toStrictEqual("off");
     expect(rawSheet.getData()).not.toHaveProperty("toggle");
+
     itHasWaitedEverything();
+
     expect(rawSheet.getData()).toMatchObject({
       toggle: "text2",
     });
+
     toggle.untoggling();
+
     expect(toggle.value()).toStrictEqual("text2");
+
     toggle.toggling({
       on: "text1",
       off: "text2",
     });
+
     expect(toggle.value()).toStrictEqual("on");
   });
 
@@ -105,15 +121,22 @@ describe("Toggle", () => {
       },
       "off",
     );
+
     expect(toggle.value()).toStrictEqual("off");
     expect(rawSheet.getData()).not.toHaveProperty("toggle");
+
     itHasWaitedEverything();
+
     expect(rawSheet.getData()).toMatchObject({
       toggle: "icon2",
     });
+
     toggle.value("on");
+
     expect(toggle.value()).toStrictEqual("on");
+
     itHasWaitedEverything();
+
     expect(rawSheet.getData()).toMatchObject({
       toggle: "icon1",
     });
@@ -131,12 +154,15 @@ describe("Toggle", () => {
       "unknown",
     );
     itHasWaitedEverything();
+
     expect(toggle.value()).toStrictEqual("off");
   });
 
   test("Clickable class handling", () => {
     const toggle = sheet.get("toggle") as Toggle;
+
     expect(toggle.hasClass("clickable")).toStrictEqual(false);
+
     toggle.toggling(
       {
         on: "text1",
@@ -144,12 +170,17 @@ describe("Toggle", () => {
       },
       "off",
     );
+
     expect(toggle.hasClass("clickable")).toStrictEqual(true);
+
     toggle.untoggling();
+
     expect(toggle.hasClass("clickable")).toStrictEqual(false);
 
     const toggle2 = sheet.get("toggle2") as Toggle;
+
     expect(toggle2.hasClass("clickable")).toStrictEqual(true);
+
     toggle2.toggling(
       {
         on: "text1",
@@ -157,8 +188,11 @@ describe("Toggle", () => {
       },
       "off",
     );
+
     expect(toggle2.hasClass("clickable")).toStrictEqual(true);
+
     toggle2.untoggling();
+
     expect(toggle2.hasClass("clickable")).toStrictEqual(true);
   });
 
@@ -171,21 +205,33 @@ describe("Toggle", () => {
       },
       "off",
     );
+
     expect(toggle.value()).toStrictEqual("off");
+
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(toggle.value()).toStrictEqual("on");
+
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(toggle.value()).toStrictEqual("off");
   });
 
   test("Toggle with no values", () => {
     const toggle = sheet.get("toggle") as Toggle;
+
     expect(toggle.value()).toStrictEqual("");
+
     toggle.toggling({});
+
     expect(toggle.value()).toStrictEqual("");
+
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(toggle.value()).toStrictEqual("");
+
     toggle.untoggling();
+
     expect(toggle.value()).toStrictEqual("");
   });
 
@@ -197,16 +243,27 @@ describe("Toggle", () => {
       state3: "Value 3",
       state4: "Value 4",
     });
+
     expect(toggle.value()).toStrictEqual("state1");
+
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(toggle.value()).toStrictEqual("state2");
+
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(toggle.value()).toStrictEqual("state3");
+
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(toggle.value()).toStrictEqual("state4");
+
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(toggle.value()).toStrictEqual("state1");
+
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(toggle.value()).toStrictEqual("state2");
   });
 
@@ -227,8 +284,11 @@ describe("Toggle", () => {
         show: ["lbl4"],
       },
     });
+
     expect(toggle.value()).toStrictEqual("on");
+
     itHasWaitedEverything();
+
     expect(lbl1.hasClass("d-none")).toStrictEqual(false);
     expect(lbl2.hasClass("d-none")).toStrictEqual(false);
     expect(lbl3.hasClass("d-none")).toStrictEqual(true);
@@ -236,6 +296,7 @@ describe("Toggle", () => {
 
     rawSheet.triggerComponentEvent("toggle", "click");
     itHasWaitedEverything();
+
     expect(lbl1.hasClass("d-none")).toStrictEqual(true);
     expect(lbl2.hasClass("d-none")).toStrictEqual(true);
     expect(lbl3.hasClass("d-none")).toStrictEqual(false);
@@ -258,14 +319,19 @@ describe("Toggle", () => {
         hideflex: ["container1"],
       },
     });
+
     expect(toggle.value()).toStrictEqual("on");
+
     itHasWaitedEverything();
+
     expect(container1.hasClass("d-flex")).toStrictEqual(true);
     expect(container1.hasClass("d-none")).toStrictEqual(false);
     expect(container2.hasClass("d-flex")).toStrictEqual(false);
     expect(container2.hasClass("d-none")).toStrictEqual(true);
+
     rawSheet.triggerComponentEvent("toggle", "click");
     itHasWaitedEverything();
+
     expect(container1.hasClass("d-flex")).toStrictEqual(false);
     expect(container1.hasClass("d-none")).toStrictEqual(true);
     expect(container2.hasClass("d-flex")).toStrictEqual(true);
@@ -289,6 +355,7 @@ describe("Toggle", () => {
       },
     });
     itHasWaitedEverything();
+
     expect(toggle.value()).toStrictEqual("1");
     expect(toggle.hasClass("class1")).toStrictEqual(true);
     expect(toggle.hasClass("class2")).toStrictEqual(false);
@@ -296,6 +363,7 @@ describe("Toggle", () => {
 
     rawSheet.triggerComponentEvent("toggle", "click");
     itHasWaitedEverything();
+
     expect(toggle.value()).toStrictEqual("2");
     expect(toggle.hasClass("class1")).toStrictEqual(true);
     expect(toggle.hasClass("class2")).toStrictEqual(true);
@@ -303,6 +371,7 @@ describe("Toggle", () => {
 
     rawSheet.triggerComponentEvent("toggle", "click");
     itHasWaitedEverything();
+
     expect(toggle.value()).toStrictEqual("3");
     expect(toggle.hasClass("class1")).toStrictEqual(false);
     expect(toggle.hasClass("class2")).toStrictEqual(true);
@@ -310,6 +379,7 @@ describe("Toggle", () => {
 
     rawSheet.triggerComponentEvent("toggle", "click");
     itHasWaitedEverything();
+
     expect(toggle.value()).toStrictEqual("1");
     expect(toggle.hasClass("class1")).toStrictEqual(true);
     expect(toggle.hasClass("class2")).toStrictEqual(false);
@@ -327,60 +397,86 @@ describe("Toggle", () => {
     });
     itHasWaitedEverything();
     toggle.on("update", cb);
+
     expect(cb).not.toHaveBeenCalled();
     expect(toggle.value()).toStrictEqual("state1");
 
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(toggle.value()).toStrictEqual("state2");
+
     itHasWaitedEverything();
+
     expect(cb).toHaveBeenCalledTimes(1);
 
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(toggle.value()).toStrictEqual("state3");
+
     itHasWaitedEverything();
+
     expect(cb).toHaveBeenCalledTimes(2);
 
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(toggle.value()).toStrictEqual("state4");
+
     itHasWaitedEverything();
+
     expect(cb).toHaveBeenCalledTimes(3);
 
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(toggle.value()).toStrictEqual("state1");
+
     itHasWaitedEverything();
+
     expect(cb).toHaveBeenCalledTimes(4);
 
     const rawCb = jest.fn();
     const rawToggle = rawSheet.get("toggle")!;
     rawToggle.on("update", rawCb);
+
     expect(rawCb).not.toHaveBeenCalled();
     expect(rawToggle.value()).toStrictEqual("Value 1");
 
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(rawToggle.value()).toStrictEqual("Value 1");
     expect(rawCb).not.toHaveBeenCalled();
+
     itHasWaitedEverything();
+
     expect(rawToggle.value()).toStrictEqual("Value 1");
     expect(rawCb).toHaveBeenCalledTimes(1);
 
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(rawToggle.value()).toStrictEqual("Value 1");
     expect(rawCb).toHaveBeenCalledTimes(1);
+
     itHasWaitedEverything();
+
     expect(rawToggle.value()).toStrictEqual("Value 3");
     expect(rawCb).toHaveBeenCalledTimes(2);
 
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(rawToggle.value()).toStrictEqual("Value 3");
     expect(rawCb).toHaveBeenCalledTimes(2);
+
     itHasWaitedEverything();
+
     expect(rawToggle.value()).toStrictEqual("Value 4");
     expect(rawCb).toHaveBeenCalledTimes(3);
 
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(rawToggle.value()).toStrictEqual("Value 4");
     expect(rawCb).toHaveBeenCalledTimes(3);
+
     itHasWaitedEverything();
+
     expect(rawToggle.value()).toStrictEqual("Value 1");
     expect(rawCb).toHaveBeenCalledTimes(4);
   });
@@ -399,12 +495,15 @@ describe("Toggle", () => {
     });
     toggle.on("update", cb);
     itHasWaitedEverything();
+
     expect(cb).not.toHaveBeenCalled();
     expect(toggle.value()).toStrictEqual("state1");
     expect(toggle.hasClass("class1")).toStrictEqual(true);
     expect(toggle.hasClass("class2")).toStrictEqual(false);
+
     rawSheet.triggerComponentEvent("toggle", "click");
     itHasWaitedEverything();
+
     expect(cb).toHaveBeenCalledTimes(1);
     expect(toggle.value()).toStrictEqual("state2");
     expect(toggle.hasClass("class1")).toStrictEqual(false);
@@ -413,8 +512,10 @@ describe("Toggle", () => {
 
   test("Saved toggling value is restored", () => {
     const toggle = sheet.get("toggle") as Toggle;
+
     expect(toggle).toBeInstanceOf(Toggle);
     expect(toggle.value()).toStrictEqual("");
+
     toggle.toggling(
       {
         on: "text1",
@@ -422,9 +523,13 @@ describe("Toggle", () => {
       },
       "off",
     );
+
     expect(toggle.value()).toStrictEqual("off");
+
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(toggle.value()).toStrictEqual("on");
+
     itHasWaitedEverything();
 
     const rawSheet2 = server.openView("main", "12345");
@@ -441,13 +546,16 @@ describe("Toggle", () => {
       },
       "off",
     );
+
     expect(toggle2.value()).toStrictEqual("on");
   });
 
   test("Unsaved toggling value is not restored", () => {
     const toggle = sheet.get("toggle") as Toggle;
+
     expect(toggle).toBeInstanceOf(Toggle);
     expect(toggle.value()).toStrictEqual("");
+
     toggle.toggling(
       {
         on: "text1",
@@ -456,9 +564,13 @@ describe("Toggle", () => {
       "off",
       false,
     );
+
     expect(toggle.value()).toStrictEqual("off");
+
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(toggle.value()).toStrictEqual("on");
+
     itHasWaitedEverything();
 
     const rawSheet2 = server.openView("main", "12345");
@@ -476,6 +588,7 @@ describe("Toggle", () => {
       "off",
       false,
     );
+
     expect(toggle2.value()).toStrictEqual("off");
   });
 
@@ -488,13 +601,18 @@ describe("Toggle", () => {
       },
       "off",
     );
+
     expect(toggle.value()).toStrictEqual("off");
+
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(toggle.value()).toStrictEqual("on");
+
     itHasWaitedEverything();
 
     toggle.refreshRaw();
     itHasWaitedEverything();
+
     expect(toggle.value()).toStrictEqual("on");
   });
 
@@ -507,19 +625,32 @@ describe("Toggle", () => {
     const fn = jest.fn(() => data);
     const dp = new DirectDataProvider("source", context, fn);
     toggle.toggling(dp);
+
     expect(toggle.value()).toStrictEqual("on");
+
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(toggle.value()).toStrictEqual("off");
+
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(toggle.value()).toStrictEqual("on");
+
     data.between = "text3";
     dp.refresh();
+
     expect(toggle.value()).toStrictEqual("on");
+
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(toggle.value()).toStrictEqual("off");
+
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(toggle.value()).toStrictEqual("between");
+
     rawSheet.triggerComponentEvent("toggle", "click");
+
     expect(toggle.value()).toStrictEqual("on");
   });
 });

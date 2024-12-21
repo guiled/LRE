@@ -49,8 +49,26 @@ const initLetsRole = (server: ServerMock): void => {
   global.context = modeHandlerMock();
 };
 
+const terminateLetsRole = (): void => {
+  // @ts-expect-error intentional deletion
+  delete global.each;
+
+  // @ts-expect-error intentional deletion
+  delete global.wait;
+  delete global.Bindings;
+  delete global.RollBuilder;
+  delete global.Tables;
+  // @ts-expect-error intentional deletion
+  delete global.loggedCall;
+  // @ts-expect-error intentional deletion
+  delete global.virtualCall;
+  // @ts-expect-error intentional deletion
+  delete global.context;
+};
+
 export {
   initLetsRole,
+  terminateLetsRole,
   itHasWaitedEnough,
   itHasWaitedEverything,
   rollBuilderMock,

@@ -5,6 +5,7 @@ import { DataBatcher } from "../../src/sheet/databatcher";
 import {
   initLetsRole,
   itHasWaitedEverything,
+  terminateLetsRole,
 } from "../../src/mock/letsrole/letsrole.mock";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { ViewMock } from "../../src/mock/letsrole/view.mock";
@@ -131,6 +132,12 @@ beforeEach(() => {
   sheet = new Sheet(rawSheet, new DataBatcher(context, rawSheet), context);
 });
 
+afterEach(() => {
+  // @ts-expect-error intentional deletion
+  delete global.lre;
+  terminateLetsRole();
+});
+
 const newCmp = jest.fn((id: string): ComponentSearchResult => {
   const rawCmp = rawSheet.get(id);
 
@@ -156,17 +163,23 @@ describe("Component cache set/get/unset/inCache", () => {
     expect(cache.inCache("unknown")).toBeFalsy();
     expect(cache.inCache("lbl1")).toBeFalsy();
     expect(newCmp).toHaveBeenCalledTimes(1);
+
     newCmp.mockClear();
+
     expect(cache.get("lbl1")).not.toBeNull();
     expect(newCmp).toHaveBeenCalledTimes(1);
     expect(cache.inCache("lbl1")).toBeTruthy();
+
     const cmp = newCmp("lbl1")!;
     cache.set("lbl1", cmp);
     newCmp.mockClear();
+
     expect(newCmp).not.toHaveBeenCalled();
     expect(cache.get("lbl1")).toStrictEqual(cmp);
     expect(newCmp).not.toHaveBeenCalled();
+
     cache.unset("lbl1");
+
     expect(newCmp).not.toHaveBeenCalled();
     expect(cache.get("lbl1")).not.toStrictEqual(cmp);
     expect(newCmp).toHaveBeenCalledTimes(1);
@@ -187,6 +200,7 @@ describe("Component cache set/get/unset/inCache", () => {
     cache.set("rep.2.a", cmp1a);
     newCmp("rep.1.b");
     cache.set("rep.2.b", cmp1b);
+
     expect(cache.inCache("*rep")).toBeTruthy();
     expect(cache.inCache("*noRep")).toBeFalsy();
     expect(cache.inCache("*rep.1")).toBeTruthy();
@@ -208,27 +222,39 @@ describe("Component cache forget/remember", () => {
 
   test("forget/remember", () => {
     expect(cache.inCache("123")).toBeFalsy();
+
     cache.remember("123");
     cache.remember("abc");
+
     expect(newCmp).not.toHaveBeenCalled();
+
     cache.get("123.b.c");
+
     expect(cache.inCache("123")).toBeFalsy();
+
     itHasWaitedEverything();
+
     expect(cache.inCache("123")).not.toBeFalsy();
     expect(newCmp).toHaveBeenCalled();
     expect(cache.inCache("123.b.c")).not.toBeFalsy();
+
     cache.forget("123");
+
     expect(cache.inCache("123.b.c")).not.toBeFalsy();
     expect(cache.inCache("123")).not.toBeFalsy();
+
     itHasWaitedEverything();
+
     expect(cache.inCache("123.b.c")).toBeFalsy();
     expect(cache.inCache("123")).toBeFalsy();
+
     cache.get("b");
     cache.forget("b");
     cache.remember("a");
     cache.remember("b");
     cache.forget("a");
     itHasWaitedEverything();
+
     expect(cache.inCache("a")).toBeFalsy();
     expect(cache.inCache("b")).not.toBeFalsy();
   });

@@ -3,11 +3,13 @@ import { registerLreRollBuilder } from "../../src/proxy/rollBuilder";
 import {
   initLetsRole,
   rollBuilderMock,
+  terminateLetsRole,
 } from "../../src/mock/letsrole/letsrole.mock";
 
 describe("RollBuilder proxy", () => {
   let subject: typeof RollBuilder;
   let sheet: LetsRole.Sheet;
+
   beforeEach(() => {
     const server = new ServerMock({
       views: [
@@ -23,8 +25,13 @@ describe("RollBuilder proxy", () => {
     sheet = server.openView("main", "123");
   });
 
+  afterEach(() => {
+    terminateLetsRole();
+  });
+
   test("works in real", () => {
     const rb = new subject(sheet);
+
     expect(rb).not.toBe(RollBuilder);
     expect(rb.title("title")).toBe(rb);
     expect(rb.visibility("visible")).toBe(rb);
@@ -45,6 +52,7 @@ describe("RollBuilder proxy", () => {
   test("works in virtual", () => {
     context.setMode("virtual");
     const rb = new subject(sheet);
+
     expect(rb).not.toBe(RollBuilder);
     expect(rb.title("title")).toBe(rb);
     expect(rb.visibility("visible")).toBe(rb);

@@ -8,6 +8,7 @@ import { DataBatcher } from "../../src/sheet/databatcher";
 import {
   initLetsRole,
   itHasWaitedEverything,
+  terminateLetsRole,
 } from "../../src/mock/letsrole/letsrole.mock";
 import { Entry } from "../../src/component/entry";
 import { Component } from "../../src/component";
@@ -17,6 +18,7 @@ let repeater: Repeater;
 let server: ServerMock;
 let rawSheet: ViewMock;
 let sheet: Sheet;
+
 beforeEach(() => {
   server = new ServerMock({
     views: [
@@ -115,6 +117,12 @@ beforeEach(() => {
   rawRepeater = repeater.raw();
 });
 
+afterEach(() => {
+  // @ts-expect-error intentional deletion
+  delete global.lre;
+  terminateLetsRole();
+});
+
 describe("Repeater is correctly initialized", () => {
   test("has the good type", () => {
     expect(repeater.lreType()).toBe("repeater");
@@ -124,6 +132,7 @@ describe("Repeater is correctly initialized", () => {
     jest.spyOn(rawRepeater, "text");
     /* @ts-expect-error repeater.text() is protected and cannot receive parameter */
     repeater.text("test");
+
     expect(rawRepeater.text).toHaveBeenCalled();
     expect((rawRepeater.text as jest.Mock).mock.calls[0].length).toBe(0);
   });
@@ -140,8 +149,11 @@ describe("Repeater is correctly initialized", () => {
       rep2: "hello",
     });
     const rep = sheet.get("rep2") as Repeater;
+
     expect(rep.value()).toMatchObject({});
+
     itHasWaitedEverything();
+
     expect(rawSheet.getData().rep2).toMatchObject({});
   });
 });
@@ -162,24 +174,32 @@ describe("Repeater events", () => {
     rawRepeater.value(values);
     const handler = jest.fn();
     repeater.on("initread", handler);
+
     expect(handler).toHaveBeenCalledTimes(3);
+
     handler.mockClear();
     values["4"] = {
       name: "test4",
     };
     rawRepeater.value({ ...values });
+
     expect(handler).toHaveBeenCalledTimes(1);
+
     handler.mockClear();
     values["1"].name = "test1";
     rawRepeater.value({ ...values });
+
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
   test("Initedit event is correctly launched for new entries", () => {
     const handler = jest.fn();
     repeater.on("initedit", handler);
+
     expect(handler).toHaveBeenCalledTimes(0);
+
     rawSheet.repeaterClickOnAdd(repeater.id()!);
+
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
@@ -191,8 +211,11 @@ describe("Repeater events", () => {
         name: "test",
       },
     });
+
     expect(handler).toHaveBeenCalledTimes(0);
+
     rawSheet.repeaterClickOnEdit(repeater.id()! + "." + "1");
+
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
@@ -210,9 +233,12 @@ describe("Repeater events", () => {
         name: "test3",
       },
     });
+
     expect(deleteCb).not.toHaveBeenCalled();
+
     rawSheet.repeaterClickOnEdit(repeater.id()! + "." + "2");
     rawSheet.repeaterClickOnRemove(repeater.id()! + "." + "2");
+
     expect(deleteCb).toHaveBeenCalledTimes(1);
     expect(deleteCb.mock.calls[0][0].id()).toStrictEqual(repeater.id());
     expect(deleteCb.mock.calls[0][1]).toStrictEqual("2");
@@ -236,6 +262,7 @@ describe("Repeater as data provider", () => {
       },
     };
     repeater.value(structuredClone(data));
+
     expect(repeater.provider().provider).toBeTruthy();
     expect(repeater.provider().providedValue()).toMatchObject(data);
   });
@@ -245,7 +272,9 @@ describe("Repeater can be readonly", () => {
   test("Put repeater readonly", () => {
     expect(repeater.hasClass("no-add")).toBeFalsy();
     expect(repeater.hasClass("no-edit")).toBeFalsy();
+
     repeater.readOnly(true);
+
     expect(repeater.hasClass("no-add")).toBeTruthy();
     expect(repeater.hasClass("no-edit")).toBeTruthy();
   });
@@ -253,12 +282,16 @@ describe("Repeater can be readonly", () => {
   test("Repeater readonly set with component", () => {
     expect(repeater.hasClass("no-add")).toBeFalsy();
     expect(repeater.hasClass("no-edit")).toBeFalsy();
+
     const chk = sheet.get("checkbox")!;
     chk.value(false);
     repeater.readOnly(chk);
+
     expect(repeater.hasClass("no-add")).toBeFalsy();
     expect(repeater.hasClass("no-edit")).toBeFalsy();
+
     chk.value(true);
+
     expect(repeater.hasClass("no-add")).toBeTruthy();
     expect(repeater.hasClass("no-edit")).toBeTruthy();
   });
@@ -279,6 +312,7 @@ describe("Repeater each", () => {
     });
     const cb = jest.fn();
     repeater.each(cb);
+
     expect(cb).toHaveBeenCalledTimes(3);
     expect(cb.mock.calls[0][0]).toBeInstanceOf(Entry);
     expect(cb.mock.calls[0][1]).toMatchObject({
@@ -309,6 +343,7 @@ describe("Repeater each", () => {
     });
     const cb = jest.fn();
     repeater.each("name", cb);
+
     expect(cb).toHaveBeenCalledTimes(3);
 
     expect(cb.mock.calls[0][0]).toBeInstanceOf(Component);
@@ -349,6 +384,7 @@ describe("Repeater map", () => {
     });
     const cb = jest.fn((entry) => entry["name"]);
     const res = repeater.map(cb);
+
     expect(cb).toHaveBeenCalledTimes(3);
     expect(Object.keys(res)).toHaveLength(3);
     expect(res).toMatchObject({
@@ -362,8 +398,11 @@ describe("Repeater map", () => {
 describe("Repeater setSorter", () => {
   test("setSorter make component clickable", () => {
     const cmp = sheet.get("cmp")!;
+
     expect(cmp.hasClass("clickable")).toBeFalsy();
+
     repeater.setSorter(cmp, "name");
+
     expect(cmp.hasClass("clickable")).toBeTruthy();
   });
 
@@ -388,6 +427,7 @@ describe("Repeater setSorter", () => {
     });
     repeater.setSorter("cmp", "name");
     rawSheet.triggerComponentEvent("cmp", "click");
+
     expect(repeater.value()).toMatchObject({
       "2": {
         name: "A",
@@ -402,7 +442,9 @@ describe("Repeater setSorter", () => {
         name: "C",
       },
     });
+
     rawSheet.triggerComponentEvent("cmp", "click");
+
     expect(repeater.value()).toMatchObject({
       "3": {
         name: "C",
@@ -421,13 +463,17 @@ describe("Repeater setSorter", () => {
 
   test("setSorter works if set when no data", () => {
     repeater.setSorter("cmp", "name");
+
     expect(repeater.value()).toMatchObject({});
+
     rawSheet.triggerComponentEvent("cmp", "click");
+
     expect(repeater.value()).toMatchObject({});
   });
 });
 
 describe("Repeater add and remove", () => {
   test.todo("Add an entry");
+
   test.todo("Remove an entry");
 });

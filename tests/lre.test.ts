@@ -2,12 +2,13 @@ import { Error } from "../src/error";
 import { LRE } from "../src/lre";
 import { ServerMock } from "../src/mock/letsrole/server.mock";
 import { Sheet } from "../src/sheet";
-import { newMockedWait } from "../src/mock/letsrole/wait.mock";
-import { initLetsRole } from "../src/mock/letsrole/letsrole.mock";
+import {
+  initLetsRole,
+  itHasWaitedEverything,
+  terminateLetsRole,
+} from "../src/mock/letsrole/letsrole.mock";
 
 jest.mock("../src/log");
-
-const { wait, itHasWaitedEverything } = newMockedWait();
 
 let server: ServerMock;
 
@@ -25,6 +26,13 @@ beforeEach(() => {
   global.wait = wait;
 });
 
+afterEach(() => {
+  jest.restoreAllMocks();
+  // @ts-expect-error The next error is deliberate
+  delete global.wait;
+  terminateLetsRole();
+});
+
 describe("LRE tests", () => {
   let subject: LRE;
   let spyOnMathRandom: jest.SpyInstance;
@@ -40,6 +48,7 @@ describe("LRE tests", () => {
 
   test("LRE util Object deep merge", () => {
     expect(subject.deepMerge({}, {})).toEqual({});
+
     const obj1 = {
       a: 1,
       c: {
@@ -55,6 +64,7 @@ describe("LRE tests", () => {
         a: 42,
       },
     };
+
     expect(subject.deepMerge(obj1, obj2)).toEqual({
       a: 1,
       b: 2,
@@ -66,8 +76,10 @@ describe("LRE tests", () => {
         a: 42,
       },
     });
+
     const a = ["a", "b", "c"];
     const b = ["e", "f", "a"];
+
     expect(subject.deepMerge(a, b)).toEqual(a);
   });
 
@@ -80,15 +92,20 @@ describe("LRE tests", () => {
     for (let i = 0; i < 100; i++) {
       const n = Math.ceil(Math.random() * Number.MAX_SAFE_INTEGER);
       const res = subject.numToAlpha(n);
+
       expect(subject.alphaToNum(res)).toEqual(n);
     }
 
     const mathRandomSpy = jest.spyOn(Math, "random");
     mathRandomSpy.mockImplementation(() => 0.424242);
+
     expect(subject.getRandomId()).toEqual("BTYuVvaBoU");
+
     mathRandomSpy.mockImplementation(() => 0.9999999999999999);
+
     // cSpell:ignore DMZN
     expect(subject.getRandomId()).toEqual("DMZNPvePse");
+
     mathRandomSpy.mockRestore();
   });
 
@@ -103,18 +120,24 @@ describe("LRE tests", () => {
     const init = subject.apply(subject, [sheetInit]);
 
     expect(sheetInit).toHaveBeenCalledTimes(0);
+
     init(sheet1);
+
     expect(sheetInit).toHaveBeenCalledTimes(0);
     expect(global.firstInit).toHaveBeenCalledTimes(0);
+
     itHasWaitedEverything();
+
     expect(sheetInit).toHaveBeenCalledTimes(1);
     expect(sheetInit.mock.calls[0][0]).toBeInstanceOf(Sheet);
     expect(global.firstInit).toHaveBeenCalledTimes(1);
     expect((global.firstInit as jest.Mock).mock.calls[0][0]).toBeInstanceOf(
       Sheet,
     );
+
     init(sheet2);
     itHasWaitedEverything();
+
     expect(sheetInit).toHaveBeenCalledTimes(2);
     expect(sheetInit.mock.calls[1][0]).toBeInstanceOf(Sheet);
 
@@ -126,15 +149,22 @@ describe("LRE tests", () => {
     });
     const initErr = subject.apply(subject, [cbErr]);
     initErr(sheet1);
+
     expect(cbErr).toHaveBeenCalledTimes(0);
     expect(global.firstInit).toHaveBeenCalledTimes(0);
+
     itHasWaitedEverything();
+
     expect(cbErr).toThrow();
     expect(global.firstInit).toThrow();
+
+    // @ts-expect-error The next error is deliberate
+    delete global.lre;
   });
 
   test("LRE util Object deep equal", () => {
     const a = {};
+
     expect(subject.deepEqual(a, a)).toBeTruthy();
     expect(subject.deepEqual({}, {})).toBeTruthy();
     expect(subject.deepEqual({}, [1])).toBeFalsy();
@@ -200,8 +230,11 @@ describe("LRE wait", () => {
     (wait as jest.Mock).mockClear();
     const cb = jest.fn();
     subject.wait(100, cb, "hop");
+
     expect(wait).toHaveBeenCalledTimes(1);
+
     itHasWaitedEverything();
+
     expect(cb).toHaveBeenCalledTimes(1);
   });
 
@@ -210,6 +243,7 @@ describe("LRE wait", () => {
     const cb = (): void => null();
     subject.wait(100, cb, "hop");
     jest.spyOn(subject, "error");
+
     expect(itHasWaitedEverything).not.toThrow();
     expect(subject.error).toHaveBeenCalled();
   });
@@ -242,11 +276,23 @@ describe("LRE autonum", () => {
     [{ 42: 1 }, undefined],
     [[], undefined],
     [[1, 2], undefined],
+    [
+      ["42", "13"],
+      [42, 13],
+    ],
+    [
+      { a: "43", b: "12" },
+      { a: 43, b: 12 },
+    ],
   ])("Value %s auto conversion", (init, result?) => {
     expect(subject.value(init)).toBe(init);
+
     subject.autoNum();
-    expect(subject.value(init)).toBe(result ?? init);
+
+    expect(subject.value(init)).toStrictEqual(result ?? init);
+
     subject.autoNum(false);
+
     expect(subject.value(init)).toBe(init);
 
     if (result !== undefined) {
@@ -365,6 +411,22 @@ describe("LRE global methods", () => {
   ])("Value %s is useable as index", (init, result) => {
     expect(subject.isUseableAsIndex(init)).toBe(result);
   });
+
+  test.each([
+    [undefined, false],
+    [null, false],
+    ["", true],
+    ["non plus", true],
+    [0, false],
+    [{}, true],
+    [[], true],
+    [{ a: 1 }, true],
+    [[1], true],
+    [1, false],
+    [true, false],
+  ])("Value %s is iterable", (init, result) => {
+    expect(subject.isIterableByEach(init)).toBe(result);
+  });
 });
 
 describe("LRE each", () => {
@@ -373,6 +435,7 @@ describe("LRE each", () => {
     const obj = { a: 1, b: 2, c: 3 };
     const cb = jest.fn((v) => v + 1);
     const res = lre.each(obj, cb);
+
     expect(cb).toHaveBeenCalledTimes(3);
     expect(res).toStrictEqual({ a: 2, b: 3, c: 4 });
   });
@@ -381,9 +444,14 @@ describe("LRE each", () => {
 describe("LRE launch", () => {
   test("LRE is callable", () => {
     const subject = new LRE(context);
+    global.lre = subject;
+
     expect(() =>
       subject.apply(subject, [server.openView("main", "13")]),
     ).not.toThrow();
+
+    // @ts-expect-error The next error is deliberate
+    delete global.lre;
   });
 
   test("LRE first launch is launched once", () => {
@@ -391,14 +459,25 @@ describe("LRE launch", () => {
     const subject = new LRE(context, cb);
     subject.apply(subject, [server.openView("main", "13")]);
     subject.apply(subject, [server.openView("main", "14")]);
+
     expect(cb).toHaveBeenCalledTimes(1);
   });
 });
 
 describe("LRE create a data provider with context", () => {
-  test("dataProvider returns a DataProvider", () => {
-    const subject = new LRE(context);
+  let subject: LRE;
+
+  beforeEach(() => {
+    subject = new LRE(context);
     global.lre = subject;
+  });
+
+  afterEach(() => {
+    // @ts-expect-error The next error is deliberate
+    delete global.lre;
+  });
+
+  test("dataProvider returns a DataProvider", () => {
     const data = { a: 1, b: 2 };
     const cb = jest.fn(() => data);
     const randomNumber = "123";

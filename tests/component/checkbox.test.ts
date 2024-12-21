@@ -3,6 +3,7 @@ import { LRE } from "../../src/lre";
 import {
   initLetsRole,
   itHasWaitedEverything,
+  terminateLetsRole,
 } from "../../src/mock/letsrole/letsrole.mock";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { SheetProxy } from "../../src/proxy/sheet";
@@ -46,17 +47,27 @@ beforeEach(() => {
   lre.sheets.add(sheet);
 });
 
+afterEach(() => {
+  // @ts-expect-error intentional deletion
+  delete global.lre;
+  terminateLetsRole();
+});
+
 describe("Checkbox basics", () => {
   test("instantiation by factory", () => {
     const cmp = sheet.get("checkbox");
+
     expect(cmp).toBeInstanceOf(Checkbox);
   });
 
   test("enabling and disabling", () => {
     const cmp: Checkbox = new Checkbox(rawCheckbox, sheet, "checkbox");
+
     expect(cmp.isEnabled()).toBe(true);
     expect(cmp.isDisabled()).toBe(false);
+
     cmp.disable();
+
     expect(cmp.isEnabled()).toBe(false);
     expect(cmp.isDisabled()).toBe(true);
   });
@@ -66,9 +77,12 @@ describe("Checkbox basics", () => {
       checkbox: true,
     });
     const cmp = new Checkbox(rawCheckbox, sheet, "checkbox");
+
     expect(cmp.value()).toBe(true);
     expect(cmp.not()).toBe(false);
+
     rawSheet.triggerComponentEvent("checkbox", "click");
+
     expect(cmp.value()).toBe(false);
     expect(cmp.not()).toBe(true);
   });
@@ -79,29 +93,34 @@ describe("Checkbox disabling", () => {
     const update = jest.fn();
     const cmp = new Checkbox(rawCheckbox, sheet, "checkbox");
     cmp.on("update", update);
+
     expect(cmp.value()).toBe(false);
 
     cmp.disable();
     rawSheet.triggerComponentEvent("checkbox", "click");
     itHasWaitedEverything();
+
     expect(cmp.value()).toBe(false);
     expect(update).not.toHaveBeenCalled();
 
     cmp.enable();
     rawSheet.triggerComponentEvent("checkbox", "click");
     itHasWaitedEverything();
+
     expect(cmp.value()).toBe(true);
     expect(update).toHaveBeenCalledTimes(1);
 
     cmp.disable();
     rawSheet.triggerComponentEvent("checkbox", "click");
     itHasWaitedEverything();
+
     expect(cmp.value()).toBe(true);
     expect(update).toHaveBeenCalledTimes(1);
 
     cmp.enable();
     rawSheet.triggerComponentEvent("checkbox", "click");
     itHasWaitedEverything();
+
     expect(cmp.value()).toBe(false);
     expect(update).toHaveBeenCalledTimes(2);
   });
@@ -110,11 +129,16 @@ describe("Checkbox disabling", () => {
     const cmp = new Checkbox(rawCheckbox, sheet, "checkbox");
     const cmpProxy = sheetProxy.get("checkbox2");
     const cmp2 = new Checkbox(cmpProxy, sheet, "checkbox2");
+
     expect(() => cmp.enable(cmp2)).not.toThrow();
     expect(cmp.isEnabled()).toBe(false);
+
     rawSheet.triggerComponentEvent("checkbox2", "click");
+
     expect(cmp.isEnabled()).toBe(true);
+
     rawSheet.triggerComponentEvent("checkbox2", "click");
+
     expect(cmp.isEnabled()).toBe(false);
   });
 });
