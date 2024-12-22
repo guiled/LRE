@@ -135,6 +135,14 @@ export class LRE extends Logger implements ILRE {
     );
   }
 
+  isIterableByEach(object: any): object is LetsRole.EachValue {
+    return (
+      Array.isArray(object) ||
+      this.isObject(object) ||
+      typeof object === "string"
+    );
+  }
+
   isAvatarValue(value: LetsRole.ComponentValue): value is LetsRole.AvatarValue {
     return (
       this.isObject(value) &&

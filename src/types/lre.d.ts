@@ -15,7 +15,9 @@ declare interface ILRE {
   getRandomId(): string;
   wait(delay: number, cb: () => void, name: string = "");
   autoNum(v: boolean = true): void;
-  value<T = any>(n: T): number | T;
+  isIterableByEach(
+    object: LetsRole.ComponentValue,
+  ): object is LetsRole.EachValue;
   isObject<T extends BasicObject = BasicObject>(object: any): object is T;
   isAvatarValue(
     object: LetsRole.ComposedComponentValue,
@@ -36,7 +38,7 @@ declare interface ILRE {
   ): IDataProvider;
   each<T extends LetsRole.EachValue = LetsRole.EachValue>(
     value: T,
-    cb: LetsRole.EachCallback<T, unknown>,
+    cb: LetsRole.EachCallback<T, T>,
   ): T;
 }
 
