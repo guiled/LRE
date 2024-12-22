@@ -26,6 +26,7 @@ export class Context implements ProxyModeHandler {
 
     return this;
   }
+
   enableAccessLog(): this {
     this.#logEnabled = true;
 

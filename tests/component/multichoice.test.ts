@@ -128,7 +128,7 @@ describe("MultiChoice", () => {
     );
   });
 
-  test("Multichoice value change triggers select event", () => {
+  test("Multichoice value change triggers unselect event", () => {
     const value = ["1", "2"];
     rawMultiChoice.value(value);
     const mockUnselectEvent = jest.fn();

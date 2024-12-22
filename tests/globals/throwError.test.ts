@@ -10,7 +10,9 @@ global.lastException = null;
 describe("throwError tests", () => {
   test("throwError", () => {
     expect(lastException).toBeNull();
+
     const a = {};
+
     expect(() => {
       throwError(a);
     }).toThrow();
@@ -22,6 +24,7 @@ describe("newError test", () => {
   test("newError", () => {
     const msg = "error message";
     const err = newError(msg);
+
     expect(err).toBeInstanceOf(Error);
     expect(err.message).toStrictEqual(msg);
   });

@@ -184,6 +184,7 @@ export class Component<
   init(): this {
     return this;
   }
+
   lreType(newType?: ComponentType): ComponentType {
     if (newType !== void 0) {
       this.#lreType = newType;
@@ -195,15 +196,19 @@ export class Component<
   id(): LetsRole.ComponentID | null {
     return this.raw().id();
   }
+
   realId(): string {
     return this.#realId;
   }
+
   index(): string | null {
     return this.raw().index();
   }
+
   name(): string {
     return this.raw().name();
   }
+
   setToolTip(text: string, placement?: LetsRole.TooltipPlacement): void {
     if (arguments.length > 1) {
       return this.raw().setToolTip(text, placement);
@@ -211,9 +216,11 @@ export class Component<
 
     return this.raw().setToolTip(text);
   }
+
   sheet(): ISheet {
     return this.#sheet;
   }
+
   parent(): ComponentContainer;
   parent(newParent: ComponentContainer): void;
   parent(newParent?: ComponentContainer): ComponentContainer | undefined {
@@ -223,6 +230,7 @@ export class Component<
 
     return this.#parent;
   }
+
   repeater(repeater?: Repeater): Repeater | undefined {
     if (repeater !== void 0) {
       this.#repeater = repeater;
@@ -230,6 +238,7 @@ export class Component<
 
     return this.#repeater;
   }
+
   entry(entry?: Entry): Entry | undefined {
     if (entry !== void 0) {
       this.#entry = entry;
@@ -237,6 +246,7 @@ export class Component<
 
     return this.#entry;
   }
+
   find(completeId: string): ComponentSearchResult {
     const tabId = completeId.split(REP_ID_SEP);
     const id = tabId.pop();
@@ -244,23 +254,28 @@ export class Component<
       tabId.join(REP_ID_SEP) + (tabId.length > 0 ? REP_ID_SEP : "") + id;
     return this.sheet().get(sRealId) as ComponentSearchResult;
   }
+
   get(completeId: string): ComponentSearchResult {
     return this.find(completeId);
   }
+
   hide(): void {
     this.trigger("class-updated", "d-none", "added");
     this.raw().hide();
   }
+
   show(): void {
     this.trigger("class-updated", "d-none", "removed");
     this.raw().show();
   }
+
   autoLoadSaveClasses(): this {
     this.#mustSaveClasses = true;
     this.#classChanges = this.#sheet.persistingCmpClasses(this.#realId);
     this.trigger("class-updated", "", "loaded");
     return this;
   }
+
   addClass(className: LetsRole.ClassName): this {
     if (!this.raw().hasClass(className)) {
       this.#classChanges[className] = 1;
@@ -270,6 +285,7 @@ export class Component<
 
     return this;
   }
+
   removeClass(className: LetsRole.ClassName): this {
     if (this.raw().hasClass(className)) {
       this.#classChanges[className] = -1;
@@ -279,12 +295,15 @@ export class Component<
 
     return this;
   }
+
   hasClass(className: LetsRole.ClassName): boolean {
     return this.raw().hasClass(className);
   }
+
   getClasses(): LetsRole.ClassName[] {
     return this.raw().getClasses();
   }
+
   toggleClass(className: LetsRole.ClassName): this {
     this.#classChanges[className] = this.raw().hasClass(className) ? -1 : 1;
     this.#saveClassChanges();
@@ -374,9 +393,11 @@ export class Component<
 
     return lre.value(this.raw().virtualValue()) as TypeValue;
   }
+
   rawValue(): TypeValue {
     return lre.value(this.raw().rawValue()) as TypeValue;
   }
+
   text(): string;
   text(replacement: string): void;
   @dynamicSetter
@@ -402,6 +423,7 @@ export class Component<
 
     return this.raw().visible();
   }
+
   setChoices(choices: LetsRole.Choices): void {
     return this.raw().setChoices(choices);
   }

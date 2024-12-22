@@ -12,6 +12,7 @@ type TestedEvents = "test" | "unused" | "click" | "update";
 
 class Dummy extends EventHolder<TestedEvents>() {
   __id: string;
+
   constructor(
     protected _raw: LetsRole.Component,
     subRaw?: LetsRole.Component,
@@ -109,8 +110,11 @@ describe("Test simple events", () => {
     subject.on("test", jest.fn());
     subject.on("test:a", jest.fn());
     subject.on("test:b", jest.fn());
+
     expect(rawCmp.on).toHaveBeenCalledTimes(0);
+
     subject.off("test");
+
     expect(rawCmp.off).toHaveBeenCalledTimes(0);
   });
 
@@ -118,30 +122,45 @@ describe("Test simple events", () => {
     subject.on("click", jest.fn());
     subject.on("click:a", jest.fn());
     subject.on("click:b", jest.fn());
+
     expect(rawCmp.on).toHaveBeenCalledTimes(1);
+
     subject.off("click");
+
     expect(rawCmp.off).toHaveBeenCalledTimes(0);
+
     subject.off("click:a");
+
     expect(rawCmp.off).toHaveBeenCalledTimes(0);
+
     subject.off("click:b");
+
     expect(rawCmp.off).toHaveBeenCalledTimes(1);
+
     subject.off("click");
+
     expect(rawCmp.off).toHaveBeenCalledTimes(1);
   });
 
   test("Handlers triggered from raw", () => {
     const eventHandler = jest.fn();
     subject.on("click", eventHandler);
+
     expect(rawCmp.on).toHaveBeenCalled();
+
     rawCmp.trigger("click");
+
     expect(eventHandler).toHaveBeenCalled();
 
     (rawCmp.on as jest.Mock).mockClear();
     eventHandler.mockClear();
     const eventHandler2 = jest.fn();
     subject.on("click:second", eventHandler2);
+
     expect(rawCmp.on).not.toHaveBeenCalled();
+
     rawCmp.trigger("click");
+
     expect(eventHandler).toHaveBeenCalled();
     expect(eventHandler2).toHaveBeenCalled();
 
@@ -150,8 +169,11 @@ describe("Test simple events", () => {
     eventHandler2.mockClear();
     const eventHandler3 = jest.fn();
     subject.on("click:third", undefined, eventHandler3);
+
     expect(rawCmp.on).not.toHaveBeenCalled();
+
     rawCmp.trigger("click");
+
     expect(eventHandler).toHaveBeenCalled();
     expect(eventHandler2).toHaveBeenCalled();
     expect(eventHandler3).toHaveBeenCalled();
@@ -160,8 +182,11 @@ describe("Test simple events", () => {
     eventHandler2.mockClear();
     eventHandler3.mockClear();
     subject.off("click:third");
+
     expect(rawCmp.off).not.toHaveBeenCalled();
+
     rawCmp.trigger("click");
+
     expect(eventHandler).toHaveBeenCalled();
     expect(eventHandler2).toHaveBeenCalled();
     expect(eventHandler3).not.toHaveBeenCalled();
@@ -170,8 +195,11 @@ describe("Test simple events", () => {
     eventHandler2.mockClear();
     eventHandler3.mockClear();
     subject.off("click:second", undefined);
+
     expect(rawCmp.off).not.toHaveBeenCalled();
+
     rawCmp.trigger("click");
+
     expect(eventHandler).toHaveBeenCalled();
     expect(eventHandler2).not.toHaveBeenCalled();
     expect(eventHandler3).not.toHaveBeenCalled();
@@ -180,8 +208,11 @@ describe("Test simple events", () => {
     eventHandler2.mockClear();
     eventHandler3.mockClear();
     subject.off("click");
+
     expect(rawCmp.off).toHaveBeenCalled();
+
     rawCmp.trigger("click");
+
     expect(eventHandler).not.toHaveBeenCalled();
     expect(eventHandler2).not.toHaveBeenCalled();
     expect(eventHandler3).not.toHaveBeenCalled();
@@ -194,10 +225,15 @@ describe("Test simple events", () => {
     });
     subject.on("test", eventHandler);
     subject.trigger("test");
+
     expect(eventHandler).toHaveBeenCalledTimes(1);
+
     subject.trigger("test");
+
     expect(eventHandler).toHaveBeenCalledTimes(2);
+
     const eventFirstArg = eventHandler.mock.calls[0][0];
+
     expect(eventFirstArg).toBe(subject);
     expect(eventFirstArg.raw()).toBe(rawCmp);
     expect(receivedCmp).toBe(subject);
@@ -218,16 +254,22 @@ describe("Test simple events", () => {
         }
       },
     );
+
     expect(eventholder.id()).toBe("123");
+
     const cb = jest.fn();
     eventholder.on("click", cb);
+
     expect(cb).not.toHaveBeenCalled();
+
     eventholder.trigger("click");
+
     expect(cb).toHaveBeenCalled();
     expect(cb.mock.calls[0][0]).toBe(eventholder);
 
     cb.mockClear();
     rawCmp.trigger("click");
+
     expect(cb).toHaveBeenCalled();
     expect(cb.mock.calls[0][0]).toBe(eventholder);
   });
@@ -237,14 +279,17 @@ describe("Test simple events", () => {
     subject.on("test", eventHandler);
     const param = 42;
     subject.trigger("test", param);
+
     expect(eventHandler).toHaveBeenCalledTimes(1);
     expect(eventHandler.mock.calls[0][1]).toBe(param);
+
     const obj = {
       a: 1,
       b: 2,
       c: [1, 2, 3],
     };
     subject.trigger("test", param + 1, obj);
+
     expect(eventHandler).toHaveBeenCalledTimes(2);
     expect(eventHandler.mock.calls[1][1]).toBe(param + 1);
     expect(eventHandler.mock.calls[1][2]).toStrictEqual(obj);
@@ -256,6 +301,7 @@ describe("Test simple events", () => {
     subject.on("test", eventHandler1);
     subject.on("test", eventHandler2);
     subject.trigger("test");
+
     expect(eventHandler1).toHaveBeenCalledTimes(0);
     expect(eventHandler2).toHaveBeenCalledTimes(1);
   });
@@ -263,6 +309,7 @@ describe("Test simple events", () => {
   test("Trigger an non-existing event", () => {
     const eventHandler = jest.fn();
     subject.trigger("test");
+
     expect(eventHandler).toHaveBeenCalledTimes(0);
   });
 
@@ -270,10 +317,13 @@ describe("Test simple events", () => {
     const eventHandler = jest.fn();
     subject.on("test", eventHandler);
     subject.trigger("test");
+
     expect(eventHandler).toHaveBeenCalledTimes(1);
+
     eventHandler.mockClear();
     subject.off("test");
     subject.trigger("test");
+
     expect(eventHandler).toHaveBeenCalledTimes(0);
   });
 
@@ -283,12 +333,19 @@ describe("Test simple events", () => {
     subject.on("test", eventHandler);
     subject.on("eventhandler-disabled", disableEvent);
     subject.trigger("test");
+
     expect(eventHandler).toHaveBeenCalledTimes(1);
+
     eventHandler.mockClear();
+
     expect(disableEvent).not.toHaveBeenCalled();
+
     subject.disableEvent("test");
+
     expect(disableEvent).toHaveBeenCalledTimes(1);
+
     subject.trigger("test");
+
     expect(eventHandler).toHaveBeenCalledTimes(0);
   });
 });
@@ -304,15 +361,17 @@ describe("Many working handlers on same event", () => {
     const eventHandler = jest.fn();
     subject.on("test:first", eventHandler);
     subject.trigger("test:first");
+
     expect(eventHandler).toHaveBeenCalledTimes(1);
   });
 
-  test("Named event trigger of named event", () => {
+  test("Named events are trigger when main event triggered", () => {
     const eventHandler1 = jest.fn();
     const eventHandler2 = jest.fn();
     subject.on("test:first", eventHandler1);
     subject.on("test:second", eventHandler2);
     subject.trigger("test");
+
     expect(eventHandler1).toHaveBeenCalledTimes(1);
     expect(eventHandler1).toHaveBeenCalledTimes(1);
   });
@@ -323,6 +382,7 @@ describe("Many working handlers on same event", () => {
     subject.on("test:first", eventHandler1);
     subject.on("test:second", eventHandler2);
     subject.trigger("test:first");
+
     expect(eventHandler1).toHaveBeenCalledTimes(1);
     expect(eventHandler2).toHaveBeenCalledTimes(0);
   });
@@ -333,6 +393,7 @@ describe("Many working handlers on same event", () => {
     subject.on("test:first", eventHandler1);
     subject.on("test:first", eventHandler2);
     subject.trigger("test:first");
+
     expect(eventHandler1).toHaveBeenCalledTimes(0);
     expect(eventHandler2).toHaveBeenCalledTimes(1);
   });
@@ -343,10 +404,13 @@ describe("Many working handlers on same event", () => {
     subject.on("test:first", eventHandler1);
     subject.on("test:second", eventHandler2);
     subject.trigger("test");
+
     expect(eventHandler1).toHaveBeenCalledTimes(1);
     expect(eventHandler2).toHaveBeenCalledTimes(1);
+
     subject.off("test:first");
     subject.trigger("test");
+
     expect(eventHandler1).toHaveBeenCalledTimes(1);
     expect(eventHandler2).toHaveBeenCalledTimes(2);
   });
@@ -357,14 +421,19 @@ describe("Many working handlers on same event", () => {
     subject.on("test:first", eventHandler1);
     subject.on("test:second", eventHandler2);
     subject.trigger("test");
+
     expect(eventHandler1).toHaveBeenCalledTimes(1);
     expect(eventHandler2).toHaveBeenCalledTimes(1);
+
     subject.off("test:third");
     subject.trigger("test");
+
     expect(eventHandler1).toHaveBeenCalledTimes(2);
     expect(eventHandler2).toHaveBeenCalledTimes(2);
+
     subject.off("unused");
     subject.trigger("test");
+
     expect(eventHandler1).toHaveBeenCalledTimes(3);
     expect(eventHandler2).toHaveBeenCalledTimes(3);
   });
@@ -381,8 +450,11 @@ describe("Event executed only once", () => {
     const eventHandler = jest.fn();
     subject.once("test", eventHandler);
     subject.trigger("test");
+
     expect(eventHandler).toHaveBeenCalledTimes(1);
+
     subject.trigger("test");
+
     expect(eventHandler).toHaveBeenCalledTimes(1);
   });
 
@@ -392,9 +464,12 @@ describe("Event executed only once", () => {
     subject.on("test", eventHandler1);
     subject.once("test:ah", eventHandler2);
     subject.trigger("test");
+
     expect(eventHandler1).toHaveBeenCalledTimes(1);
     expect(eventHandler2).toHaveBeenCalledTimes(1);
+
     subject.trigger("test");
+
     expect(eventHandler1).toHaveBeenCalledTimes(2);
     expect(eventHandler2).toHaveBeenCalledTimes(1);
   });
@@ -403,17 +478,24 @@ describe("Event executed only once", () => {
     const eventHandler = jest.fn();
     const eventHandler2 = jest.fn();
     subject.once("click", eventHandler);
+
     expect(rawCmp.on).toHaveBeenCalledTimes(1);
+
     rawCmp.trigger("click");
     rawCmp.trigger("click");
+
     expect(eventHandler).toHaveBeenCalledTimes(1);
+
     eventHandler.mockClear();
     (rawCmp.on as jest.Mock).mockClear();
     subject.once("click", eventHandler);
     subject.once("click:second", eventHandler2);
+
     expect(rawCmp.on).toHaveBeenCalledTimes(1);
+
     rawCmp.trigger("click");
     rawCmp.trigger("click");
+
     expect(eventHandler).toHaveBeenCalledTimes(1);
     expect(eventHandler2).toHaveBeenCalledTimes(1);
   });
@@ -429,10 +511,12 @@ describe("Delegated events", () => {
     rawCmpSub = vw.get("sub") as ComponentMock;
     subject = new Dummy(rawContainer, rawCmpSub);
   });
+
   test("Delegate an event", () => {
     const eventHandler1 = jest.fn();
     subject.on("click", rawCmpSub.id()!, eventHandler1);
     rawCmpSub.trigger("click");
+
     expect(eventHandler1).toHaveBeenCalledTimes(1);
   });
 
@@ -441,13 +525,16 @@ describe("Delegated events", () => {
     subject.once("click", rawCmpSub.id()!, eventHandler1);
     rawCmpSub.trigger("click");
     rawCmpSub.trigger("click");
+
     expect(eventHandler1).toHaveBeenCalledTimes(1);
+
     eventHandler1.mockClear();
     subject.once("click:ah", rawCmpSub.id()!, eventHandler1);
     subject.once("click:be", rawCmpSub.id()!, eventHandler1);
     subject.on("click:be", rawCmpSub.id()!, eventHandler1);
     rawCmpSub.trigger("click");
     rawCmpSub.trigger("click");
+
     expect(eventHandler1).toHaveBeenCalledTimes(4);
   });
 
@@ -459,7 +546,9 @@ describe("Delegated events", () => {
     subject.off("click", rawCmpSub.id()!);
     rawCmpSub.trigger("click");
     rawCmpSub.trigger("click");
+
     expect(eventHandler1).toHaveBeenCalledTimes(0);
+
     eventHandler1.mockClear();
     subject.on("click", rawCmpSub.id()!, eventHandler0);
     subject.on("click:ah", rawCmpSub.id()!, eventHandler1);
@@ -467,9 +556,11 @@ describe("Delegated events", () => {
     subject.off("click:ah", rawCmpSub.id()!);
     rawCmpSub.trigger("click");
     rawCmpSub.trigger("click");
+
     expect(eventHandler0).toHaveBeenCalledTimes(2);
     expect(eventHandler1).toHaveBeenCalledTimes(0);
     expect(eventHandler2).toHaveBeenCalledTimes(2);
+
     eventHandler0.mockClear();
     eventHandler1.mockClear();
     eventHandler2.mockClear();
@@ -477,6 +568,7 @@ describe("Delegated events", () => {
     subject.off("click", rawCmpSub.id()!);
     rawCmpSub.trigger("click");
     rawCmpSub.trigger("click");
+
     expect(eventHandler0).toHaveBeenCalledTimes(0);
     expect(eventHandler1).toHaveBeenCalledTimes(0);
     expect(eventHandler2).toHaveBeenCalledTimes(0);
@@ -507,23 +599,31 @@ describe("Disabling event", () => {
     subject.on("test:glue", eventHandler3);
     subject.on("eventhandler-enabled", enableEventCb);
     subject.on("eventhandler-disabled", disableEventCb);
+
     expect(disableEventCb).not.toHaveBeenCalled();
+
     subject.trigger("test");
+
     expect(eventHandler).toHaveBeenCalledTimes(1);
     expect(eventHandler2).toHaveBeenCalledTimes(1);
     expect(disableEventCb).toHaveBeenCalledTimes(1);
     expect(eventHandler3).toHaveBeenCalledTimes(0);
 
     subject.trigger("test");
+
     expect(eventHandler).toHaveBeenCalledTimes(1);
     expect(eventHandler2).toHaveBeenCalledTimes(1);
     expect(disableEventCb).toHaveBeenCalledTimes(1);
     expect(eventHandler3).toHaveBeenCalledTimes(0);
 
     expect(enableEventCb).not.toHaveBeenCalled();
+
     subject.enableEvent("test");
+
     expect(enableEventCb).toHaveBeenCalledTimes(1);
+
     subject.trigger("test");
+
     expect(eventHandler).toHaveBeenCalledTimes(2);
     expect(eventHandler2).toHaveBeenCalledTimes(2);
     expect(eventHandler3).toHaveBeenCalledTimes(0);
@@ -531,19 +631,33 @@ describe("Disabling event", () => {
 
   test("Event enabled checks", () => {
     expect(subject.isEventEnabled("click")).toBeFalsy();
+
     subject.on("click", jest.fn());
+
     expect(subject.isEventEnabled("click")).toBeTruthy();
+
     subject.cancelEvent("click");
+
     expect(subject.isEventEnabled("click")).toBeFalsy();
+
     subject.trigger("click");
+
     expect(subject.isEventEnabled("click")).toBeTruthy();
+
     subject.disableEvent("click");
+
     expect(subject.isEventEnabled("click")).toBeFalsy();
+
     subject.trigger("click");
+
     expect(subject.isEventEnabled("click")).toBeFalsy();
+
     subject.enableEvent("click");
+
     expect(subject.isEventEnabled("click")).toBeTruthy();
+
     subject.off("click");
+
     expect(subject.isEventEnabled("click")).toBeFalsy();
   });
 });
@@ -568,10 +682,13 @@ describe("Cancel event", () => {
     subject.on("test:shit", eventHandler2);
     subject.on("test:glue", eventHandler3);
     subject.trigger("test");
+
     expect(eventHandler).toHaveBeenCalledTimes(1);
     expect(eventHandler2).toHaveBeenCalledTimes(1);
     expect(eventHandler3).toHaveBeenCalledTimes(0);
+
     subject.trigger("test");
+
     expect(eventHandler).toHaveBeenCalledTimes(2);
     expect(eventHandler2).toHaveBeenCalledTimes(2);
     expect(eventHandler3).toHaveBeenCalledTimes(0);
@@ -595,8 +712,11 @@ describe("Handle error in event", () => {
       a();
     });
     subject.on("test", eventHandler);
+
     expect(lre.error).not.toHaveBeenCalled();
+
     subject.trigger("test");
+
     expect(lre.error).toHaveBeenCalled();
   });
 });
@@ -615,9 +735,12 @@ describe("Transfer events", () => {
     const eventHandler = jest.fn();
     subject.on("click", eventHandler);
     rawCmp.trigger("click");
+
     expect(eventHandler).toHaveBeenCalledTimes(1);
+
     subject.transferEvents(rawCmpDest);
     rawCmpDest.trigger("click");
+
     expect(eventHandler).toHaveBeenCalledTimes(2);
   });
 });
@@ -655,20 +778,35 @@ describe("Handle on change event trigger", () => {
   test("Update is triggered only when value changed", () => {
     const eventHandler = jest.fn();
     subject.on("update", eventHandler);
+
     expect(eventHandler).not.toHaveBeenCalled();
+
     rawCmp.value(2);
+
     expect(eventHandler).toHaveBeenCalledTimes(1);
+
     rawCmp.value(3);
+
     expect(eventHandler).toHaveBeenCalledTimes(2);
+
     rawCmp.value(3);
+
     expect(eventHandler).toHaveBeenCalledTimes(2);
+
     rawCmp.value(4);
+
     expect(eventHandler).toHaveBeenCalledTimes(3);
+
     rawCmp.value(2);
+
     expect(eventHandler).toHaveBeenCalledTimes(4);
+
     rawCmp.value(2);
+
     expect(eventHandler).toHaveBeenCalledTimes(4);
+
     subject.trigger("update");
+
     expect(eventHandler).toHaveBeenCalledTimes(5);
   });
 
@@ -676,13 +814,20 @@ describe("Handle on change event trigger", () => {
     rawCmp.value({ a: 42, b: { c: 13 } });
     const eventHandler = jest.fn();
     subject.on("update", eventHandler);
+
     expect(eventHandler).not.toHaveBeenCalled();
+
     rawCmp.value({ a: 42, b: { c: 13 } });
+
     // the first time is always triggered because there is no info of the data before change
     expect(eventHandler).toHaveBeenCalledTimes(1);
+
     rawCmp.value({ a: 42, b: { c: 13 } });
+
     expect(eventHandler).toHaveBeenCalledTimes(1);
+
     rawCmp.value({ a: 42, b: { c: 14 } });
+
     expect(eventHandler).toHaveBeenCalledTimes(2);
   });
 });
@@ -708,8 +853,11 @@ describe("Component has not targeting", () => {
   test("Update is triggered when value changed", () => {
     const eventHandler = jest.fn();
     subject.on("test", eventHandler);
+
     expect(eventHandler).not.toHaveBeenCalled();
+
     subject.trigger("test");
+
     expect(eventHandler).toHaveBeenCalled();
     expect(eventHandler.mock.calls[0][0]).toBe(subject);
   });
@@ -735,25 +883,41 @@ describe("Event holder triggers events", () => {
     const destroyed = jest.fn();
 
     subject.on("eventhandler-added", added);
+
     expect(added).toHaveBeenCalledTimes(0);
+
     subject.on("eventhandler-added:test", added2);
+
     expect(added).toHaveBeenCalledTimes(0);
+
     subject.on("eventhandler-updated", updated);
+
     expect(added).toHaveBeenCalledTimes(0);
+
     subject.on("eventhandler-removed", removed);
+
     expect(added).toHaveBeenCalledTimes(0);
+
     subject.on("eventhandler-enabled", enabled);
+
     expect(added).toHaveBeenCalledTimes(0);
+
     subject.on("eventhandler-disabled", disabled);
+
     expect(added).toHaveBeenCalledTimes(0);
+
     subject.on("eventhandler-created", created);
+
     expect(added).toHaveBeenCalledTimes(0);
+
     subject.on("eventhandler-destroyed", destroyed);
+
     expect(added).toHaveBeenCalledTimes(0);
 
     const fcn1 = (): void => {};
 
     subject.on("click", fcn1);
+
     expect(added).toHaveBeenCalledTimes(1);
     expect(added2).toHaveBeenCalledTimes(1);
     expect(created).toHaveBeenCalledTimes(1);
@@ -763,6 +927,7 @@ describe("Event holder triggers events", () => {
     expect(added.mock.calls[0][3]).toStrictEqual(fcn1);
 
     subject.on("click:2nd", jest.fn());
+
     expect(added).toHaveBeenCalledTimes(2);
     expect(added2).toHaveBeenCalledTimes(2);
     expect(created).toHaveBeenCalledTimes(1);
@@ -772,6 +937,7 @@ describe("Event holder triggers events", () => {
     const fcn2 = (): void => {};
 
     subject.on("click", fcn2);
+
     expect(added).toHaveBeenCalledTimes(2);
     expect(added2).toHaveBeenCalledTimes(2);
     expect(created).toHaveBeenCalledTimes(1);
@@ -782,10 +948,13 @@ describe("Event holder triggers events", () => {
     expect(updated.mock.calls[0][3]).toEqual(fcn2);
 
     subject.on("click:2nd", fcn2);
+
     expect(updated).toHaveBeenCalledTimes(2);
 
     expect(removed).toHaveBeenCalledTimes(0);
+
     subject.off("click");
+
     expect(removed).toHaveBeenCalledTimes(1);
     expect(destroyed).toHaveBeenCalledTimes(0);
     expect(removed.mock.calls[0][0]).toStrictEqual(subject);
@@ -793,10 +962,12 @@ describe("Event holder triggers events", () => {
     expect(removed.mock.calls[0][2]).toBeUndefined();
 
     subject.off("click");
+
     expect(removed).toHaveBeenCalledTimes(1);
     expect(destroyed).toHaveBeenCalledTimes(0);
 
     subject.off("click:2nd");
+
     expect(removed).toHaveBeenCalledTimes(2);
     expect(destroyed).toHaveBeenCalledTimes(1);
 
@@ -806,13 +977,16 @@ describe("Event holder triggers events", () => {
     (removed as jest.Mock).mockClear();
     (destroyed as jest.Mock).mockClear();
     subject.on("click", "bla", fcn1);
+
     expect(added).toHaveBeenCalledTimes(1);
     expect(created).toHaveBeenCalledTimes(1);
     expect(added.mock.calls[0][0]).toStrictEqual(subject);
     expect(added.mock.calls[0][1]).toEqual("click");
     expect(added.mock.calls[0][2]).toEqual("bla");
     expect(added.mock.calls[0][3]).toStrictEqual(fcn1);
+
     subject.on("click", "bla", fcn2);
+
     expect(updated).toHaveBeenCalledTimes(1);
     expect(updated.mock.calls[0][0]).toStrictEqual(subject);
     expect(updated.mock.calls[0][1]).toEqual("click");
@@ -820,6 +994,7 @@ describe("Event holder triggers events", () => {
     expect(updated.mock.calls[0][3]).toEqual(fcn2);
 
     subject.off("click", "bla");
+
     expect(removed).toHaveBeenCalledTimes(1);
     expect(destroyed).toHaveBeenCalledTimes(1);
     expect(removed.mock.calls[0][0]).toStrictEqual(subject);
@@ -844,13 +1019,18 @@ describe("Event holder triggers events", () => {
       subject1.on("click", subject1Cb);
       subject2.on("test", subject2Cb);
       subject1.linkEventTo("click", subject2, "test");
+
       expect(subject1Cb).toHaveBeenCalledTimes(0);
       expect(subject2Cb).toHaveBeenCalledTimes(0);
+
       subject1.trigger("click");
+
       expect(subject1Cb).toHaveBeenCalledTimes(1);
       expect(subject2Cb).toHaveBeenCalledTimes(1);
+
       subject1.unlinkEventTo("click", subject2, "test");
       subject1.trigger("click");
+
       expect(subject1Cb).toHaveBeenCalledTimes(2);
       expect(subject2Cb).toHaveBeenCalledTimes(1);
     });
@@ -863,15 +1043,20 @@ describe("Event holder triggers events", () => {
       subject2.on("test", subject2Cb);
       subject2.on("click", subject2Cb2);
       subject1.linkEventTo("click", subject2);
+
       expect(subject1Cb).toHaveBeenCalledTimes(0);
       expect(subject2Cb).toHaveBeenCalledTimes(0);
       expect(subject2Cb2).toHaveBeenCalledTimes(0);
+
       subject1.trigger("click");
+
       expect(subject1Cb).toHaveBeenCalledTimes(1);
       expect(subject2Cb).toHaveBeenCalledTimes(0);
       expect(subject2Cb2).toHaveBeenCalledTimes(1);
+
       subject1.unlinkEventTo("click", subject2);
       subject1.trigger("click");
+
       expect(subject1Cb).toHaveBeenCalledTimes(2);
       expect(subject2Cb).toHaveBeenCalledTimes(0);
       expect(subject2Cb2).toHaveBeenCalledTimes(1);
@@ -882,12 +1067,15 @@ describe("Event holder triggers events", () => {
       subject2.on("click", subject2Cb);
       subject1.linkEventTo("click", subject2);
       subject1.trigger("click");
+
       expect(subject2Cb).toHaveBeenCalledTimes(1);
       expect(subject2Cb.mock.calls[0][0]).toStrictEqual(subject2);
       expect(subject2Cb.mock.calls[0][1]).toStrictEqual(subject1);
+
       subject2Cb.mockClear();
       const obj = {};
       subject1.trigger("click", 42, obj);
+
       expect(subject2Cb).toHaveBeenCalledTimes(1);
       expect(subject2Cb.mock.calls[0][0]).toStrictEqual(subject2);
       expect(subject2Cb.mock.calls[0][1]).toStrictEqual(subject1);
@@ -926,12 +1114,14 @@ describe("Copy events from a component to an other", () => {
     dest.on("click:second", click2);
 
     rawDest.trigger("click");
+
     expect(click1).toHaveBeenCalledWith(dest);
     expect(click2).toHaveBeenCalledWith(dest);
 
     click1.mockClear();
     click2.mockClear();
     rawSource.trigger("click");
+
     expect(click1).not.toHaveBeenCalled();
     expect(click2).not.toHaveBeenCalled();
 
@@ -940,6 +1130,7 @@ describe("Copy events from a component to an other", () => {
     click1.mockClear();
     click2.mockClear();
     rawSource.trigger("click");
+
     expect(click1).toHaveBeenCalledWith(dest);
     expect(click2).toHaveBeenCalledWith(dest);
 
@@ -948,10 +1139,12 @@ describe("Copy events from a component to an other", () => {
     dest.on("test", customCb);
     dest.on("test:hop", customCb2);
     source.trigger("test");
+
     expect(customCb).toHaveBeenCalledTimes(1);
     expect(customCb2).toHaveBeenCalledTimes(1);
 
     source.trigger("test:hop");
+
     expect(customCb).toHaveBeenCalledTimes(1);
     expect(customCb2).toHaveBeenCalledTimes(2);
 
@@ -963,6 +1156,7 @@ describe("Copy events from a component to an other", () => {
     click1.mockClear();
     click2.mockClear();
     rawSource.trigger("click");
+
     expect(click1).toHaveBeenCalledTimes(0);
     expect(click2).toHaveBeenCalledTimes(0);
     expect(click3).toHaveBeenCalledWith(source);
@@ -971,6 +1165,7 @@ describe("Copy events from a component to an other", () => {
 
     click3.mockClear();
     rawSource.trigger("click");
+
     expect(click1).toHaveBeenCalledWith(dest);
     expect(click2).toHaveBeenCalledWith(dest);
     expect(click3).toHaveBeenCalledWith(source);
@@ -981,6 +1176,7 @@ describe("Copy events from a component to an other", () => {
     click2.mockClear();
     click3.mockClear();
     rawSource.trigger("click");
+
     expect(click1).toHaveBeenCalledWith(dest);
     expect(click2).toHaveBeenCalledWith(dest);
     expect(click3).toHaveBeenCalledWith(source);
@@ -997,6 +1193,7 @@ describe("Copy events from a component to an other", () => {
     click3.mockClear();
     click4.mockClear();
     rawSource.trigger("click");
+
     expect(click1).toHaveBeenCalledWith(dest);
     expect(click2).toHaveBeenCalledWith(dest);
     expect(click3).toHaveBeenCalledWith(source);
@@ -1016,6 +1213,7 @@ describe("Copy events from a component to an other", () => {
     source.propagateEventTo(dest2);
 
     rawSource.trigger("click");
+
     expect(clickCbs[0]).toHaveBeenCalledTimes(1);
     expect(clickCbs[1]).toHaveBeenCalledTimes(1);
     expect(clickCbs[1]).toHaveBeenCalledWith(dest);
@@ -1038,6 +1236,7 @@ describe("Copy events from a component to an other", () => {
     source.propagateEventTo(dest2);
 
     source.trigger("test");
+
     expect(clickCbs[0]).toHaveBeenCalledTimes(1);
     expect(clickCbs[1]).toHaveBeenCalledTimes(1);
     expect(clickCbs[1]).toHaveBeenCalledWith(dest);
@@ -1048,6 +1247,7 @@ describe("Copy events from a component to an other", () => {
 
     jest.clearAllMocks();
     source.trigger("test:second");
+
     expect(clickCbs[0]).not.toHaveBeenCalled();
     expect(clickCbs[1]).toHaveBeenCalledTimes(1);
     expect(clickCbs[1]).toHaveBeenCalledWith(dest);
@@ -1063,15 +1263,19 @@ describe("Copy events from a component to an other", () => {
 
     source.propagateEventTo(dest, ["click"]);
     rawSource.trigger("click");
+
     expect(clickCbs[0]).toHaveBeenCalledTimes(1);
     expect(clickCbs[1]).toHaveBeenCalledTimes(1);
+
     jest.clearAllMocks();
 
     source.off("click");
 
     rawSource.trigger("click");
+
     expect(clickCbs[0]).toHaveBeenCalledTimes(0);
     expect(clickCbs[1]).toHaveBeenCalledTimes(1);
+
     jest.clearAllMocks();
   });
 });

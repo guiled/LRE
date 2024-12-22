@@ -3,11 +3,13 @@ import { Context } from "../src/context";
 describe("LRE Context mode", () => {
   test("default context is real", () => {
     const subject = new Context();
+
     expect(subject.getMode()).toBe("real");
   });
 
   test("Context mode can be changed", () => {
     const subject = new Context();
+
     expect(subject.setMode("virtual")).toBe(subject);
     expect(subject.getMode()).toBe("virtual");
     expect(subject.setMode("real")).toBe(subject);
@@ -31,12 +33,15 @@ describe("Context access logs", () => {
     "Access logs are all empty at start for %s",
     (logType: ProxyModeHandlerLogType) => {
       const subject = new Context();
+
       expect(subject.getAccessLog(logType)).toStrictEqual([]);
       expect(subject.getPreviousAccessLog(logType)).toStrictEqual([]);
+
       const logMessage: [string, string] = [
         "123",
         "This is log type " + logType,
       ];
+
       expect(subject.logAccess(logType, logMessage)).toBe(subject);
       expect(subject.getAccessLog(logType)).toStrictEqual([logMessage]);
     },
@@ -60,6 +65,7 @@ describe("Context access logs", () => {
     subject.logAccess("value", ["123", "b"]);
     subject.enableAccessLog();
     subject.logAccess("value", ["123", "c"]);
+
     expect(subject.getAccessLog("value")).toStrictEqual([
       ["123", "a"],
       ["123", "c"],
@@ -78,6 +84,7 @@ describe("Context access logs", () => {
     const saveLogs: Partial<ContextLog> = {};
     allLogTypes.forEach((logType) => {
       saveLogs[logType] = subject.getAccessLog(logType);
+
       expect(saveLogs[logType]).not.toStrictEqual([]);
     });
     subject.setMode("virtual");
@@ -105,14 +112,18 @@ describe("Context access logs", () => {
 describe("Context save", () => {
   test("default context is undefined", () => {
     const subject = new Context();
+
     expect(subject.getContext("test1")).toBeUndefined();
   });
 
   test("set context works only in virtual", () => {
     const subject = new Context();
+
     expect(subject.setContext("test1", "a")).toBe(subject);
     expect(subject.getContext("test1")).toBeUndefined();
+
     subject.setMode("virtual");
+
     expect(subject.setContext("test1", "a")).toBe(subject);
     expect(subject.getContext("test1")).toBe("a");
   });
@@ -120,13 +131,20 @@ describe("Context save", () => {
   test("Context is emptied when going back to real mode", () => {
     const subject = new Context();
     subject.setMode("virtual");
+
     expect(subject.setContext("test1", "a")).toBe(subject);
     expect(subject.getContext("test1")).toBe("a");
+
     subject.setMode("virtual");
+
     expect(subject.getContext("test1")).toBe("a");
+
     subject.setMode("real");
+
     expect(subject.getContext("test1")).toBeUndefined();
+
     subject.setMode("virtual");
+
     expect(subject.getContext("test1")).toBeUndefined();
   });
 });

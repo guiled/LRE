@@ -1,6 +1,7 @@
 import { ServerMock } from "../../../src/mock/letsrole/server.mock";
 
 let server: ServerMock;
+
 beforeEach(() => {
   server = new ServerMock({
     views: [
@@ -60,6 +61,7 @@ beforeEach(() => {
 
 describe("SheetMock behavior", () => {
   it.todo("SheetMock must refuse duplicate id in structure");
+
   it.todo("SheetMock must refuse setData with more than 20 components");
 });
 
@@ -82,7 +84,9 @@ describe("Open prompt", () => {
 
     expect(global.init).toHaveBeenCalled();
     expect(initCb).toHaveBeenCalled();
+
     const init: jest.Mock = global.init as jest.Mock;
+
     expect(init.mock.invocationCallOrder[0]).toBeLessThan(
       initCb.mock.invocationCallOrder[0],
     );
@@ -96,7 +100,9 @@ describe("Prompt sheet", () => {
     const lbl = prompt.get("lbl");
 
     expect(lbl).toBeDefined();
+
     lbl.value("theLabel");
+
     expect(prompt.getData()).toMatchObject({ lbl: "theLabel" });
   });
 
@@ -106,15 +112,18 @@ describe("Prompt sheet", () => {
     const initCb = jest.fn();
 
     main.prompt("title", "prompt", jest.fn(), initCb);
+
     expect(global.init).toHaveBeenCalledTimes(1);
     expect(initCb).toHaveBeenCalledTimes(1);
 
     main.prompt("title", "prompt", jest.fn(), initCb);
+
     expect(global.init).toHaveBeenCalledTimes(1);
     expect(initCb).toHaveBeenCalledTimes(1);
 
     server.closePrompt("prompt");
     main.prompt("title", "prompt", jest.fn(), initCb);
+
     expect(global.init).toHaveBeenCalledTimes(2);
     expect(initCb).toHaveBeenCalledTimes(2);
   });
@@ -126,6 +135,7 @@ describe("Prompt sheet", () => {
 
     lbl1.value("theLabel");
     const lbl2 = prompt2.get("lbl");
+
     expect(lbl2.value()).not.toBe("theLabel");
   });
 
@@ -139,15 +149,18 @@ describe("Prompt sheet", () => {
     const main = server.openView("main", "12345");
 
     main.prompt("title", "prompt", jest.fn(), cb);
+
     expect(promptView?.getData()).toMatchObject({});
 
     promptView?.get("lbl").value("theLabel");
+
     expect(promptView?.getData()).toMatchObject({
       lbl: "theLabel",
     });
 
     server.closePrompt("prompt");
     main.prompt("title", "prompt", jest.fn(), cb);
+
     expect(promptView?.getData()).toMatchObject({});
   });
 });

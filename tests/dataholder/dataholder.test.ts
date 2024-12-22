@@ -57,7 +57,9 @@ describe("Dataholder", () => {
   test("Volatile data", () => {
     expect(subject.hasData("d1")).toBeFalsy();
     expect(subject.data("d1")).toBeUndefined();
+
     const val = 42;
+
     expect(subject.data("d1", val)).toBe(subject);
     expect(subject.hasData("d1")).toBeTruthy();
     expect(subject.data("d1")).toBe(val);
@@ -72,12 +74,15 @@ describe("Dataholder", () => {
     expect(subject.hasData("d1")).toBeTruthy();
 
     const subject2 = new C(sheet1, "a.b.c");
+
     expect(subject2.hasData("d1")).toBeFalsy();
   });
 
   test("Persistent data", () => {
     expect(subject.hasData("d1")).toBeFalsy();
+
     const val = 42;
+
     expect(subject.data("d1", val, true)).toBe(subject);
     expect(subject.hasData("d1")).toBeTruthy();
     expect(subject.data("d1")).toBe(val);
@@ -92,9 +97,12 @@ describe("Dataholder", () => {
     expect(subject.hasData("d1")).toBeTruthy();
 
     const subject2 = new C(sheet1, "a.b.c");
+
     expect(subject2.hasData("d1")).toBeFalsy();
+
     itHasWaitedEverything();
     subject2.loadPersistent();
+
     expect(subject2.hasData("d1")).toBeFalsy();
     expect(subject.data("d1", val + 1, true)).toBe(subject);
     expect(subject.hasData("d1")).toBeTruthy();

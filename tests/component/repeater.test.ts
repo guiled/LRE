@@ -410,7 +410,7 @@ describe("Repeater setSorter", () => {
     expect(() => repeater.setSorter("unknown", "name")).not.toThrow();
   });
 
-  test("setSorter make component clickable", () => {
+  test("setSorter sort the repeater", () => {
     repeater.value({
       "1": {
         name: "B",

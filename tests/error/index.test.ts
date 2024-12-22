@@ -14,19 +14,26 @@ describe("Test error handler", () => {
   test("Single line error", () => {
     const message = "This is an error";
     const err = new Error(message);
+
     expect(err.toString()).toContain(message);
     expect(err.message).toStrictEqual(message);
     expect(err.lineNumber).toStrictEqual(0);
     expect(err.columnNumber).toStrictEqual(0);
+
     err.thrownBy({
       name: "emptyError",
       message: "message",
     });
+
     expect(err.lineNumber).toStrictEqual(0);
     expect(err.columnNumber).toStrictEqual(0);
+
     const err2 = new Error(message, {});
+
     expect(err2.toString()).toContain(message);
+
     const err3 = new Error(message, { cause: {} });
+
     expect(err3.toString()).toContain(message);
   });
 
@@ -52,12 +59,15 @@ describe("Test error handler", () => {
     };
     const message = "This is an error";
     const err = new Error(message);
+
     expect(err.thrownBy(trace)).toStrictEqual(err);
     expect(err.toString()).toContain(message);
     expect(err.message).toStrictEqual(message);
     expect(err.lineNumber).toStrictEqual(12);
     expect(err.columnNumber).toStrictEqual(1);
+
     const err2 = new Error("second", { cause: err });
+
     expect(err2.message).toStrictEqual("second");
     expect(err2.lineNumber).toStrictEqual(12);
     expect(err2.columnNumber).toStrictEqual(1);
@@ -113,10 +123,13 @@ describe("Test error handler", () => {
       ],
     };
     const err = new Error("err", { cause: trace });
+
     expect(err.lineNumber).toStrictEqual(12);
     expect(err.columnNumber).toStrictEqual(1);
+
     lre.__debug = true;
     const err2 = new Error("err2").thrownBy(new Error("err", { cause: trace }));
+
     expect(err2.lineNumber).toStrictEqual(120);
     expect(err2.columnNumber).toStrictEqual(1);
   });
@@ -159,6 +172,7 @@ describe("Test error handler", () => {
     };
     lre.__debug = true;
     const err = new Error("err", { cause: trace });
+
     expect(err.lineNumber).toStrictEqual(120);
     expect(err.columnNumber).toStrictEqual(1);
   });

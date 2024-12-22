@@ -462,6 +462,7 @@ class ClassToFunction extends Visitor {
 
     return result;
   }
+
   #propertyToVariable(n: ClassProperty | PrivateProperty): PropertyToVariable {
     if (n.type === "ClassProperty") {
       return {

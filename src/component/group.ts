@@ -160,19 +160,24 @@ export class Group
   repeater(_repeater?: unknown): undefined {
     return undefined;
   }
+
   entry(_entry?: unknown): undefined {
     return undefined;
   }
+
   autoLoadSaveClasses(): this {
     this.#components.forEach((cmp) => cmp.autoLoadSaveClasses());
     return this;
   }
+
   toggle(): void {
     this.#components.forEach((cmp) => cmp.toggle());
   }
+
   exists(): boolean {
     return true;
   }
+
   knownChildren(): Array<IComponent> {
     return this.#components;
   }
@@ -199,6 +204,7 @@ export class Group
   hide(): void {
     this.#components.forEach((cmp) => cmp.hide());
   }
+
   show(): void {
     this.#components.forEach((cmp) => cmp.show());
   }

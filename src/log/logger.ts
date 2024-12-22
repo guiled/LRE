@@ -16,6 +16,7 @@ const LOG_PREFIXES: Record<keyof typeof LogLevel, string> = {
 
 export class Logger {
   #logLevel: keyof typeof LogLevel = "none";
+
   #_log(level: keyof typeof LogLevel, ...args: any[]): void {
     if (LogLevel[this.#logLevel] >= LogLevel[level]) {
       args.forEach((a) => {
@@ -31,18 +32,23 @@ export class Logger {
       });
     }
   }
+
   error(...args: any[]): void {
     this.#_log.apply(this, ["error", ...args]);
   }
+
   warn(...args: any[]): void {
     this.#_log.apply(this, ["warn", ...args]);
   }
+
   trace(...args: any[]): void {
     this.#_log.apply(this, ["trace", ...args]);
   }
+
   log(...args: any[]): void {
     this.#_log.apply(this, ["all", ...args]);
   }
+
   setLogLevel(level: keyof typeof LogLevel): void {
     this.#logLevel = level;
   }

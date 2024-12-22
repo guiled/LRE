@@ -11,10 +11,12 @@ global.each = jest.fn(
     }
   },
 );
+
 describe("structuredClone polyfill test", () => {
   test("structuredClone polyfill test", () => {
     [{}, [], [1, 2, 3], [1, 2, [3, 4, 5]]].forEach((v) => {
       const c = lreStructuredClone(v);
+
       expect(c).toMatchObject(v);
       expect(c).toEqual(v);
       expect(c === v).toBeFalsy();
@@ -38,6 +40,7 @@ describe("structuredClone polyfill test", () => {
       },
     };
     const c = lreStructuredClone(obj);
+
     expect(c).toMatchObject(obj);
     expect(c).toEqual(obj);
     expect(c === obj).toBeFalsy();

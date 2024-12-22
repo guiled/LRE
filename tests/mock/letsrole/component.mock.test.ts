@@ -73,6 +73,7 @@ describe("ComponentMock behavior", () => {
 
   test("find behavior", () => {
     const found = componentLabel.find("oh");
+
     expect(found).toBeInstanceOf(FailingExistingComponent);
     expect(found.id()).toBe("oh");
     //found = componentContainer.find("oh");
@@ -99,9 +100,12 @@ describe("ComponentMock behavior", () => {
   test("parent behavior", () => {
     const child = sheet.get("oh2");
     const container = child.parent();
+
     expect(container).toBeInstanceOf(ComponentMock);
     expect(container.id()).toBe(system.views![0].children[0].id);
+
     const supposedSheet = componentContainer.parent();
+
     expect(supposedSheet).toBeInstanceOf(ComponentMock);
     expect(supposedSheet.id()).toBe(system.views![0].id);
   });
@@ -113,13 +117,16 @@ describe("ComponentMock behavior", () => {
     componentContainer.on("click", cb0);
     componentContainer.on("click", cb);
     componentContainer.trigger("click");
+
     expect(cb0).not.toHaveBeenCalled();
     expect(cb).toHaveBeenCalledTimes(1);
     expect(arg!).toBeInstanceOf(ComponentMock);
     expect(arg!.id()).toBe("ah");
+
     cb.mockClear();
     componentContainer.off("click");
     componentContainer.trigger("click");
+
     expect(cb0).not.toHaveBeenCalled();
     expect(cb).not.toHaveBeenCalled();
   });
@@ -128,8 +135,11 @@ describe("ComponentMock behavior", () => {
     const cb = jest.fn();
     componentContainer.on("click", cb);
     componentSubLabel.trigger("click");
+
     expect(cb).toHaveBeenCalledTimes(1);
+
     sheet.componentChangedManually(componentSubLabel.id()!, 42);
+
     expect(cb).toHaveBeenCalledTimes(1);
   });
 
@@ -139,27 +149,37 @@ describe("ComponentMock behavior", () => {
     componentInput.on("update", cbUpdate);
     componentInput.on("change", cbChange);
     componentInput.value("42");
+
     expect(cbUpdate).toHaveBeenCalledTimes(1);
     expect(cbChange).toHaveBeenCalledTimes(0);
+
     sheet.setData({
       test1: 13,
     });
+
     expect(cbUpdate).toHaveBeenCalledTimes(1);
     expect(cbChange).toHaveBeenCalledTimes(0);
+
     sheet.setData({
       [componentInput.id()!]: 13,
     });
+
     expect(cbUpdate).toHaveBeenCalledTimes(2);
     expect(cbChange).toHaveBeenCalledTimes(0);
+
     sheet.componentChangedManually(componentInput.id()!, 4242);
+
     expect(cbUpdate).toHaveBeenCalledTimes(3);
     expect(cbChange).toHaveBeenCalledTimes(1);
+
     sheet.componentChangedManually(componentInput.id()!, 4242);
+
     expect(cbUpdate).toHaveBeenCalledTimes(3);
     expect(cbChange).toHaveBeenCalledTimes(1);
   });
 
   it.todo("text() returns null for multichoice");
+
   it.todo("text() returns undefined for choice with no table or label");
 
   test("event delegation behavior", () => {
@@ -167,15 +187,20 @@ describe("ComponentMock behavior", () => {
     const cb = jest.fn((a) => (arg = a));
     componentContainer.on("click", ".label", cb);
     componentSubLabel.trigger("click");
+
     expect(cb).toHaveBeenCalledTimes(1);
     expect(arg!).toBeInstanceOf(ComponentMock);
     expect(arg!.id()).toBe("oh2");
+
     cb.mockClear();
     componentContainer.off("click", ".label");
     componentSubLabel.trigger("click");
+
     expect(cb).not.toHaveBeenCalled();
+
     componentContainer.on("click", componentSubLabel.id()!, cb);
     componentSubLabel.trigger("click");
+
     expect(cb).toHaveBeenCalledTimes(1);
   });
 
@@ -185,52 +210,75 @@ describe("ComponentMock behavior", () => {
     componentContainer.on("update", ".widget", cb);
     componentContainer.on("change", ".widget", cb2);
     sheet.componentChangedManually(componentInput.id()!, Math.random());
+
     expect(cb).not.toHaveBeenCalled();
     expect(cb2).toHaveBeenCalledTimes(1);
   });
 
   it.todo("event delegation with class doesn't work with expanded choices");
+
   it.todo("event keyup work only on text input");
+
   it.todo("event mouseleave and mouseenter");
 
   test("class behavior", () => {
     expect(componentContainer.hasClass("widget")).toBeTruthy();
     expect(componentContainer.hasClass("toto")).toBeFalsy();
+
     componentContainer.addClass("toto");
+
     expect(componentContainer.hasClass("toto")).toBeTruthy();
     expect(componentContainer.getClasses()).toContainEqual("toto");
+
     componentContainer.removeClass("toto");
+
     expect(componentContainer.hasClass("toto")).toBeFalsy();
+
     componentContainer.toggleClass("toto");
+
     expect(componentContainer.hasClass("toto")).toBeTruthy();
+
     componentContainer.toggleClass("toto");
+
     expect(componentContainer.hasClass("toto")).toBeFalsy();
+
     componentContainer.addClass("toto");
     componentContainer.addClass("toto");
     let classes = componentContainer.getClasses();
+
     expect(classes.reduce(countClass("toto"), 0)).toBe(2);
+
     componentContainer.removeClass("toto");
     classes = componentContainer.getClasses();
+
     expect(classes.reduce(countClass("toto"), 0)).toBe(0);
   });
 
   test("hide/show behavior", () => {
     expect(componentSubLabel.hasClass("d-none")).toBeFalsy();
+
     componentSubLabel.hide();
+
     expect(componentSubLabel.hasClass("d-none")).toBeTruthy();
+
     componentSubLabel.show();
+
     expect(componentSubLabel.hasClass("d-none")).toBeFalsy();
   });
 
   test("value behavior", () => {
     expect(componentInput.value()).toBe(componentDefaultValue);
     expect(sheet.getData()[componentInput.id()!]).toBeUndefined();
+
     componentInput.value("42");
+
     expect(componentInput.value()).toBe("42");
     expect(sheet.getData()[componentInput.id()!]).toBe("42");
+
     sheet.setData({
       [componentInput.id()!]: "4343",
     });
+
     expect(componentInput.value()).toBe("4343");
     expect(sheet2.get(componentInput.id()!).value()).toBe("4343");
   });
@@ -239,6 +287,7 @@ describe("ComponentMock behavior", () => {
 describe("FailingComponent behavior", () => {
   let sheet: ViewMock;
   let failingComponent: FailingComponent;
+
   beforeEach(() => {
     const server = new ServerMock({
       views: [
@@ -256,7 +305,9 @@ describe("FailingComponent behavior", () => {
 
   test("id is null (and throws if component from FailingComponent.find)", () => {
     expect(failingComponent.id()).toBe(null);
+
     const secondFailingComponent = new FailingComponent(sheet, "");
+
     expect(() => secondFailingComponent.id()).toThrow();
   });
 
@@ -266,6 +317,7 @@ describe("FailingComponent behavior", () => {
 
   test("find throws exception", () => {
     const found = failingComponent.find("oh");
+
     expect(found).toBeInstanceOf(FailingComponent);
     expect(() => found.id()).toThrow();
   });
@@ -314,6 +366,7 @@ describe("FailingComponent behavior", () => {
 
   test("FailingComponent virtualValue always returns null", () => {
     failingComponent.value(42);
+
     expect(failingComponent.value()).toBe(42);
     expect(failingComponent.virtualValue()).toBe(null);
     expect(() => failingComponent.virtualValue(4242)).not.toThrow();
@@ -323,6 +376,7 @@ describe("FailingComponent behavior", () => {
 
   test("rawValue works", () => {
     failingComponent.value(42);
+
     expect(failingComponent.value()).toBe(42);
     expect(failingComponent.rawValue()).toBe(42);
   });
@@ -418,6 +472,7 @@ describe("ComponentMock event bubbling behavior", () => {
     componentLabel.on("click", clickLabel);
 
     componentLabel.trigger("click");
+
     expect(clickContainer).toHaveBeenCalledTimes(1);
     expect(clickSub).toHaveBeenCalledTimes(1);
     expect(clickLabel).toHaveBeenCalledTimes(1);
@@ -427,9 +482,11 @@ describe("ComponentMock event bubbling behavior", () => {
     expect(clickSub.mock.invocationCallOrder[0]).toBeLessThan(
       clickContainer.mock.invocationCallOrder[0],
     );
+
     jest.clearAllMocks();
 
     componentSub.trigger("click");
+
     expect(clickContainer).toHaveBeenCalledTimes(1);
     expect(clickSub).toHaveBeenCalledTimes(1);
     expect(clickLabel).toHaveBeenCalledTimes(0);
@@ -448,6 +505,7 @@ describe("ComponentMock event bubbling behavior", () => {
     componentContainer.on("click", clickContainer);
 
     componentLabel.trigger("click");
+
     expect(clickContainer).toHaveBeenCalledTimes(1);
     expect(clickDirect).toHaveBeenCalledTimes(1);
     expect(clickDelegated).toHaveBeenCalledTimes(1);
@@ -495,6 +553,7 @@ describe("ComponentMock event bubbling behavior", () => {
     componentContainer.on("click", "sub", clickSubDelegatedByIdOnContainer);
 
     componentContainer.trigger("click");
+
     expect(clickContainer).toHaveBeenCalledTimes(1);
     expect(clickSub).toHaveBeenCalledTimes(0);
     expect(clickLabel).toHaveBeenCalledTimes(0);
@@ -508,6 +567,7 @@ describe("ComponentMock event bubbling behavior", () => {
     jest.clearAllMocks();
 
     componentSub.trigger("click");
+
     expect(clickContainer).toHaveBeenCalledTimes(1);
     expect(clickSub).toHaveBeenCalledTimes(1);
     expect(clickLabel).toHaveBeenCalledTimes(0);
@@ -532,6 +592,7 @@ describe("ComponentMock event bubbling behavior", () => {
 
     jest.clearAllMocks();
     componentLabel.trigger("click");
+
     expect(clickContainer).toHaveBeenCalledTimes(1);
     expect(clickSub).toHaveBeenCalledTimes(1);
     expect(clickLabel).toHaveBeenCalledTimes(1);
@@ -565,6 +626,7 @@ describe("ComponentMock event bubbling behavior", () => {
 describe("FailingExistingComponent behavior", () => {
   let sheet: ViewMock;
   let failingComponent: FailingExistingComponent;
+
   beforeEach(() => {
     const server = new ServerMock({
       views: [
@@ -712,6 +774,7 @@ describe("Repeaters", () => {
 
   test("Find child when repeater is empty gives a FailingComponent", () => {
     const found = repeater.find("oh");
+
     expect(repeater.value()).toBeNull();
     expect(found).toBeInstanceOf(FailingComponent);
     expect(found.id()).toBe(null);
@@ -719,7 +782,9 @@ describe("Repeaters", () => {
 
   test("Get value for a component in a repeater", () => {
     const id = repeater.realId();
+
     expect(repeater.value()).toBeNull();
+
     const newValue = {
       entryId: {
         choice: "2",
@@ -729,6 +794,7 @@ describe("Repeaters", () => {
     sheet.setData({
       [id]: newValue,
     });
+
     expect(repeater.value()).toEqual(newValue);
     expect(repeater.find("entryId").value()).toEqual(newValue.entryId);
     expect(repeater.find("entryId").find("display").value()).toBe("The Label");
@@ -739,8 +805,11 @@ describe("Repeaters", () => {
 
   test("Repeater click on add doesn't create an entry in the value", () => {
     sheet.repeaterClickOnAdd(repeater.realId());
+
     expect(repeater.value()).toBeNull();
+
     sheet.repeaterClickOnAdd(repeaterKo.realId());
+
     expect(repeaterKo.value()).toBeNull();
   });
 
@@ -748,6 +817,7 @@ describe("Repeaters", () => {
     sheet.repeaterClickOnAdd(repeaterOk.realId());
     const values = repeaterOk.value() as LetsRole.RepeaterValue;
     const keys = Object.keys(values!);
+
     expect(keys.length).toBe(1);
     expect(values![keys[0]]).toEqual({
       choice: "1",
@@ -759,6 +829,7 @@ describe("Repeaters", () => {
     expect(repeaterOk.find(keys[0]).hasClass("editing")).toBeTruthy();
 
     const input = repeaterOk.find(keys[0]).find("input");
+
     expect(input.id()).toBe("input");
     // yes, when editing, the text component gives the default value, but undefined in the repeater value
     expect(input.value()).toBe("Hi !");
@@ -796,6 +867,7 @@ describe("Repeaters", () => {
     input.on("update", fnOnInput);
     const newVal = "Eh !";
     input.value(newVal);
+
     expect(input.value()).toBe(newVal);
     expect(repeaterOk.value()).toEqual({
       [keys[0]]: {
@@ -849,6 +921,7 @@ describe("Repeaters", () => {
     });
 
     input = repeaterOk.find(keys[0]).find("input");
+
     expect(input).toBeInstanceOf(FailingComponent);
     expect(input.value()).toBe(newVal);
 
@@ -890,6 +963,7 @@ describe("Repeaters", () => {
     expect(fnOnRepeaterOther).toHaveBeenCalledTimes(0);
 
     sheet.repeaterClickOnRemove(entryId);
+
     expect(fnOnRepeater).toHaveBeenCalledTimes(1);
     expect(fnClickOnRepeater).toHaveBeenCalledTimes(4);
     expect(fnOnRepeaterOther).toHaveBeenCalledTimes(1);
@@ -899,12 +973,15 @@ describe("Repeaters", () => {
   test.todo(
     "One view opened on two screens, it two different repeater entries are edited at the same time, an update on one screen will trigger update AND un-edit entries on the other screen",
   );
+
   test.todo(
     "update a component in a readable view doesn't trigger repeater update event",
   );
+
   test.todo(
     "One view opened on two screens, A number input change in a repeater edit view will un-edit the entry immediately IF the entry is in read view in the other screen AND it changes a read view component value",
   );
+
   test.todo(
     "If an edit view contains a choice with a list A of choices, editing an entry with a choice from list B will empty the value of the choice !!!",
   );
@@ -914,6 +991,7 @@ describe("Checkbox mock", () => {
   let server: ServerMock;
   let sheet: ViewMock;
   let rawCheckbox: LetsRole.Component;
+
   beforeEach(() => {
     server = new ServerMock({
       views: [
@@ -935,17 +1013,23 @@ describe("Checkbox mock", () => {
 
   test("Checkbox default value is false", () => {
     expect(rawCheckbox.value()).toStrictEqual(false);
+
     sheet.setData({
       checkbox: true,
     });
+
     expect(rawCheckbox.value()).toStrictEqual(true);
   });
 
   test("Checkbox change its value when clicked", () => {
     expect(rawCheckbox.value()).toStrictEqual(false);
+
     sheet.triggerComponentEvent("checkbox", "click");
+
     expect(rawCheckbox.value()).toStrictEqual(true);
+
     sheet.triggerComponentEvent("checkbox", "click");
+
     expect(rawCheckbox.value()).toStrictEqual(false);
   });
 
@@ -960,8 +1044,11 @@ describe("Checkbox mock", () => {
     });
     rawCheckbox.on("click", click);
     rawCheckbox.on("update", update);
+
     expect(rawCheckbox.value()).toStrictEqual(false);
+
     sheet.triggerComponentEvent("checkbox", "click");
+
     expect(rawCheckbox.value()).toStrictEqual(true);
     expect(click).toHaveBeenCalledTimes(1);
     expect(update).toHaveBeenCalledTimes(1);
@@ -972,6 +1059,7 @@ describe("Checkbox mock", () => {
     expect(updateValue).toStrictEqual(true);
 
     sheet.triggerComponentEvent("checkbox", "click");
+
     expect(rawCheckbox.value()).toStrictEqual(false);
     expect(clickValue).toStrictEqual(true);
     expect(updateValue).toStrictEqual(false);

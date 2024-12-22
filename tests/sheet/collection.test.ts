@@ -37,13 +37,21 @@ describe("Sheet collection", () => {
 
   test("Add, get, lists", () => {
     expect(subject.get("4242")).toBeUndefined();
+
     subject.add(sheet1);
+
     expect(subject.get("4242")).toEqual(sheet1);
+
     subject.add(sheet2);
+
     expect(subject.get("4243")).toEqual(sheet2);
+
     const cb = jest.fn();
+
     expect(cb).toHaveBeenCalledTimes(0);
+
     subject.each(cb);
+
     expect(cb).toHaveBeenCalledTimes(2);
   });
 });

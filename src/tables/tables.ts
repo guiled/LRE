@@ -17,6 +17,7 @@ export class LreTables
       ],
     ]);
   }
+
   get(id: LetsRole.TableID): ITable | null {
     lre.trace(`Get table "${id}"`);
 

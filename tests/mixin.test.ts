@@ -33,18 +33,25 @@ describe("Mixin tests", () => {
       getB: jest.fn(),
     };
     const Dummy = createDummyMixableClass(ctor, methods)(class {}) as Newable;
+
     expect(ctor).toHaveBeenCalledTimes(0);
     expect(methods.getA).toHaveBeenCalledTimes(0);
     expect(methods.getB).toHaveBeenCalledTimes(0);
+
     const a = new Dummy(42);
+
     expect(ctor).toHaveBeenCalledTimes(1);
     expect(ctor.mock.calls[0]).toEqual([42]);
     expect(methods.getA).toHaveBeenCalledTimes(0);
     expect(methods.getB).toHaveBeenCalledTimes(0);
+
     a.getA(13, 1313);
+
     expect(methods.getA).toHaveBeenCalledTimes(1);
     expect(methods.getA.mock.calls[0]).toEqual([13, 1313]);
+
     a.getB("go");
+
     expect(methods.getB).toHaveBeenCalledTimes(1);
     expect(methods.getB.mock.calls[0]).toEqual(["go"]);
   });
@@ -52,8 +59,11 @@ describe("Mixin tests", () => {
   test("Single Class Mixin calls constructor", () => {
     const ctor = jest.fn();
     const Subject = Mixin(createDummyMixableClass(ctor));
+
     expect(ctor).toHaveBeenCalledTimes(0);
+
     new Subject();
+
     expect(ctor).toHaveBeenCalledTimes(1);
   });
 
@@ -84,6 +94,7 @@ describe("Mixin tests", () => {
       createDummyMixableClass(ctor2),
     );
     new Subject([args1, args2]);
+
     expect(ctor1).toHaveBeenCalledTimes(1);
     expect(ctor1.mock.calls[0]).toHaveLength(args1.length);
     expect(ctor1.mock.calls[0]).toEqual(args1);
@@ -107,6 +118,7 @@ describe("Mixin tests", () => {
       };
     const Dummy = Mixin(A, B);
     const subject = new Dummy();
+
     expect(subject).toHaveProperty("a");
     expect(subject.a).toEqual(valueA);
     expect(subject).toHaveProperty("b");
@@ -126,6 +138,7 @@ describe("Mixin tests", () => {
     const class2 = createDummyMixableClass(null, methods2);
     const Subject = Mixin(class1, class2);
     const obj = new Subject();
+
     expect(obj).toHaveProperty("getA");
     expect(obj).toHaveProperty("getB");
     expect(obj).toHaveProperty("getC");
@@ -133,11 +146,17 @@ describe("Mixin tests", () => {
     expect(methods1.getB).toHaveBeenCalledTimes(0);
     expect(methods1.getC).toHaveBeenCalledTimes(0);
     expect(methods2.getC).toHaveBeenCalledTimes(0);
+
     obj.getA();
+
     expect(methods1.getA).toHaveBeenCalledTimes(1);
+
     obj.getB();
+
     expect(methods1.getB).toHaveBeenCalledTimes(1);
+
     obj.getC();
+
     expect(methods1.getC).toHaveBeenCalledTimes(0);
     expect(methods2.getC).toHaveBeenCalledTimes(1);
   });
@@ -153,7 +172,9 @@ describe("Mixin tests", () => {
       };
     const TestClass = Mixin(A);
     const test = new TestClass();
+
     test.callIt();
+
     expect(cb).toHaveBeenCalledWith(test);
   });
 
@@ -162,10 +183,12 @@ describe("Mixin tests", () => {
     const A = (superclass: Newable = class {}) => {
       return class A extends superclass {
         #id: number;
+
         constructor(id: number) {
           super();
           this.#id = id;
         }
+
         getId(): number {
           return this.#id;
         }
@@ -176,10 +199,12 @@ describe("Mixin tests", () => {
     const BMixable = (superclass: Newable = class {}) => {
       abstract class B extends superclass {
         #name: string;
+
         constructor(name: string) {
           super();
           this.#name = name;
         }
+
         abstract getId(): number;
         getThroughB(): string {
           //return this.#name;
@@ -197,6 +222,7 @@ describe("Mixin tests", () => {
     const id = 42;
     const name = "glop";
     const subject = new C(id, name);
+
     expect(subject.getThroughB()).toEqual("42glop");
   });
 
@@ -205,10 +231,12 @@ describe("Mixin tests", () => {
     const A = (superclass: Newable = class {}) =>
       class A extends superclass {
         #val: number;
+
         constructor(val: number) {
           super();
           this.#val = val;
         }
+
         get a(): number {
           return this.#val;
         }
@@ -228,14 +256,18 @@ describe("Mixin tests", () => {
     }
 
     const c = new C(42);
+
     expect(c.a).toStrictEqual(42);
+
     c.a = 43;
+
     expect(c.a).toStrictEqual(43);
 
     class D extends Mixin(A, B) {
       constructor(v: number) {
         super([[v]]);
       }
+
       get a(): number {
         return 13;
       }
@@ -246,6 +278,7 @@ describe("Mixin tests", () => {
     }
 
     const d = new D(12);
+
     expect(d.a).toStrictEqual(13);
     expect(d.getSuper()).toStrictEqual(12);
   });
@@ -260,6 +293,7 @@ describe("Mixin tests", () => {
           super();
           this.#id = id;
         }
+
         id(): number {
           return this.#id;
         }
@@ -269,12 +303,14 @@ describe("Mixin tests", () => {
       constructor(val: number) {
         super([[val]]);
       }
+
       id(): number {
         return 13 + super.id();
       }
     }
 
     const c = new C(42);
+
     expect(c.id()).toStrictEqual(13 + 42);
   });
 
@@ -299,6 +335,7 @@ describe("Mixin tests", () => {
     }
 
     const c = new C();
+
     expect(c.getA()).toStrictEqual(43);
     expect(c.a).toStrictEqual(43);
     expect(c.getSuperA()).toBeUndefined();
@@ -350,6 +387,7 @@ describe("Mixin tests", () => {
     }
 
     new D();
+
     expect(ctorCbA).toHaveBeenCalledTimes(2);
     expect(ctorCbA.mock.calls[0][0]).toBe("second");
     expect(ctorCbA.mock.calls[1][0]).toBe("first");

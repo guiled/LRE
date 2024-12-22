@@ -236,6 +236,7 @@ export class ComponentMock<
 export class FailingComponent implements LetsRole.Component<any> {
   #sheet: ViewMock;
   #realId: LetsRole.ComponentID;
+
   constructor(sheet: ViewMock, realId: LetsRole.ComponentID) {
     this.#realId = realId;
     this.#sheet = sheet;
@@ -358,10 +359,12 @@ export class FailingComponent implements LetsRole.Component<any> {
 
 export class FailingExistingComponent extends FailingComponent {
   #id;
+
   constructor(sheet: ViewMock, realId: LetsRole.ComponentID) {
     super(sheet, realId);
     this.#id = realId;
   }
+
   id(): LetsRole.ComponentID | null {
     return this.#id.substring(this.#id.lastIndexOf(".") + 1);
   }

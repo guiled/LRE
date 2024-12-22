@@ -164,9 +164,11 @@ export class MultiChoice extends Choice<
   clear(): void {
     this.value([]);
   }
+
   selectNone(): void {
     this.clear();
   }
+
   unselectAll(): void {
     this.clear();
   }
@@ -174,6 +176,7 @@ export class MultiChoice extends Choice<
   selectAll(): void {
     this.value(Object.keys(this.getChoices()));
   }
+
   invert(): void {
     const choices = this.getChoices();
     const val = this.value();

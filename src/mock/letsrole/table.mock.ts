@@ -1,5 +1,6 @@
 export class TableMock implements LetsRole.Table {
   #rows: LetsRole.TableRow[];
+
   constructor(rows: LetsRole.TableRow[]) {
     this.#rows = rows;
   }

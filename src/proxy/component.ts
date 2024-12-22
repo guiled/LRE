@@ -182,6 +182,7 @@ class ComponentProxy
   toggleClass(className: LetsRole.ClassName): void {
     this.getDest().toggleClass(className);
   }
+
   virtualValue(newValue?: LetsRole.ComponentValue): LetsRole.ComponentValue {
     if (arguments.length > 0) {
       this.getDest().virtualValue(newValue);
@@ -229,6 +230,7 @@ class ComponentProxy
     this.#logAccess("value");
     return this.getDest().value();
   }
+
   sheet(): LetsRole.Sheet {
     return this.#sheet as LetsRole.Sheet;
   }

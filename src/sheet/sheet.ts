@@ -275,6 +275,7 @@ export class Sheet
   getVariable(id: string): number | null {
     return this.raw().getVariable(id);
   }
+
   prompt(
     title: string,
     view: string,
@@ -283,22 +284,28 @@ export class Sheet
   ): void {
     return this.raw().prompt(title, view, callback, callbackInit);
   }
+
   id(): string {
     return this.raw().id();
   }
+
   getSheetAlphaId(): string {
     this.#alphaId ??= lre.numToAlpha(Number(this.getSheetId()));
     return this.#alphaId!;
   }
+
   realId(): string {
     return this.raw().id();
   }
+
   getSheetId(): LetsRole.SheetRealID {
     return this.raw().getSheetId();
   }
+
   name(): string {
     return this.raw().name();
   }
+
   properName(): string {
     return this.raw().properName();
   }

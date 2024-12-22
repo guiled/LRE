@@ -17,22 +17,32 @@ describe("Wait proxy", () => {
   test("runs normally in real mode", () => {
     context.setMode("real");
     const subject = registerLreWait(context, wait);
+
     expect(wait).not.toHaveBeenCalled();
+
     subject(100, cb);
+
     expect(cb).not.toHaveBeenCalled();
     expect(wait).toHaveBeenCalled();
+
     mockedWaitDefs.itHasWaitedEverything();
+
     expect(cb).toHaveBeenCalled();
   });
 
   test("wait is not called in real mode", () => {
     context.setMode("virtual");
     const subject = registerLreWait(context, wait);
+
     expect(wait).not.toHaveBeenCalled();
+
     subject(100, cb);
+
     expect(cb).not.toHaveBeenCalled();
     expect(wait).not.toHaveBeenCalled();
+
     mockedWaitDefs.itHasWaitedEverything();
+
     expect(cb).not.toHaveBeenCalled();
   });
 });

@@ -10,24 +10,29 @@ describe("Logged call", () => {
     jest.spyOn(context, "pushLogContext");
     jest.spyOn(context, "popLogContext");
     const cb = jest.fn();
+
     expect(context.pushLogContext).not.toHaveBeenCalled();
     expect(context.popLogContext).not.toHaveBeenCalled();
     expect(cb).not.toHaveBeenCalled();
+
     loggedCall(cb);
+
     expect(context.pushLogContext).toHaveBeenCalled();
     expect(context.popLogContext).toHaveBeenCalled();
     expect(cb).toHaveBeenCalled();
   });
 
-  test("logged call runs the callback with clean logs", () => {
+  test("logged call returns the callback return", () => {
     const result = Math.random();
     const cb = jest.fn(() => result);
+
     expect(loggedCall(cb)).toBe(result);
   });
 });
 
 describe("Virtual call", () => {
   const env: any = {};
+
   beforeEach(() => {
     global.init = env.init = jest.fn();
     global.initRoll = env.initRoll = jest.fn();
@@ -41,6 +46,7 @@ describe("Virtual call", () => {
       create: jest.fn(),
     };
   });
+
   test("runs the callback", () => {
     const result = Math.random();
     const cb = jest.fn(() => {
@@ -55,6 +61,7 @@ describe("Virtual call", () => {
       global.Dice.roll = jest.fn();
       return result;
     });
+
     expect(virtualCall(cb)).toBe(result);
     expect(global.Dice.roll).not.toHaveBeenCalled();
     expect(global.init).toBe(env.init);
@@ -75,6 +82,7 @@ describe("Virtual call", () => {
       /* @ts-expect-error Intended error */
       null();
     });
+
     expect(context.getMode()).toBe("real");
     expect(lre.error).not.toHaveBeenCalled();
     expect(() => virtualCall(cb)).not.toThrow();

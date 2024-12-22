@@ -82,7 +82,7 @@ describe("Test all log method", () => {
     expect(global.log).toHaveBeenCalledTimes(2);
   });
 
-  test("Check log errors, warnings and trace… so all", () => {
+  test("Check log errors, warnings and trace… so everything", () => {
     const logger = new Logger();
     logger.setLogLevel("trace");
 

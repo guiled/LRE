@@ -4,6 +4,7 @@ export const registerLreRollBuilder = (
 ): typeof RollBuilder =>
   class {
     #raw: LetsRole.RollBuilderInstance;
+
     constructor(sheet: unknown) {
       this.#raw = new initialRollBuilder(sheet);
     }
