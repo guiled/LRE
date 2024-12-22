@@ -66,7 +66,9 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     #getCurrentValue(): ReturnType<ValueGetterSetter> {
-      return this.#currentValue ?? this.#setCurrentValue(this.#valueCb);
+      const result = this.#currentValue ?? this.#setCurrentValue(this.#valueCb);
+
+      return lre.value(result);
     }
 
     @dynamicSetter
@@ -126,7 +128,15 @@ export const DataProvider = (superclass: Newable = class {}) =>
         sorter = ((
           a: Record<string, DataProviderDataValue>,
           b: Record<string, DataProviderDataValue>,
-        ) => defaultSorter(a[field], b[field])) as Sorter;
+          _ka: DataProviderDataId,
+          _kb: DataProviderDataId,
+          dataA: DataProviderDataValue,
+          dataB: DataProviderDataValue,
+        ) =>
+          defaultSorter(
+            a[field] ?? (dataA as Record<string, any>)?.[field],
+            b[field] ?? (dataB as Record<string, any>)?.[field],
+          )) as Sorter;
       } else {
         sorter = sorterOrString;
       }
@@ -410,6 +420,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
 export class DirectDataProvider extends Mixin(DataProvider) {
   #id: string;
+
   constructor(
     id: string,
     context: ProxyModeHandler | undefined,

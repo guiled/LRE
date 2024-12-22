@@ -169,6 +169,39 @@ describe("Data provider sort", () => {
       a: "10",
     });
   });
+
+  test("Sort on field from original data", () => {
+    const data = {
+      a: { a: "10", b: "1", c: "11" },
+      b: { a: "4", b: "2", c: "100" },
+      c: { a: "2", b: "3", c: "50" },
+      d: { a: "1", b: "6", c: "30" },
+    };
+    const dataGetter = jest.fn((_a: any) => data as any);
+    const dp = lre.dataProvider("test", dataGetter);
+    const sorted = dp.select("a").sort("c");
+
+    // sorted by string value of c
+    expect(sorted.providedValue()).toStrictEqual({
+      b: "4",
+      a: "10",
+      d: "1",
+      c: "2",
+    });
+
+    lre.autoNum();
+    sorted.refresh();
+
+    // sorted by numeric value of c
+    expect(JSON.stringify(sorted.providedValue())).toStrictEqual(
+      JSON.stringify({
+        a: 10,
+        d: 1,
+        c: 2,
+        b: 4,
+      }),
+    );
+  });
 });
 
 describe("DataProvider each", () => {
