@@ -15,6 +15,7 @@ declare interface ILRE {
   getRandomId(): string;
   wait(delay: number, cb: () => void, name: string = "");
   autoNum(v: boolean = true): void;
+  value<T = any>(n: T): T;
   isIterableByEach(
     object: LetsRole.ComponentValue,
   ): object is LetsRole.EachValue;

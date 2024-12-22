@@ -227,18 +227,29 @@ export class LRE extends Logger implements ILRE {
   }
 
   autoNum(v: boolean = true): void {
-    this.trace(`autonum ${v ? "activated" : "deactivated"}`);
+    this.trace(`auto num ${v ? "activated" : "deactivated"}`);
     this.#autoNum = v;
   }
 
-  value<T = any>(value: T): number | T {
-    if (
-      this.#autoNum &&
-      value !== "" &&
-      !isNaN(value as any) &&
-      !Array.isArray(value)
-    ) {
-      return Number(value);
+  value<T = any>(value: T): T {
+    if (!this.#autoNum) return value;
+
+    if (typeof value === "string" && value !== "" && !isNaN(Number(value))) {
+      return Number(value) as T;
+    }
+
+    if (Array.isArray(value)) {
+      return value.map((v) => this.value(v)) as T;
+    }
+
+    if (this.isObject(value)) {
+      const result: BasicObject = {};
+
+      for (const key in value) {
+        result[key] = this.value(value[key]);
+      }
+
+      return result as T;
     }
 
     return value;
@@ -261,7 +272,7 @@ export class LRE extends Logger implements ILRE {
 
   each<T extends LetsRole.EachValue = LetsRole.EachValue>(
     value: T,
-    cb: LetsRole.EachCallback<T, unknown>,
+    cb: LetsRole.EachCallback<T, T>,
   ): T {
     const result: T = (Array.isArray(value) ? [] : {}) as T;
 
