@@ -4,30 +4,11 @@ import { Mixin } from "../mixin";
 
 export class Table
   extends Mixin(HasRaw<LetsRole.Table>, DataProvider)
-  implements LetsRole.Table
+  implements ITable
 {
-  get(id: LetsRole.ColumnId): LetsRole.TableRow | null {
-    return this.raw().get(id);
-  }
-  each(callback: (row: LetsRole.TableRow, key: string) => void): void {
-    return this.raw().each((row: LetsRole.TableRow) => {
-      callback(row, row.id);
-    });
-  }
-  random(...args: any[]): void {
-    let callback: (row: LetsRole.TableRow) => void, count: number;
+  #id: LetsRole.TableID;
 
-    if (args.length === 2) {
-      [count, callback] = args;
-      /* @ts-expect-error the second parameter is optional but raise an error */
-      this.raw().random(count, callback);
-    } else {
-      [callback] = args;
-      this.raw().random(callback);
-    }
-  }
-
-  constructor(raw: LetsRole.Table) {
+  constructor(raw: LetsRole.Table, id: LetsRole.TableID) {
     super([
       [
         {
@@ -37,13 +18,49 @@ export class Table
       [
         undefined,
         () => {
-          const result: { [key: LetsRole.TableValue]: LetsRole.TableRow } = {};
-          this.each((row: LetsRole.TableRow) => {
+          const result: { [key: keyof TableRow]: TableRow } = {};
+          this.each((row: TableRow) => {
             result[row.id] = row;
           });
           return result;
         },
       ],
     ]);
+    this.#id = id;
+  }
+
+  id(): LetsRole.TableID {
+    return this.#id;
+  }
+
+  get(id: LetsRole.ColumnId): TableRow | null {
+    const row = this.raw().get(id);
+
+    if (!row) {
+      return row;
+    }
+
+    return lre.value(row);
+  }
+
+  each(callback: (row: TableRow, key: string | number) => void): void {
+    return this.raw().each((row: LetsRole.TableRow) => {
+      callback(lre.value(row), lre.value(row.id));
+    });
+  }
+
+  random(...args: any[]): void {
+    let callback: (row: LetsRole.TableRow) => void, count: number;
+
+    if (args.length === 2) {
+      [count, callback] = args;
+      /* @ts-expect-error the second parameter is optional but raise an error */
+      this.raw().random(count, (row: LetsRole.TableRow) =>
+        lre.value(callback(row)),
+      );
+    } else {
+      [callback] = args;
+      this.raw().random((row: LetsRole.TableRow) => lre.value(callback(row)));
+    }
   }
 }

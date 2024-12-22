@@ -142,7 +142,7 @@ declare namespace LetsRole {
   export type TableID = string;
   export type TableColumn = string;
   export type TableValue = string;
-  export type TableRow = { id: TableValue } & Record<TableColumn, TableValue>;
+  export type TableRow<T = TableValue> = { id: T } & Record<TableColumn, T>;
   export type ColumnId = string;
 
   export type Tables = {
@@ -150,7 +150,7 @@ declare namespace LetsRole {
   };
 
   export type Table = {
-    get: (id: ColumnId) => TableRow | null;
+    get: (id: TableValue) => TableRow | null;
     each: (callback: (row: TableRow) => void) => void;
     random: (callback: (row: TableRow) => void) => void;
     random: (count: number, callback: (row: TableRow) => void) => void;
@@ -277,12 +277,13 @@ declare namespace LetsRole {
 
   export type RollBuilder = new (...args: unknown[]) => RollBuilderInstance;
 
-  export type EachValue = Array<unknown> | Record<string, unknown>;
+  export type EachValue<T = any> = Array<T> | Record<string, T> | string;
   export type EachCallback<
-    T extends Array<unknown> | Record<string, unknown>,
+    T extends Array<any> | Record<string, any> | string,
     U = void,
-  > =
-    T extends Array<infer V>
+  > = T extends string
+    ? (d: string, i?: number) => U
+    : T extends Array<infer V>
       ? (d: V, i?: number) => void
       : (
           d: T extends undefined ? unknown : T[keyof T],

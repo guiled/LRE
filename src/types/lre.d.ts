@@ -404,3 +404,15 @@ declare type DynamicSetValue<T> =
   | IComponent
   | IGroup
   | ((...args: any[]) => T);
+
+declare type TableRow = LetsRole.TableRow<LetsRole.TableValue | number>;
+
+declare interface ITable extends LetsRole.Table, IDataProvider {
+  id(): LetsRole.TableID;
+  get(id: LetsRole.ColumnId): TableRow | null;
+  each(callback: (row: TableRow, key: string | number) => void): void;
+}
+
+declare interface ITables extends LetsRole.Tables {
+  get(id: LetsRole.TableID): ITable | null;
+}
