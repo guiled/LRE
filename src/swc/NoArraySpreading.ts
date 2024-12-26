@@ -7,7 +7,7 @@ import {
   TsType,
 } from "@swc/core";
 import { Visitor } from "@swc/core/Visitor.js";
-import call from "./node/expression/call";
+import { call } from "./node/expression/call";
 import member from "./node/expression/member";
 import identifier from "./node/identifier";
 

@@ -1,5 +1,5 @@
 import { Argument, Expression, Span } from "@swc/core";
-import call from "./call";
+import { call } from "./call";
 
 export const objectassign = (
   span: Span,

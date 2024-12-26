@@ -1,6 +1,6 @@
 import { CallExpression, OptionalChainingExpression, Span } from "@swc/core";
 import identifier from "../identifier";
-import call from "./call";
+import { call } from "./call";
 import member from "./member";
 
 export const arrayfromarguments = (

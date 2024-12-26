@@ -36,7 +36,7 @@ import {
 } from "@swc/core";
 import onevariable from "./node/declaration/onevariable";
 import assignment from "./node/expression/assignment";
-import call from "./node/expression/call";
+import { call } from "./node/expression/call";
 import iife from "./node/expression/iife";
 import member from "./node/expression/member";
 import thisexpression from "./node/expression/thisexpression";

@@ -13,7 +13,7 @@ export type Call_Param = {
   typeArguments?: CallExpression["typeArguments"];
 };
 
-export default (
+export const call = (
   { span, callee, args = [], typeArguments }: Call_Param,
   optional: boolean = false,
 ): CallExpression | OptionalChainingExpression => {

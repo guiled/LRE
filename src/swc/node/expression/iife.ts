@@ -7,7 +7,7 @@ import {
   Span,
   Statement,
 } from "@swc/core";
-import call from "./call";
+import { call } from "./call";
 import func from "./func";
 import parenthesis from "./parenthesis";
 import member from "./member";

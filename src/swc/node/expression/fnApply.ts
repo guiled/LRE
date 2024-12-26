@@ -1,5 +1,5 @@
 import { Argument, CallExpression, Expression } from "@swc/core";
-import call from "./call";
+import { call } from "./call";
 import member from "./member";
 import { ExpressionWithSpan } from "../../types";
 import identifier from "../identifier";

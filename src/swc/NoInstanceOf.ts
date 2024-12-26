@@ -1,6 +1,6 @@
 import { BinaryExpression, Expression, Program, TsType } from "@swc/core";
 import { Visitor } from "@swc/core/Visitor.js";
-import call from "./node/expression/call";
+import { call } from "./node/expression/call";
 import identifier from "./node/identifier";
 
 class NoInstanceOf extends Visitor {

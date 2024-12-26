@@ -20,7 +20,7 @@ import identifier from "./node/identifier";
 import { objectassign } from "./node/expression/objectassign";
 import { newexpression } from "./node/expression/newexpression";
 import thisexpression from "./node/expression/thisexpression";
-import call from "./node/expression/call";
+import { call } from "./node/expression/call";
 import member from "./node/expression/member";
 import { arrayexpression } from "./node/expression/arrayexpression";
 import iife from "./node/expression/iife";

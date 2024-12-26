@@ -10,7 +10,7 @@ import { Visitor } from "@swc/core/Visitor.js";
 import { arrayexpression } from "./node/expression/arrayexpression";
 import { fnApply } from "./node/expression/fnApply";
 import { ExpressionWithSpan } from "./types";
-import call from "./node/expression/call";
+import { call } from "./node/expression/call";
 import member from "./node/expression/member";
 import identifier from "./node/identifier";
 import { spreadToConcat } from "./utils/spreadToConcat";

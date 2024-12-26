@@ -21,7 +21,7 @@ import numericliteral from "./node/literal/numericliteral";
 import undefinedidentifier from "./node/undefinedidentifier";
 import returnstmt from "./node/statement/returnstmt";
 import onevariable from "./node/declaration/onevariable";
-import call from "./node/expression/call";
+import { call } from "./node/expression/call";
 
 const ARGS = "_arg";
 
