@@ -34,7 +34,7 @@ b`),
     const a: unknown[] = [1];
     a.push(a);
 
-    expect(stringify(a, false)).toStrictEqual(`[1,"[recursive…]"]`);
+    expect(stringify(a, false)).toStrictEqual(`[1,"[recursive]"]`);
   });
 
   test("objects", () => {
@@ -52,7 +52,7 @@ b`),
     obj.c = obj;
 
     expect(stringify(obj, false)).toStrictEqual(
-      `{"a":1,"b":"2","c":"{recursive…}"}`,
+      `{"a":1,"b":"2","c":"{recursive}"}`,
     );
   });
 });

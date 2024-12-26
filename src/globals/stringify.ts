@@ -33,7 +33,7 @@ const _stringify = function <T>(
 
       if (Array.isArray(obj)) {
         if (treatedObject.some((o) => o === obj)) {
-          return '"[recursive…]"';
+          return '"[recursive]"';
         }
 
         treatedObject.push(obj);
@@ -61,7 +61,7 @@ const _stringify = function <T>(
   }
 
   if (treatedObject.some((o) => o === obj)) {
-    return '"{recursive…}"';
+    return '"{recursive}"';
   }
 
   treatedObject.push(obj);
