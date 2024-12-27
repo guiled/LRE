@@ -267,7 +267,7 @@ export const EventHolder = <
 
       let logText = "Handler added";
 
-      if (Object.keys(this.#events[eventName]!.handlers).length === 1) {
+      if (cnt === 1) {
         this.#triggerThisEvent(
           "eventhandler-created",
           event,
