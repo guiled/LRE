@@ -13,9 +13,8 @@ import {
 } from "@swc/core";
 import { Visitor } from "@swc/core/Visitor.js";
 import { ExpressionWithSpan } from "./types";
-import member from "./node/expression/member";
-import { arrayexpression } from "./node/expression/arrayexpression";
-import numericliteral from "./node/literal/numericliteral";
+import { call } from "./node/expression/call";
+import identifier from "./node/identifier";
 
 class NoSequence extends Visitor {
   visitStatements(stmts: Statement[]): Statement[] {
@@ -77,25 +76,22 @@ class NoSequence extends Visitor {
   }
 
   // don't generate [].pop(), because Let's Role runs it twice
+  // don't generate [xx, xx][1], because Let's Role runs "xx" it twice
+  // so sequence expression is transformed into a function that return the last expression
   #transformSequenceExpressionToArrayLastExpression(
     seq: SequenceExpression,
   ): Expression {
     const span = seq.span;
-    return member({
-      object: arrayexpression({
+
+    return call({
+      span,
+      callee: identifier({
         span,
-        elements: seq.expressions.map((e) => {
-          return { expression: e } as ExprOrSpread;
-        }),
+        value: "la",
       }),
-      property: {
-        type: "Computed",
-        span: seq.span,
-        expression: numericliteral({
-          span: seq.span,
-          value: seq.expressions.length - 1,
-        }),
-      },
+      args: seq.expressions.map((e) => {
+        return { expression: e } as ExprOrSpread;
+      }),
     });
   }
 

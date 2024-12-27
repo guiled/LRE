@@ -17,6 +17,7 @@ import { noSpreadArgument } from "./src/swc/NoSpreadArgument";
 import fixArrayFromArguments from "./src/swc/FixArrayFromArguments";
 import { noSequence } from "./src/swc/noSequence";
 import { noTypeof } from "./src/swc/noTypeof";
+import { noCallInIf } from "./src/swc/noCallInIf";
 
 const transformForLR: Options = {
   jsc: {
@@ -86,7 +87,7 @@ const postCleanup: Options = {
   // minify: false,
   // isModule: false,
   ...transformForLR,
-  plugin: plugins([noVoid0(), noTypeof(), noSequence()]),
+  plugin: plugins([noVoid0(), noTypeof(), noSequence(), noCallInIf()]),
 };
 
 export { transformForLR, postCleanup };

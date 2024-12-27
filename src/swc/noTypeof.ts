@@ -1,4 +1,10 @@
-import { BinaryExpression, Expression, Program, TsType } from "@swc/core";
+import {
+  BinaryExpression,
+  BinaryOperator,
+  Expression,
+  Program,
+  TsType,
+} from "@swc/core";
 import { Visitor } from "@swc/core/Visitor.js";
 import identifier from "./node/identifier";
 import { call } from "./node/expression/call";
@@ -14,11 +20,41 @@ const types = [
   "boolean",
 ];
 
+const coefficient: Record<
+  Extract<BinaryOperator, "===" | "==" | "!==" | "!=" | ">" | "<">,
+  1 | -1
+> = {
+  "===": 1,
+  "==": 1,
+  "!==": -1,
+  "!=": -1,
+  ">": -1,
+  "<": -1,
+};
+
 class NoTypeof extends Visitor {
+  #isTypeofOperator(n: BinaryOperator): n is keyof typeof coefficient {
+    return Object.keys(coefficient).includes(n);
+  }
+
   visitBinaryExpression(n: BinaryExpression): Expression {
-    if (n.left.type === "UnaryExpression" && n.left.operator === "typeof") {
+    if (
+      n.left.type === "UnaryExpression" &&
+      n.left.operator === "typeof" &&
+      this.#isTypeofOperator(n.operator)
+    ) {
       if (n.right.type !== "StringLiteral") {
         throw new Error("Expected string literal with typeof operator");
+      }
+
+      if (n.right.value === "u") {
+        n.right.value = "undefined";
+
+        if (n.operator === "<") {
+          n.operator = "!==";
+        } else {
+          n.operator = "===";
+        }
       }
 
       return this.visitExpression(
@@ -35,9 +71,7 @@ class NoTypeof extends Visitor {
             {
               expression: numericliteral({
                 span: n.right.span,
-                value:
-                  types.indexOf(n.right.value) *
-                  (n.operator === "===" || n.operator === "==" ? 1 : -1),
+                value: types.indexOf(n.right.value) * coefficient[n.operator],
               }),
             },
           ],

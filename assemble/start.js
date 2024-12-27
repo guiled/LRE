@@ -20,6 +20,10 @@ function ct(name) {
   };
 }
 
+function la() {
+  return Array.from(arguments).at(-1);
+}
+
 const types = [
   "",
   "undefined",

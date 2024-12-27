@@ -1291,6 +1291,6 @@ class DefaultVisitor extends Visitor {
 }
 
 // ts-unused-exports:disable-next-line
-export default function defaultVisitor() {
+export function defaultVisitor() {
   return (program: Program) => new DefaultVisitor().visitProgram(program);
 }
