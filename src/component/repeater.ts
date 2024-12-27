@@ -302,7 +302,7 @@ export class Repeater extends Component<
 
   map(
     callback: (d: LetsRole.ViewData, k: LetsRole.Index) => LetsRole.ViewData,
-  ): LetsRole.RepeaterDefinedValue {
+  ): NonNullable<LetsRole.RepeaterValue> {
     const val = this.value();
     const result: LetsRole.RepeaterValue = {};
     each(val || {}, function (d: LetsRole.ViewData, k: LetsRole.Index) {

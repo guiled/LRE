@@ -89,7 +89,7 @@ declare type ProxyModeHandlerLogType =
   | "cmp";
 
 declare type ContextLogRecord =
-  | [LetsRole.SheetRealIdDefined, LetsRole.ComponentID]
+  | [NonNullable<LetsRole.SheetRealID>, LetsRole.ComponentID]
   | IEventHolder; // these could be removed when sheet can e identified as DiceResult, prompt, craft…
 //  | IGroup; // these could be removed when sheet can e identified as DiceResult, prompt, craft…
 declare type ContextLogByType = Array<ContextLogRecord>;

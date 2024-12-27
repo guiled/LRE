@@ -1,7 +1,7 @@
 import { Sheet } from "./sheet";
 
 export class SheetCollection implements ISheetCollection {
-  #sheets: Record<LetsRole.SheetRealIdDefined, Sheet> = {};
+  #sheets: Record<NonNullable<LetsRole.SheetRealID>, Sheet> = {};
 
   add(s: Sheet): void {
     const sheetId = s.getSheetId();

@@ -4,8 +4,9 @@ import { ViewMock } from "./view.mock";
 export class ServerMock {
   #views: LetsRoleMock.ViewDefinitions[];
   #viewVariables: Record<LetsRole.ViewID, Record<string, number>> = {};
-  #viewData: Record<LetsRole.SheetRealIdDefined, LetsRole.ViewData> = {};
-  #openedSheets: Record<LetsRole.SheetRealIdDefined, Array<ViewMock>> = {};
+  #viewData: Record<NonNullable<LetsRole.SheetRealID>, LetsRole.ViewData> = {};
+  #openedSheets: Record<NonNullable<LetsRole.SheetRealID>, Array<ViewMock>> =
+    {};
   #openedPrompts: Record<
     LetsRole.SheetID,
     (result: LetsRole.ViewData) => void
