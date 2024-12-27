@@ -14,6 +14,7 @@ import assignment from "./node/expression/assignment";
 import member from "./node/expression/member";
 import parenthesis from "./node/expression/parenthesis";
 import or from "./node/expression/binary/or";
+import undefinedidentifier from "./node/undefinedidentifier";
 
 class NoThrowStatement extends Visitor {
   #lastExceptionIdentifier(span: Span): Identifier {
@@ -72,16 +73,21 @@ class NoThrowStatement extends Visitor {
                     }),
                     args: [
                       {
-                        expression: member(
-                          {
+                        expression: {
+                          span: handler.param.span,
+                          type: "ConditionalExpression",
+                          test: handler.param,
+                          consequent: member({
                             object: handler.param,
                             property: identifier({
                               span: handler.param.span,
                               value: "message",
                             }),
-                          },
-                          true,
-                        ),
+                          }),
+                          alternate: undefinedidentifier({
+                            span: handler.param.span,
+                          }),
+                        },
                       },
                     ],
                   }),

@@ -1,6 +1,6 @@
 import esbuild from "esbuild";
 import { transformFile, transformSync } from "@swc/core";
-import { transformForLR, noVoid0Plugin } from "./transpile.conf";
+import { transformForLR, postCleanup } from "./transpile.conf";
 import fs from "fs";
 import { formatLRECode } from "./builder/formatLRECode";
 import { assembleLRECode, encloseInRegion } from "./builder/assemble";
@@ -45,16 +45,24 @@ esbuild
     format: "iife",
     define: {
       "console.log": "log",
+      LRE_DEBUG: "false",
     },
+    minifySyntax: true,
   })
   .then(() => {
-    if (DEBUG_BUILD && noVoid0Plugin.jsc) {
-      delete noVoid0Plugin.jsc.minify;
+    if (DEBUG_BUILD && postCleanup.jsc) {
+      delete postCleanup.jsc.minify;
     }
 
-    return transformFile(OUTPUT_FILE + ".0.tmp.js", noVoid0Plugin);
+    return transformFile(OUTPUT_FILE + ".0.tmp.js", postCleanup);
   })
-  .then((result) => result.code.trim())
+  .then((result) =>
+    result.code
+      .trim()
+      .replace(/void 0/g, "undefined")
+      .replace(/\(\)=>\{/g, "function() {")
+      .replace(/`\n`/gm, '"\\n"'),
+  )
   .then((code) => {
     code = assembleLRECode(code);
     fs.writeFileSync(OUTPUT_FILE + ".1.tmp.js", code);

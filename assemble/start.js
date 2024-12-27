@@ -6,17 +6,32 @@ try {
   errExclFirstLine = e.trace[0].loc.start.line;
 }
 
-function instanceOf(a, b) {
+function iOf(a, b) {
   return a instanceof b;
 }
 
 function def(args, idx, val) {
-  return args.length < idx + 1 || typeof args[idx] === "undefined"
-    ? val : args[idx];
+  return args.length < idx + 1 || tpo(args[idx], 1) ? val : args[idx];
 }
 
 function ct(name) {
   return {
     name: name,
   };
+}
+
+const types = [
+  "",
+  "undefined",
+  "string",
+  "object",
+  "function",
+  "number",
+  "boolean",
+];
+function tpo(val, idx) {
+  if (idx > 0) {
+    return typeof val === types[idx];
+  }
+  return typeof val !== types[-idx];
 }

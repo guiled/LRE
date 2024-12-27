@@ -15,6 +15,8 @@ import noInstanceOf from "./src/swc/NoInstanceOf";
 import noObjectSpreading from "./src/swc/NoObjectSpread";
 import { noSpreadArgument } from "./src/swc/NoSpreadArgument";
 import fixArrayFromArguments from "./src/swc/FixArrayFromArguments";
+import { noSequence } from "./src/swc/noSequence";
+import { noTypeof } from "./src/swc/noTypeof";
 
 const transformForLR: Options = {
   jsc: {
@@ -61,9 +63,30 @@ const transformForLR: Options = {
   sourceMaps: false,
 };
 
-const noVoid0Plugin: Options = {
+const postCleanup: Options = {
+  // jsc: {
+  //   parser: {
+  //     syntax: "ecmascript",
+  //     decorators: false,
+  //   },
+  //   target: "es5",
+  //   loose: false,
+  //   minify: {
+  //     compress: false,
+  //     mangle: {
+  //       toplevel: false,
+  //       keep_classnames: false,
+  //       keep_fnames: false,
+  //       keep_private_props: false,
+  //       ie8: false,
+  //       safari10: false,
+  //     },
+  //   },
+  // },
+  // minify: false,
+  // isModule: false,
   ...transformForLR,
-  plugin: plugins([noVoid0()]),
+  plugin: plugins([noVoid0(), noTypeof(), noSequence()]),
 };
 
-export { transformForLR, noVoid0Plugin };
+export { transformForLR, postCleanup };

@@ -11,7 +11,7 @@ class NoInstanceOf extends Visitor {
           span: n.span,
           callee: identifier({
             span: n.span,
-            value: "instanceOf",
+            value: "iOf",
           }),
           args: [
             {
