@@ -61,7 +61,8 @@ esbuild
       .trim()
       .replace(/void 0/g, "undefined")
       .replace(/\(\)=>\{/g, "function() {")
-      .replace(/`\n`/gm, '"\\n"'),
+      .replace(/`\n`/gm, '"\\n"')
+      .replace(/bind\(this\)\.(bind|apply)\(this/gm, "$1(this"),
   )
   .then((code) => {
     code = assembleLRECode(code);
