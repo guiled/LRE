@@ -36,7 +36,8 @@ const traceDynamicSetter = (
   realId: string,
   context: ClassMethodDecoratorContext<any>,
 ): void => {
-  lre.trace(`Add dynamic setter for ${realId} on ${context.name as string}`);
+  LRE_DEBUG &&
+    lre.trace(`Add dynamic setter for ${realId} on ${context.name as string}`);
 };
 
 export const extractDataProviders = function <
@@ -201,9 +202,10 @@ const removeOldEventLogHandlers = function <This extends DynamicSetterHolder>(
   });
 
   if (deleted) {
-    lre.trace(
-      `Remove dynamic setter for ${this.realId()} on ${decoratorContext.name as string}`,
-    );
+    LRE_DEBUG &&
+      lre.trace(
+        `Remove dynamic setter for ${this.realId()} on ${decoratorContext.name as string}`,
+      );
   }
 };
 

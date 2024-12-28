@@ -52,13 +52,13 @@ export const DataHolder: Mixable<MixableParams, IDataHolder> = (
     }
 
     loadPersistent(): DataStorage {
-      lre.trace(`Load persistent data for ${this.#realId}`);
+      LRE_DEBUG && lre.trace(`Load persistent data for ${this.#realId}`);
       return (this.#persistent =
         this.#sheet.persistingCmpData(this.#realId) || {});
     }
 
     #savePersistent(): void {
-      lre.trace(`Save persistent data for ${this.#realId}`);
+      LRE_DEBUG && lre.trace(`Save persistent data for ${this.#realId}`);
       this.#sheet.persistingCmpData(
         this.#realId,
         this.#persistent as LetsRole.ViewData,

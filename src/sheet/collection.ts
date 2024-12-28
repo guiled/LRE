@@ -7,7 +7,7 @@ export class SheetCollection implements ISheetCollection {
     const sheetId = s.getSheetId();
 
     if (sheetId) {
-      lre.log(`sheet stored ${sheetId}`);
+      LRE_DEBUG && lre.log(`sheet stored ${sheetId}`);
       this.#sheets[sheetId] = s;
     }
   }

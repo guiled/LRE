@@ -118,11 +118,12 @@ export const EventHolder = <
         const fcn = handlers[hId];
 
         if (!this.isEventEnabled(eventId)) {
-          lre.trace(`Event ${eventId} is disabled`);
+          LRE_DEBUG && lre.trace(`Event ${eventId} is disabled`);
           return true;
         }
 
-        lre.trace(`Run handler ${this.#holderId}:${eventId}:${hId}`);
+        LRE_DEBUG &&
+          lre.trace(`Run handler ${this.#holderId}:${eventId}:${hId}`);
 
         try {
           isHandlerRan = true;
@@ -180,12 +181,12 @@ export const EventHolder = <
       eventName: EventType<AdditionalEvents>,
     ): LetsRole.EventCallback<LREEventTarget> {
       return (rawTarget: LREEventTarget, ...args: unknown[]): void => {
-        lre.trace(`Run events ${this.#holderId}:${eventName}`);
+        LRE_DEBUG && lre.trace(`Run events ${this.#holderId}:${eventName}`);
         const { eventId, handlers } =
           this.#getEventIdAndHandlersFromEventName(eventName);
 
         if (!this.isEventEnabled(eventId)) {
-          lre.trace(`Event ${eventName} is disabled`);
+          LRE_DEBUG && lre.trace(`Event ${eventName} is disabled`);
           return;
         }
 
@@ -293,11 +294,12 @@ export const EventHolder = <
         logText = "Handler updated ";
       }
 
-      lre.trace(
-        `${logText} ${
-          this.#holderId + (subComponent ? ">" + subComponent : "")
-        }:${eventName}:${handlerId}. Count : ${cnt}`,
-      );
+      LRE_DEBUG &&
+        lre.trace(
+          `${logText} ${
+            this.#holderId + (subComponent ? ">" + subComponent : "")
+          }:${eventName}:${handlerId}. Count : ${cnt}`,
+        );
     }
 
     once(
@@ -388,11 +390,12 @@ export const EventHolder = <
         return;
       }
 
-      lre.trace(
-        `Handlers for ${event} removed on ${
-          this.#holderId + (delegateId ? ">" + delegateId : "")
-        }`,
-      );
+      LRE_DEBUG &&
+        lre.trace(
+          `Handlers for ${event} removed on ${
+            this.#holderId + (delegateId ? ">" + delegateId : "")
+          }`,
+        );
 
       const prevCount = Object.keys(eventDef.handlers).length;
       delete eventDef.handlers[handlerId];

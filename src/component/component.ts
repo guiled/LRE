@@ -353,7 +353,8 @@ export class Component<
       try {
         val = this.raw().value() as TypeValue;
       } catch (e) {
-        lre.trace("Unknown error. Please communicate about it. " + e);
+        LRE_DEBUG &&
+          lre.trace("Unknown error. Please communicate about it. " + e);
       }
       //} else if (this.#lreType === "repeater") {
       // a repeater with a pending value set, we must set it immediately when we need it because it has impact on existing elements

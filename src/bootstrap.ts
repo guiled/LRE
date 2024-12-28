@@ -26,7 +26,7 @@ export const bootstrap = (): ProxyModeHandler => {
   loggedCall = globals.loggedCall;
 
   const firstLaunch = (ctx: ProxyModeHandler): void => {
-    lre.trace("LRE first launch bootstrap");
+    LRE_DEBUG && lre.trace("LRE first launch bootstrap");
     overloadTables(Tables);
     wait = registerLreWait(ctx, wait);
     Bindings = registerLreBindings(ctx, Bindings);
@@ -35,13 +35,15 @@ export const bootstrap = (): ProxyModeHandler => {
 
   lre = new LRE(ctx, firstLaunch);
 
-  // @ts-expect-error Overload console for some edge cases like throw new Error changed into console.error
-  console = {
-    log: lre.log,
-    error: lre.error,
-    trace: lre.log,
-    warn: lre.warn,
-  };
+  if (LRE_DEBUG) {
+    // @ts-expect-error Overload console for some edge cases like throw new Error changed into console.error
+    console = {
+      log: lre.log,
+      error: lre.error,
+      trace: lre.log,
+      warn: lre.warn,
+    };
+  }
 
   return ctx;
 };

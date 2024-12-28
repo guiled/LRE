@@ -19,7 +19,7 @@ export class LreTables
   }
 
   get(id: LetsRole.TableID): ITable | null {
-    lre.trace(`Get table "${id}"`);
+    LRE_DEBUG && lre.trace(`Get table "${id}"`);
 
     if (!Object.prototype.hasOwnProperty.call(this.#tables, id)) {
       const foundTable = this.raw().get(id);

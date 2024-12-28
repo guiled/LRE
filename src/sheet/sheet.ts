@@ -50,7 +50,7 @@ export class Sheet
     dataBatcher: DataBatcher,
     context: ProxyModeHandler,
   ) {
-    lre.log(`new sheet ${rawSheet.getSheetId()}`);
+    LRE_DEBUG && lre.log(`new sheet ${rawSheet.getSheetId()}`);
     super([
       [/* EventHolder params */ rawSheet.name()],
       [
@@ -139,7 +139,7 @@ export class Sheet
   }
 
   #handleDataUpdate(): void {
-    lre.trace("data updated from server…");
+    LRE_DEBUG && lre.trace("data updated from server…");
     this.#loadState(this.#storedState);
     const data = this.raw().getData();
 
@@ -172,7 +172,7 @@ export class Sheet
     cmpWithChangedClasses.forEach((c) => c.trigger("class-updated"));
 
     if (hasPendingData) {
-      lre.trace("pending data update");
+      LRE_DEBUG && lre.trace("pending data update");
       this.#saveStoredState();
     }
   }
@@ -432,7 +432,8 @@ export class Sheet
 
   deletePersistingData(dataName: Exclude<string, ProtectedStoredState>): void {
     if (["initialized", "cmpData", "cmpClasses"].includes(dataName)) {
-      lre.warn("Unauthorized persisting data deletion " + dataName);
+      LRE_DEBUG &&
+        lre.warn("Unauthorized persisting data deletion " + dataName);
       return;
     }
 

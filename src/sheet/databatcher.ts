@@ -99,9 +99,10 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
     }
 
     if (added > 0) {
-      lre.trace(
-        `Batcher: sends ${added} data for ${this.#sheet.id()}-${this.#sheet.getSheetId()}`,
-      );
+      LRE_DEBUG &&
+        lre.trace(
+          `Batcher: sends ${added} data for ${this.#sheet.id()}-${this.#sheet.getSheetId()}`,
+        );
       this.#sheet.setData(dataToSend);
     }
 

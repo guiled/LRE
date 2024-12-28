@@ -128,6 +128,7 @@ type cb = (thisArg?: any, argArray?: any) => (rawSheet: LetsRole.Sheet) => void;
 declare module "lre" {
   global {
     /* eslint-disable no-var */
+    var LRE_DEBUG: boolean;
     var lre: ILRE & Logger & cb;
     var firstInit: undefined | ((sheet: ISheet) => boolean);
     var errExclFirstLine: number, errExclLastLine: number;

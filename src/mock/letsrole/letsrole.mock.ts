@@ -47,6 +47,7 @@ const initLetsRole = (server: ServerMock): void => {
   global.loggedCall = loggedCall;
   global.virtualCall = virtualCall;
   global.context = modeHandlerMock();
+  global.LRE_DEBUG = true;
 };
 
 const terminateLetsRole = (): void => {

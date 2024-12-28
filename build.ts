@@ -45,7 +45,7 @@ esbuild
     format: "iife",
     define: {
       "console.log": "log",
-      LRE_DEBUG: "false",
+      LRE_DEBUG: `${DEBUG_BUILD}`,
     },
     minifySyntax: true,
   })

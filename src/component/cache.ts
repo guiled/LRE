@@ -94,9 +94,9 @@ export class ComponentCache {
 
   set(realId: LetsRole.ComponentID, cmp: CacheableTypes): this {
     if (Object.prototype.hasOwnProperty.call(this.#components, realId)) {
-      lre.trace(`Component overwritten in cache ${realId}`);
+      LRE_DEBUG && lre.trace(`Component overwritten in cache ${realId}`);
     } else {
-      lre.trace(`Component added to cache ${realId}`);
+      LRE_DEBUG && lre.trace(`Component added to cache ${realId}`);
     }
 
     this.#components[realId] = cmp;
@@ -113,11 +113,11 @@ export class ComponentCache {
     silent: boolean = false,
   ): CacheableTypes | null {
     if (this.inCache(realId)) {
-      lre.trace(`Get component ${realId} from cache`);
+      LRE_DEBUG && lre.trace(`Get component ${realId} from cache`);
       return this.#components[realId];
     }
 
-    lre.trace(`Get component ${realId} from sheet`);
+    LRE_DEBUG && lre.trace(`Get component ${realId} from sheet`);
     this.#context.disableAccessLog();
     const cmp = this.#getter(realId, silent);
     this.#context.enableAccessLog();

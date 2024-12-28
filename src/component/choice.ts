@@ -140,9 +140,10 @@ export class Choice<
 
   getChoices(): LetsRole.Choices {
     if (!this.#choices || lre.isObjectEmpty(this.#choices)) {
-      lre.warn(
-        'this component has no choice available for LRE. If this Choice component is filled with a table, we recommend to use script to fill it (see choiceComponent.populate()) instead of built-in "Table/ List Label" parameters',
-      );
+      LRE_DEBUG &&
+        lre.warn(
+          'this component has no choice available for LRE. If this Choice component is filled with a table, we recommend to use script to fill it (see choiceComponent.populate()) instead of built-in "Table/ List Label" parameters',
+        );
     }
 
     return this.#choices;

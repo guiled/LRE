@@ -24,7 +24,7 @@ export class LRE extends Logger implements ILRE {
   #firstLaunchCb?: (ctx: ProxyModeHandler) => void;
 
   apply(_thisArg: any, argArray?: any) {
-    this.log("prepare init");
+    LRE_DEBUG && this.log("prepare init");
 
     if (!firstLaunchDone && this.#firstLaunchCb) {
       firstLaunchDone = true;
@@ -52,7 +52,7 @@ export class LRE extends Logger implements ILRE {
           this.sheets.add(_sheet);
 
           if (!_sheet.isInitialized() && firstInit !== void 0) {
-            this.log(`sheet first initialization`);
+            LRE_DEBUG && this.log(`sheet first initialization`);
 
             try {
               _sheet.persistingData("initialized", firstInit(_sheet));
@@ -61,11 +61,12 @@ export class LRE extends Logger implements ILRE {
             }
           }
 
-          this.log(
-            `init sheet ${rawSheet.id()} (${rawSheet.name()} ${
-              rawSheet.properName() || ""
-            } ${sheetId ? "#" + sheetId : ""})`,
-          );
+          LRE_DEBUG &&
+            this.log(
+              `init sheet ${rawSheet.id()} (${rawSheet.name()} ${
+                rawSheet.properName() || ""
+              } ${sheetId ? "#" + sheetId : ""})`,
+            );
 
           try {
             callback.call(this, _sheet);
@@ -85,7 +86,7 @@ export class LRE extends Logger implements ILRE {
     super();
     this.#context = context;
     this.#firstLaunchCb = firstLaunchCb;
-    this.log(`init`);
+    LRE_DEBUG && this.log(`init`);
     this.sheets = new SheetCollection();
   }
 
@@ -227,7 +228,7 @@ export class LRE extends Logger implements ILRE {
   }
 
   autoNum(v: boolean = true): void {
-    this.trace(`auto num ${v ? "activated" : "deactivated"}`);
+    LRE_DEBUG && this.trace(`auto num ${v ? "activated" : "deactivated"}`);
     this.#autoNum = v;
   }
 
