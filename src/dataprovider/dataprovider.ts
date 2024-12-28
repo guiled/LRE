@@ -120,7 +120,10 @@ export const DataProvider = (superclass: Newable = class {}) =>
       this.#getOriginalValue();
     }
 
-    sort(sorterOrString: Sorter | string = defaultSorter): IDataProvider {
+    sort(
+      sorterOrString: Sorter | string = defaultSorter,
+      direction: SortDirection = "ASC",
+    ): IDataProvider {
       let sorter: Sorter;
 
       if (typeof sorterOrString === "string") {
@@ -141,33 +144,44 @@ export const DataProvider = (superclass: Newable = class {}) =>
         sorter = sorterOrString;
       }
 
-      return this.#sortData(sorter);
+      return this.#sortData(sorter, direction);
     }
 
-    sortBy(sorterWithData: DataProviderComputer): IDataProvider {
-      return this.#sortData((a, b, ka, kb, dataA, dataB) =>
-        defaultSorter(
-          sorterWithData(a, ka, dataA),
-          sorterWithData(b, kb, dataB),
-        ),
+    sortBy(
+      sorterWithData: DataProviderComputer,
+      direction: SortDirection = "ASC",
+    ): IDataProvider {
+      return this.#sortData(
+        (a, b, ka, kb, dataA, dataB) =>
+          defaultSorter(
+            sorterWithData(a, ka, dataA),
+            sorterWithData(b, kb, dataB),
+          ),
+        direction,
       );
     }
 
-    #sortData(sorter: Sorter): IDataProvider {
+    #sortData(sorter: Sorter, direction: SortDirection): IDataProvider {
       return this.#newProvider("sort", () => {
         const data = this.#getCurrentValue();
 
         if (Array.isArray(data)) {
-          return data.toSorted((a, b) => sorter(a, b));
+          return data.toSorted(
+            (a, b) => (direction === "ASC" ? 1 : -1) * sorter(a, b),
+          );
         } else if (lre.isObject(data)) {
-          return Object.entries(data)
-            .sort(
-              (
-                [ka, a]: [DataProviderDataId, DataProviderDataValue],
-                [kb, b]: [DataProviderDataId, DataProviderDataValue],
-              ) => sorter(a, b, ka, kb, this.getData(ka), this.getData(kb)),
-            )
-            .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+          const sorted = Object.entries(data).toSorted(
+            (
+              [ka, a]: [DataProviderDataId, DataProviderDataValue],
+              [kb, b]: [DataProviderDataId, DataProviderDataValue],
+            ) =>
+              (direction === "ASC" ? 1 : -1) *
+              sorter(a, b, ka, kb, this.getData(ka), this.getData(kb)),
+          );
+          const result: ReturnType<ValueGetterSetter> = {};
+          sorted.forEach(([k, v]) => (result[k] = v));
+
+          return result;
         }
 
         return data;

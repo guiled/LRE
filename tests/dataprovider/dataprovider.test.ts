@@ -61,6 +61,16 @@ describe("Data provider sort", () => {
       { a: "4" },
       { a: "42" },
     ]);
+
+    const sorted2 = dp.sort("a", "DESC");
+
+    expect(sorted2.provider).toBeTruthy();
+    expect(sorted2.providedValue()).toStrictEqual([
+      { a: "42" },
+      { a: "4" },
+      { a: "24" },
+      { a: "24" },
+    ]);
   });
 
   test("Sort object", () => {
@@ -86,6 +96,14 @@ describe("Data provider sort", () => {
       b: "13",
       c: "24",
       a: "43",
+    });
+
+    const sorted2 = dp.sort(undefined, "DESC");
+
+    expect(sorted2.providedValue()).toStrictEqual({
+      a: "43",
+      c: "24",
+      b: "13",
     });
   });
 
@@ -140,7 +158,7 @@ describe("Data provider sort", () => {
     });
   });
 
-  test("SortBy", () => {
+  test("SortBy with function that returns a value to sort", () => {
     const data = {
       a: { a: "10", b: "1" },
       b: { a: "4", b: "2" },
@@ -168,13 +186,23 @@ describe("Data provider sort", () => {
       d: "1",
       a: "10",
     });
+
+    const sorted2 = cols.sortBy(sorter, "DESC");
+
+    expect(sorted2.provider).toBeTruthy();
+    expect(sorted2.providedValue()).toStrictEqual({
+      a: "10",
+      b: "4",
+      c: "2",
+      d: "1",
+    });
   });
 
   test("Sort on field from original data", () => {
     const data = {
       a: { a: "10", b: "1", c: "11" },
       b: { a: "4", b: "2", c: "100" },
-      c: { a: "2", b: "3", c: "50" },
+      c: { a: "2", b: "3", c: "150" },
       d: { a: "1", b: "6", c: "30" },
     };
     const dataGetter = jest.fn((_a: any) => data as any);
@@ -185,8 +213,8 @@ describe("Data provider sort", () => {
     expect(sorted.providedValue()).toStrictEqual({
       b: "4",
       a: "10",
-      d: "1",
       c: "2",
+      d: "1",
     });
 
     lre.autoNum();
@@ -197,8 +225,30 @@ describe("Data provider sort", () => {
       JSON.stringify({
         a: 10,
         d: 1,
-        c: 2,
         b: 4,
+        c: 2,
+      }),
+    );
+  });
+
+  test("Sort DESC on field from original data", () => {
+    lre.autoNum();
+    const data = {
+      a: { a: "10", b: "1", c: "11" },
+      c: { a: "20", b: "3", c: "50" },
+      b: { a: "4", b: "2", c: "100" },
+      d: { a: "1", b: "6", c: "30" },
+    };
+    const dataGetter = jest.fn((_a: any) => data as any);
+    const dp = lre.dataProvider("test", dataGetter);
+    const sorted2 = dp.select("a").sort("c", "DESC");
+
+    expect(JSON.stringify(sorted2.providedValue())).toStrictEqual(
+      JSON.stringify({
+        b: 4,
+        c: 20,
+        d: 1,
+        a: 10,
       }),
     );
   });
@@ -435,9 +485,11 @@ describe("DataProvider get single value", () => {
     //data["2"]["a"] = "42";
     //expect(result.singleValue()).toBe("42");
   });
+
+  test("getBy", () => {});
 });
 
-describe("DataProvider count", () => {
+describe("DataProvider analysis", () => {
   test("Count | length data provider result", () => {
     const data: any = {
       "1": { a: "42", b: "13", c: "24" },
@@ -463,4 +515,12 @@ describe("DataProvider count", () => {
     expect(filtered.count()).toBe(2);
     expect(filtered.where("no").length()).toBe(0);
   });
+
+  test("Min", () => {});
+
+  test("Max", () => {});
+
+  test("countDistinct", () => {});
+
+  test("sum", () => {});
 });

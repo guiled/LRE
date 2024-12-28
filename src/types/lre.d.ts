@@ -294,14 +294,22 @@ declare type DataProviderCallback<ReturnType> = (
 declare type DataProviderWhereConditioner = DataProviderCallback<boolean>;
 declare type DataProviderComputer = DataProviderCallback<string | number>;
 
+declare type SortDirection = "ASC" | "DESC";
+
 declare interface IDataProvider {
   provider: boolean;
   providedValue<T extends DataProviderDataValue = DataProviderDataValue>(
     _newValue?: T,
   ): T extends undefined ? DataProviderDataValue : void;
   refresh(): void;
-  sort(sorterOrString?: Sorter | string): IDataProvider;
-  sortBy(sorterWithData: DataProviderComputer): IDataProvider;
+  sort(
+    sorterOrString?: Sorter | string,
+    direction: SortDirection = "ASC",
+  ): IDataProvider;
+  sortBy(
+    sorterWithData: DataProviderComputer,
+    direction: SortDirection = "ASC",
+  ): IDataProvider;
   each(mapper: (val: DataProviderDataValue) => void): void;
   select(column: LetsRole.ComponentID): IDataProvider;
   getData(
