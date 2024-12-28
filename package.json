@@ -43,9 +43,9 @@
     "build": "f() { tsx build.ts $npm_package_config_outLREFile && node --check $npm_package_config_outLREFile && yarn count_output; }; f",
     "builddebug": "f() { tsx build.ts $npm_package_config_outLREFile debug; }; f",
     "buildall": "yarn build && yarn builddebug",
-    "cspell": "npx cspell --no-progress --no-summary --gitignore .",
+    "spell": "yarn cspell --no-progress --no-summary --gitignore .",
     "testsilent": "jest --reporters jest-silent-reporter --collectCoverage=false",
     "tscheck": "tsc --noEmit",
-    "checkall": "yarn ts-unused-exports tsconfig.json && yarn cspell && yarn tscheck && yarn eslint && yarn testsilent"
+    "checkall": "yarn ts-unused-exports tsconfig.json && yarn spell && yarn tscheck && yarn eslint && yarn testsilent"
   }
 }
