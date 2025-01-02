@@ -96,7 +96,7 @@ export const formatLRECode = (
     /[ \t]*([^\s\w"'$]+)[ \t]*/g,
   ].forEach((e) => (code = code.replace(e, "$1")));
 
-  const MAX_LINE_LENGTH = 127;
+  const MAX_LINE_LENGTH = 131;
   const lines: Array<string> = [""];
   const compiledTextLines: TextLineDefs = [];
 
