@@ -16,6 +16,7 @@ declare interface ILRE {
   wait(delay: number, cb: () => void, name: string = "");
   autoNum(v: boolean = true): void;
   value<T = any>(n: T): T;
+  isComponent(value: any): value is IComponent;
   isIterableByEach(
     object: LetsRole.ComponentValue,
   ): object is LetsRole.EachValue;

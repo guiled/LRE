@@ -130,6 +130,10 @@ export class LRE extends Logger implements ILRE {
     return this.numToAlpha(rnd);
   }
 
+  isComponent(value: any): value is IComponent {
+    return !!value?.component;
+  }
+
   isObject<T extends BasicObject = BasicObject>(object: any): object is T {
     return (
       object != null && typeof object === "object" && !Array.isArray(object)
