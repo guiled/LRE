@@ -49,6 +49,10 @@ export const DataProvider = (superclass: Newable = class {}) =>
       this.#sourceRefresh = sourceRefresh;
     }
 
+    realId(): string {
+      return this.id();
+    }
+
     @dynamicSetter
     @extractDataProviders()
     #setCurrentValue(
@@ -91,7 +95,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
       return this.#originalValue;
     }
 
-    realId(): string {
+    id(): string {
       return this.#id;
     }
 
@@ -223,7 +227,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     select(column: string): IDataProvider {
-      return this.#newProvider(`${this.realId()}-select-${column}`, () => {
+      return this.#newProvider(`${this.id()}-select-${column}`, () => {
         const result: Record<string, TableRow | LetsRole.ComponentValue> = {};
 
         this.each((v, k) => {
@@ -445,7 +449,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
         this.refresh.bind(this),
       );
       this.subscribeRefresh(
-        provider.realId(),
+        provider.id(),
         provider.providedValue.bind(provider),
       );
 
@@ -466,7 +470,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
     min(dataValueOrColumn?: string | DataProviderGetValue): IDataProvider {
       return this.#comparisonProvider(
-        this.realId() + "-min",
+        this.id() + "-min",
         dataValueOrColumn,
         (a: LetsRole.ComponentValue, b: LetsRole.ComponentValue) => a! < b!,
       );
@@ -474,7 +478,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
     max(dataValueOrColumn?: string | DataProviderGetValue): IDataProvider {
       return this.#comparisonProvider(
-        this.realId() + "-max",
+        this.id() + "-max",
         dataValueOrColumn,
         (a: LetsRole.ComponentValue, b: LetsRole.ComponentValue) => a! > b!,
       );
@@ -563,14 +567,14 @@ export const DataProvider = (superclass: Newable = class {}) =>
       LRE_DEBUG &&
         hasNaN &&
         lre.warn(
-          `Sum for ${this.realId()} could have failed because of non numeric values`,
+          `Sum for ${this.id()} could have failed because of non numeric values`,
         );
 
       return total;
     }
 
     limit(nb: number): IDataProvider {
-      return this.#newProvider(this.realId() + "-limit-" + nb, () => {
+      return this.#newProvider(this.id() + "-limit-" + nb, () => {
         const values = this.#getCurrentValue();
 
         if (Array.isArray(values)) {
@@ -637,7 +641,7 @@ export class DirectDataProvider extends Mixin(DataProvider) {
     this.#directId = id;
   }
 
-  realId(): string {
+  id(): string {
     return this.#directId;
   }
 }

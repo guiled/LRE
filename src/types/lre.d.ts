@@ -346,6 +346,7 @@ declare interface IDataProvider {
   count(): number;
   countDistinct(column?: string): number;
   length(): number;
+  id(): string;
   realId(): string;
   subscribeRefresh(id: string, refresh: () => void): void;
   unsubscribeRefresh(id: string): void;
