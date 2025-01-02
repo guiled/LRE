@@ -1,4 +1,8 @@
 import { DataProvider } from "../dataprovider";
+import {
+  dynamicSetter,
+  extractDataProviders,
+} from "../globals/decorators/dynamicSetter";
 import { HasRaw } from "../hasraw";
 import { Mixin } from "../mixin";
 
@@ -37,7 +41,13 @@ export class Table
     return this.#id;
   }
 
-  get(id: LetsRole.ColumnId): TableRow | null {
+  @dynamicSetter
+  @extractDataProviders()
+  get(id: DynamicSetValue<LetsRole.ColumnId>): TableRow | null {
+    if (typeof id !== "string") {
+      return null;
+    }
+
     const row = this.raw().get(id);
 
     if (!row) {
