@@ -538,7 +538,7 @@ describe("Component get and set value", () => {
 
   test("valueData passed", () => {
     const rawChoice = rawSheet.get("choice");
-    Tables = new LreTables(Tables);
+    Tables = new LreTables(Tables, context);
     const choice = new Choice(rawChoice, sheet, "choice");
     choice.populate("theTable", "a");
     choice.value("y");

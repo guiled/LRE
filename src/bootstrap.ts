@@ -27,7 +27,7 @@ export const bootstrap = (): ProxyModeHandler => {
 
   const firstLaunch = (ctx: ProxyModeHandler): void => {
     LRE_DEBUG && lre.trace("LRE first launch bootstrap");
-    overloadTables(Tables);
+    overloadTables(Tables, ctx);
     wait = registerLreWait(ctx, wait);
     Bindings = registerLreBindings(ctx, Bindings);
     RollBuilder = registerLreRollBuilder(ctx, RollBuilder);

@@ -54,7 +54,7 @@ beforeEach(() => {
   });
   initLetsRole(server);
   global.lre = new LRE(context);
-  Tables = new LreTables(Tables);
+  Tables = new LreTables(Tables, context);
 
   rawSheet = server.openView("main", "12345", {
     chA: "a",

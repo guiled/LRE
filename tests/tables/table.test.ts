@@ -37,7 +37,7 @@ afterEach(() => {
 describe("Table test", () => {
   test("Table id", () => {
     const rawTable = Tables.get("theTable")!;
-    const table = new Table(rawTable, "123");
+    const table = new Table(rawTable, context, "123");
 
     expect(table.id()).toBe("123");
   });
@@ -47,7 +47,7 @@ describe("Table test", () => {
     jest.spyOn(rawTable, "get");
     jest.spyOn(rawTable, "each");
     jest.spyOn(rawTable, "random");
-    const table = new Table(rawTable, "123");
+    const table = new Table(rawTable, context, "123");
     table.get("123");
 
     expect(rawTable.get).toHaveBeenCalledTimes(1);
@@ -68,7 +68,7 @@ describe("Table test", () => {
 
 describe("Table basic operations", () => {
   test("Table get", () => {
-    const table = new Table(Tables.get("a"), "123");
+    const table = new Table(Tables.get("a"), context, "123");
 
     expect(table.get("_1")).toMatchObject({
       id: "_1",
@@ -79,7 +79,7 @@ describe("Table basic operations", () => {
   });
 
   test("Table each", () => {
-    const table = new Table(Tables.get("a"), "_123");
+    const table = new Table(Tables.get("a"), context, "_123");
     const result: (string | number)[] = [];
     table.each((row) => {
       result.push(row.a);
@@ -89,7 +89,7 @@ describe("Table basic operations", () => {
   });
 
   test("random", () => {
-    const table = new Table(Tables.get("a"), "a");
+    const table = new Table(Tables.get("a"), context, "a");
     let result: string[] = [];
 
     jest.spyOn(global.Math, "random").mockReturnValue(0);
@@ -115,7 +115,7 @@ describe("Table basic operations", () => {
 describe("Table additional features", () => {
   test("Autonum of fields with Table.get", () => {
     const rawTable = Tables.get("theTable")!;
-    const table = new Table(rawTable, "theTable");
+    const table = new Table(rawTable, context, "theTable");
 
     expect(table.get("_123")).toMatchObject({
       id: "_123",
@@ -136,7 +136,7 @@ describe("Table additional features", () => {
 
   test("Autonum of fields with Table.each", () => {
     const rawTable = Tables.get("theTable")!;
-    const table = new Table(rawTable, "theTable");
+    const table = new Table(rawTable, context, "theTable");
     const fn = jest.fn();
     lre.autoNum();
     table.each(fn);
@@ -158,7 +158,7 @@ describe("Table additional features", () => {
 
   test("Autonum of fields with Table.random", () => {
     const rawTable = Tables.get("theTable")!;
-    const table = new Table(rawTable, "theTable");
+    const table = new Table(rawTable, context, "theTable");
     const fn = jest.fn();
     table.random(2, fn);
 
@@ -176,7 +176,7 @@ describe("Table additional features", () => {
   });
 
   test("random returns the row", () => {
-    const table = new Table(Tables.get("a"), "a");
+    const table = new Table(Tables.get("a"), context, "a");
     let rowAsArg: LetsRole.TableRow | undefined;
 
     const rowAsReturn = table.random((row: LetsRole.TableRow) => {
@@ -197,7 +197,7 @@ describe("Table additional features", () => {
 describe("Table as DataProvider", () => {
   test("Table select a column", () => {
     const rawTable = Tables.get("a")!;
-    const table = new Table(rawTable, "a");
+    const table = new Table(rawTable, context, "a");
 
     expect(table.providedValue()).toStrictEqual({
       _1: { id: "_1", a: "42", b: "13", c: "four" },

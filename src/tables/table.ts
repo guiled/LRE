@@ -8,7 +8,11 @@ export class Table
 {
   #id: LetsRole.TableID;
 
-  constructor(raw: LetsRole.Table, id: LetsRole.TableID) {
+  constructor(
+    raw: LetsRole.Table,
+    context: ProxyModeHandler,
+    id: LetsRole.TableID,
+  ) {
     super([
       [
         {
@@ -16,7 +20,7 @@ export class Table
         },
       ],
       [
-        undefined,
+        context,
         () => {
           const result: { [key: keyof TableRow]: TableRow } = {};
           this.each((row: TableRow) => {

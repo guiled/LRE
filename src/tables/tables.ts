@@ -7,8 +7,9 @@ export class LreTables
   implements ITables
 {
   #tables: Record<LetsRole.TableID, ITable | null> = {};
+  #context: ProxyModeHandler;
 
-  constructor(raw: LetsRole.Tables) {
+  constructor(raw: LetsRole.Tables, context: ProxyModeHandler) {
     super([
       [
         {
@@ -16,6 +17,7 @@ export class LreTables
         },
       ],
     ]);
+    this.#context = context;
   }
 
   get(id: LetsRole.TableID): ITable | null {
@@ -23,13 +25,18 @@ export class LreTables
 
     if (!Object.prototype.hasOwnProperty.call(this.#tables, id)) {
       const foundTable = this.raw().get(id);
-      this.#tables[id] = foundTable ? new Table(foundTable, id) : null;
+      this.#tables[id] = foundTable
+        ? new Table(foundTable, this.#context, id)
+        : null;
     }
 
     return this.#tables[id];
   }
 }
 
-export function overloadTables(_Tables: LetsRole.Tables): void {
-  Tables = new LreTables(_Tables);
+export function overloadTables(
+  _Tables: LetsRole.Tables,
+  context: ProxyModeHandler,
+): void {
+  Tables = new LreTables(_Tables, context);
 }

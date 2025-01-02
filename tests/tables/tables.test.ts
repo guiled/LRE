@@ -41,22 +41,25 @@ describe("Tables overload", () => {
 
     expect(get).toHaveBeenCalledTimes(0);
 
-    overloadTables(global.Tables);
+    overloadTables(global.Tables, context);
     Tables.get("123");
 
     expect(get).toHaveBeenCalledTimes(1);
   });
 
   test("Tables get table", () => {
-    const tables = new LreTables({
-      get: (_id: LetsRole.TableID): LetsRole.Table => {
-        return {
-          get: jest.fn() as LetsRole.Table["get"],
-          each: jest.fn() as LetsRole.Table["each"],
-          random: jest.fn() as LetsRole.Table["random"],
-        };
+    const tables = new LreTables(
+      {
+        get: (_id: LetsRole.TableID): LetsRole.Table => {
+          return {
+            get: jest.fn() as LetsRole.Table["get"],
+            each: jest.fn() as LetsRole.Table["each"],
+            random: jest.fn() as LetsRole.Table["random"],
+          };
+        },
       },
-    });
+      context,
+    );
 
     const table = tables.get("theTable");
 
