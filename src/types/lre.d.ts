@@ -327,10 +327,20 @@ declare interface IDataProvider {
   ): void;
   select(column: LetsRole.ComponentID): IDataProvider;
   getData(
-    id: DataProviderDataId | Array<number | string>,
+    id?: DataProviderDataId | Array<number | string>,
   ): DataProviderDataValue;
   filter(condition: DataProviderWhereConditioner): IDataProvider;
-  where(condition: DataProviderDataValue | DataProviderWhereConditioner);
+  where(
+    column:
+      | string
+      | LetsRole.ComponentValue
+      | DataProviderWhereConditioner
+      | IComponent,
+    condition?:
+      | LetsRole.ComponentValue
+      | DataProviderWhereConditioner
+      | IComponent,
+  ): IDataProvider;
   singleValue(): DataProviderDataValue;
   singleId(): DataProviderDataId;
   count(): number;

@@ -335,13 +335,36 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     where(
-      condition: LetsRole.ComponentValue | DataProviderWhereConditioner,
+      column:
+        | string
+        | LetsRole.ComponentValue
+        | DataProviderWhereConditioner
+        | IComponent,
+      condition?:
+        | LetsRole.ComponentValue
+        | DataProviderWhereConditioner
+        | IComponent,
     ): IDataProvider {
+      if (arguments.length === 1) {
+        condition = column;
+        column = undefined;
+      }
+
       if (typeof condition === "undefined") return this;
 
       let conditioner: DataProviderWhereConditioner = (v) => v === condition;
 
-      if (typeof condition === "function") {
+      if (lre.isComponent(condition)) {
+        if (typeof column === "undefined") {
+          conditioner = (v) => lre.deepEqual(v, condition.value());
+        } else if (typeof column === "string") {
+          const dataValueOrColumn = this.#getDataValueGetter(column)[1];
+          conditioner = (v, k, data) =>
+            dataValueOrColumn(v, k, data) === condition.value();
+        } else {
+          throw new Error("Invalid where condition");
+        }
+      } else if (typeof condition === "function") {
         conditioner = condition as DataProviderWhereConditioner;
       }
 
