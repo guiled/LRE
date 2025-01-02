@@ -5,16 +5,11 @@ import {
 import { Mixin } from "../mixin";
 
 export type ValueGetterSetter<
-  T extends LetsRole.ComponentValue | LetsRole.TableRow | undefined = undefined,
+  T extends LetsRole.ComponentValue | TableRow | undefined = undefined,
 > = (
   newValue?: T,
-) => T extends undefined ? LetsRole.ComponentValue | LetsRole.TableRow : void;
+) => T extends undefined ? LetsRole.ComponentValue | TableRow : void;
 
-/*type FlatDataRow = {
-  id: DataProviderDataId;
-  val: DataProviderDataValue;
-} & Record<string, DataProviderDataValue>;
-*/
 type Sorter = (
   a: DataProviderDataValue,
   b: DataProviderDataValue,
@@ -38,6 +33,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
     #sourceRefresh: undefined | (() => void);
     #destRefresh: Record<string, () => void> = {};
     #context: ProxyModeHandler | undefined;
+    #id: string;
 
     constructor(
       context: ProxyModeHandler | undefined,
@@ -46,6 +42,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
       sourceRefresh?: () => void,
     ) {
       super();
+      this.#id = "dp-" + lre.getRandomId();
       this.#context = context;
       this.#valueCb = valueCb;
       this.#originalValueCb = originalValueCb;
@@ -95,7 +92,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     realId(): string {
-      return "dp-" + lre.getRandomId();
+      return this.#id;
     }
 
     providedValue<T extends LetsRole.ComponentValue | undefined = undefined>(
@@ -203,44 +200,34 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
     each(
       mapper: (
-        val: LetsRole.ComponentValue | LetsRole.TableRow,
+        val: DataProviderDataValue,
         key: DataProviderDataId,
-      ) => void,
+        originalValue: LetsRole.ComponentValue | TableRow,
+      ) => void | false,
     ): void {
       const values = this.#getCurrentValue();
 
-      if (typeof values === "undefined") return;
+      if (typeof values === "undefined") {
+        return;
+      }
 
       if (Array.isArray(values)) {
-        values.forEach(mapper);
+        values.every((v, k) => mapper(v, k, this.getData(k)) !== false);
       } else if (lre.isObject(values) && !lre.isAvatarValue(values)) {
-        Object.keys(values).forEach((k) => mapper(values[k], k));
+        Object.keys(values).every(
+          (k) => mapper(values[k], k, this.getData(k)) !== false,
+        );
       } else {
-        mapper(values, "");
+        mapper(values, "", values);
       }
     }
 
     select(column: string): IDataProvider {
-      return this.#newProvider("select", () => {
-        const result: Record<
-          string,
-          LetsRole.TableRow | LetsRole.ComponentValue
-        > = {};
+      return this.#newProvider(`${this.realId()}-select-${column}`, () => {
+        const result: Record<string, TableRow | LetsRole.ComponentValue> = {};
 
         this.each((v, k) => {
-          if (typeof v === "undefined") return;
-          else if (Array.isArray(v)) {
-            result[k] = v.includes(column);
-          } else if (
-            v &&
-            lre.isObject(v) &&
-            !lre.isAvatarValue(v) &&
-            Object.prototype.hasOwnProperty.call(v, column)
-          ) {
-            result[k] = v[column] as LetsRole.ComponentValue;
-          } else {
-            result[k] = undefined;
-          }
+          result[k] = this.#getValueColumn(v, column);
         });
 
         if (
@@ -254,9 +241,29 @@ export const DataProvider = (superclass: Newable = class {}) =>
       });
     }
 
+    #getValueColumn(
+      value: DataProviderDataValue,
+      column: string | number,
+    ): LetsRole.ComponentValue {
+      if (typeof value === "undefined") {
+        return;
+      } else if (Array.isArray(value)) {
+        return value.includes(column as string);
+      } else if (
+        value &&
+        lre.isObject(value) &&
+        !lre.isAvatarValue(value) &&
+        Object.prototype.hasOwnProperty.call(value, column)
+      ) {
+        return value[column] as LetsRole.ComponentValue;
+      } else {
+        return undefined;
+      }
+    }
+
     getData(
       id?: DataProviderDataId | Array<number | string>,
-    ): LetsRole.TableRow | LetsRole.ComponentValue {
+    ): TableRow | LetsRole.ComponentValue {
       const originalValues = this.#getOriginalValue();
 
       if (typeof id === "undefined") {
@@ -315,10 +322,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
     filter(condition: DataProviderWhereConditioner): IDataProvider {
       return this.#newProvider("filter", () => {
-        const result: Record<
-          string,
-          LetsRole.TableRow | LetsRole.ComponentValue
-        > = {};
+        const result: Record<string, TableRow | LetsRole.ComponentValue> = {};
 
         this.each((v, k) => {
           if (condition(v, k, this.getData(k))) {
@@ -354,6 +358,24 @@ export const DataProvider = (superclass: Newable = class {}) =>
       } else {
         return 1;
       }
+    }
+
+    countDistinct(dataValueOrColumn?: string | DataProviderGetValue): number {
+      const values: Array<LetsRole.ComponentValue> = [];
+      dataValueOrColumn = this.#getDataValueGetter(dataValueOrColumn)[1];
+      this.each((value, key, data) => {
+        const val = dataValueOrColumn(value, key, data);
+
+        if (lre.isObject(val)) {
+          if (!values.some((v) => lre.deepEqual(v, val))) {
+            values.push(val);
+          }
+        } else if (!values.includes(val)) {
+          values.push(val);
+        }
+      });
+
+      return values.length;
     }
 
     length(): number {
@@ -419,21 +441,155 @@ export const DataProvider = (superclass: Newable = class {}) =>
       Object.values(this.#destRefresh).forEach((refresh) => refresh());
     }
 
-    /*toArray(): Array<DataProviderDataValue> {
-      const values = this.#getCurrentValue();
+    min(dataValueOrColumn?: string | DataProviderGetValue): IDataProvider {
+      return this.#comparisonProvider(
+        this.realId() + "-min",
+        dataValueOrColumn,
+        (a: LetsRole.ComponentValue, b: LetsRole.ComponentValue) => a! < b!,
+      );
+    }
 
-      if (Array.isArray(values)) {
-        return values;
-      } else if (lre.isObject(values)) {
-        return Object.values(values);
+    max(dataValueOrColumn?: string | DataProviderGetValue): IDataProvider {
+      return this.#comparisonProvider(
+        this.realId() + "-max",
+        dataValueOrColumn,
+        (a: LetsRole.ComponentValue, b: LetsRole.ComponentValue) => a! > b!,
+      );
+    }
+
+    #comparisonProvider(
+      id: string,
+      dataValueOrColumn: string | DataProviderGetValue | undefined,
+      comparisonCallback: (
+        a: LetsRole.ComponentValue,
+        b: LetsRole.ComponentValue,
+      ) => boolean,
+    ): IDataProvider {
+      const dataGetterResult = this.#getDataValueGetter(dataValueOrColumn);
+
+      const comparisonId: string = dataGetterResult[0];
+      dataValueOrColumn = dataGetterResult[1];
+
+      return this.#newProvider(`${id}-${comparisonId}`, () => {
+        let minData: DataProviderDataValue | undefined = undefined;
+        let minVal: LetsRole.ComponentValue | undefined = undefined;
+        this.each((v, k, data) => {
+          const val = dataValueOrColumn(v, k, data);
+
+          if (!val) return;
+
+          if (
+            typeof minVal === "undefined" ||
+            comparisonCallback(val, minVal)
+          ) {
+            minData = { [k]: v };
+            minVal = val;
+          }
+        });
+
+        return minData;
+      });
+    }
+
+    #getDataValueGetter(
+      dataValueOrColumn: string | DataProviderGetValue | undefined,
+    ): [string, DataProviderGetValue] {
+      let comparisonId: string;
+
+      if (typeof dataValueOrColumn === "undefined") {
+        comparisonId = "value";
+        dataValueOrColumn = (v: DataProviderDataValue) => v;
+      } else if (typeof dataValueOrColumn === "string") {
+        comparisonId = dataValueOrColumn;
+        const colName = dataValueOrColumn;
+
+        dataValueOrColumn = (
+          value: DataProviderDataValue,
+          _key?: DataProviderDataId,
+          data?: DataProviderDataValue,
+        ): ReturnType<DataProviderGetValue> => {
+          return (
+            this.#getValueColumn(value, colName) ??
+            this.#getValueColumn(data, colName)
+          );
+        };
       } else {
-        return [values];
+        comparisonId = lre.getRandomId();
       }
-    }*/
+
+      return [comparisonId, dataValueOrColumn];
+    }
+
+    sum(dataValueOrColumn?: string | DataProviderGetValue): number {
+      let total: number = 0;
+      let hasNaN = false;
+
+      const dataGetterResult = this.#getDataValueGetter(dataValueOrColumn);
+      dataValueOrColumn = dataGetterResult[1];
+
+      this.each((v, k, data) => {
+        const val = dataValueOrColumn(v, k, data);
+
+        if (typeof val === "number" || !isNaN(val as unknown as number)) {
+          hasNaN = true;
+        }
+
+        total += 1 * (val as number);
+      });
+
+      LRE_DEBUG &&
+        hasNaN &&
+        lre.warn(
+          `Sum for ${this.realId()} could have failed because of non numeric values`,
+        );
+
+      return total;
+    }
+
+    limit(nb: number): IDataProvider {
+      return this.#newProvider(this.realId() + "-limit-" + nb, () => {
+        const values = this.#getCurrentValue();
+
+        if (Array.isArray(values)) {
+          return values.slice(0, nb);
+        } else if (lre.isObject(values)) {
+          const result: ReturnType<ValueGetterSetter> = {};
+          let i = 0;
+
+          (Object.keys(values) as Array<keyof typeof values>).every((k) => {
+            result[k] = values[k];
+            i++;
+
+            return i < nb;
+          });
+
+          return result;
+        }
+
+        return values;
+      });
+    }
+
+    getBy(
+      dataValueOrColumn: string | DataProviderGetValue,
+      value: LetsRole.ComponentValue,
+    ): DataProviderDataValue {
+      dataValueOrColumn = this.#getDataValueGetter(dataValueOrColumn)[1];
+
+      let result: DataProviderDataValue | undefined = undefined;
+      this.each((v, k, data) => {
+        if (dataValueOrColumn(v, k, data) === value) {
+          result = { [k]: v };
+          return false;
+        }
+      });
+
+      return result;
+    }
   };
 
 export class DirectDataProvider extends Mixin(DataProvider) {
-  #id: string;
+  #directId: string;
 
   constructor(
     id: string,
@@ -455,10 +611,10 @@ export class DirectDataProvider extends Mixin(DataProvider) {
     }
 
     super([dataProviderArgs]);
-    this.#id = super.realId() + "-" + id;
+    this.#directId = id;
   }
 
   realId(): string {
-    return this.#id;
+    return this.#directId;
   }
 }

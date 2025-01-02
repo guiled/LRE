@@ -297,6 +297,14 @@ declare type DataProviderComputer = DataProviderCallback<string | number>;
 
 declare type SortDirection = "ASC" | "DESC";
 
+declare type DataProviderGetValue =
+  DataProviderCallback<LetsRole.ComponentValue>;
+
+declare type DataProviderValueComparator = (
+  a: DataProviderDataValue,
+  b: DataProviderDataValue,
+) => boolean;
+
 declare interface IDataProvider {
   provider: boolean;
   providedValue<T extends DataProviderDataValue = DataProviderDataValue>(
@@ -311,20 +319,31 @@ declare interface IDataProvider {
     sorterWithData: DataProviderComputer,
     direction: SortDirection = "ASC",
   ): IDataProvider;
-  each(mapper: (val: DataProviderDataValue) => void): void;
+  each(
+    mapper: (val: DataProviderDataValue, key: DataProviderDataId) => void,
+  ): void;
   select(column: LetsRole.ComponentID): IDataProvider;
   getData(
     id: DataProviderDataId | Array<number | string>,
   ): DataProviderDataValue;
-  filter(condition: DataProviderWhereConditioner);
+  filter(condition: DataProviderWhereConditioner): IDataProvider;
   where(condition: DataProviderDataValue | DataProviderWhereConditioner);
   singleValue(): DataProviderDataValue;
   singleId(): DataProviderDataId;
   count(): number;
+  countDistinct(column?: string): number;
   length(): number;
   realId(): string;
   subscribeRefresh(id: string, refresh: () => void): void;
   unsubscribeRefresh(id: string): void;
+  min(criteria?: string | DataProviderGetValue): IDataProvider;
+  max(criteria?: string | DataProviderGetValue): IDataProvider;
+  sum(column?: string): number;
+  limit(nb: number): IDataProvider;
+  getBy(
+    dataValueOrColumn: string | DataProviderGetValue,
+    value: LetsRole.ComponentValue,
+  ): DataProviderDataValue;
 }
 
 declare interface ComponentBase {

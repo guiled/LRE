@@ -320,6 +320,26 @@ describe("DataProvider each", () => {
     expect(fn.mock.calls[1][0]).toStrictEqual("13");
     expect(fn.mock.calls[2][0]).toStrictEqual("24");
   });
+
+  test("each stops when cb returns false", () => {
+    const data = { a: "42", b: "13", c: "24" };
+
+    const dataGetter = jest.fn((_a: any) => {
+      if (_a) {
+        Object.assign(data, _a);
+      }
+
+      return data as any;
+    });
+    const dp = lre.dataProvider("test", dataGetter);
+    let cnt = 0;
+    const MAX = 2;
+    const fn = jest.fn(() => ++cnt < MAX);
+
+    dp.each(fn);
+
+    expect(fn).toHaveBeenCalledTimes(MAX);
+  });
 });
 
 describe("DataProvider select a column", () => {
@@ -486,11 +506,7 @@ describe("DataProvider get single value", () => {
     //expect(result.singleValue()).toBe("42");
   });
 
-  test("getBy", () => {});
-});
-
-describe("DataProvider analysis", () => {
-  test("Count | length data provider result", () => {
+  test("getBy", () => {
     const data: any = {
       "1": { a: "42", b: "13", c: "24" },
       "2": { a: "1", b: "2", c: "3" },
@@ -499,28 +515,169 @@ describe("DataProvider analysis", () => {
     const dataGetter = jest.fn((_a: any) => {
       return data as any;
     });
-    const dp = lre.dataProvider("test", dataGetter);
+    const dp = lre.dataProvider("test", dataGetter).select("a");
 
+    expect(dp.getBy("b", "2")).toStrictEqual({
+      "2": "1",
+    });
+
+    const calculator = (_v: any, _k: any, data: any): number => {
+      return Number(data.a) + Number(data.b) + Number(data.c);
+    };
+
+    expect(dp.getBy(calculator, 15)).toStrictEqual({
+      "3": "4",
+    });
+  });
+});
+
+describe("DataProvider analysis", () => {
+  let dp: IDataProvider;
+  let data: any;
+
+  beforeEach(() => {
+    data = {
+      _1: { a: "402", b: "13", c: "34" },
+      _2: { a: "1", b: "9", c: "3" },
+      _3: { a: "41", b: "5", c: "6" },
+    };
+    const dataGetter = jest.fn((_a: any) => {
+      return data as any;
+    });
+    dp = lre.dataProvider("test", dataGetter);
+  });
+
+  test("Count | length data provider result", () => {
     expect(dp.count()).toBe(3);
+    expect(dp.length()).toBe(3);
+  });
 
+  test("Count on filtered data", () => {
     const filtered = dp.select("a").where((_v, _k, data: any) => {
-      return data.b === "2";
+      return data.b === "9";
     });
 
     expect(filtered.count()).toBe(1);
 
-    data["4"] = { a: "420", b: "2", c: "240" };
+    data["_4"] = { a: "420", b: "9", c: "240" };
     filtered.refresh();
 
     expect(filtered.count()).toBe(2);
     expect(filtered.where("no").length()).toBe(0);
   });
 
-  test("Min", () => {});
+  test("Min on column", () => {
+    const min = dp.min("a");
 
-  test("Max", () => {});
+    expect(min.provider).toBeTruthy();
+    expect(min.providedValue()).toStrictEqual({
+      _2: { a: "1", b: "9", c: "3" },
+    });
+  });
 
-  test("countDistinct", () => {});
+  test("Min on value", () => {
+    const min = dp.select("a").min();
 
-  test("sum", () => {});
+    expect(min.providedValue()).toStrictEqual({ _2: "1" });
+    expect(min.singleValue()).toStrictEqual("1");
+    expect(min.singleId()).toStrictEqual("_2");
+  });
+
+  test("Min on original data", () => {
+    const min = dp.select("b").min("a");
+
+    expect(min.providedValue()).toStrictEqual({ _2: "9" });
+  });
+
+  test("Max", () => {
+    const min = dp.max("a");
+
+    expect(min.provider).toBeTruthy();
+    expect(min.providedValue()).toStrictEqual({
+      _3: { a: "41", b: "5", c: "6" },
+    });
+  });
+
+  test("Max on numerics", () => {
+    lre.autoNum();
+    dp.refresh();
+    const min = dp.max("a");
+
+    expect(min.provider).toBeTruthy();
+    expect(min.providedValue()).toStrictEqual({
+      _1: { a: 402, b: 13, c: 34 },
+    });
+  });
+
+  test("countDistinct", () => {
+    expect(dp.countDistinct()).toBe(3);
+    expect(dp.countDistinct("a")).toBe(3);
+
+    data["_4"] = { a: "1", b: "9", c: "3" };
+
+    expect(dp.countDistinct()).toBe(3);
+    expect(dp.countDistinct("a")).toBe(3);
+
+    data["_5"] = { a: "1", b: "10", c: "3" };
+
+    expect(dp.countDistinct()).toBe(4);
+    expect(dp.countDistinct("a")).toBe(3);
+  });
+
+  test("sum", () => {
+    expect(dp.sum("a")).toBe(444);
+    expect(dp.sum("b")).toBe(27);
+    expect(dp.sum("c")).toBe(43);
+
+    data["_4"] = { a: "1", b: "9", c: "3" };
+
+    expect(dp.sum("a")).toBe(445);
+    expect(dp.sum("b")).toBe(36);
+    expect(dp.sum("c")).toBe(46);
+
+    const selected = dp.select("a");
+
+    expect(selected.sum()).toBe(445);
+  });
+
+  test("limit = get a limited number of data", () => {
+    lre.autoNum();
+    const limited = dp.sort("a").limit(2);
+
+    expect(limited.provider).toBeTruthy();
+    expect(
+      Object.keys(limited.providedValue() as Record<any, any>),
+    ).toHaveLength(2);
+    expect(limited.length()).toBe(2);
+    expect(limited.providedValue()).toStrictEqual({
+      _2: { a: 1, b: 9, c: 3 },
+      _3: { a: 41, b: 5, c: 6 },
+    });
+
+    const arr = [
+      { a: 1, b: 10 },
+      { a: 3, b: 4 },
+      { a: 5, b: 3 },
+      { a: 7, b: 8 },
+    ];
+
+    const dpArray = lre.dataProvider("testArray", () => arr);
+
+    const limitedArray = dpArray.sort("b").limit(3);
+
+    expect(limitedArray.provider).toBeTruthy();
+    expect(limitedArray.providedValue()).toHaveLength(3);
+    expect(limitedArray.length()).toBe(3);
+
+    arr.push({ a: 2, b: 6 });
+
+    limitedArray.refresh();
+
+    expect(limitedArray.length()).toBe(3);
+    expect(limitedArray.providedValue()).toStrictEqual([
+      { a: 5, b: 3 },
+      { a: 3, b: 4 },
+      { a: 2, b: 6 },
+    ]);
+  });
 });

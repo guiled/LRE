@@ -487,7 +487,7 @@ describe("LRE create a data provider with context", () => {
     const dataProvider = subject.dataProvider(dpId, cb);
 
     expect(dataProvider.provider).toStrictEqual(true);
-    expect(dataProvider.realId()).toStrictEqual(`dp-${randomNumber}-${dpId}`);
+    expect(dataProvider.realId()).toStrictEqual(dpId);
     expect(dataProvider.providedValue()).toStrictEqual(data);
   });
 });

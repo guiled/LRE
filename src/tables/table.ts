@@ -43,9 +43,15 @@ export class Table
     return lre.value(row);
   }
 
-  each(callback: (row: TableRow, key: string | number) => void): void {
+  each(
+    callback: (
+      row: TableRow,
+      key: string | number,
+      originalData: TableRow,
+    ) => void,
+  ): void {
     return this.raw().each((row: LetsRole.TableRow) => {
-      callback(lre.value(row), lre.value(row.id));
+      callback(lre.value(row), lre.value(row.id), lre.value(row));
     });
   }
 
