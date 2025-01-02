@@ -717,6 +717,77 @@ describe("DataProvider analysis", () => {
   });
 });
 
+describe("DataProvider transform", () => {
+  let dp: IDataProvider;
+  let data: any;
+
+  beforeEach(() => {
+    context.popLogContext();
+    data = {
+      _1: { a: "402", b: "13", c: "34" },
+      _2: { a: "1", b: "9", c: "3" },
+      _3: { a: "41", b: "5", c: "6" },
+    };
+    const dataGetter = jest.fn((_a: any) => {
+      return data as any;
+    });
+    dp = lre.dataProvider("testTransform", dataGetter);
+  });
+
+  test("Transform object", () => {
+    expect(dp.providedValue()).toStrictEqual(data);
+
+    const transformMap = {
+      a: "z",
+      b: "y",
+      c: "x",
+    };
+
+    const transformed = dp.transform(transformMap);
+
+    expect(transformed.providedValue()).toStrictEqual({
+      _1: { z: "402", y: "13", x: "34" },
+      _2: { z: "1", y: "9", x: "3" },
+      _3: { z: "41", y: "5", x: "6" },
+    });
+  });
+
+  test("Transform object missing key", () => {
+    expect(dp.providedValue()).toStrictEqual(data);
+
+    const transformMap = {
+      a: "z",
+      b: "y",
+      d: "x",
+    };
+
+    const transformed = dp.transform(transformMap);
+
+    expect(transformed.providedValue()).toStrictEqual({
+      _1: { z: "402", y: "13" },
+      _2: { z: "1", y: "9" },
+      _3: { z: "41", y: "5" },
+    });
+  });
+
+  test("Transform object from original data key", () => {
+    expect(dp.providedValue()).toStrictEqual(data);
+
+    const transformMap = {
+      a: "z",
+      b: "y",
+    };
+
+    const transformed = dp.transform({ a: "a" }).transform(transformMap);
+
+    expect(transformed.providedValue()).toStrictEqual({
+      _1: { z: "402", y: "13" },
+      _2: { z: "1", y: "9" },
+      _3: { z: "41", y: "5" },
+    });
+  });
+});
+
 describe("Dataprovider from cb refresh", () => {
   let rawSheet: ViewMock;
   let sheetProxy: SheetProxy;

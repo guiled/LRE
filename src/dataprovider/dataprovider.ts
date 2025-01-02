@@ -613,6 +613,36 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
       return result;
     }
+
+    transform(map: Record<string | number, string | number>): IDataProvider {
+      return this.#newProvider(this.id() + "-transform", () => {
+        const result: DataProviderDataValue = {};
+
+        this.each((v, k, data) => {
+          const newValue: Record<string, TableRow | LetsRole.ComponentValue> =
+            {};
+
+          if (lre.isObject(map) && lre.isObject<Record<string, string>>(v)) {
+            Object.keys(map).forEach((mapKey) => {
+              const transformedKey = map[mapKey];
+
+              if (typeof v[mapKey] !== "undefined") {
+                newValue[transformedKey] = v[mapKey];
+              } else if (
+                lre.isObject<Record<string, string>>(data) &&
+                typeof data[mapKey] !== "undefined"
+              ) {
+                newValue[transformedKey] = data[mapKey];
+              }
+            });
+          }
+
+          result[k] = newValue;
+        });
+
+        return result;
+      });
+    }
   };
 
 export class DirectDataProvider extends Mixin(DataProvider) {

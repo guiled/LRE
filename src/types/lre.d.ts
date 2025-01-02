@@ -358,6 +358,7 @@ declare interface IDataProvider {
     dataValueOrColumn: string | DataProviderGetValue,
     value: LetsRole.ComponentValue,
   ): DataProviderDataValue;
+  transform(map: Record<string | number, string | number>): IDataProvider;
 }
 
 declare interface ComponentBase {
