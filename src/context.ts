@@ -4,7 +4,7 @@ export class Context implements ProxyModeHandler {
   #log: Partial<ContextLog> = {};
   #prevLog: Partial<ContextLog> = {};
   #data: LetsRole.ViewData = {};
-  #logEnabled: boolean = true;
+  #logEnabled: boolean = false;
 
   getMode(): ProxyMode {
     return this.#mode;
@@ -29,6 +29,16 @@ export class Context implements ProxyModeHandler {
 
   enableAccessLog(): this {
     this.#logEnabled = true;
+
+    return this;
+  }
+
+  getLogEnabled(): boolean {
+    return this.#logEnabled;
+  }
+
+  setLogEnabled(enabled: boolean): this {
+    this.#logEnabled = enabled;
 
     return this;
   }

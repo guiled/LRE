@@ -218,6 +218,7 @@ describe("Sheet real usages in virtual", () => {
 
 describe("Proxy logs", () => {
   test("get cmp is logged", () => {
+    context.enableAccessLog();
     const data = {
       cmp1: "42",
     };
@@ -229,5 +230,7 @@ describe("Proxy logs", () => {
     subject.get("cmp1");
 
     expect(context.getAccessLog("cmp").length).toBe(1);
+
+    context.disableAccessLog();
   });
 });

@@ -33,6 +33,7 @@ describe("Context access logs", () => {
     "Access logs are all empty at start for %s",
     (logType: ProxyModeHandlerLogType) => {
       const subject = new Context();
+      subject.enableAccessLog();
 
       expect(subject.getAccessLog(logType)).toStrictEqual([]);
       expect(subject.getPreviousAccessLog(logType)).toStrictEqual([]);
@@ -60,6 +61,7 @@ describe("Context access logs", () => {
 
   test("Disable log access", () => {
     const subject = new Context();
+    subject.enableAccessLog();
     subject.logAccess("value", ["123", "a"]);
     subject.disableAccessLog();
     subject.logAccess("value", ["123", "b"]);
@@ -74,6 +76,7 @@ describe("Context access logs", () => {
 
   test("Access log is reset mode switch", () => {
     const subject = new Context();
+    subject.enableAccessLog();
     allLogTypes.forEach((logType) =>
       subject.logAccess(logType, ["123", "Message"]),
     );

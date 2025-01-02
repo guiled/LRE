@@ -256,6 +256,7 @@ export class Group
       this.#context.logAccess("value", this);
     }
 
+    const logEnabled = this.#context.getLogEnabled();
     this.#context.disableAccessLog();
     const result = this.#getSet.apply(
       this,
@@ -264,7 +265,7 @@ export class Group
         Record<string, unknown>,
       ],
     );
-    this.#context.enableAccessLog();
+    this.#context.setLogEnabled(logEnabled);
 
     return result;
   }

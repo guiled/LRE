@@ -102,6 +102,8 @@ declare interface ProxyModeHandler {
   getMode: () => ProxyMode;
   disableAccessLog: () => ProxyModeHandler;
   enableAccessLog: () => ProxyModeHandler;
+  getLogEnabled(): boolean;
+  setLogEnabled(enabled: boolean): this;
   logAccess: <T extends keyof ContextLog>(
     type: T,
     value: ContextLog[T][number],

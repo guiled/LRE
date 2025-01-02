@@ -662,6 +662,7 @@ describe("Component events on sub component", () => {
 
 describe("Component behavior with context", () => {
   test("Context has component ref when value is get", () => {
+    context.enableAccessLog();
     const cmpProxy = sheet.get(cmpId)!;
 
     expect(context.getAccessLog("value")).toHaveLength(0);
@@ -681,5 +682,7 @@ describe("Component behavior with context", () => {
     cmpProxy.value();
 
     expect(context.getAccessLog("value")).toHaveLength(1);
+
+    context.disableAccessLog();
   });
 });

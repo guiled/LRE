@@ -1,9 +1,12 @@
 export const loggedCall = <T>(cb: () => T): T => {
+  const logEnabled = context.getLogEnabled();
+  context.enableAccessLog();
   context.pushLogContext();
 
   const result: T = cb();
 
   context.popLogContext();
+  context.setLogEnabled(logEnabled);
 
   return result;
 };

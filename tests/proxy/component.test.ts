@@ -446,6 +446,7 @@ describe("Proxy logs", () => {
 
   test("Proxy log with view in prompt", () => {
     global.lre = new LRE(context);
+    context.enableAccessLog();
     const prompt = server.openView("prompt", undefined);
     const sheetProxy = new SheetProxy(context, prompt);
     const lbl = prompt.get("lbl");
@@ -471,5 +472,7 @@ describe("Proxy logs", () => {
     const log = context.getAccessLog("value");
 
     expect(log.some((l) => l === cmp)).toBeTruthy();
+
+    context.disableAccessLog();
   });
 });
