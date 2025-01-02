@@ -744,6 +744,10 @@ describe("Dataprovider from cb refresh", () => {
         two: txt2.value(),
       };
     });
+    const derived = jest.fn(() => {
+      const a = 1;
+      return a;
+    });
     const dp = lre.dataProvider("test", fn);
 
     expect(fn).toHaveBeenCalledTimes(0);
@@ -753,6 +757,9 @@ describe("Dataprovider from cb refresh", () => {
       two: "WorldTwo",
     });
 
+    dp.subscribeRefresh("derived", derived);
+
+    expect(derived).toHaveBeenCalledTimes(0);
     expect(fn).toHaveBeenCalledTimes(1);
 
     jest.spyOn(txt1, "value");
@@ -760,6 +767,7 @@ describe("Dataprovider from cb refresh", () => {
     rawSheet.componentChangedManually("txt1", "Hello");
 
     expect(fn).toHaveBeenCalledTimes(2);
+    expect(derived).toHaveBeenCalledTimes(1);
 
     jest.clearAllMocks();
 
@@ -770,5 +778,6 @@ describe("Dataprovider from cb refresh", () => {
 
     expect(txt1.value).toHaveBeenCalledTimes(0);
     expect(fn).toHaveBeenCalledTimes(0);
+    expect(derived).toHaveBeenCalledTimes(0);
   });
 });
