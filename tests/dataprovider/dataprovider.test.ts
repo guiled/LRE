@@ -4,9 +4,44 @@ import {
   initLetsRole,
   terminateLetsRole,
 } from "../../src/mock/letsrole/letsrole.mock";
+import { SheetProxy } from "../../src/proxy/sheet";
+import { DataBatcher } from "../../src/sheet/databatcher";
+import { Sheet } from "../../src/sheet";
+import { ViewMock } from "../../src/mock/letsrole/view.mock";
+
+let server: ServerMock;
 
 beforeEach(() => {
-  initLetsRole(new ServerMock({}));
+  server = new ServerMock({
+    views: [
+      {
+        id: "main",
+        name: "Main",
+        className: "View",
+        children: [
+          {
+            id: "lbl",
+            name: "Label",
+            className: "Label",
+            text: "Hello",
+          },
+          {
+            id: "txt1",
+            name: "Text",
+            className: "TextInput",
+            defaultValue: "World",
+          },
+          {
+            id: "txt2",
+            name: "Text",
+            className: "TextInput",
+            defaultValue: "World2",
+          },
+        ],
+      },
+    ],
+  });
+  initLetsRole(server);
   global.lre = new LRE(context);
 });
 
@@ -679,5 +714,61 @@ describe("DataProvider analysis", () => {
       { a: 3, b: 4 },
       { a: 2, b: 6 },
     ]);
+  });
+});
+
+describe("Dataprovider from cb refresh", () => {
+  let rawSheet: ViewMock;
+  let sheetProxy: SheetProxy;
+  let sheet: Sheet;
+
+  beforeEach(() => {
+    rawSheet = server.openView("main", "123");
+    sheetProxy = new SheetProxy(context, rawSheet);
+    sheet = new Sheet(
+      sheetProxy,
+      new DataBatcher(context, sheetProxy),
+      context,
+    );
+    lre.sheets.add(sheet);
+    rawSheet.componentChangedManually("txt1", "HelloOne");
+    rawSheet.componentChangedManually("txt2", "WorldTwo");
+  });
+
+  test("Refresh from component change", () => {
+    const txt1 = sheet.get("txt1")!;
+    const txt2 = sheet.get("txt2")!;
+    const fn = jest.fn(() => {
+      return {
+        one: txt1.value(),
+        two: txt2.value(),
+      };
+    });
+    const dp = lre.dataProvider("test", fn);
+
+    expect(fn).toHaveBeenCalledTimes(0);
+
+    expect(dp.providedValue()).toStrictEqual({
+      one: "HelloOne",
+      two: "WorldTwo",
+    });
+
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    jest.spyOn(txt1, "value");
+
+    rawSheet.componentChangedManually("txt1", "Hello");
+
+    expect(fn).toHaveBeenCalledTimes(2);
+
+    jest.clearAllMocks();
+
+    expect(dp.providedValue()).toStrictEqual({
+      one: "Hello",
+      two: "WorldTwo",
+    });
+
+    expect(txt1.value).toHaveBeenCalledTimes(0);
+    expect(fn).toHaveBeenCalledTimes(0);
   });
 });
