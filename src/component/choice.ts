@@ -33,6 +33,7 @@ export class Choice<
   #currentValue: LetsRole.ComponentValue | void;
   #optional: boolean = false;
   #defaultLabel: string = "";
+  #valueProvider: IDataProvider | undefined;
 
   constructor(
     raw: LetsRole.Component,
@@ -72,6 +73,8 @@ export class Choice<
   setChoices(
     choices: DynamicSetValue<LetsRole.Choices | ChoicesWithData>,
   ): void {
+    this.#valueProvider = undefined;
+
     const currentValue: LetsRole.ChoiceValue =
       this.value() as LetsRole.ChoiceValue;
     const newChoices: LetsRole.Choices = {};
@@ -207,7 +210,11 @@ export class Choice<
   }
 
   valueProvider(): IDataProvider | undefined {
-    return this.#choiceDataProvider?.where(this.value());
+    this.#valueProvider ??= this.#choiceDataProvider?.filter(
+      (_v, k, _data) => k === this.value(),
+    );
+
+    return this.#valueProvider;
   }
 
   row(): LetsRole.TableRow | LetsRole.ComponentValue {

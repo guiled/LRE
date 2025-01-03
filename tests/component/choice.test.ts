@@ -9,9 +9,11 @@ import {
   itHasWaitedEverything,
   terminateLetsRole,
 } from "../../src/mock/letsrole/letsrole.mock";
+import { SheetProxy } from "../../src/proxy/sheet";
 
 let raw: LetsRole.Component;
 let rawSheet: LetsRole.Sheet;
+let sheetProxy: SheetProxy;
 let sheet: ISheet;
 
 beforeEach(() => {
@@ -59,7 +61,8 @@ beforeEach(() => {
   rawSheet = server.openView("main", "12345", {
     chA: "a",
   });
-  sheet = new Sheet(rawSheet, new DataBatcher(context, rawSheet), context);
+  sheetProxy = new SheetProxy(context, rawSheet);
+  sheet = new Sheet(sheetProxy, new DataBatcher(context, rawSheet), context);
   lre.sheets.add(sheet);
   raw = rawSheet.get("ch");
 });
@@ -299,7 +302,7 @@ describe("choice populate", () => {
 
   test("populate with table object", () => {
     const ch = new Choice(rawSheet.get("chA"), sheet, "chA");
-    const table = (Tables as LreTables).get("theTable")!;
+    const table = Tables.get("theTable")!;
     ch.populate(table, "a");
 
     expect(ch.getChoices()).toStrictEqual({
@@ -328,6 +331,75 @@ describe("choice populate", () => {
       b: "2",
     });
     expect(ch.getChoiceData("b")).toBeNull();
+  });
+});
+
+describe("valueProvider tests", () => {
+  let ch: Choice;
+
+  beforeEach(() => {
+    ch = sheet.get("chA") as Choice;
+  });
+
+  test("valueProvider is undefined if no provider given", () => {
+    expect(ch.valueProvider()).toBeUndefined();
+  });
+
+  test("valueProvider always returns the same provider", () => {
+    const p = lre.dataProvider("test", () => ({}));
+
+    ch.setChoices(p);
+
+    const p1 = ch.valueProvider();
+    const p2 = ch.valueProvider();
+
+    expect(p1).toBe(p2);
+  });
+
+  test("valueProvider is changed if the choices are changed", () => {
+    const p = lre.dataProvider("test", () => ({}));
+
+    ch.setChoices(p);
+
+    const p1 = ch.valueProvider();
+
+    expect(p1).toHaveProperty("provider");
+
+    ch.setChoices({
+      a: "1",
+      b: "2",
+    });
+
+    expect(ch.valueProvider()).toBeUndefined();
+
+    ch.setChoices(p);
+
+    expect(ch.valueProvider()).not.toBe(p1);
+  });
+
+  test("valueProvider is refreshed when choice value changed", () => {
+    const a = "42";
+    const b = "13";
+    const data = {
+      a,
+      b,
+    };
+    const p = lre.dataProvider("test", () => data);
+
+    const ch = sheet.get("chA") as Choice;
+
+    expect(ch.valueProvider()).toBeUndefined();
+
+    ch.setChoices(p);
+
+    const provider = ch.valueProvider()!;
+
+    expect(provider).toHaveProperty("provider");
+    expect(provider.providedValue()).toStrictEqual({ a });
+
+    ch.value("b");
+
+    expect(provider.providedValue()).toStrictEqual({ b });
   });
 });
 
