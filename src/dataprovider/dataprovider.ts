@@ -171,14 +171,24 @@ export const DataProvider = (superclass: Newable = class {}) =>
             (a, b) => (direction === "ASC" ? 1 : -1) * sorter(a, b),
           );
         } else if (lre.isObject(data)) {
+          let hasNumericKey = false;
           const sorted = Object.entries(data).toSorted(
             (
               [ka, a]: [DataProviderDataId, DataProviderDataValue],
               [kb, b]: [DataProviderDataId, DataProviderDataValue],
-            ) =>
-              (direction === "ASC" ? 1 : -1) *
-              sorter(a, b, ka, kb, this.getData(ka), this.getData(kb)),
+            ) => {
+              hasNumericKey ||=
+                !isNaN(ka as unknown as number) ||
+                !isNaN(kb as unknown as number);
+              return (
+                (direction === "ASC" ? 1 : -1) *
+                sorter(a, b, ka, kb, this.getData(ka), this.getData(kb))
+              );
+            },
           );
+          LRE_DEBUG &&
+            hasNumericKey &&
+            lre.warn("Numeric keys prevent sort from working properly");
           const result: ReturnType<ValueGetterSetter> = {};
           sorted.forEach(([k, v]) => (result[k] = v));
 
