@@ -58,7 +58,7 @@ export const extractDataProviders = function <
       dataProviders[0].forEach((value, index) => {
         newArgs.push(value);
 
-        if (!!dataProviders[1][index] && callbacks?.[index]) {
+        if (callbacks?.[index]) {
           callbacks[index].call?.(this, dataProviders[1][index]);
         }
       });
