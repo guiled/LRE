@@ -6,25 +6,26 @@ import {
   terminateLetsRole,
 } from "../../src/mock/letsrole/letsrole.mock";
 
+let server: ServerMock;
+
 beforeEach(() => {
-  initLetsRole(
-    new ServerMock({
-      tables: {
-        theTable: [
-          { id: "_123", a: "42", b: "13", c: "one" },
-          { id: "_124", a: "1", b: "2", c: "two" },
-          { id: "_125", a: "4", b: "5", c: "three" },
-          { id: "oh", a: "2", b: "100", c: "last" },
-        ],
-        a: [
-          { id: "_1", a: "42", b: "13", c: "four" },
-          { id: "_2", a: "1", b: "2", c: "five" },
-          { id: "_3", a: "4", b: "5", c: "six" },
-          { id: "oh", a: "2", b: "100", c: "last" },
-        ],
-      },
-    }),
-  );
+  server = new ServerMock({
+    tables: {
+      theTable: [
+        { id: "_123", a: "42", b: "13", c: "one" },
+        { id: "_124", a: "1", b: "2", c: "two" },
+        { id: "_125", a: "4", b: "5", c: "three" },
+        { id: "oh", a: "2", b: "100", c: "last" },
+      ],
+      a: [
+        { id: "_1", a: "42", b: "13", c: "four" },
+        { id: "_2", a: "1", b: "2", c: "five" },
+        { id: "_3", a: "4", b: "5", c: "six" },
+        { id: "oh", a: "2", b: "100", c: "last" },
+      ],
+    },
+  });
+  initLetsRole(server);
   global.lre = new LRE(context);
 });
 
