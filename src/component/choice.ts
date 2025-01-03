@@ -225,23 +225,32 @@ export class Choice<
     label: string = "id",
     optional: boolean = false,
   ): void {
+    this.#valueProvider = undefined;
+
     if (arguments.length >= 2) {
       this.optional(optional);
     }
 
     if (Array.isArray(tableOrCb)) {
       const choices: ChoicesWithData = {};
-      tableOrCb.forEach((row) => {
-        choices[row.id] = {
+      tableOrCb.every((row) => {
+        if (typeof row.id === "undefined") {
+          lre.error("Table row must have an id field");
+          return false;
+        } else if (typeof row[label] === "undefined") {
+          lre.warn(`Table row misses a ${label} field`);
+        }
+
+        return (choices[row.id] = {
           value: row[label],
           data: row,
-        };
+        });
       });
       this.setChoices(choices);
     } else if (
       lre.isObject<BasicObject<string | LetsRole.TableRow>>(tableOrCb)
     ) {
-      const choices: LetsRole.Choices = {};
+      const choices: ChoicesWithData = {};
       Object.keys(tableOrCb).forEach((choiceId) => {
         const currentChoice: string | LetsRole.TableRow = tableOrCb[choiceId];
 
@@ -257,7 +266,10 @@ export class Choice<
             val = currentChoice[label];
           }
 
-          choices[id] = val;
+          choices[id] = {
+            value: val,
+            data: currentChoice,
+          };
         } else {
           choices[choiceId] = currentChoice;
         }
