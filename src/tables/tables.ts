@@ -30,6 +30,10 @@ export class LreTables
         : null;
     }
 
+    if (!this.#tables[id]) {
+      lre.error(`Table "${id}" not found`);
+    }
+
     return this.#tables[id];
   }
 }
