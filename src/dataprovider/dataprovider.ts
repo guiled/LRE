@@ -338,8 +338,8 @@ export const DataProvider = (superclass: Newable = class {}) =>
       return this.#newProvider("filter", () => {
         const result: Record<string, TableRow | LetsRole.ComponentValue> = {};
 
-        this.each((v, k) => {
-          if (condition(v, k, this.getData(k))) {
+        this.each((v, k, data) => {
+          if (condition(v, k, data)) {
             result[k] = v;
           }
         });
