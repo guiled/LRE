@@ -277,12 +277,21 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
     getData(
       id?: DataProviderDataId | Array<number | string>,
-    ): TableRow | LetsRole.ComponentValue {
+    ): DataProviderDataValue {
       const originalValues = this.#getOriginalValue();
 
       if (typeof id === "undefined") {
-        if (Array.isArray(originalValues) && originalValues.length === 1) {
-          return originalValues[0];
+        const values = this.#getCurrentValue() || {};
+
+        if (Array.isArray(values)) {
+          return values.reduce<Record<any, any>>((acc, _v, i) => {
+            acc[i] = this.getData(i);
+            return acc;
+          }, {});
+        }
+
+        if (Array.isArray(originalValues)) {
+          return originalValues;
         } else if (
           !Array.isArray(originalValues) &&
           lre.isObject(originalValues) &&
@@ -291,14 +300,13 @@ export const DataProvider = (superclass: Newable = class {}) =>
           const values = this.#getCurrentValue() || {};
           const valueKeys = Object.keys(values);
 
-          if (valueKeys.length === 1) {
-            return originalValues[valueKeys[0]];
-          }
+          return valueKeys.reduce<Record<any, any>>((acc, k) => {
+            acc[k] = originalValues[k];
+            return acc;
+          }, {});
         } else {
           return originalValues;
         }
-
-        return undefined;
       }
 
       if (Array.isArray(originalValues) || lre.isObject(originalValues)) {
@@ -631,17 +639,16 @@ export const DataProvider = (superclass: Newable = class {}) =>
         this.each((v, k, data) => {
           const newValue: Record<string, TableRow | LetsRole.ComponentValue> =
             {};
+          const vIsObj = lre.isObject<Record<string, string>>(v);
+          const dataIsObj = lre.isObject<Record<string, string>>(data);
 
-          if (lre.isObject(map) && lre.isObject<Record<string, string>>(v)) {
+          if (lre.isObject(map)) {
             Object.keys(map).forEach((mapKey) => {
               const transformedKey = map[mapKey];
 
-              if (typeof v[mapKey] !== "undefined") {
+              if (vIsObj && typeof v[mapKey] !== "undefined") {
                 newValue[transformedKey] = v[mapKey];
-              } else if (
-                lre.isObject<Record<string, string>>(data) &&
-                typeof data[mapKey] !== "undefined"
-              ) {
+              } else if (dataIsObj && typeof data[mapKey] !== "undefined") {
                 newValue[transformedKey] = data[mapKey];
               }
             });

@@ -525,7 +525,7 @@ describe("DataProvider get single value", () => {
     expect(result.provider).toBeTruthy();
     expect(dataGetter).toHaveBeenCalledTimes(0);
 
-    expect(result.getData()).toStrictEqual({ a: "1", b: "2", c: "3" });
+    expect(result.getData()).toStrictEqual({ 2: { a: "1", b: "2", c: "3" } });
     expect(dataGetter).toHaveBeenCalledTimes(1);
     expect(result.singleValue()).toBe("1");
     expect(result.singleId()).toBe("2");
@@ -534,7 +534,7 @@ describe("DataProvider get single value", () => {
       return data.b === "5";
     });
 
-    expect(result2.getData()).toStrictEqual({ a: "4", b: "5", c: "6" });
+    expect(result2.getData()).toStrictEqual({ 3: { a: "4", b: "5", c: "6" } });
     expect(dataGetter).toHaveBeenCalledTimes(1);
 
     //data["2"]["a"] = "42";

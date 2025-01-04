@@ -494,3 +494,54 @@ describe("MultiChoice", () => {
     expect(multiChoice.value()).toEqual(["1", "2", "3", "4", "5"]);
   });
 });
+
+describe("Multichoice filled with data", () => {
+  test("valueProvider returns the right data", () => {
+    const data = lre.dataProvider("test", () => {
+      return {
+        1: { id: "1", lbl: "One", nb: 2, weight: 30 },
+        2: { id: "2", lbl: "Two", nb: 2, weight: 10 },
+        3: { id: "3", lbl: "Three", nb: 1, weight: 20 },
+        4: { id: "4", lbl: "Four", nb: 1, weight: 10 },
+        5: { id: "5", lbl: "Five", nb: 3, weight: 1 },
+        6: { id: "6", lbl: "Six", nb: 1, weight: 50 },
+        7: { id: "7", lbl: "Seven", nb: 3, weight: 10 },
+      };
+    });
+    multiChoice.setChoices(data.select("lbl"));
+    multiChoice.value([]);
+
+    const provider = multiChoice.valueProvider()!;
+
+    expect(provider).toHaveProperty("provider");
+    expect(provider.providedValue()).toStrictEqual({});
+
+    multiChoice.value(["1"]);
+
+    expect(provider.providedValue()).toStrictEqual({
+      1: "One",
+    });
+
+    multiChoice.value(["1", "4"]);
+
+    expect(provider.providedValue()).toStrictEqual({
+      1: "One",
+      4: "Four",
+    });
+    expect(provider.getData()).toStrictEqual({
+      1: { id: "1", lbl: "One", nb: 2, weight: 30 },
+      4: { id: "4", lbl: "Four", nb: 1, weight: 10 },
+    });
+
+    const transformed = provider.transform({
+      id: "id",
+      lbl: "name",
+      weight: "points",
+    });
+
+    expect(transformed.providedValue()).toStrictEqual({
+      1: { id: "1", name: "One", points: 30 },
+      4: { id: "4", name: "Four", points: 10 },
+    });
+  });
+});
