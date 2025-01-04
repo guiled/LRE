@@ -56,12 +56,6 @@ export class MultiChoice extends Choice<
     newValue?: DynamicSetValue<LetsRole.MultiChoiceValue>,
   ): void | LetsRole.MultiChoiceValue {
     if (arguments.length > 0) {
-      if (!Array.isArray(newValue)) {
-        lre.error(`[MultiChoice] ${this.realId()} value should be an array.`);
-        this.clear();
-        return;
-      }
-
       const valueAsArray = this.#sanitizeValue(newValue);
       const setChoicesNeeded = this.#currentValue.some(
         (v) => !valueAsArray.includes(v),

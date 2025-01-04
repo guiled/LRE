@@ -210,9 +210,15 @@ export class Choice<
   }
 
   valueProvider(): IDataProvider | undefined {
-    this.#valueProvider ??= this.#choiceDataProvider?.filter(
-      (_v, k, _data) => k === this.value(),
-    );
+    this.#valueProvider ??= this.#choiceDataProvider?.filter((_v, k, _data) => {
+      const val = this.value();
+
+      if (Array.isArray(val)) {
+        return val.includes(k as string);
+      }
+
+      return k === this.value();
+    });
 
     return this.#valueProvider;
   }

@@ -543,5 +543,29 @@ describe("Multichoice filled with data", () => {
       1: { id: "1", name: "One", points: 30 },
       4: { id: "4", name: "Four", points: 10 },
     });
+
+    const unchecked = multiChoice.unchecked();
+
+    expect(unchecked.providedValue()).toStrictEqual({
+      2: "Two",
+      3: "Three",
+      5: "Five",
+      6: "Six",
+      7: "Seven",
+    });
+
+    const transformedChecked = unchecked.transform({
+      id: "id",
+      lbl: "name",
+      weight: "points",
+    });
+
+    expect(transformedChecked.providedValue()).toStrictEqual({
+      2: { id: "2", name: "Two", points: 10 },
+      3: { id: "3", name: "Three", points: 20 },
+      5: { id: "5", name: "Five", points: 1 },
+      6: { id: "6", name: "Six", points: 50 },
+      7: { id: "7", name: "Seven", points: 10 },
+    });
   });
 });
