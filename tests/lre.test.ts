@@ -95,8 +95,14 @@ describe("LRE tests", () => {
 
       expect(subject.alphaToNum(res)).toEqual(n);
     }
+  });
 
+  test("random id generation", () => {
     const mathRandomSpy = jest.spyOn(Math, "random");
+    mathRandomSpy.mockImplementation(() => 0);
+
+    expect(subject.getRandomId()).toEqual("A");
+
     mathRandomSpy.mockImplementation(() => 0.424242);
 
     expect(subject.getRandomId()).toEqual("BTYuVvaBoU");
@@ -105,6 +111,19 @@ describe("LRE tests", () => {
 
     // cSpell:ignore DMZN
     expect(subject.getRandomId()).toEqual("DMZNPvePse");
+
+    mathRandomSpy.mockRestore();
+  });
+
+  test("random id generation with length", () => {
+    const mathRandomSpy = jest.spyOn(Math, "random");
+    mathRandomSpy.mockImplementation(() => 0);
+
+    expect(subject.getRandomId(1)).toEqual("A");
+
+    mathRandomSpy.mockImplementation(() => 0.9999999999999999);
+
+    expect(subject.getRandomId(3)).toEqual("zzz");
 
     mathRandomSpy.mockRestore();
   });

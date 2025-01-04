@@ -12,7 +12,7 @@ declare interface ILRE {
   deepEqual(x: any, y: any): boolean;
   numToAlpha(n: number): string;
   alphaToNum(s: string): number;
-  getRandomId(): string;
+  getRandomId(length?: number): string;
   wait(delay: number, cb: () => void, name: string = "");
   autoNum(v: boolean = true): void;
   value<T = any>(n: T): T;
@@ -358,7 +358,12 @@ declare interface IDataProvider {
     dataValueOrColumn: string | DataProviderGetValue,
     value: LetsRole.ComponentValue,
   ): DataProviderDataValue;
-  transform(map: Record<string | number, string | number>): IDataProvider;
+  transform(
+    map:
+      | Record<string | number, string | number>
+      | string
+      | DataProviderCallback<Record<string | number, string | number> | string>,
+  ): IDataProvider;
 }
 
 declare interface ComponentBase {

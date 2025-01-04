@@ -124,7 +124,13 @@ export class LRE extends Logger implements ILRE {
     return n;
   }
 
-  getRandomId(): string {
+  getRandomId(length?: number): string {
+    if (length) {
+      const rnd = Math.ceil(Math.random() * (Math.pow(2 * 26, length) - 1));
+
+      return this.numToAlpha(rnd);
+    }
+
     const rnd = Math.ceil(Math.random() * Number.MAX_SAFE_INTEGER);
 
     return this.numToAlpha(rnd);
