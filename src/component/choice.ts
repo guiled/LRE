@@ -108,7 +108,7 @@ export class Choice<
         tmpChoices[currentValue] = this.#choices[currentValue];
         tmpChoices[newValues[0]] = newChoices[newValues[0]];
         this.raw().setChoices(tmpChoices);
-        this.value(newValues[0]);
+        this.setDefaultValue();
         this.sheet().sendPendingDataFor(this.realId());
       }
     }
@@ -117,6 +117,14 @@ export class Choice<
     this.#choiceData = newChoiceData;
     this.#setChoicesToComponent();
     this.trigger("update", this);
+  }
+
+  setDefaultValue(): void {
+    if (this.#optional) {
+      this.value("");
+    } else {
+      this.value(Object.keys(this.#choices)[0]);
+    }
   }
 
   #setChoicesToComponent(): void {

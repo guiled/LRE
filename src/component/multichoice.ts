@@ -73,6 +73,10 @@ export class MultiChoice extends Choice<
     return this.#sanitizeValue(super.value());
   }
 
+  setDefaultValue(): void {
+    this.value([]);
+  }
+
   #sanitizeValue(value: unknown): LetsRole.MultiChoiceValue {
     if (Array.isArray(value)) {
       return value.map(lre.value.bind(lre));
