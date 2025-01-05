@@ -542,6 +542,30 @@ describe("Multichoice checked and unchecked", () => {
       f: "Six",
     });
     expect(choiceOn.getChoices()).toStrictEqual({ a: "One" });
+  });
+
+  test("Value is reset if choices totally changed", () => {
+    expect(multiChoice.getChoices()).toStrictEqual({
+      a: "One",
+      b: "Two",
+      c: "Three",
+      d: "Four",
+      e: "Five",
+      f: "Six",
+    });
+
+    multiChoice.value(["a", "c"]);
+
+    expect(multiChoice.value()).toStrictEqual(["a", "c"]);
+
+    multiChoice.setChoices({
+      g: "Seven",
+      h: "Eight",
+      i: "Nine",
+    });
+
+    expect(multiChoice.value()).toStrictEqual([]);
+  });
 });
 
 describe("Multichoice filled with data", () => {
