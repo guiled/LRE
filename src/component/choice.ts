@@ -23,6 +23,14 @@ export type ChoiceEvents =
   | "unselect"
   | "valunselect"
   | "valclick";
+
+const choiceEvents: Array<ChoiceEvents> = [
+  "select",
+  "valselect",
+  "unselect",
+  "valunselect",
+  "valclick",
+];
 export class Choice<
   ValueType extends LetsRole.ComponentValue = LetsRole.ChoiceValue,
   Events extends string = LetsRole.EventType,
@@ -49,20 +57,30 @@ export class Choice<
       lre.error(`[Choice] Unable to get ${realId} value. ${e}`);
     }
 
-    this.on(UPDATE_CHECK_CHANGES, this.#checkChanges.bind(this));
+    this.on(
+      "eventhandler-created:__lre__",
+      this.#addSelEventHandler.bind(this),
+    );
+  }
+
+  #addSelEventHandler(_target: Choice, eventName: ChoiceEvents): void {
+    if (choiceEvents.includes(eventName)) {
+      this.off("eventhandler-created:__lre__");
+      this.on(UPDATE_CHECK_CHANGES, this.#checkChanges.bind(this));
+    }
   }
 
   #checkChanges(choice: Component): void {
     const newValue = choice.value();
 
     if (newValue !== this.#currentValue) {
-      this.trigger(`valselect:${newValue}`);
-      this.trigger("select", newValue);
-      this.trigger(`valunselect:${this.#currentValue}`);
-      this.trigger("unselect", this.#currentValue);
+      this.trigger(`${choiceEvents[1]}:${newValue}`);
+      this.trigger(choiceEvents[0], newValue);
+      this.trigger(`${choiceEvents[3]}:${this.#currentValue}`);
+      this.trigger(choiceEvents[2], this.#currentValue);
     }
 
-    this.trigger(`valclick:${newValue}`);
+    this.trigger(`${choiceEvents[4]}:${newValue}`);
     this.#currentValue = newValue;
   }
 

@@ -11,6 +11,7 @@ import {
   terminateLetsRole,
 } from "../../src/mock/letsrole/letsrole.mock";
 import { ComponentProxy } from "../../src/proxy/component";
+import { Choice } from "../../src/component/choice";
 
 let rawSheet: LetsRole.Sheet;
 let sheet: Sheet;
@@ -37,6 +38,14 @@ beforeEach(() => {
             name: "command",
             className: "TextInput",
             defaultValue: "2",
+          },
+          {
+            id: "choiceOn",
+            className: "Choice",
+          },
+          {
+            id: "choiceOff",
+            className: "Choice",
           },
         ],
         className: "View",

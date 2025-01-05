@@ -44,11 +44,22 @@ export class MultiChoice extends Choice<
     super(raw, sheet, realId);
     this.lreType("multichoice");
     this.#currentValue = Array.from(super.value() || []);
-    this.on(UPDATE_CHECK_CHANGES, this.#checkChanges.bind(this));
+    this.on(
+      "eventhandler-created:__lre__",
+      this.#addSelEventHandler.bind(this),
+    );
     this.#minCalculator = defaultCalculator;
     this.#maxCalculator = defaultCalculator;
     this.#valuesSavedForMinMax =
       (this.raw().value() as LetsRole.MultiChoiceValue) || [];
+  }
+
+  #addSelEventHandler(_target: Choice, eventName: ChoiceEvents): void {
+    if (["select", "unselect"].includes(eventName)) {
+      this.off("eventhandler-created:__lre__");
+      this.#currentValue = Array.from(super.value() || []);
+      this.on(UPDATE_CHECK_CHANGES, this.#checkChanges.bind(this));
+    }
   }
 
   value(): LetsRole.MultiChoiceValue;
