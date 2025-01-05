@@ -163,40 +163,44 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     #sortData(sorter: Sorter, direction: SortDirection): IDataProvider {
-      return this.#newProvider("sort", () => {
-        const data = this.#getCurrentValue();
+      return this.#newProvider(
+        "sort",
+        () => {
+          const data = this.#getCurrentValue();
 
-        if (Array.isArray(data)) {
-          return data.toSorted(
-            (a, b) => (direction === "ASC" ? 1 : -1) * sorter(a, b),
-          );
-        } else if (lre.isObject(data)) {
-          let hasNumericKey = false;
-          const sorted = Object.entries(data).toSorted(
-            (
-              [ka, a]: [DataProviderDataId, DataProviderDataValue],
-              [kb, b]: [DataProviderDataId, DataProviderDataValue],
-            ) => {
-              hasNumericKey ||=
-                !isNaN(ka as unknown as number) ||
-                !isNaN(kb as unknown as number);
-              return (
-                (direction === "ASC" ? 1 : -1) *
-                sorter(a, b, ka, kb, this.getData(ka), this.getData(kb))
-              );
-            },
-          );
-          LRE_DEBUG &&
-            hasNumericKey &&
-            lre.warn("Numeric keys prevent sort from working properly");
-          const result: ReturnType<ValueGetterSetter> = {};
-          sorted.forEach(([k, v]) => (result[k] = v));
+          if (Array.isArray(data)) {
+            return data.toSorted(
+              (a, b) => (direction === "ASC" ? 1 : -1) * sorter(a, b),
+            );
+          } else if (lre.isObject(data)) {
+            let hasNumericKey = false;
+            const sorted = Object.entries(data).toSorted(
+              (
+                [ka, a]: [DataProviderDataId, DataProviderDataValue],
+                [kb, b]: [DataProviderDataId, DataProviderDataValue],
+              ) => {
+                hasNumericKey ||=
+                  !isNaN(ka as unknown as number) ||
+                  !isNaN(kb as unknown as number);
+                return (
+                  (direction === "ASC" ? 1 : -1) *
+                  sorter(a, b, ka, kb, this.getData(ka), this.getData(kb))
+                );
+              },
+            );
+            LRE_DEBUG &&
+              hasNumericKey &&
+              lre.warn("Numeric keys prevent sort from working properly");
+            const result: ReturnType<ValueGetterSetter> = {};
+            sorted.forEach(([k, v]) => (result[k] = v));
 
-          return result;
-        }
+            return result;
+          }
 
-        return data;
-      });
+          return data;
+        },
+        true,
+      );
     }
 
     #handleSet<T extends LetsRole.ComponentValue | undefined = undefined>(
@@ -343,17 +347,21 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     filter(condition: DataProviderWhereConditioner): IDataProvider {
-      return this.#newProvider("filter", () => {
-        const result: Record<string, TableRow | LetsRole.ComponentValue> = {};
+      return this.#newProvider(
+        "filter",
+        () => {
+          const result: Record<string, TableRow | LetsRole.ComponentValue> = {};
 
-        this.each((v, k, data) => {
-          if (condition(v, k, data)) {
-            result[k] = v;
-          }
-        });
+          this.each((v, k, data) => {
+            if (condition(v, k, data)) {
+              result[k] = v;
+            }
+          });
 
-        return result;
-      });
+          return result;
+        },
+        true,
+      );
     }
 
     where(
@@ -458,7 +466,26 @@ export const DataProvider = (superclass: Newable = class {}) =>
       }
     }
 
-    #newProvider(id: string, valueCb: ValueGetterSetter): IDataProvider {
+    #newProvider(
+      id: string,
+      valueCb: ValueGetterSetter,
+      withRandom: boolean = false,
+    ): IDataProvider {
+      if (withRandom) {
+        let rnd: string = lre.getRandomId(5);
+        let cnt: number = 0;
+
+        while (cnt++ < 10 && this.#destRefresh[id + "-" + rnd]) {
+          rnd = lre.getRandomId(5);
+        }
+
+        if (cnt >= 10) {
+          throw new Error("Could not generate a unique random id");
+        }
+
+        id += "-" + rnd;
+      }
+
       const provider = new DirectDataProvider(
         id,
         this.#context,
