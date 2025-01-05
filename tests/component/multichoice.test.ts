@@ -196,65 +196,6 @@ describe("MultiChoice", () => {
     expect(multiChoice.value()).toEqual(["2", "4", "6"]);
   });
 
-  test("Multichoice checked() and unchecked() return providers", () => {
-    const data = lre.dataProvider("test", () => {
-      return {
-        a: { id: "1", lbl: "One", nb: 10 },
-        b: { id: "2", lbl: "Two", nb: 20 },
-        c: { id: "3", lbl: "Three", nb: 30 },
-        d: { id: "4", lbl: "Four", nb: 40 },
-        e: { id: "5", lbl: "Five", nb: 50 },
-        f: { id: "6", lbl: "Six", nb: 60 },
-      };
-    });
-    multiChoice.setChoices(data.select("lbl"));
-    const checked = multiChoice.checked();
-    const unchecked = multiChoice.unchecked();
-
-    expect(checked.provider).toBeTruthy();
-    expect(unchecked.provider).toBeTruthy();
-    expect(checked.providedValue()).toEqual({});
-    expect(unchecked.providedValue()).toEqual({
-      a: "One",
-      b: "Two",
-      c: "Three",
-      d: "Four",
-      e: "Five",
-      f: "Six",
-    });
-
-    multiChoice.value(["a"]);
-
-    expect(checked.providedValue()).toEqual({ a: "One" });
-    expect(unchecked.providedValue()).toEqual({
-      b: "Two",
-      c: "Three",
-      d: "Four",
-      e: "Five",
-      f: "Six",
-    });
-
-    multiChoice.value(["a", "c"]);
-
-    expect(checked.providedValue()).toEqual({ a: "One", c: "Three" });
-    expect(unchecked.providedValue()).toEqual({
-      b: "Two",
-      d: "Four",
-      e: "Five",
-      f: "Six",
-    });
-    expect(checked.getData("a")).toStrictEqual({
-      id: "1",
-      lbl: "One",
-      nb: 10,
-    });
-    expect(unchecked.getData("b")).toStrictEqual({
-      id: "2",
-      lbl: "Two",
-      nb: 20,
-    });
-  });
-
   test("Limit min and max choices with numbers", () => {
     multiChoice.on("click:other", jest.fn());
     const data = lre.dataProvider("test", () => {
@@ -493,6 +434,114 @@ describe("MultiChoice", () => {
 
     expect(multiChoice.value()).toEqual(["1", "2", "3", "4", "5"]);
   });
+});
+
+describe("Multichoice checked and unchecked", () => {
+  let data: IDataProvider;
+
+  beforeEach(() => {
+    data = lre.dataProvider("test", () => {
+      return {
+        a: { id: "1", lbl: "One", nb: 10 },
+        b: { id: "2", lbl: "Two", nb: 20 },
+        c: { id: "3", lbl: "Three", nb: 30 },
+        d: { id: "4", lbl: "Four", nb: 40 },
+        e: { id: "5", lbl: "Five", nb: 50 },
+        f: { id: "6", lbl: "Six", nb: 60 },
+      };
+    });
+    multiChoice.setChoices(data.select("lbl"));
+  });
+
+  test("Checked and unchecked always return the same provider", () => {
+    const checked1 = multiChoice.checked();
+    const checked2 = multiChoice.checked();
+    const unchecked1 = multiChoice.unchecked();
+    const unchecked2 = multiChoice.unchecked();
+
+    expect(checked1).toBe(checked2);
+    expect(unchecked1).toBe(unchecked2);
+  });
+
+  test("Multichoice checked() and unchecked() return providers", () => {
+    const checked = multiChoice.checked();
+    const unchecked = multiChoice.unchecked();
+
+    expect(checked.provider).toBeTruthy();
+    expect(unchecked.provider).toBeTruthy();
+    expect(checked.providedValue()).toEqual({});
+    expect(unchecked.providedValue()).toEqual({
+      a: "One",
+      b: "Two",
+      c: "Three",
+      d: "Four",
+      e: "Five",
+      f: "Six",
+    });
+
+    multiChoice.value(["a"]);
+
+    expect(checked.providedValue()).toEqual({ a: "One" });
+    expect(unchecked.providedValue()).toEqual({
+      b: "Two",
+      c: "Three",
+      d: "Four",
+      e: "Five",
+      f: "Six",
+    });
+
+    multiChoice.value(["a", "c"]);
+
+    expect(checked.providedValue()).toEqual({ a: "One", c: "Three" });
+    expect(unchecked.providedValue()).toEqual({
+      b: "Two",
+      d: "Four",
+      e: "Five",
+      f: "Six",
+    });
+    expect(checked.getData("a")).toStrictEqual({
+      id: "1",
+      lbl: "One",
+      nb: 10,
+    });
+    expect(unchecked.getData("b")).toStrictEqual({
+      id: "2",
+      lbl: "Two",
+      nb: 20,
+    });
+  });
+
+  test("Checked and unchecked pass on multichoice update", () => {
+    const checked = multiChoice.checked();
+    const unchecked = multiChoice.unchecked();
+
+    const choiceOn = sheet.get("choiceOn") as Choice;
+    const choiceOff = sheet.get("choiceOff") as Choice;
+
+    choiceOn.setChoices(checked.transform("lbl"));
+    choiceOff.setChoices(unchecked);
+
+    expect(choiceOn.getChoices()).toStrictEqual({});
+    expect(choiceOff.getChoices()).toStrictEqual({
+      a: "One",
+      b: "Two",
+      c: "Three",
+      d: "Four",
+      e: "Five",
+      f: "Six",
+    });
+
+    multiChoice.value(["a"]);
+
+    expect(checked.providedValue()).toStrictEqual({ a: "One" });
+    expect(unchecked.providedValue()).toStrictEqual({
+      b: "Two",
+      c: "Three",
+      d: "Four",
+      e: "Five",
+      f: "Six",
+    });
+    expect(choiceOn.getChoices()).toStrictEqual({ a: "One" });
 });
 
 describe("Multichoice filled with data", () => {

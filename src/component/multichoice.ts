@@ -33,6 +33,8 @@ export class MultiChoice extends Choice<
   #minCalculator: MinMaxCalculator;
   #maxCalculator: MinMaxCalculator;
   #valuesSavedForMinMax: LetsRole.MultiChoiceValue = [];
+  #checkedProvider: IDataProvider | undefined;
+  #uncheckedProvider: IDataProvider | undefined;
 
   constructor(
     raw: LetsRole.Component,
@@ -182,7 +184,7 @@ export class MultiChoice extends Choice<
   }
 
   checked(): IDataProvider {
-    return lre.dataProvider(
+    this.#checkedProvider ??= lre.dataProvider(
       this.realId() + "-checked",
       () => {
         const result: LetsRole.ViewData = {};
@@ -196,10 +198,12 @@ export class MultiChoice extends Choice<
         return this.valueData();
       },
     );
+
+    return this.#checkedProvider;
   }
 
   unchecked(): IDataProvider {
-    return lre.dataProvider(
+    this.#uncheckedProvider ??= lre.dataProvider(
       this.realId() + "-unchecked",
       () => {
         const result: LetsRole.ViewData = {};
@@ -229,6 +233,8 @@ export class MultiChoice extends Choice<
         return result;
       },
     );
+
+    return this.#uncheckedProvider;
   }
 
   maxChoiceNb(): MinMaxLimit;
