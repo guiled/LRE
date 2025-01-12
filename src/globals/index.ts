@@ -2,7 +2,7 @@ import { isNaN } from "./isNaN";
 import { stringify } from "./stringify";
 import { structuredClone } from "./structuredClone";
 import { throwError, newError } from "./throwError";
-import { virtualCall, loggedCall } from "./virtualcall";
+import { virtualCall } from "./virtualcall";
 
 export const globals = {
   isNaN,
@@ -11,5 +11,4 @@ export const globals = {
   structuredClone,
   stringify,
   virtualCall,
-  loggedCall,
 };

@@ -146,7 +146,6 @@ declare module "lre" {
     var newError: (err: message) => unknown;
     var stringify: (obj: unknown, indent?: boolean) => string | undefined;
     var virtualCall: <T>(cb: () => T) => T;
-    var loggedCall: <T>(cb: () => T) => T;
     /* eslint-enable no-var */
   }
 }

@@ -1,4 +1,4 @@
-import { loggedCall, virtualCall } from "../../globals/virtualcall";
+import { virtualCall } from "../../globals/virtualcall";
 import { ServerMock } from "./server.mock";
 import { modeHandlerMock } from "../../../tests/mock/modeHandler.mock";
 import { newMockedWait } from "./wait.mock";
@@ -44,7 +44,6 @@ const initLetsRole = (server: ServerMock, context?: ProxyModeHandler): void => {
   global.Bindings = Bindings;
   global.RollBuilder = RollBuilderClass;
   global.Tables = server.getMockOfTables();
-  global.loggedCall = loggedCall;
   global.virtualCall = virtualCall;
   global.context = context ?? modeHandlerMock();
   global.LRE_DEBUG = true;
@@ -59,8 +58,6 @@ const terminateLetsRole = (): void => {
   delete global.Bindings;
   delete global.RollBuilder;
   delete global.Tables;
-  // @ts-expect-error intentional deletion
-  delete global.loggedCall;
   // @ts-expect-error intentional deletion
   delete global.virtualCall;
   // @ts-expect-error intentional deletion

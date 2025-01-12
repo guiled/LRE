@@ -1,34 +1,9 @@
-import { loggedCall, virtualCall } from "../../src/globals/virtualcall";
+import { virtualCall } from "../../src/globals/virtualcall";
 import { LRE } from "../../src/lre";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 global.context = modeHandlerMock();
 jest.mock("../../src/lre");
-
-describe("Logged call", () => {
-  test("logged call runs the callback with clean logs", () => {
-    jest.spyOn(context, "pushLogContext");
-    jest.spyOn(context, "popLogContext");
-    const cb = jest.fn();
-
-    expect(context.pushLogContext).not.toHaveBeenCalled();
-    expect(context.popLogContext).not.toHaveBeenCalled();
-    expect(cb).not.toHaveBeenCalled();
-
-    loggedCall(cb);
-
-    expect(context.pushLogContext).toHaveBeenCalled();
-    expect(context.popLogContext).toHaveBeenCalled();
-    expect(cb).toHaveBeenCalled();
-  });
-
-  test("logged call returns the callback return", () => {
-    const result = Math.random();
-    const cb = jest.fn(() => result);
-
-    expect(loggedCall(cb)).toBe(result);
-  });
-});
 
 describe("Virtual call", () => {
   const env: any = {};
