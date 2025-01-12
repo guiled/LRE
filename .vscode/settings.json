@@ -9,8 +9,10 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "editor.codeActionsOnSave": {
-    "source.fixAll": "explicit"
+    "source.fixAll": "explicit",
+    "source.fixAll.ts": "never"
   },
+  "eslint.codeActionsOnSave.rules": ["!prefer-const", "*"],
   "eslint.rules.customizations": [
     {
       "rule": "prettier/prettier",
