@@ -502,15 +502,20 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     subscribeRefresh(id: string, refresh: () => void): void {
+      LRE_DEBUG && lre.trace(`Subscribe provider ${id} in ${this.id()}`);
       this.#destRefresh[id] = refresh;
     }
 
     unsubscribeRefresh(id: string): void {
+      LRE_DEBUG && lre.trace(`Unsubscribe provider ${id} in ${this.id()}`);
       delete this.#destRefresh[id];
     }
 
     refreshDerived(): void {
-      Object.values(this.#destRefresh).forEach((refresh) => refresh());
+      Object.keys(this.#destRefresh).forEach((id) => {
+        LRE_DEBUG && lre.trace(`Refresh provider ${id} from ${this.id()}`);
+        this.#destRefresh[id]();
+      });
     }
 
     min(dataValueOrColumn?: string | DataProviderGetValue): IDataProvider {
