@@ -118,10 +118,9 @@ export class ComponentCache {
     }
 
     LRE_DEBUG && lre.trace(`Get component ${realId} from sheet`);
-    const logEnabled = this.#context.getLogEnabled();
-    this.#context.disableAccessLog();
-    const cmp = this.#getter(realId, silent);
-    this.#context.setLogEnabled(logEnabled);
+    const cmp = this.#context.call(false, () =>
+      this.#getter(realId, silent),
+    )[0];
 
     if (cmp) {
       this.set(realId, cmp);

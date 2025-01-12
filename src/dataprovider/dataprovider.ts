@@ -210,7 +210,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
       return ((...args: [undefined] | []): ReturnType<ValueGetterSetter<T>> => {
         if (args.length === 0) {
           this.#context?.logAccess?.("provider", this);
-          return valueCb();
+          return this.#context?.call?.(false, valueCb)[0];
         }
 
         this.#valueCb(...args);

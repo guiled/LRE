@@ -262,16 +262,15 @@ export class Group
       this.#context.logAccess("value", this);
     }
 
-    const logEnabled = this.#context.getLogEnabled();
-    this.#context.disableAccessLog();
-    const result = this.#getSet.apply(
-      this,
-      ["value"].concat(Array.from(arguments)) as [
-        "value",
-        Record<string, unknown>,
-      ],
-    );
-    this.#context.setLogEnabled(logEnabled);
+    const result = this.#context.call(false, () =>
+      this.#getSet.apply(
+        this,
+        ["value"].concat(Array.from(arguments)) as [
+          "value",
+          Record<string, unknown>,
+        ],
+      ),
+    )[0];
 
     return result;
   }
