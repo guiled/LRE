@@ -115,4 +115,22 @@ export class Context implements ProxyModeHandler {
   getContext<T = LetsRole.ComponentValue>(id: string): T {
     return this.#data[id] as T;
   }
+
+  getLastLog(): Partial<ContextLog> {
+    return this.#prevLog;
+  }
+
+  call<T>(enabled: boolean, callback: () => T): [T, Partial<ContextLog>] {
+    const saveEnabled = this.#logEnabled;
+    this.#logEnabled = enabled;
+    this.pushLogContext();
+
+    const result = callback();
+
+    this.#logEnabled = saveEnabled;
+
+    this.popLogContext();
+
+    return [result, this.#prevLog];
+  }
 }

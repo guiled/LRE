@@ -47,6 +47,20 @@ export const modeHandlerMock = (): ProxyModeHandler => {
 
       return this;
     },
+    getLastLog(): Partial<ContextLog> {
+      return prevLogs;
+    },
+    call<T>(newEnabled: boolean, callback: () => T): [T, Partial<ContextLog>] {
+      const saveEnabled = enabled;
+      enabled = newEnabled;
+      result.pushLogContext();
+
+      const res = callback();
+      enabled = saveEnabled;
+      result.popLogContext();
+
+      return [res, prevLogs];
+    },
   };
 
   return result;

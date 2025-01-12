@@ -115,6 +115,8 @@ declare interface ProxyModeHandler {
   getContext: <T = any>(id: string) => T;
   pushLogContext: () => ProxyModeHandler;
   popLogContext: () => ProxyModeHandler;
+  getLastLog(): Partial<ContextLog>;
+  call<T>(enabled: boolean, callback: () => T): [T, Partial<ContextLog>];
 }
 declare type ProxyMode = "real" | "virtual";
 
