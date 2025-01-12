@@ -194,7 +194,7 @@ const removeOldEventLogHandlers = function <This extends DynamicSetterHolder>(
     );
     delete eventLogs[t.logType];
   });
-  eventLogs.provider?.forEach((provider: IDataProvider) => {
+  eventLogs.provider?.forEach((provider: IDataProviderAsSource) => {
     deleted = true;
     provider.unsubscribeRefresh(
       this.realId() + "-" + (decoratorContext.name as string),
@@ -256,7 +256,7 @@ const handleAccessLog = function <This extends DynamicSetterHolder>(
   });
   context
     .getPreviousAccessLog("provider")
-    .forEach((provider: IDataProvider) => {
+    .forEach((provider: IDataProviderAsSource) => {
       provider.subscribeRefresh(this.realId() + "-" + destName, newSetter);
     });
 

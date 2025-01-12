@@ -32,7 +32,7 @@ const RollBuilderClass = class {
   onRoll = rollBuilderMock.onRoll;
 };
 
-const initLetsRole = (server: ServerMock): void => {
+const initLetsRole = (server: ServerMock, context?: ProxyModeHandler): void => {
   global.each = jest.fn((obj: unknown, cb) => {
     for (const k in obj as object) {
       /* @ts-expect-error can be various type */
@@ -46,7 +46,7 @@ const initLetsRole = (server: ServerMock): void => {
   global.Tables = server.getMockOfTables();
   global.loggedCall = loggedCall;
   global.virtualCall = virtualCall;
-  global.context = modeHandlerMock();
+  global.context = context ?? modeHandlerMock();
   global.LRE_DEBUG = true;
 };
 

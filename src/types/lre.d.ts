@@ -96,7 +96,7 @@ declare type ContextLogRecord =
 //  | IGroup; // these could be removed when sheet can e identified as DiceResult, prompt, craft…
 declare type ContextLogByType = Array<ContextLogRecord>;
 declare type ContextLog = Record<ProxyModeHandlerLogType, ContextLogByType> & {
-  provider: Array<IDataProvider>;
+  provider: Array<IDataProviderAsSource>;
 };
 
 declare interface ProxyModeHandler {
@@ -368,6 +368,15 @@ declare interface IDataProvider {
       | DataProviderCallback<Record<string | number, string | number> | string>,
   ): IDataProvider;
 }
+
+declare type IDataProviderAsSource = Pick<
+  IDataProvider,
+  | "provider"
+  | "providedValue"
+  | "realId"
+  | "subscribeRefresh"
+  | "unsubscribeRefresh"
+>;
 
 declare interface ComponentBase {
   lreType(newValue?: ComponentType): ComponentType;
