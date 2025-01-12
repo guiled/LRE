@@ -183,6 +183,10 @@ export class LRE extends Logger implements ILRE {
     return typeof value === "number" || typeof value === "string";
   }
 
+  isDataProvider(value: any): value is IDataProvider {
+    return !!value.provider;
+  }
+
   deepMerge(target: any, ...sources: any[]): any {
     if (!sources.length) return target;
     const source = sources.shift();

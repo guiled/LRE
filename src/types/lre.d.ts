@@ -17,6 +17,7 @@ declare interface ILRE {
   autoNum(v: boolean = true): void;
   value<T = any>(n: T): T;
   isComponent(value: any): value is IComponent;
+  isDataProvider(value: any): value is IDataProvider;
   isIterableByEach(
     object: LetsRole.ComponentValue,
   ): object is LetsRole.EachValue;
