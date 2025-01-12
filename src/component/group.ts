@@ -1,7 +1,7 @@
 import { DataHolder } from "../dataholder";
 import { DataProvider } from "../dataprovider";
 import { EventHolder } from "../eventholder";
-import { dynamicSetter } from "../globals/decorators/dynamicSetter";
+import { ChangeTracker } from "../globals/changetracker";
 import { Mixin } from "../mixin";
 
 type GroupEventsForComponent = ["update", "click"][number];
@@ -21,6 +21,7 @@ export class Group
   implements IGroup
 {
   #id: string;
+  #tracker: ChangeTracker;
   #sheet: ISheet;
   #components: Array<IComponent> = [];
   #context: ProxyModeHandler;
@@ -43,7 +44,12 @@ export class Group
     this.#id = id;
     this.#sheet = sheet;
     this.#context = context;
+    this.#tracker = new ChangeTracker(this, context);
     componentIds.forEach(this.add.bind(this));
+  }
+
+  getChangeTracker(): ChangeTracker {
+    return this.#tracker;
   }
 
   init(): this {
@@ -298,7 +304,7 @@ export class Group
     );
   }
 
-  @dynamicSetter
+  @ChangeTracker.linkParams()
   visible(
     _newValue?: DynamicSetValue<
       Record<LetsRole.ComponentID, boolean> | boolean | undefined

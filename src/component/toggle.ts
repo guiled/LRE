@@ -1,7 +1,4 @@
-import {
-  dynamicSetter,
-  extractDataProviders,
-} from "../globals/decorators/dynamicSetter";
+import { ChangeTracker } from "../globals/changetracker";
 import { Component } from "./component";
 
 type TogglingValue = string | number;
@@ -36,8 +33,7 @@ export class Toggle<
     super(raw, sheet, realId);
   }
 
-  @dynamicSetter
-  @extractDataProviders()
+  @ChangeTracker.linkParams()
   toggling(
     data: TogglingDataMap | Record<TogglingValue, string>,
     defaultValue?: TogglingValue,

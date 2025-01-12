@@ -1,7 +1,4 @@
-import {
-  dynamicSetter,
-  flaggedDynamicSetter,
-} from "../globals/decorators/dynamicSetter";
+import { ChangeTracker } from "../globals/changetracker";
 import { Choice, ChoiceEvents, UPDATE_CHECK_CHANGES } from "./choice";
 
 type MultiChoiceEvents = "limit" | ChoiceEvents;
@@ -64,7 +61,7 @@ export class MultiChoice extends Choice<
 
   value(): LetsRole.MultiChoiceValue;
   value(newValue?: DynamicSetValue<LetsRole.MultiChoiceValue>): void;
-  @dynamicSetter
+  @ChangeTracker.linkParams()
   value(
     newValue?: DynamicSetValue<LetsRole.MultiChoiceValue>,
   ): void | LetsRole.MultiChoiceValue {
@@ -251,7 +248,7 @@ export class MultiChoice extends Choice<
   maxChoiceNb(): MinMaxLimit;
   maxChoiceNb(nb: MinMaxLimiter): void;
   maxChoiceNb(nb: MinMaxLimiter, calculator: MinMaxCalculator): void;
-  @flaggedDynamicSetter([true, false])
+  @ChangeTracker.linkParams([true, false])
   maxChoiceNb(
     nb?: MinMaxLimiter,
     calculator?: MinMaxCalculator,
@@ -268,7 +265,7 @@ export class MultiChoice extends Choice<
   minChoiceNb(): MinMaxLimit;
   minChoiceNb(nb: MinMaxLimiter): void;
   minChoiceNb(nb: MinMaxLimiter, calculator: MinMaxCalculator): void;
-  @flaggedDynamicSetter([true, false])
+  @ChangeTracker.linkParams([true, false])
   minChoiceNb(
     nb?: MinMaxLimiter,
     calculator?: MinMaxCalculator,

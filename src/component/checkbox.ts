@@ -1,7 +1,4 @@
-import {
-  dynamicSetter,
-  extractDataProviders,
-} from "../globals/decorators/dynamicSetter";
+import { ChangeTracker } from "../globals/changetracker";
 import { Component } from "./component";
 
 export class Checkbox extends Component {
@@ -43,14 +40,12 @@ export class Checkbox extends Component {
     return this;
   }
 
-  @dynamicSetter
-  @extractDataProviders()
+  @ChangeTracker.linkParams()
   enable(value: DynamicSetValue<boolean> = true): this {
     return this.#setEnabled(value);
   }
 
-  @dynamicSetter
-  @extractDataProviders()
+  @ChangeTracker.linkParams()
   disable(value: DynamicSetValue<boolean> = true): this {
     return this.#setEnabled(!value);
   }

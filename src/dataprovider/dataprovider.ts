@@ -1,7 +1,4 @@
-import {
-  dynamicSetter,
-  extractDataProviders,
-} from "../globals/decorators/dynamicSetter";
+import { ChangeTracker } from "../globals/changetracker";
 import { Mixin } from "../mixin";
 
 export type ValueGetterSetter<
@@ -34,9 +31,10 @@ export const DataProvider = (superclass: Newable = class {}) =>
     #destRefresh: Record<string, () => void> = {};
     #context: ProxyModeHandler | undefined;
     #id: string;
+    #tracker: ChangeTracker;
 
     constructor(
-      context: ProxyModeHandler | undefined,
+      context: ProxyModeHandler,
       valueCb: ValueGetterSetter,
       originalValueCb?: ValueGetterSetter,
       sourceRefresh?: () => void,
@@ -47,14 +45,18 @@ export const DataProvider = (superclass: Newable = class {}) =>
       this.#valueCb = valueCb;
       this.#originalValueCb = originalValueCb;
       this.#sourceRefresh = sourceRefresh;
+      this.#tracker = new ChangeTracker(this, context);
     }
 
     realId(): string {
       return this.id();
     }
 
-    @dynamicSetter
-    @extractDataProviders()
+    getChangeTracker(): ChangeTracker {
+      return this.#tracker;
+    }
+
+    @ChangeTracker.linkParams()
     #setCurrentValue(
       value: DynamicSetValue<ReturnType<ValueGetterSetter>>,
     ): ReturnType<ValueGetterSetter> {
@@ -72,8 +74,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
       return lre.value(result);
     }
 
-    @dynamicSetter
-    @extractDataProviders()
+    @ChangeTracker.linkParams()
     #setOriginalValue(
       value: DynamicSetValue<ReturnType<ValueGetterSetter>>,
     ): ReturnType<ValueGetterSetter> {

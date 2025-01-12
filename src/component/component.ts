@@ -5,11 +5,8 @@ import { Mixin } from "../mixin";
 import { Repeater } from "./repeater";
 import { Entry } from "./entry";
 import { DataHolder } from "../dataholder";
-import {
-  dynamicSetter,
-  extractDataProviders,
-} from "../globals/decorators/dynamicSetter";
 import { ComponentProxy } from "../proxy/component";
+import { ChangeTracker } from "../globals/changetracker";
 
 export const REP_ID_SEP = ".";
 
@@ -72,6 +69,7 @@ export class Component<
 {
   component: boolean = true;
   #realId: string;
+  #tracker: ChangeTracker;
   #sheet: ISheet;
   #lreType: ComponentType = "component";
   #parent: ComponentContainer | undefined;
@@ -168,6 +166,8 @@ export class Component<
       [/* DataHolder*/ sheet, realId],
     ]);
 
+    this.#tracker = new ChangeTracker(this, context);
+
     if (Object.prototype.hasOwnProperty.call(raw, "setDestGetter")) {
       (raw as ComponentProxy).setDestGetter(() => this);
     }
@@ -179,6 +179,10 @@ export class Component<
       this.loadPersistent.bind(this),
     );
     this.on("class-updated:__lre__:apply", this.#applyClassChanges.bind(this));
+  }
+
+  getChangeTracker(): ChangeTracker {
+    return this.#tracker;
   }
 
   init(): this {
@@ -318,13 +322,11 @@ export class Component<
 
   value(): TypeValue;
   value(newValue: DynamicSetValue<unknown>): void;
-  @dynamicSetter
-  @extractDataProviders(function (
-    this: Component,
-    dataProvider: IDataProvider,
-  ) {
-    this.#valueDataProvider = dataProvider;
-  })
+  @ChangeTracker.linkParams(undefined, [
+    function (this: Component, dataProvider: IDataProvider | undefined) {
+      this.#valueDataProvider = dataProvider;
+    },
+  ])
   value(newValue?: DynamicSetValue<unknown>): void | TypeValue {
     if (arguments.length > 0) {
       const oldValue = this.#getValue();
@@ -401,7 +403,7 @@ export class Component<
 
   text(): string;
   text(replacement: string): void;
-  @dynamicSetter
+  @ChangeTracker.linkParams()
   text(replacement?: string): string | null | void {
     if (arguments.length > 0) {
       this.raw().text(replacement!);
@@ -411,8 +413,7 @@ export class Component<
     return this.raw().text();
   }
 
-  @dynamicSetter
-  @extractDataProviders()
+  @ChangeTracker.linkParams()
   visible(newValue?: DynamicSetValue<boolean>): boolean {
     if (arguments.length > 0) {
       if (newValue) {

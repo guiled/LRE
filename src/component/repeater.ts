@@ -1,7 +1,4 @@
-import {
-  dynamicSetter,
-  extractDataProviders,
-} from "../globals/decorators/dynamicSetter";
+import { ChangeTracker } from "../globals/changetracker";
 import { Component, REP_ID_SEP } from "./component";
 import { Entry } from "./entry";
 
@@ -375,8 +372,7 @@ export class Repeater extends Component<
     });
   }
 
-  @dynamicSetter
-  @extractDataProviders()
+  @ChangeTracker.linkParams()
   readOnly(readOnly: DynamicSetValue<boolean> = true): boolean | void {
     if (readOnly) {
       this.addClass("no-add").addClass("no-edit");

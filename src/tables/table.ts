@@ -1,8 +1,5 @@
 import { DataProvider } from "../dataprovider";
-import {
-  dynamicSetter,
-  extractDataProviders,
-} from "../globals/decorators/dynamicSetter";
+import { ChangeTracker } from "../globals/changetracker";
 import { HasRaw } from "../hasraw";
 import { Mixin } from "../mixin";
 
@@ -11,6 +8,7 @@ export class Table
   implements ITable
 {
   #id: LetsRole.TableID;
+  #tracker: ChangeTracker;
 
   constructor(
     raw: LetsRole.Table,
@@ -35,14 +33,18 @@ export class Table
       ],
     ]);
     this.#id = id;
+    this.#tracker = new ChangeTracker(this, context);
   }
 
   id(): LetsRole.TableID {
     return this.#id;
   }
 
-  @dynamicSetter
-  @extractDataProviders()
+  getChangeTracker(): ChangeTracker {
+    return this.#tracker;
+  }
+
+  @ChangeTracker.linkParams()
   get(id: DynamicSetValue<LetsRole.ColumnId>): TableRow | null {
     if (typeof id !== "string") {
       return null;

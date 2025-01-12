@@ -88,7 +88,6 @@ export class ChangeTracker {
                     true,
                     newValue.providedValue.bind(newValue),
                   );
-                  console.log(res);
                   providedBy = newValue;
                 } else if (t === "callback") {
                   res = context.call(true, newValue);

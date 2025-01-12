@@ -1,8 +1,5 @@
 import { Component } from ".";
-import {
-  dynamicSetter,
-  extractDataProviders,
-} from "../globals/decorators/dynamicSetter";
+import { ChangeTracker } from "../globals/changetracker";
 import { Table } from "../tables/table";
 
 type ChoiceValueWithData = ComponentValueWithData<string>;
@@ -84,10 +81,11 @@ export class Choice<
     this.#currentValue = newValue;
   }
 
-  @dynamicSetter
-  @extractDataProviders(function (this: Choice, dataProvider: IDataProvider) {
-    this.#choiceDataProvider = dataProvider;
-  })
+  @ChangeTracker.linkParams(undefined, [
+    function (this: Choice, dataProvider: IDataProvider | undefined) {
+      this.#choiceDataProvider = dataProvider;
+    },
+  ])
   setChoices(
     choices: DynamicSetValue<LetsRole.Choices | ChoicesWithData>,
   ): void {
@@ -253,10 +251,11 @@ export class Choice<
     return this.choiceData();
   }
 
-  @dynamicSetter
-  @extractDataProviders(function (this: Choice, dataProvider: IDataProvider) {
-    this.#choiceDataProvider = dataProvider;
-  })
+  @ChangeTracker.linkParams(undefined, [
+    function (this: Choice, dataProvider: IDataProvider | undefined) {
+      this.#choiceDataProvider = dataProvider;
+    },
+  ])
   populate(
     tableOrCb: DynamicSetValue<
       string | Array<LetsRole.TableRow> | LetsRole.Choices
