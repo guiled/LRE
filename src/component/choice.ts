@@ -241,7 +241,7 @@ export class Choice<
         return val.includes(k as string);
       }
 
-      return k === this.value();
+      return k === val;
     });
 
     return this.#valueProvider;
