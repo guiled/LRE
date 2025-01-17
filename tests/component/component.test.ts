@@ -541,11 +541,11 @@ describe("Component get and set value", () => {
     Tables = new LreTables(Tables, context);
     const choice = new Choice(rawChoice, sheet, "choice");
     choice.populate("theTable", "a");
-    choice.value("y");
+    choice.value("1");
     const cmp1 = sheet.get("cmp1")!;
     cmp1.value(choice);
 
-    expect(cmp1.value()).toBe("y");
+    expect(cmp1.value()).toBe("1");
     expect(cmp1.valueData()).toBe(choice.choiceData());
   });
 });

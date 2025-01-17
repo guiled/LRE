@@ -378,6 +378,10 @@ describe("valueProvider tests", () => {
   });
 
   test("valueProvider is refreshed when choice value changed", () => {
+    const ch = sheet.get("chA") as Choice;
+
+    expect(ch.valueProvider()).toBeUndefined();
+
     const a = "42";
     const b = "13";
     const data = {
@@ -385,15 +389,10 @@ describe("valueProvider tests", () => {
       b,
     };
     const p = lre.dataProvider("test", () => data);
-
-    const ch = sheet.get("chA") as Choice;
-
-    expect(ch.valueProvider()).toBeUndefined();
-
     ch.setChoices(p);
-
     const provider = ch.valueProvider()!;
 
+    expect(ch.value()).toBe("a");
     expect(provider).toHaveProperty("provider");
     expect(provider.providedValue()).toStrictEqual({ a });
 

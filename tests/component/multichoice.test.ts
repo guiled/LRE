@@ -12,6 +12,7 @@ import {
 } from "../../src/mock/letsrole/letsrole.mock";
 import { ComponentProxy } from "../../src/proxy/component";
 import { Choice } from "../../src/component/choice";
+import { DirectDataProvider } from "../../src/dataprovider";
 
 let rawSheet: LetsRole.Sheet;
 let sheet: Sheet;
@@ -65,9 +66,6 @@ beforeEach(() => {
   sheet = new Sheet(proxySheet, new DataBatcher(context, proxySheet), context);
   lre.sheets.add(sheet);
   sheet.raw = jest.fn(() => proxySheet);
-  jest.spyOn(sheet, "get");
-  jest.spyOn(sheet, "componentExists");
-  jest.spyOn(sheet, "knownChildren");
   multiChoice = sheet.get("multi") as MultiChoice;
   proxyMultiChoice = multiChoice.raw() as ComponentProxy;
   rawMultiChoice = proxyMultiChoice.getDest() as ComponentMock;
@@ -263,6 +261,9 @@ describe("MultiChoice", () => {
     multiChoice.setChoices(data.select("lbl"));
     const rawCmd = rawSheet.get("cmd");
     const cmp = sheet.get("cmd") as Component;
+
+    expect(cmp.value()).toBe("2");
+
     multiChoice.maxChoiceNb(cmp);
 
     expect(
@@ -277,18 +278,16 @@ describe("MultiChoice", () => {
     rawMultiChoice.value(["1"]);
 
     expect(updateEvent).toHaveBeenCalledTimes(1);
+    expect(multiChoice.value()).toEqual(["1"]);
 
     updateEvent.mockReset();
-
-    expect(multiChoice.value()).toEqual(["1"]);
 
     rawMultiChoice.value(["1", "2"]);
 
     expect(updateEvent).toHaveBeenCalledTimes(1);
+    expect(multiChoice.value()).toEqual(["1", "2"]);
 
     updateEvent.mockReset();
-
-    expect(multiChoice.value()).toEqual(["1", "2"]);
 
     rawMultiChoice.value(["1", "2", "3"]);
 
@@ -301,11 +300,10 @@ describe("MultiChoice", () => {
     rawCmd.value("3");
     rawMultiChoice.value(["1", "2", "3"]);
 
+    expect(multiChoice.value()).toEqual(["1", "2", "3"]);
     expect(updateEvent).toHaveBeenCalledTimes(1);
 
     updateEvent.mockReset();
-
-    expect(multiChoice.value()).toEqual(["1", "2", "3"]);
 
     multiChoice.maxChoiceNb(50, (_lbl, _id, data: any, _prev) => {
       return data?.nb;
@@ -315,6 +313,9 @@ describe("MultiChoice", () => {
     expect(multiChoice.value()).toEqual(["1", "2", "3"]);
 
     multiChoice.minChoiceNb(() => (cmp.value() as number) - 1);
+
+    expect(multiChoice.minChoiceNb()).toBe(2);
+
     rawMultiChoice.value(["1", "2"]);
 
     expect(multiChoice.value()).toEqual(["1", "2"]);
@@ -324,6 +325,9 @@ describe("MultiChoice", () => {
     expect(multiChoice.value()).toEqual(["1", "2"]);
 
     rawCmd.value(2);
+
+    expect(multiChoice.minChoiceNb()).toBe(1);
+
     rawMultiChoice.value(["1"]);
 
     expect(multiChoice.value()).toEqual(["1"]);
@@ -523,11 +527,10 @@ describe("Multichoice checked and unchecked", () => {
   test("Checked and unchecked pass on multichoice update", () => {
     const checked = multiChoice.checked();
     const unchecked = multiChoice.unchecked();
-
     const choiceOn = sheet.get("choiceOn") as Choice;
     const choiceOff = sheet.get("choiceOff") as Choice;
-
-    choiceOn.setChoices(checked.transform("lbl"));
+    const transformed = checked.transform("lbl") as DirectDataProvider;
+    choiceOn.setChoices(transformed);
     choiceOff.setChoices(unchecked);
 
     expect(choiceOn.getChoices()).toStrictEqual({});
