@@ -673,33 +673,71 @@ export const DataProvider = (superclass: Newable = class {}) =>
       return result;
     }
 
-    transform(map: Record<string | number, string | number>): IDataProvider {
-      return this.#newProvider(this.id() + "-transform", () => {
-        const result: DataProviderDataValue = {};
+    transform(
+      map:
+        | Record<string | number, string | number>
+        | string
+        | DataProviderCallback<
+            | TableRow
+            | LetsRole.ComponentValue
+            | Record<string | number, TableRow | LetsRole.ComponentValue>
+          >,
+    ): IDataProvider {
+      let cbEach: DataProviderCallback<
+        | TableRow
+        | LetsRole.ComponentValue
+        | Record<string | number, TableRow | LetsRole.ComponentValue>
+      >;
 
-        this.each((v, k, data) => {
+      if (typeof map === "string") {
+        cbEach = (v, _k, data) => {
+          const vIsObj = lre.isObject<Record<string, string>>(v);
+          const dataIsObj = lre.isObject<Record<string, string>>(data);
+
+          if (vIsObj && typeof v[map] !== "undefined") {
+            return v[map];
+          } else if (dataIsObj && typeof data[map] !== "undefined") {
+            return data[map];
+          }
+
+          return undefined;
+        };
+      } else if (typeof map === "function") {
+        cbEach = map;
+      } else {
+        cbEach = (v, _k, data) => {
           const newValue: Record<string, TableRow | LetsRole.ComponentValue> =
             {};
           const vIsObj = lre.isObject<Record<string, string>>(v);
           const dataIsObj = lre.isObject<Record<string, string>>(data);
 
-          if (lre.isObject(map)) {
-            Object.keys(map).forEach((mapKey) => {
-              const transformedKey = map[mapKey];
+          Object.keys(map).forEach((mapKey) => {
+            const transformedKey = map[mapKey];
 
-              if (vIsObj && typeof v[mapKey] !== "undefined") {
-                newValue[transformedKey] = v[mapKey];
-              } else if (dataIsObj && typeof data[mapKey] !== "undefined") {
-                newValue[transformedKey] = data[mapKey];
-              }
-            });
-          }
+            if (vIsObj && typeof v[mapKey] !== "undefined") {
+              newValue[transformedKey] = v[mapKey];
+            } else if (dataIsObj && typeof data[mapKey] !== "undefined") {
+              newValue[transformedKey] = data[mapKey];
+            }
+          });
 
-          result[k] = newValue;
-        });
+          return newValue;
+        };
+      }
 
-        return result;
-      });
+      return this.#newProvider(
+        this.id() + "-transform",
+        () => {
+          const result: DataProviderDataValue = {};
+
+          this.each((v, k, data) => {
+            result[k] = cbEach(v, k, data);
+          });
+
+          return result;
+        },
+        true,
+      );
     }
   };
 

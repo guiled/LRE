@@ -736,6 +736,24 @@ describe("DataProvider transform", () => {
     dp = lre.dataProvider("testTransform", dataGetter);
   });
 
+  test("Transform single value", () => {
+    const select = dp.select("a");
+
+    expect(select.providedValue()).toStrictEqual({
+      _1: "402",
+      _2: "1",
+      _3: "41",
+    });
+
+    const transformed = select.transform("b");
+
+    expect(transformed.providedValue()).toStrictEqual({
+      _1: "13",
+      _2: "9",
+      _3: "5",
+    });
+  });
+
   test("Transform object", () => {
     expect(dp.providedValue()).toStrictEqual(data);
 
