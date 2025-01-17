@@ -537,8 +537,10 @@ describe("DataProvider get single value", () => {
     expect(result2.getData()).toStrictEqual({ 3: { a: "4", b: "5", c: "6" } });
     expect(dataGetter).toHaveBeenCalledTimes(1);
 
-    //data["2"]["a"] = "42";
-    //expect(result.singleValue()).toBe("42");
+    data["2"]["a"] = "42";
+    dp.refresh();
+
+    expect(result.singleValue()).toBe("42");
   });
 
   test("getBy", () => {

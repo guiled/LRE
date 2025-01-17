@@ -63,6 +63,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
     ): ReturnType<ValueGetterSetter> {
       if (!lre.deepEqual(this.#currentValue, value)) {
         this.#currentValue = value as ReturnType<ValueGetterSetter>;
+        this.#originalValue = undefined;
         this.refreshDerived();
       }
 
@@ -117,10 +118,14 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
     refresh(): void {
       this.#sourceRefresh?.();
+      this.refreshSelf();
+    }
+
+    refreshSelf(): void {
       this.#currentValue = undefined;
       this.#originalValue = undefined;
-      this.#getCurrentValue();
       this.#getOriginalValue();
+      this.#getCurrentValue();
     }
 
     sort(
@@ -210,8 +215,8 @@ export const DataProvider = (superclass: Newable = class {}) =>
     ): ValueGetterSetter<T> {
       return ((...args: [undefined] | []): ReturnType<ValueGetterSetter<T>> => {
         if (args.length === 0) {
-          this.#context?.logAccess?.("provider", this);
-          return this.#context?.call?.(false, valueCb)[0];
+          this.#context.logAccess?.("provider", this);
+          return valueCb();
         }
 
         this.#valueCb(...args);
@@ -495,10 +500,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
         this.#getOriginalValue.bind(this),
         this.refresh.bind(this),
       );
-      this.subscribeRefresh(
-        provider.id(),
-        provider.providedValue.bind(provider),
-      );
+      this.subscribeRefresh(provider.id(), provider.refreshSelf.bind(provider));
 
       return provider;
     }
@@ -514,7 +516,12 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     refreshDerived(): void {
+      // These 3 commented lines here might be useful one day
+      // but for now, the UT are ok without them
+      // this.#getCurrentValue();
+      // this.#getOriginalValue();
       Object.keys(this.#destRefresh).forEach((id) => {
+        //if (!this.#destRefresh[id]) return;
         LRE_DEBUG && lre.trace(`Refresh provider ${id} from ${this.id()}`);
         this.#destRefresh[id]();
       });
