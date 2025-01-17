@@ -486,7 +486,10 @@ export class ViewMock implements LetsRole.Sheet {
       return;
     }
 
-    if (this.#componentEvents[realId][event] === void 0) {
+    if (
+      this.#componentEvents[realId][event] === void 0 ||
+      this.#componentEvents[realId][event].length === 0
+    ) {
       return;
     }
 
