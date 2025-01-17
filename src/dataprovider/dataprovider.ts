@@ -30,7 +30,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
     #originalValue: ReturnType<ValueGetterSetter> | undefined;
     #sourceRefresh: undefined | (() => void);
     #destRefresh: Record<string, () => void> = {};
-    #context: ProxyModeHandler | undefined;
+    #context: ProxyModeHandler;
     #id: string;
     #tracker: ChangeTracker;
 
