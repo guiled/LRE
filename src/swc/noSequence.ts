@@ -50,6 +50,16 @@ class NoSequence extends Visitor {
     }
 
     if (
+      stmt.alternate?.type === "ExpressionStatement" &&
+      stmt.alternate.expression.type === "SequenceExpression"
+    ) {
+      stmt.alternate.expression =
+        this.#transformSequenceExpressionToArrayLastExpression(
+          stmt.alternate.expression,
+        );
+    }
+
+    if (
       stmt.consequent.type === "ExpressionStatement" &&
       stmt.consequent.expression.type === "SequenceExpression"
     ) {
