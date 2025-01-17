@@ -24,11 +24,23 @@ export const modeHandlerMock = (): ProxyModeHandler => {
     getAccessLog: <T extends keyof ContextLog>(type: T) => (logs[type] ??= []),
     getPreviousAccessLog: <T extends keyof ContextLog>(type: T) =>
       prevLogs[type] ?? [],
-    logAccess: (_type, _value) => {
+    logAccess: (type, value) => {
       if (!enabled) return result;
-      logs[_type] ??= [];
-      if (!logs[_type]!.includes(_value as IDataProvider & ContextLogRecord))
-        logs[_type]!.push(_value as IDataProvider & ContextLogRecord);
+      logs[type] ??= [];
+      let found = false;
+
+      if (Array.isArray(value)) {
+        found = logs[type]!.some(
+          (v: any) => v[0] === value[0] && v[1] === value[1],
+        );
+      } else {
+        found = logs[type]!.includes(value as IDataProvider & ContextLogRecord);
+      }
+
+      if (!found) {
+        logs[type]!.push(value as IDataProvider & ContextLogRecord);
+      }
+
       return result;
     },
 
