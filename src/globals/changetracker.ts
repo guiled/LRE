@@ -32,7 +32,7 @@ const LOG_TYPE_EVENTS: Partial<Record<ProxyModeHandlerLogType, EventType>> = {
 export class ChangeTracker {
   #holder: DynamicSetterHolder;
   #context: ProxyModeHandler;
-  #logs: Partial<ContextLog> = {};
+  #logs: Record<string, Partial<ContextLog>> = {};
 
   constructor(holder: DynamicSetterHolder, context: ProxyModeHandler) {
     this.#holder = holder;
@@ -146,8 +146,8 @@ export class ChangeTracker {
       ) as Array<ProxyModeHandlerLogType>;
       logTypes.forEach((type) => {
         const logs = newLogs[type] || [];
-        const hasPreviousLog: boolean = !!this.#logs[type];
-        const previousLogs = this.#logs[type] ?? [];
+        const hasPreviousLog: boolean = !!this.#logs[name]?.[type];
+        const previousLogs = this.#logs[name]?.[type] ?? [];
         let hasDeletedPreviousLogs: boolean = false;
 
         logs.forEach((log) => {
@@ -169,8 +169,11 @@ export class ChangeTracker {
       });
     }
 
-    this.#destroyAllEvents(this.#logs, name);
-    this.#logs = newLogs;
+    if (this.#logs[name]) {
+      this.#destroyAllEvents(this.#logs[name], name);
+    }
+
+    this.#logs[name] = newLogs;
   }
 
   static findLogIndex(
@@ -232,7 +235,7 @@ export class ChangeTracker {
         logData.unsubscribeRefresh(refreshId);
       }
     } else {
-      const eventId = this.#getEventId(typeLog);
+      const eventId = this.#getEventId(typeLog, methodName);
 
       if (Array.isArray(logData)) {
         const [sheetRealID, realId] = logData;
@@ -258,9 +261,13 @@ export class ChangeTracker {
 
   #getEventId(
     logType: ProxyModeHandlerLogType,
+    methodName: string,
   ): EventType<EventHolderDefaultEvents> {
-    return [LOG_TYPE_EVENTS[logType], logType, this.#holder.realId()].join(
-      EVENT_SEP,
-    ) as EventType<EventHolderDefaultEvents>;
+    return [
+      LOG_TYPE_EVENTS[logType],
+      logType,
+      this.#holder.realId(),
+      methodName,
+    ].join(EVENT_SEP) as EventType<EventHolderDefaultEvents>;
   }
 }
