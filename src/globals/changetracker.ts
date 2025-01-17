@@ -5,6 +5,19 @@ type DynamicSetterHolder = {
   getChangeTracker(): ChangeTracker;
 };
 
+type FunctionDecorator<
+  This extends DynamicSetterHolder,
+  Args extends any[],
+  Return,
+> = (
+  target: (this: This, ...args: Args) => Return,
+  context: DecoratorContext<This, Args, Return>,
+) => any;
+
+type DecoratorContext<This, Args extends any[], Return> =
+  | ClassMethodDecoratorContext<This, (this: This, ...args: Args) => Return>
+  | { name: string };
+
 type DynamicArgType = "value" | "provider" | "callback" | "component";
 
 const LOG_TYPE_EVENTS: Partial<Record<ProxyModeHandlerLogType, EventType>> = {
@@ -33,19 +46,10 @@ export class ChangeTracker {
   >(
     argFlags: Array<boolean> = [],
     providerExtractors: Array<(dp: IDataProvider | undefined) => void> = [],
-  ): (
-    target: (this: This, ...args: Args) => Return,
-    context: ClassMethodDecoratorContext<
-      This,
-      (this: This, ...args: Args) => Return
-    >,
-  ) => any {
+  ): FunctionDecorator<This, Args, Return> {
     return function (
       target: (this: This, ...args: Args) => Return,
-      decoratorContext: ClassMethodDecoratorContext<
-        This,
-        (this: This, ...args: Args) => Return
-      >,
+      decoratorContext: DecoratorContext<This, Args, Return>,
     ) {
       const replacementMethod = function (this: This, ...args: Args): Return {
         if (arguments.length > 0) {
