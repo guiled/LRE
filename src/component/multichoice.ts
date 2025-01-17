@@ -215,8 +215,9 @@ export class MultiChoice extends Choice<
       this.realId() + "-unchecked",
       () => {
         const result: LetsRole.ViewData = {};
+        const val = this.value();
         each(this.getChoices(), (_v: string, k: LetsRole.ChoiceValue) => {
-          if (!this.value().includes(k as unknown as LetsRole.ChoiceValue)) {
+          if (!val.includes(k as unknown as LetsRole.ChoiceValue)) {
             result[k as unknown as LetsRole.ChoiceValue] = this.label(
               k as unknown as LetsRole.ChoiceValue,
             );
@@ -230,8 +231,9 @@ export class MultiChoice extends Choice<
           LetsRole.ChoiceValue,
           LetsRole.ComponentValue | LetsRole.TableRow
         > = {};
+        const val = this.value();
         each(this.getChoices(), (_v: string, k: LetsRole.ChoiceValue) => {
-          if (!this.value().includes(k as unknown as LetsRole.ChoiceValue)) {
+          if (!val.includes(k as unknown as LetsRole.ChoiceValue)) {
             result[k as unknown as LetsRole.ChoiceValue] = this.getChoiceData(
               k as unknown as LetsRole.ChoiceValue,
             );
