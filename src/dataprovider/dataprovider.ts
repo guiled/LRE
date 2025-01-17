@@ -1,3 +1,4 @@
+import { EventHolder } from "../eventholder";
 import { ChangeTracker } from "../globals/changetracker";
 import { Mixin } from "../mixin";
 
@@ -695,7 +696,12 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
   };
 
-export class DirectDataProvider extends Mixin(DataProvider) {
+type DataProviderEvents = "refresh";
+
+export class DirectDataProvider extends Mixin(
+  DataProvider,
+  EventHolder<DataProviderEvents>,
+) {
   #directId: string;
 
   constructor(
@@ -717,11 +723,28 @@ export class DirectDataProvider extends Mixin(DataProvider) {
       dataProviderArgs.push(sourceRefresh!);
     }
 
-    super([dataProviderArgs]);
+    super([dataProviderArgs, [id, () => this]]);
     this.#directId = id;
   }
 
   id(): string {
     return this.#directId;
+  }
+
+  refresh(): void {
+    this.trigger("refresh");
+    super.refresh();
+  }
+
+  providedValue<T extends LetsRole.ComponentValue | undefined = undefined>(
+    newValue?: T,
+  ): ReturnType<ValueGetterSetter<T>> {
+    this.trigger("refresh");
+
+    if (arguments.length > 0) {
+      return super.providedValue(newValue);
+    }
+
+    return super.providedValue();
   }
 }
