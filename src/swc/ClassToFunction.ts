@@ -583,7 +583,7 @@ class ClassToFunction extends Visitor {
     if (_.concat(staticMethods, staticProperties, staticStmts).length > 0) {
       const tmpClassFunctionId = identifier({
         span: classFunction.span,
-        value: "__lreClass" + classFunction.identifier?.value,
+        value: "__lreClass" + classStmt.identifier?.value || "anonymous",
       });
       const publicStatic: Array<
         PublicMethodToFunctionStatement | PublicPropertyToVariable
