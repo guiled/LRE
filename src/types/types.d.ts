@@ -293,6 +293,7 @@ declare namespace LetsRole {
 declare module "letsrole" {
   global {
     /* eslint-disable no-var */
+    var enableLog: boolean;
     var log: (input: unknown) => void;
     var wait: (delay: number, callback: Callback) => void;
     var each: <T extends EachValue>(data: T, callback: EachCallback<T>) => void;

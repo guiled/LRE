@@ -47,6 +47,12 @@ const initLetsRole = (server: ServerMock, context?: ProxyModeHandler): void => {
   global.virtualCall = virtualCall;
   global.context = context ?? modeHandlerMock();
   global.LRE_DEBUG = true;
+
+  global.log = (str) => {
+    if (global.enableLog) {
+      console.log(str);
+    }
+  };
 };
 
 const terminateLetsRole = (): void => {
