@@ -40,6 +40,10 @@ export class Table
     return this.#id;
   }
 
+  realId(): LetsRole.TableID {
+    return this.id();
+  }
+
   getChangeTracker(): ChangeTracker {
     return this.#tracker;
   }

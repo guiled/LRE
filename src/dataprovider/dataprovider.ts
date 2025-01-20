@@ -171,7 +171,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
     #sortData(sorter: Sorter, direction: SortDirection): IDataProvider {
       return this.#newProvider(
-        "sort",
+        this.id() + "-sort",
         () => {
           const data = this.#getCurrentValue();
 
@@ -355,7 +355,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
     filter(condition: DataProviderWhereConditioner): IDataProvider {
       return this.#newProvider(
-        "filter",
+        this.id() + "-filter",
         () => {
           const result: Record<string, TableRow | LetsRole.ComponentValue> = {};
 
@@ -556,7 +556,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
       const comparisonId: string = dataGetterResult[0];
       dataValueOrColumn = dataGetterResult[1];
 
-      return this.#newProvider(`${id}-${comparisonId}`, () => {
+      return this.#newProvider(`${this.id()}-${id}-${comparisonId}`, () => {
         let minData: DataProviderDataValue | undefined = undefined;
         let minVal: LetsRole.ComponentValue | undefined = undefined;
         this.each((v, k, data) => {
