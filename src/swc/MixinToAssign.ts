@@ -36,6 +36,9 @@ import { objectexpression } from "./node/expression/objectexpression";
 import { arrayfromarguments } from "./node/expression/arrayfromarguments";
 import binary from "./node/expression/binary";
 import numericliteral from "./node/literal/numericliteral";
+import { objectkeys } from "./node/expression/objectkeys";
+import { typeofcompared } from "./node/expression/binary/typeofcompared";
+import assignment from "./node/expression/assignment";
 
 class MixinToAssign extends Visitor {
   #mixinClasses: Argument[] | undefined;
@@ -78,6 +81,16 @@ class MixinToAssign extends Visitor {
     const _reversed = identifier({ span, value: "rev" });
     const prev = identifier({ span, value: "prev" });
     const resParent = identifier({ span, value: "resParent" });
+    const parentKeys = identifier({ span, value: "parentKeys" });
+    const foreachKey = identifier({ span, value: "k" });
+    const parentOneKey = member({
+      object: resParent,
+      property: {
+        span,
+        type: "Computed",
+        expression: foreachKey,
+      },
+    });
     let superFound = false;
     const parentMixin = identifier({
       span,
@@ -232,6 +245,71 @@ class MixinToAssign extends Visitor {
                     ],
                   }),
                 }),
+                onevariable({
+                  span,
+                  id: parentKeys,
+                  init: objectkeys(resParent),
+                }),
+                {
+                  type: "ExpressionStatement",
+                  span,
+                  expression: call({
+                    callee: member({
+                      span,
+                      object: parentKeys,
+                      property: identifier({ span, value: "forEach" }),
+                    }),
+                    args: [
+                      expression(
+                        func({
+                          span,
+                          params: [
+                            paramidentifier({
+                              span,
+                              param: identifier({ span, value: "k" }),
+                            }),
+                          ],
+                          stmts: [
+                            {
+                              type: "IfStatement",
+                              span,
+                              test: typeofcompared({
+                                expr: parentOneKey,
+                                type: "function",
+                              }),
+                              consequent: {
+                                span,
+                                type: "ExpressionStatement",
+                                expression: assignment({
+                                  span,
+                                  left: parentOneKey,
+                                  right: call({
+                                    span,
+                                    callee: member({
+                                      span,
+                                      object: parentOneKey,
+                                      property: identifier({
+                                        span,
+                                        value: "bind",
+                                      }),
+                                    }),
+                                    args: [
+                                      {
+                                        expression: thisexpression({ span }),
+                                      },
+                                    ],
+                                  }),
+                                  operator: "=",
+                                }),
+                              },
+                            },
+                          ],
+                          binded: { expression: thisexpression({ span }) },
+                        }),
+                      ),
+                    ],
+                  }) as CallExpression,
+                },
                 {
                   type: "ExpressionStatement",
                   span,
