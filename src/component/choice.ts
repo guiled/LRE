@@ -242,7 +242,7 @@ export class Choice<
       }
 
       return k === val;
-    });
+    }, "value");
 
     return this.#valueProvider;
   }

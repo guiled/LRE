@@ -331,7 +331,7 @@ declare interface IDataProvider {
   getData(
     id?: DataProviderDataId | Array<number | string>,
   ): DataProviderDataValue;
-  filter(condition: DataProviderWhereConditioner): IDataProvider;
+  filter(condition: DataProviderWhereConditioner, name?: string): IDataProvider;
   where(
     column:
       | string

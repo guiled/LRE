@@ -78,7 +78,7 @@ export class ChangeTracker {
 
           if (hasDynamicSetter) {
             LRE_DEBUG &&
-              lre.trace(`Add dynamic setter for ${this.realId()} on ${name}`);
+              lre.trace(`Call ${this.realId()}:${name} with dynamic args`);
 
             const newSetter = (): any => {
               const argsForTarget: Args = [] as unknown as Args;

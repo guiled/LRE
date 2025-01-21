@@ -171,7 +171,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
     #sortData(sorter: Sorter, direction: SortDirection): IDataProvider {
       return this.#newProvider(
-        this.id() + "-sort",
+        this.realId() + "-sort",
         () => {
           const data = this.#getCurrentValue();
 
@@ -248,7 +248,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     select(column: string): IDataProvider {
-      return this.#newProvider(`${this.id()}-select-${column}`, () => {
+      return this.#newProvider(`${this.realId()}-select(${column})`, () => {
         const result: Record<string, TableRow | LetsRole.ComponentValue> = {};
 
         this.each((v, k) => {
@@ -353,9 +353,12 @@ export const DataProvider = (superclass: Newable = class {}) =>
       return undefined;
     }
 
-    filter(condition: DataProviderWhereConditioner): IDataProvider {
+    filter(
+      condition: DataProviderWhereConditioner,
+      name: string = "filter",
+    ): IDataProvider {
       return this.#newProvider(
-        this.id() + "-filter",
+        `${this.realId()}-${name}`,
         () => {
           const result: Record<string, TableRow | LetsRole.ComponentValue> = {};
 
@@ -382,6 +385,8 @@ export const DataProvider = (superclass: Newable = class {}) =>
         | DataProviderWhereConditioner
         | IComponent,
     ): IDataProvider {
+      let filterName: string = "where";
+
       if (arguments.length === 1) {
         condition = column;
         column = undefined;
@@ -395,6 +400,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
         if (typeof column === "undefined") {
           conditioner = (v) => lre.deepEqual(v, condition.value());
         } else if (typeof column === "string") {
+          filterName = `where(${column}=?)`;
           const dataValueOrColumn = this.#getDataValueGetter(column)[1];
           conditioner = (v, k, data) =>
             dataValueOrColumn(v, k, data) === condition.value();
@@ -405,7 +411,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
         conditioner = condition as DataProviderWhereConditioner;
       }
 
-      return this.filter(conditioner);
+      return this.filter(conditioner, filterName);
     }
 
     count(): number {
@@ -490,7 +496,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
           throw new Error("Could not generate a unique random id");
         }
 
-        id += "-" + rnd;
+        id += "#" + rnd;
       }
 
       const provider = new DirectDataProvider(
@@ -500,18 +506,23 @@ export const DataProvider = (superclass: Newable = class {}) =>
         this.#getOriginalValue.bind(this),
         this.refresh.bind(this),
       );
-      this.subscribeRefresh(provider.id(), provider.refreshSelf.bind(provider));
+      this.subscribeRefresh(
+        provider.realId(),
+        provider.refreshSelf.bind(provider),
+      );
 
       return provider;
     }
 
     subscribeRefresh(id: string, refresh: () => void): void {
-      LRE_DEBUG && lre.trace(`Subscribe provider ${id} in ${this.id()}`);
+      LRE_DEBUG &&
+        lre.trace(`Add update subscriber in ${this.realId()}: ${id}`);
       this.#destRefresh[id] = refresh;
     }
 
     unsubscribeRefresh(id: string): void {
-      LRE_DEBUG && lre.trace(`Unsubscribe provider ${id} in ${this.id()}`);
+      LRE_DEBUG &&
+        lre.trace(`Remove update subscriber in ${this.realId()}: ${id}`);
       delete this.#destRefresh[id];
     }
 
@@ -522,14 +533,14 @@ export const DataProvider = (superclass: Newable = class {}) =>
       // this.#getOriginalValue();
       Object.keys(this.#destRefresh).forEach((id) => {
         //if (!this.#destRefresh[id]) return;
-        LRE_DEBUG && lre.trace(`Refresh provider ${id} from ${this.id()}`);
+        LRE_DEBUG && lre.trace(`${this.id()} refreshes ${id}`);
         this.#destRefresh[id]();
       });
     }
 
     min(dataValueOrColumn?: string | DataProviderGetValue): IDataProvider {
       return this.#comparisonProvider(
-        this.id() + "-min",
+        "min",
         dataValueOrColumn,
         (a: LetsRole.ComponentValue, b: LetsRole.ComponentValue) => a! < b!,
       );
@@ -537,7 +548,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
     max(dataValueOrColumn?: string | DataProviderGetValue): IDataProvider {
       return this.#comparisonProvider(
-        this.id() + "-max",
+        "max",
         dataValueOrColumn,
         (a: LetsRole.ComponentValue, b: LetsRole.ComponentValue) => a! > b!,
       );
@@ -556,25 +567,29 @@ export const DataProvider = (superclass: Newable = class {}) =>
       const comparisonId: string = dataGetterResult[0];
       dataValueOrColumn = dataGetterResult[1];
 
-      return this.#newProvider(`${this.id()}-${id}-${comparisonId}`, () => {
-        let minData: DataProviderDataValue | undefined = undefined;
-        let minVal: LetsRole.ComponentValue | undefined = undefined;
-        this.each((v, k, data) => {
-          const val = dataValueOrColumn(v, k, data);
+      return this.#newProvider(
+        `${this.realId()}-${id}-${comparisonId}`,
+        () => {
+          let minData: DataProviderDataValue | undefined = undefined;
+          let minVal: LetsRole.ComponentValue | undefined = undefined;
+          this.each((v, k, data) => {
+            const val = dataValueOrColumn(v, k, data);
 
-          if (!val) return;
+            if (!val) return;
 
-          if (
-            typeof minVal === "undefined" ||
-            comparisonCallback(val, minVal)
-          ) {
-            minData = { [k]: v };
-            minVal = val;
-          }
-        });
+            if (
+              typeof minVal === "undefined" ||
+              comparisonCallback(val, minVal)
+            ) {
+              minData = { [k]: v };
+              minVal = val;
+            }
+          });
 
-        return minData;
-      });
+          return minData;
+        },
+        true,
+      );
     }
 
     #getDataValueGetter(
@@ -633,7 +648,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     limit(nb: number): IDataProvider {
-      return this.#newProvider(this.id() + "-limit-" + nb, () => {
+      return this.#newProvider(`${this.realId()}-limit(${nb})`, () => {
         const values = this.#getCurrentValue();
 
         if (Array.isArray(values)) {
@@ -726,7 +741,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
       }
 
       return this.#newProvider(
-        this.id() + "-transform",
+        this.realId() + "-transform",
         () => {
           const result: DataProviderDataValue = {};
 

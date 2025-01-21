@@ -41,7 +41,7 @@ export class Table
   }
 
   realId(): LetsRole.TableID {
-    return this.id();
+    return `table(${this.id()})`;
   }
 
   getChangeTracker(): ChangeTracker {
