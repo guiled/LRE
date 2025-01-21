@@ -184,5 +184,23 @@ describe("Set choices with table", () => {
       "2-hand sword": "Great sword",
       axe: "Hatchet",
     });
+
+    selectedClass.value("mage");
+
+    expect(choiceSkills.getChoices()).toStrictEqual({
+      fireball: "Fireball",
+      invisibility: "Invisibility",
+    });
+
+    expect(selectedSkills.getChoices()).toStrictEqual({});
+
+    choiceSkills.value(["fireball"]);
+
+    expect(selectedSkills.getChoices()).toStrictEqual({
+      fireball: "Fireball",
+    });
+    expect(selectedTransformedSkills.getChoices()).toStrictEqual({
+      fireball: "Flame orb",
+    });
   });
 });

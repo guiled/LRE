@@ -146,8 +146,8 @@ export class ChangeTracker {
       ) as Array<ProxyModeHandlerLogType>;
       logTypes.forEach((type) => {
         const logs = newLogs[type] || [];
-        const hasPreviousLog: boolean = !!this.#logs[name]?.[type];
         const previousLogs = this.#logs[name]?.[type] ?? [];
+        const hasPreviousLog: boolean = previousLogs.length > 0;
         let hasDeletedPreviousLogs: boolean = false;
 
         logs.forEach((log) => {
@@ -164,7 +164,7 @@ export class ChangeTracker {
         });
 
         if (hasDeletedPreviousLogs && previousLogs.length === 0) {
-          delete this.#logs[type];
+          delete this.#logs[name];
         }
       });
     }
@@ -183,9 +183,11 @@ export class ChangeTracker {
     return logs.findIndex((l: ContextLogRecord) => {
       if (Array.isArray(l) && Array.isArray(log)) {
         return l[0] === log[0] && l[1] === log[1];
-      } else {
-        return l === log;
+      } else if (!Array.isArray(l) && !Array.isArray(log)) {
+        return l.realId() === log.realId();
       }
+
+      return false;
     });
   }
 
