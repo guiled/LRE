@@ -39,6 +39,18 @@ export class ChangeTracker {
     this.#context = context;
   }
 
+  static linkValueCallbackLogToTarget<Return>(
+    cb: Callback<Return>,
+    target: Callback,
+    decoratorContextName: string,
+  ): Return {
+    return ChangeTracker.linkParams()
+      .call(this, target, {
+        name: decoratorContextName,
+      })
+      .call(this, cb);
+  }
+
   static linkParams<
     This extends DynamicSetterHolder,
     Return,
