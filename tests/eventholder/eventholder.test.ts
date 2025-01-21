@@ -6,7 +6,6 @@ import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 const context = modeHandlerMock();
-global.lre = new LRE(context);
 
 type TestedEvents = "test" | "unused" | "click" | "update";
 
@@ -61,6 +60,9 @@ let vw: ViewMock;
 let rawCmp: ComponentMock;
 
 beforeEach(() => {
+  global.log = jest.fn();
+  global.lre = new LRE(context);
+
   const cmpDef: LetsRoleMock.ComponentDefinitions = {
     className: "Label",
     text: "test",

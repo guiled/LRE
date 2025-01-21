@@ -1,7 +1,16 @@
 import { Logger } from "../../src/log";
+import { LRE } from "../../src/lre";
+import { modeHandlerMock } from "../mock/modeHandler.mock";
+
+let context: ProxyModeHandler;
+let logger: Logger;
 
 beforeEach(() => {
   global.log = jest.fn();
+  context = modeHandlerMock();
+  global.lre = new LRE(context);
+  logger = new Logger();
+  jest.clearAllMocks();
 });
 
 afterEach(() => {
@@ -11,7 +20,6 @@ afterEach(() => {
 
 describe("Test all log method", () => {
   test("Check all method", () => {
-    const logger = new Logger();
     logger.setLogLevel("all");
     let nbCall = -1;
 
@@ -35,7 +43,6 @@ describe("Test all log method", () => {
   });
 
   test("Check no log", () => {
-    const logger = new Logger();
     logger.setLogLevel("none");
     logger.error("this is an error");
     logger.warn("this is a warning");
@@ -46,7 +53,6 @@ describe("Test all log method", () => {
   });
 
   test("Check log only errors", () => {
-    const logger = new Logger();
     logger.setLogLevel("error");
 
     expect(global.log).toHaveBeenCalledTimes(0);
@@ -63,7 +69,6 @@ describe("Test all log method", () => {
   });
 
   test("Check log errors and warnings", () => {
-    const logger = new Logger();
     logger.setLogLevel("warn");
 
     expect(global.log).toHaveBeenCalledTimes(0);
@@ -83,7 +88,6 @@ describe("Test all log method", () => {
   });
 
   test("Check log errors, warnings and trace… so everything", () => {
-    const logger = new Logger();
     logger.setLogLevel("trace");
 
     expect(global.log).toHaveBeenCalledTimes(0);
@@ -106,7 +110,6 @@ describe("Test all log method", () => {
   });
 
   test("Check log errors, warnings and trace… so all", () => {
-    const logger = new Logger();
     logger.setLogLevel("all");
 
     expect(global.log).toHaveBeenCalledTimes(0);
@@ -131,7 +134,6 @@ describe("Test all log method", () => {
 
 describe("Log many args", () => {
   test("Log many args", () => {
-    const logger = new Logger();
     logger.setLogLevel("all");
 
     expect(global.log).toHaveBeenCalledTimes(0);
@@ -148,7 +150,6 @@ describe("Log many args", () => {
   });
 
   test("Log with non string args", () => {
-    const logger = new Logger();
     let arg: unknown = 42;
     logger.setLogLevel("all");
 
@@ -174,7 +175,6 @@ describe("Log many args", () => {
   });
 
   test("Unknown log level", () => {
-    const logger = new Logger();
     const arg: unknown = 42;
     /* @ts-expect-error because user can do that */
     logger.setLogLevel("unknown");

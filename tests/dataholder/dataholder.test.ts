@@ -9,6 +9,7 @@ import { modeHandlerMock } from "../mock/modeHandler.mock";
 const { wait, itHasWaitedEverything } = newMockedWait();
 global.wait = wait;
 const context = modeHandlerMock();
+global.log = jest.fn();
 global.lre = new LRE(context);
 
 describe("Dataholder", () => {

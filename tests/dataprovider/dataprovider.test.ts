@@ -462,7 +462,7 @@ describe("DataProvider filter and where", () => {
       return data as any;
     });
     const dp = lre.dataProvider("test", dataGetter);
-    const filtered = dp.filter((v: any, _k) => {
+    const filtered = dp.filter((v: any, _k: any) => {
       return 1 * v?.b < 10;
     });
 
@@ -518,7 +518,7 @@ describe("DataProvider get single value", () => {
 
     expect(dataGetter).toHaveBeenCalledTimes(0);
 
-    const result = select.where((_v, _k, data: any) => {
+    const result = select.where((_v: any, _k: any, data: any) => {
       return data.b === "2";
     });
 
@@ -530,7 +530,7 @@ describe("DataProvider get single value", () => {
     expect(result.singleValue()).toBe("1");
     expect(result.singleId()).toBe("2");
 
-    const result2 = select.where((_v, _k, data: any) => {
+    const result2 = select.where((_v: any, _k: any, data: any) => {
       return data.b === "5";
     });
 
