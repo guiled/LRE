@@ -690,7 +690,12 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
     transform(
       map:
-        | Record<string | number, string | number>
+        | Record<
+            string | number,
+            | string
+            | number
+            | DataProviderCallback<TableRow | LetsRole.ComponentValue>
+          >
         | string
         | DataProviderCallback<
             | TableRow
@@ -720,7 +725,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
       } else if (typeof map === "function") {
         cbEach = map;
       } else {
-        cbEach = (v, _k, data) => {
+        cbEach = (v, k, data) => {
           const newValue: Record<string, TableRow | LetsRole.ComponentValue> =
             {};
           const vIsObj = lre.isObject<Record<string, string>>(v);
@@ -729,10 +734,15 @@ export const DataProvider = (superclass: Newable = class {}) =>
           Object.keys(map).forEach((mapKey) => {
             const transformedKey = map[mapKey];
 
-            if (vIsObj && typeof v[mapKey] !== "undefined") {
-              newValue[transformedKey] = v[mapKey];
-            } else if (dataIsObj && typeof data[mapKey] !== "undefined") {
-              newValue[transformedKey] = data[mapKey];
+            if (typeof transformedKey === "function") {
+              newValue[mapKey] = transformedKey(v, k, data);
+            } else if (vIsObj && typeof v[transformedKey] !== "undefined") {
+              newValue[mapKey] = v[transformedKey];
+            } else if (
+              dataIsObj &&
+              typeof data[transformedKey] !== "undefined"
+            ) {
+              newValue[mapKey] = data[transformedKey];
             }
           });
 

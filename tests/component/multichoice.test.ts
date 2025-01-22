@@ -620,8 +620,8 @@ describe("Multichoice filled with data", () => {
 
     const transformed = provider.transform({
       id: "id",
-      lbl: "name",
-      weight: "points",
+      name: "lbl",
+      points: "weight",
     });
 
     expect(transformed.providedValue()).toStrictEqual({
@@ -641,8 +641,8 @@ describe("Multichoice filled with data", () => {
 
     const transformedChecked = unchecked.transform({
       id: "id",
-      lbl: "name",
-      weight: "points",
+      name: "lbl",
+      points: "weight",
     });
 
     expect(transformedChecked.providedValue()).toStrictEqual({

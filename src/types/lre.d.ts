@@ -362,7 +362,7 @@ declare interface IDataProvider {
   ): DataProviderDataValue;
   transform(
     map:
-      | Record<string | number, string | number>
+      | Record<string | number, string | number | DataProviderCallback>
       | string
       | DataProviderCallback<Record<string | number, string | number> | string>,
   ): IDataProvider;

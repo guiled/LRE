@@ -758,9 +758,9 @@ describe("DataProvider transform", () => {
     expect(dp.providedValue()).toStrictEqual(data);
 
     const transformMap = {
-      a: "z",
-      b: "y",
-      c: "x",
+      z: "a",
+      y: "b",
+      x: "c",
     };
 
     const transformed = dp.transform(transformMap);
@@ -776,9 +776,9 @@ describe("DataProvider transform", () => {
     expect(dp.providedValue()).toStrictEqual(data);
 
     const transformMap = {
-      a: "z",
-      b: "y",
-      d: "x",
+      z: "a",
+      y: "b",
+      x: "d",
     };
 
     const transformed = dp.transform(transformMap);
@@ -794,8 +794,8 @@ describe("DataProvider transform", () => {
     expect(dp.providedValue()).toStrictEqual(data);
 
     const transformMap = {
-      a: "z",
-      b: "y",
+      z: "a",
+      y: "b",
     };
 
     const transformed = dp.transform({ a: "a" }).transform(transformMap);
@@ -804,6 +804,22 @@ describe("DataProvider transform", () => {
       _1: { z: "402", y: "13" },
       _2: { z: "1", y: "9" },
       _3: { z: "41", y: "5" },
+    });
+  });
+
+  test("Transform object with function", () => {
+    expect(dp.providedValue()).toStrictEqual(data);
+
+    const transform = function (_v: any, _k: any, data: any): string {
+      return data.a + data.b + data.c;
+    };
+
+    const transformed = dp.transform({ lbl: transform });
+
+    expect(transformed.providedValue()).toStrictEqual({
+      _1: { lbl: "4021334" },
+      _2: { lbl: "193" },
+      _3: { lbl: "4156" },
     });
   });
 });
