@@ -251,11 +251,12 @@ class ClassToFunction extends Visitor {
   }
 
   #ConstructorToFunction(n: Constructor): Statement[] {
+    const span = spannewctxt(n.span, 1);
     const args: Argument[] = [
       {
         expression: {
           type: "Identifier",
-          span: spannewctxt(n.span, 1),
+          span,
           value: CONSTRUCTOR_ARG_NAME,
           optional: false,
         },
@@ -270,7 +271,7 @@ class ClassToFunction extends Visitor {
       if (p.accessibility === "public") {
         propName = {
           type: "Identifier",
-          span: p.span,
+          span,
           optional: false,
           value:
             p.param.type === "Identifier"
@@ -282,10 +283,10 @@ class ClassToFunction extends Visitor {
       } else {
         propName = {
           type: "PrivateName",
-          span: p.span,
+          span,
           id: {
             type: "Identifier",
-            span: p.span,
+            span,
             optional: false,
             value:
               p.param.type === "Identifier"
@@ -299,7 +300,7 @@ class ClassToFunction extends Visitor {
           type: "PrivateProperty",
           accessibility: p.accessibility,
           typeAnnotation: p.param.typeAnnotation,
-          span: p.span,
+          span,
           key: propName,
           isStatic: false,
           isOverride: false,
@@ -311,12 +312,12 @@ class ClassToFunction extends Visitor {
 
       propertyDeclarations.push({
         type: "ExpressionStatement",
-        span: p.span,
+        span,
         expression: assignment({
-          span: p.span,
+          span,
           operator: "=",
           left: member({
-            span: p.span,
+            span,
             object: thisexpression({ span: p.span }),
             property: propName,
           }),
@@ -332,7 +333,7 @@ class ClassToFunction extends Visitor {
       });
       return {
         type: "Parameter",
-        span: p.span,
+        span,
         pat: p.param,
       };
     });
@@ -464,33 +465,35 @@ class ClassToFunction extends Visitor {
   }
 
   #propertyToVariable(n: ClassProperty | PrivateProperty): PropertyToVariable {
+    const span = spannewctxt(n.span);
+
     if (n.type === "ClassProperty") {
       return {
         type: "ExpressionStatement",
-        span: n.span,
+        span,
         expression: {
           type: "AssignmentExpression",
-          span: n.span,
+          span,
           operator: "=",
           left: {
             type: "MemberExpression",
-            span: n.span,
-            object: thisexpression({ span: n.span }),
+            span,
+            object: thisexpression({ span }),
             property: n.key as MemberExpression["property"],
           },
-          right: n.value ?? undefinedidentifier({ span: n.span }),
+          right: n.value ?? undefinedidentifier({ span }),
         },
       };
     } else {
       return {
         type: "VariableDeclaration",
-        span: n.span,
+        span,
         kind: "let",
         declare: false,
         declarations: [
           {
             type: "VariableDeclarator",
-            span: n.span,
+            span,
             id: this.#transformPrivateIdentifier(n.key.id),
             init: n.value,
             definite: n.definite,

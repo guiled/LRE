@@ -28,17 +28,17 @@ const transformForLR: Options = {
     },
     target: "es5",
     loose: true,
-    minify: {
-      compress: false,
-      mangle: {
-        toplevel: false,
-        keep_classnames: false,
-        keep_fnames: false,
-        keep_private_props: false,
-        ie8: false,
-        safari10: false,
-      },
-    },
+    // minify: {
+    //   compress: false,
+    //   mangle: {
+    //     toplevel: false,
+    //     keep_classnames: false,
+    //     keep_fnames: false,
+    //     keep_private_props: false,
+    //     ie8: false,
+    //     safari10: false,
+    //   },
+    // },
   },
   minify: false,
   isModule: true,
@@ -65,28 +65,29 @@ const transformForLR: Options = {
 };
 
 const postCleanup: Options = {
-  // jsc: {
-  //   parser: {
-  //     syntax: "ecmascript",
-  //     decorators: false,
-  //   },
-  //   target: "es5",
-  //   loose: false,
-  //   minify: {
-  //     compress: false,
-  //     mangle: {
-  //       toplevel: false,
-  //       keep_classnames: false,
-  //       keep_fnames: false,
-  //       keep_private_props: false,
-  //       ie8: false,
-  //       safari10: false,
-  //     },
-  //   },
-  // },
-  // minify: false,
-  // isModule: false,
   ...transformForLR,
+  jsc: {
+    parser: {
+      syntax: "typescript",
+      decorators: true,
+      tsx: false,
+    },
+    target: "es5",
+    loose: true,
+    minify: {
+      compress: false,
+      mangle: {
+        toplevel: false,
+        keep_classnames: false,
+        keep_fnames: false,
+        keep_private_props: false,
+        ie8: false,
+        safari10: false,
+      },
+    },
+  },
+  minify: false,
+  isModule: true,
   plugin: plugins([noVoid0(), noTypeof(), noSequence(), noCallInIf()]),
 };
 
