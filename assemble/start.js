@@ -39,3 +39,23 @@ function tpo(val, idx) {
   }
   return typeof val !== types[-idx];
 }
+
+function mx(m, a) {
+  const prev = Object.assign({}, this);
+  const rev = m.reverse();
+  const resParent = rev.reduce(
+    function (acc, cur, idx) {
+      const p = new (cur.bind.apply(cur, [null, a[m.length - 1 - idx]]))();
+      return Object.assign(acc, p);
+    }.bind(this),
+    {}
+  );
+  const parentKeys = Object.keys(resParent);
+  parentKeys.forEach(
+    function (k) {
+      tpo(resParent[k], 4) && (resParent[k] = resParent[k].bind(this));
+    }.bind(this)
+  );
+  Object.assign(this, resParent, prev);
+  return resParent;
+}
