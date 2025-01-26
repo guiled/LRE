@@ -125,4 +125,8 @@ export class SheetProxy
   getData(): Partial<{ [key: string]: LetsRole.ComponentValue }> {
     return this.getDest().getData();
   }
+
+  getSheetType(): LetsRole.SheetType {
+    return this.getDest().getSheetType();
+  }
 }

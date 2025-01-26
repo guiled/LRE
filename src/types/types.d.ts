@@ -67,6 +67,7 @@ declare namespace LetsRole {
   export type VariableID = string;
   export type TooltipPlacement = "top" | "right" | "bottom" | "left";
   export type RollVisibility = "visible" | "gm" | "gmonly";
+  export type SheetType = "character" | "craft" | "prompt";
 
   export interface Sheet extends object {
     /** get the id of the sheet */
@@ -90,6 +91,8 @@ declare namespace LetsRole {
     setData(data: ViewData): void;
 
     getData(): ViewData;
+
+    getSheetType(): SheetType;
   }
 
   export interface Component<ValueType = ComponentValue> extends object {

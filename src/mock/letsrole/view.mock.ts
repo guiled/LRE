@@ -95,6 +95,10 @@ export class ViewMock implements LetsRole.Sheet {
     return this.#properName;
   }
 
+  getSheetType(): LetsRole.SheetType {
+    return "character"; // todo for prompt and craft
+  }
+
   get(id: LetsRole.ComponentID): ComponentMock | FailingComponent {
     let usedId = id;
 
