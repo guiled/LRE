@@ -152,6 +152,46 @@ describe("Choice get and set choices", () => {
       }),
     ).not.toThrow();
   });
+
+  test("set choice that does not change the value does not trigger update event", () => {
+    const ch = new Choice(rawSheet.get("chA"), sheet, "chA");
+    ch.setChoices({
+      a: "1",
+      b: "2",
+    });
+    ch.value("a");
+    const update = jest.fn();
+    ch.on("update", update);
+
+    expect(update).not.toHaveBeenCalled();
+
+    ch.setChoices({
+      a: "1",
+      c: "3",
+    });
+
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  test("set choice that changes the value triggers update event", () => {
+    const ch = new Choice(rawSheet.get("chA"), sheet, "chA");
+    ch.setChoices({
+      a: "1",
+      b: "2",
+    });
+    ch.value("a");
+    const update = jest.fn();
+    ch.on("update", update);
+
+    expect(update).not.toHaveBeenCalled();
+
+    ch.setChoices({
+      c: "1",
+      d: "3",
+    });
+
+    expect(update).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("Set choice dynamically", () => {

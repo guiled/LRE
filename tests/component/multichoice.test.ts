@@ -8,6 +8,7 @@ import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
 import {
   initLetsRole,
+  itHasWaitedEverything,
   terminateLetsRole,
 } from "../../src/mock/letsrole/letsrole.mock";
 import { ComponentProxy } from "../../src/proxy/component";
@@ -106,6 +107,15 @@ describe("MultiChoice", () => {
 
     expect(rawSheet.setData).toHaveBeenCalledTimes(1);
     expect(rawMultiChoice.setChoices).toHaveBeenCalledTimes(1);
+  });
+
+  test("Set value of the sames values doesn't trigger update event", () => {
+    multiChoice.value(["1", "2"]);
+    const mockUpdateEvent = jest.fn();
+    multiChoice.on("update", mockUpdateEvent);
+    multiChoice.value(["1", "2"]);
+
+    expect(mockUpdateEvent).toHaveBeenCalledTimes(0);
   });
 
   test("Multichoice value change triggers select event", () => {
@@ -449,6 +459,127 @@ describe("MultiChoice", () => {
   });
 });
 
+describe("Multichoice setChoices", () => {
+  let fnUpdate: jest.Mock;
+  let fnSelect: jest.Mock;
+  let fnUnselect: jest.Mock;
+
+  beforeEach(() => {
+    multiChoice.setChoices({
+      a: "One",
+      b: "Two",
+      c: "Three",
+    });
+    multiChoice.value(["b"]);
+    itHasWaitedEverything();
+    fnUpdate = jest.fn(() => {
+      return true;
+    });
+    fnSelect = jest.fn();
+    fnUnselect = jest.fn();
+    multiChoice.on("update", fnUpdate);
+    multiChoice.on("select", fnSelect);
+    multiChoice.on("unselect", fnUnselect);
+    jest.clearAllMocks();
+  });
+
+  test("Unique value is kept if in new choices, no update event", () => {
+    expect(multiChoice.value()).toEqual(["b"]);
+
+    multiChoice.setChoices({
+      a: "One",
+      b: "Two",
+      c: "Three",
+      d: "Four",
+    });
+
+    expect(multiChoice.value()).toEqual(["b"]);
+    expect(fnUpdate).not.toHaveBeenCalled();
+    expect(fnSelect).not.toHaveBeenCalled();
+    expect(fnUnselect).not.toHaveBeenCalled();
+  });
+
+  test("Unique value is lost if not in new choices", () => {
+    multiChoice.value(["b"]);
+
+    expect(multiChoice.value()).toEqual(["b"]);
+
+    jest.clearAllMocks();
+
+    multiChoice.setChoices({
+      a: "One",
+      c: "Three",
+      d: "Four",
+    });
+
+    expect(multiChoice.value()).toEqual([]);
+    expect(fnUpdate).toHaveBeenCalledTimes(1);
+    expect(fnSelect).not.toHaveBeenCalled();
+    expect(fnUnselect).toHaveBeenCalledTimes(1);
+  });
+
+  test("Multiple values are kept if all in new choices", () => {
+    multiChoice.value(["b", "c"]);
+
+    expect(multiChoice.value()).toEqual(["b", "c"]);
+
+    jest.clearAllMocks();
+
+    multiChoice.setChoices({
+      a: "One",
+      b: "Two",
+      c: "Three",
+      d: "Four",
+    });
+
+    expect(multiChoice.value()).toEqual(["b", "c"]);
+    expect(fnUpdate).not.toHaveBeenCalled();
+    expect(fnSelect).not.toHaveBeenCalled();
+    expect(fnUnselect).not.toHaveBeenCalled();
+  });
+
+  test("Multiple values are lost if none in new choices", () => {
+    multiChoice.value(["b", "c"]);
+
+    expect(multiChoice.value()).toEqual(["b", "c"]);
+
+    jest.clearAllMocks();
+
+    multiChoice.setChoices({
+      a: "One",
+      d: "Four",
+      e: "Five",
+      f: "Six",
+    });
+
+    expect(multiChoice.value()).toEqual([]);
+    expect(fnUpdate).toHaveBeenCalledTimes(1);
+    expect(fnSelect).not.toHaveBeenCalled();
+    expect(fnUnselect).toHaveBeenCalledTimes(1);
+  });
+
+  test("Multiple values are kept for those in new choices", () => {
+    multiChoice.value(["b", "c"]);
+
+    expect(multiChoice.value()).toEqual(["b", "c"]);
+
+    jest.clearAllMocks();
+
+    multiChoice.setChoices({
+      a: "One",
+      d: "Four",
+      e: "Five",
+      c: "Three",
+      f: "Six",
+    });
+
+    expect(multiChoice.value()).toEqual(["c"]);
+    expect(fnUpdate).toHaveBeenCalledTimes(1);
+    expect(fnSelect).not.toHaveBeenCalled();
+    expect(fnUnselect).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("Multichoice checked and unchecked", () => {
   let data: IDataProvider;
 
@@ -557,14 +688,25 @@ describe("Multichoice checked and unchecked", () => {
   });
 
   test("Value is reset if choices totally changed", () => {
-    expect(multiChoice.getChoices()).toStrictEqual({
+    const checked = multiChoice.checked() as DirectDataProvider;
+    const unchecked = multiChoice.unchecked() as DirectDataProvider;
+    const fnCheckedUpdate = jest.fn();
+    const fnUncheckedUpdate = jest.fn();
+    checked.on("refresh", fnCheckedUpdate);
+    unchecked.on("refresh", fnUncheckedUpdate);
+    checked.refresh(); // force data provider dependencies
+    unchecked.refresh(); // force data provider dependencies
+
+    const data = {
       a: "One",
       b: "Two",
       c: "Three",
       d: "Four",
       e: "Five",
       f: "Six",
-    });
+    };
+
+    expect(multiChoice.getChoices()).toStrictEqual(data);
 
     multiChoice.value(["a", "c"]);
 
@@ -577,6 +719,10 @@ describe("Multichoice checked and unchecked", () => {
     });
 
     expect(multiChoice.value()).toStrictEqual([]);
+    expect(fnCheckedUpdate).toHaveBeenCalledTimes(1);
+    expect(fnUncheckedUpdate).toHaveBeenCalledTimes(1);
+    expect(checked.providedValue()).toStrictEqual({});
+    expect(unchecked.providedValue()).toStrictEqual(data);
   });
 });
 

@@ -39,14 +39,22 @@ export class Choice<
   #optional: boolean = false;
   #defaultLabel: string = "";
   #valueProvider: IDataProvider | undefined;
+  #checkWithValue: (newChoices: LetsRole.Choices) => void;
 
   constructor(
     raw: LetsRole.Component,
     sheet: ISheet,
     realId: LetsRole.ComponentID,
+    checkWithValue?: (newChoices: LetsRole.Choices) => void,
   ) {
     super(raw, sheet, realId);
     this.lreType("choice");
+
+    if (arguments.length >= 4) {
+      this.#checkWithValue = checkWithValue!;
+    } else {
+      this.#checkWithValue = this.#checkChoiceWithValue.bind(this);
+    }
 
     try {
       this.#currentValue = lre.value(raw.value());
@@ -91,48 +99,62 @@ export class Choice<
   ): void {
     this.#valueProvider = undefined;
 
+    const [newChoices, newChoiceData] = this.#splitChoicesAndData(choices);
+
+    this.#checkWithValue(newChoices);
+
+    this.#choices = newChoices;
+    this.#choiceData = newChoiceData;
+    this.#setChoicesToComponent();
+  }
+
+  #splitChoicesAndData(
+    newChoices: DynamicSetValue<LetsRole.Choices | ChoicesWithData>,
+  ): [LetsRole.Choices, ChoiceData] {
+    if (!lre.isObject<LetsRole.Choices | ChoicesWithData>(newChoices)) {
+      return [{}, {}];
+    }
+
+    const choices: LetsRole.Choices = {};
+    const choiceData: ChoiceData = {};
+    const values = Object.keys(newChoices);
+
+    values.forEach((choiceId) => {
+      const currentChoice = newChoices[choiceId];
+
+      if (lre.isObject<ChoiceValueWithData>(currentChoice)) {
+        choices[choiceId] = currentChoice.value;
+        choiceData[choiceId] = currentChoice.data;
+      } else {
+        choices[choiceId] = currentChoice;
+        choiceData[choiceId] = null;
+      }
+    });
+
+    return [choices, choiceData];
+  }
+
+  #checkChoiceWithValue(newChoices: LetsRole.Choices): void {
     const currentValue: LetsRole.ChoiceValue =
       this.value() as LetsRole.ChoiceValue;
-    const newChoices: LetsRole.Choices = {};
-    let newValues: LetsRole.ChoiceValues = [];
-    const newChoiceData: ChoiceData = {};
-
-    if (lre.isObject<LetsRole.Choices | ChoicesWithData>(choices)) {
-      newValues = Object.keys(choices);
-      newValues.forEach((chVal: LetsRole.ChoiceValue) => {
-        const v = choices[chVal];
-
-        if (lre.isObject<ChoiceValueWithData>(v)) {
-          newChoices[chVal] = v.value;
-          newChoiceData[chVal] = v.data;
-        } else {
-          newChoices[chVal] = v;
-          newChoiceData[chVal] = null;
-        }
-      });
-    }
+    const newAvailableValues: LetsRole.ChoiceValues = Object.keys(newChoices);
 
     if (!Object.prototype.hasOwnProperty.call(newChoices, currentValue)) {
       const availableValues: LetsRole.ChoiceValues = Object.keys(this.#choices);
 
       if (
         availableValues.length &&
-        newValues.length &&
-        !newValues.includes(currentValue)
+        newAvailableValues.length &&
+        !newAvailableValues.includes(currentValue)
       ) {
         const tmpChoices: LetsRole.Choices = {};
         tmpChoices[currentValue] = this.#choices[currentValue];
-        tmpChoices[newValues[0]] = newChoices[newValues[0]];
+        tmpChoices[newAvailableValues[0]] = newChoices[newAvailableValues[0]];
         this.raw().setChoices(tmpChoices);
         this.setDefaultValue();
         this.sheet().sendPendingDataFor(this.realId());
       }
     }
-
-    this.#choices = newChoices;
-    this.#choiceData = newChoiceData;
-    this.#setChoicesToComponent();
-    this.trigger("update", this);
   }
 
   setDefaultValue(): void {

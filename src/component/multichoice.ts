@@ -38,7 +38,7 @@ export class MultiChoice extends Choice<
     sheet: ISheet,
     realId: LetsRole.ComponentID,
   ) {
-    super(raw, sheet, realId);
+    super(raw, sheet, realId, (...args) => this.#checkChoiceWithValue(...args));
     this.lreType("multichoice");
     this.#currentValue = Array.from(super.value() || []);
     this.on(
@@ -86,6 +86,20 @@ export class MultiChoice extends Choice<
 
   setDefaultValue(): void {
     this.value([]);
+  }
+
+  #checkChoiceWithValue(newChoices: LetsRole.Choices): void {
+    const currentValue: LetsRole.MultiChoiceValue = this.value();
+    const newAvailableValues: LetsRole.ChoiceValues = Object.keys(newChoices);
+
+    const newValues = currentValue.filter((v) =>
+      newAvailableValues.includes(v),
+    );
+
+    if (newValues.length !== currentValue.length) {
+      this.value(newValues);
+      this.sheet().sendPendingDataFor(this.realId());
+    }
   }
 
   #sanitizeValue(value: unknown): LetsRole.MultiChoiceValue {
