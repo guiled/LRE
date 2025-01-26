@@ -340,7 +340,7 @@ export class Component<
         this.raw().value(newValue as LetsRole.ComponentValue);
       }
 
-      if (oldValue !== newValue) {
+      if (!lre.deepEqual(oldValue, newValue)) {
         this.trigger("update");
       }
     } else {
