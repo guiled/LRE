@@ -71,6 +71,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     #getCurrentValue(): ReturnType<ValueGetterSetter> {
+      this.#context.logAccess?.("provider", this);
       const result = this.#currentValue ?? this.#setCurrentValue(this.#valueCb);
 
       return lre.value(result);
@@ -527,12 +528,12 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     refreshDerived(): void {
-      // These 3 commented lines here might be useful one day
+      // These 2 commented lines here might be useful one day
       // but for now, the UT are ok without them
       // this.#getCurrentValue();
       // this.#getOriginalValue();
       Object.keys(this.#destRefresh).forEach((id) => {
-        //if (!this.#destRefresh[id]) return;
+        if (!this.#destRefresh[id]) return;
         LRE_DEBUG && lre.trace(`${this.id()} refreshes ${id}`);
         this.#destRefresh[id]();
       });
