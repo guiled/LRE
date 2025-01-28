@@ -272,6 +272,10 @@ export class Sheet
     return this;
   }
 
+  getSheetType(): LetsRole.SheetType {
+    return this.raw().getSheetType();
+  }
+
   getVariable(id: string): number | null {
     return this.raw().getVariable(id);
   }
@@ -383,15 +387,15 @@ export class Sheet
       ...(this.#batcher.getPendingData() as LetsRole.ViewData),
     };
 
-    if (arguments.length === 0) {
+    if (arguments.length === 0 || typeof realId === "undefined") {
       return data;
     }
 
     const realIdParts: Array<LetsRole.ComponentID | LetsRole.Index> =
-      realId!.split(REP_ID_SEP);
+      realId.split(REP_ID_SEP);
 
     if (realIdParts.length === 1) {
-      return data[realId!];
+      return data[realId] as LetsRole.ComponentValue;
     }
 
     let result: LetsRole.ComponentValue | LetsRole.ViewData | undefined =

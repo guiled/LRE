@@ -2,6 +2,7 @@ import { Container } from "../../src/component/container";
 import { LRE } from "../../src/lre";
 import {
   initLetsRole,
+  itHasWaitedEverything,
   terminateLetsRole,
 } from "../../src/mock/letsrole/letsrole.mock";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
@@ -24,7 +25,13 @@ beforeEach(() => {
             id: "container",
             name: "Container",
             className: "Container",
-            children: [],
+            children: [
+              {
+                id: "subTxt1",
+                name: "Text",
+                className: "TextInput",
+              },
+            ],
           },
           {
             id: "containerWithDNone",
@@ -84,5 +91,77 @@ describe("Container", () => {
 
     expect(container.hasClass("d-flex")).toBe(true);
     expect(container.hasClass("d-none")).toBe(false);
+  });
+
+  test("Find a child is successful", () => {
+    const container = sheet.get("container") as Container;
+    jest.spyOn(lre, "error");
+
+    const child = container.find("subTxt1");
+
+    expect(child).not.toBeNull();
+    expect(child?.id()).toBe("subTxt1");
+    expect(lre.error).not.toHaveBeenCalled();
+  });
+
+  test("Find a child that does not exist returns null and error be logged", () => {
+    const container = sheet.get("container") as Container;
+    jest.spyOn(lre, "error");
+
+    const child = container.find("unknownCmp");
+
+    expect(child).toBeNull();
+    expect(lre.error).toHaveBeenCalled();
+  });
+
+  test("Find a child that exists elsewhere returns null and error must be logged", () => {
+    const container = sheet.get("container") as Container;
+    jest.spyOn(lre, "error");
+
+    const child = container.find("txt1");
+
+    expect(child).toBeNull();
+    expect(lre.error).toHaveBeenCalled();
+  });
+});
+
+describe("Container value", () => {
+  test("set Value changes children values", () => {
+    const container = sheet.get("container") as Container;
+
+    let data: LetsRole.ViewData = sheet.getData() as LetsRole.ViewData;
+
+    expect(data.subTxt1).toBeUndefined();
+
+    container.value({
+      subTxt1: 42,
+    });
+    itHasWaitedEverything();
+
+    data = sheet.getData() as LetsRole.ViewData;
+
+    expect(data).toStrictEqual({
+      subTxt1: 42,
+    });
+
+    container.value({
+      subTxt1: 43,
+      subTxtUnknown: 44,
+    });
+    itHasWaitedEverything();
+    data = sheet.getData() as LetsRole.ViewData;
+
+    expect(data).toStrictEqual({
+      subTxt1: 43,
+    });
+  });
+
+  test("set value with invalid data logs error", () => {
+    const container = sheet.get("container") as Container;
+    jest.spyOn(lre, "error");
+
+    container.value(42);
+
+    expect(lre.error).toHaveBeenCalled();
   });
 });
