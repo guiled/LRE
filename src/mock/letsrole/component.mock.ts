@@ -53,16 +53,29 @@ export class ComponentMock<
 
   find(id: LetsRole.ComponentID): LetsRole.Component {
     const type = this.getType();
-    const completeId =
-      type === "Repeater" || type === "RepeaterElement"
-        ? this.#realId + "." + id
-        : id;
 
-    if (completeId === this.#realId) {
-      return new FailingExistingComponent(this.#sheet, completeId);
+    if (type === "Repeater" || type === "RepeaterElement") {
+      return this.#sheet.get(this.#realId + "." + id);
     }
 
-    return this.#sheet.get(completeId);
+    if (id === this.#realId) {
+      return new FailingExistingComponent(this.#sheet, id);
+    }
+
+    const foundInSheet = this.#sheet.get(id);
+
+    if (this.#definitions.className !== "_CmpFromSheet_") {
+      const childDefs = ViewMock.findIdInDefinition(
+        this.#definitions.children || [],
+        id,
+      );
+
+      if (!childDefs) {
+        return new FailingOuterExistingComponent(this.#sheet, id);
+      }
+    }
+
+    return foundInSheet;
   }
 
   on(event: LetsRole.EventType, callback: LetsRole.EventCallback): void;
@@ -376,7 +389,11 @@ export class FailingOuterExistingComponent extends FailingExistingComponent {
     super(sheet, realId);
   }
 
-  value(): void {
+  id(): LetsRole.ComponentID | null {
+    return null;
+  }
+
+  value(): any {
     throw new Error("This call must throw an error");
   }
 }

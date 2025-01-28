@@ -69,7 +69,8 @@ namespace LetsRoleMock {
       | "RepeaterElement"
       /* @deprecated */
       | "View"
-      | "_Unknown_";
+      | "_Unknown_"
+      | "_CmpFromSheet_";
     collapsed?: boolean;
     references?: Array<LetsRole.ComponentID>;
     children?: Array<ComponentDefinitions>;
@@ -196,7 +197,7 @@ namespace LetsRoleMock {
   };
 
   declare type UnknownComponentDefinitions = CommonComponentDefinitions & {
-    className: "_Unknown_";
+    className: "_Unknown_" | "_CmpFromSheet_";
   };
 
   declare type EntryDefinitions = CommonComponentDefinitions & {

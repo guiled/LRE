@@ -2,6 +2,7 @@ import {
   ComponentMock,
   FailingComponent,
   FailingExistingComponent,
+  FailingOuterExistingComponent,
 } from "../../../src/mock/letsrole/component.mock";
 import { ServerMock } from "../../../src/mock/letsrole/server.mock";
 import { ViewMock } from "../../../src/mock/letsrole/view.mock";
@@ -72,15 +73,19 @@ describe("ComponentMock behavior", () => {
   });
 
   test("find behavior", () => {
-    const found = componentLabel.find("oh");
+    let found = componentLabel.find("oh");
 
     expect(found).toBeInstanceOf(FailingExistingComponent);
     expect(found.id()).toBe("oh");
-    //found = componentContainer.find("oh");
-    //expect(found).toBeInstanceOf(FailingOuterExistingComponent);
-    //expect(found.id()).toBe(null);
-    //found = componentContainer.find("oh2");
-    //expect(found).toBeInstanceOf(FailingExistingComponent);
+
+    found = componentContainer.find("oh");
+
+    expect(found).toBeInstanceOf(FailingOuterExistingComponent);
+    expect(found.id()).toBe(null);
+
+    found = componentContainer.find("oh2");
+
+    expect(found).toBeInstanceOf(ComponentMock);
   });
 
   test("index basic behavior", () => {

@@ -115,10 +115,14 @@ export class ViewMock implements LetsRole.Sheet {
     const [_unused, entryId, ...rest] = parts;
 
     if (id === this.id()) {
-      return this.toComponent(id, "_Unknown_");
+      return this.toComponent(
+        id,
+        "_CmpFromSheet_",
+        this.#getDefinitions()?.children,
+      );
     }
 
-    const definition = this.#findIdInDefinition(
+    const definition = ViewMock.findIdInDefinition(
       this.#getDefinitions().children,
       cmpId,
     );
@@ -185,7 +189,7 @@ export class ViewMock implements LetsRole.Sheet {
 
     if (definition.className !== "Repeater") {
       if (
-        this.#findIdInDefinition(definition.children || [], entryId) !== null
+        ViewMock.findIdInDefinition(definition.children || [], entryId) !== null
       ) {
         return new FailingExistingComponent(this.#realView || this, id);
       } else {
@@ -219,7 +223,11 @@ export class ViewMock implements LetsRole.Sheet {
     entryView.setRealView(this, cmpId + "." + entryId);
 
     if (rest.length === 0) {
-      return entryView.toComponent(usedId, "RepeaterElement");
+      return entryView.toComponent(
+        usedId,
+        "RepeaterElement",
+        definition.children || [],
+      );
     }
 
     return entryView.get(id);
@@ -228,6 +236,7 @@ export class ViewMock implements LetsRole.Sheet {
   toComponent(
     id: LetsRole.ComponentID,
     className: Exclude<LetsRoleMock.ComponentClassName, "View">,
+    children: Array<LetsRoleMock.ComponentDefinitions>,
   ): ComponentMock {
     const cmp = new ComponentMock(
       this.#realView || this,
@@ -235,6 +244,7 @@ export class ViewMock implements LetsRole.Sheet {
       {
         id,
         className,
+        children,
       } as any,
       this.#getData(),
     );
@@ -315,17 +325,17 @@ export class ViewMock implements LetsRole.Sheet {
     }
   }
 
-  #findIdInDefinition(
+  static findIdInDefinition(
     children: Array<LetsRoleMock.ComponentDefinitions>,
     id: LetsRole.ComponentID,
   ): LetsRoleMock.ComponentDefinitions | null {
-    return this.#traverseDefinition(
+    return ViewMock.traverseDefinition(
       children,
       (definition) => definition.id === id,
     );
   }
 
-  #traverseDefinition(
+  static traverseDefinition(
     children: Array<LetsRoleMock.ComponentDefinitions>,
     finder: (definition: LetsRoleMock.ComponentDefinitions) => boolean,
   ): LetsRoleMock.ComponentDefinitions | null {
@@ -335,7 +345,7 @@ export class ViewMock implements LetsRole.Sheet {
       }
 
       if (definition.children) {
-        const result = this.#traverseDefinition(definition.children, finder);
+        const result = ViewMock.traverseDefinition(definition.children, finder);
 
         if (result) {
           return result;
@@ -406,7 +416,7 @@ export class ViewMock implements LetsRole.Sheet {
       return false;
     }
 
-    const rootDef = this.#findIdInDefinition(
+    const rootDef = ViewMock.findIdInDefinition(
       this.#getDefinitions().children,
       parts[0],
     );
@@ -530,7 +540,7 @@ export class ViewMock implements LetsRole.Sheet {
     } else {
       this.#runDirectEvent(realId, event);
 
-      const defs = this.#findIdInDefinition(
+      const defs = ViewMock.findIdInDefinition(
         this.#getDefinitions().children,
         realId,
       );
@@ -634,7 +644,7 @@ export class ViewMock implements LetsRole.Sheet {
       return this.findParentInRepeater(id);
     }
 
-    const def = this.#traverseDefinition(
+    const def = ViewMock.traverseDefinition(
       [this.#getDefinitions()],
       (definition) => !!definition.children?.some((child) => child.id === id),
     );
@@ -668,7 +678,7 @@ export class ViewMock implements LetsRole.Sheet {
   private getEntryView(entryId: string, repeaterId: string): ViewMock {
     const entryState = this.getEntryState(entryId);
     let vwId;
-    const repeaterDef = this.#findIdInDefinition(
+    const repeaterDef = ViewMock.findIdInDefinition(
       this.#getDefinitions().children,
       repeaterId,
     ) as LetsRoleMock.RepeaterDefinitions;
@@ -748,7 +758,7 @@ export class ViewMock implements LetsRole.Sheet {
     if (newValue === currentValue) return;
 
     this.saveComponentValue(realId, newValue);
-    const defs = this.#findIdInDefinition(
+    const defs = ViewMock.findIdInDefinition(
       this.#getDefinitions().children,
       realId,
     );
@@ -764,7 +774,7 @@ export class ViewMock implements LetsRole.Sheet {
   }
 
   repeaterClickOnAdd(realId: LetsRole.ComponentID): void {
-    const defs = this.#findIdInDefinition(
+    const defs = ViewMock.findIdInDefinition(
       this.#getDefinitions().children,
       realId,
     );
@@ -826,7 +836,7 @@ export class ViewMock implements LetsRole.Sheet {
     idParts.pop()!;
     const repeaterRealId = idParts.join(".");
 
-    const defs = this.#findIdInDefinition(
+    const defs = ViewMock.findIdInDefinition(
       this.#getDefinitions().children,
       repeaterRealId,
     );
@@ -860,7 +870,7 @@ export class ViewMock implements LetsRole.Sheet {
     const entryId = idParts.pop()!;
     const repeaterRealId = idParts.join(".");
 
-    const defs = this.#findIdInDefinition(
+    const defs = ViewMock.findIdInDefinition(
       this.#getDefinitions().children,
       repeaterRealId,
     );
@@ -893,7 +903,7 @@ export class ViewMock implements LetsRole.Sheet {
     idParts.pop()!;
     const repeaterRealId = idParts.join(".");
 
-    const defs = this.#findIdInDefinition(
+    const defs = ViewMock.findIdInDefinition(
       this.#getDefinitions().children,
       repeaterRealId,
     );
@@ -917,9 +927,12 @@ export class ViewMock implements LetsRole.Sheet {
   }
 
   findChoiceDefs(): LetsRoleMock.ComponentDefinitions | null {
-    return this.#traverseDefinition(this.#getDefinitions().children, (def) => {
-      return def.className === "Choice";
-    });
+    return ViewMock.traverseDefinition(
+      this.#getDefinitions().children,
+      (def) => {
+        return def.className === "Choice";
+      },
+    );
   }
 
   #randomString(length: number): string {
