@@ -186,3 +186,19 @@ describe("Log many args", () => {
     expect(global.log).toHaveBeenCalledTimes(0);
   });
 });
+
+describe("Log push and pop trace", () => {
+  test("Log start and stop trace", () => {
+    logger.setLogLevel("trace");
+
+    expect(global.log).toHaveBeenCalledTimes(0);
+
+    logger.push("Start trace");
+
+    expect(global.log).toHaveBeenCalledTimes(1);
+
+    logger.pop();
+
+    expect(global.log).toHaveBeenCalledTimes(2);
+  });
+});

@@ -123,7 +123,7 @@ export const EventHolder = <
         }
 
         LRE_DEBUG &&
-          lre.trace(`Run handler ${this.#holderId}:${eventId}:${hId}`);
+          lre.push(`Run handler ${this.#holderId}:${eventId}:${hId}`);
 
         try {
           isHandlerRan = true;
@@ -135,6 +135,8 @@ export const EventHolder = <
             )}] Unhandled error : ${e}`,
           );
         }
+
+        LRE_DEBUG && lre.pop();
 
         return false;
       });
@@ -181,12 +183,13 @@ export const EventHolder = <
       eventName: EventType<AdditionalEvents>,
     ): LetsRole.EventCallback<LREEventTarget> {
       return (rawTarget: LREEventTarget, ...args: unknown[]): void => {
-        LRE_DEBUG && lre.trace(`Run events ${this.#holderId}:${eventName}`);
+        LRE_DEBUG && lre.push(`Run events ${this.#holderId}:${eventName}`);
         const { eventId, handlers } =
           this.#getEventIdAndHandlersFromEventName(eventName);
 
         if (!this.isEventEnabled(eventId)) {
           LRE_DEBUG && lre.trace(`Event ${eventName} is disabled`);
+          LRE_DEBUG && lre.pop();
           return;
         }
 
@@ -194,14 +197,17 @@ export const EventHolder = <
         const canBeRan = this.#eventCanBeRan(eventId);
 
         if (!canBeRan) {
+          LRE_DEBUG && lre.pop();
           return;
         }
 
         const cmp =
-          this.#getTarget?.(rawTarget, this.#events[eventId]!) || this;
+          this.#getTarget?.call?.(this, rawTarget, this.#events[eventId]!) ||
+          this;
 
         this.#runHandlers(eventId, handlers, cmp, ...args);
         this.#propagateToLinks(eventName, ...args);
+        LRE_DEBUG && lre.pop();
       };
     }
 

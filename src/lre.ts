@@ -71,8 +71,10 @@ export class LRE extends Logger implements ILRE {
           try {
             LRE_DEBUG && this.trace("Run init");
             callback.call(this, _sheet);
+            LRE_DEBUG && this.pop();
           } catch (e: unknown) {
             this.error("[Init] Unhandled error : " + e);
+            LRE_DEBUG && this.pop();
           }
         },
         "sheet init",

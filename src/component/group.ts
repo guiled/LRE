@@ -107,9 +107,10 @@ export class Group
     if (component?.exists?.()) {
       component.propagateEventTo(this, ["update", "click"]);
       this.#components.push(component as IComponent);
-      LRE_DEBUG && lre.trace(`Add a component to group ${this.#id}`);
+      LRE_DEBUG && lre.push(`Add a component to group ${this.#id}`);
       this.trigger("add", component);
       this.trigger("update");
+      LRE_DEBUG && lre.pop();
     } else {
       LRE_DEBUG && lre.warn(`Unable to add component to group ${this.#id}`);
     }
@@ -129,9 +130,10 @@ export class Group
     if (cmpIndex !== -1) {
       const removed = this.#components.splice(cmpIndex, 1);
       removed[0].unpropagateEventTo(this);
-      LRE_DEBUG && lre.trace(`Remove a component from group ${this.#id}`);
+      LRE_DEBUG && lre.push(`Remove a component from group ${this.#id}`);
       this.trigger("remove", removed[0]);
       this.trigger("update");
+      LRE_DEBUG && lre.pop();
     } else {
       LRE_DEBUG &&
         lre.warn(`Unable to remove component from group ${this.#id}`);

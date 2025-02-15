@@ -125,7 +125,10 @@ declare interface Logger {
   error(...args: any[]): void;
   warn(...args: any[]): void;
   trace(...args: any[]): void;
+  profile(...args: any[]): void;
   log(...args: any[]): void;
+  push(...args: any[]): void;
+  pop(): void;
   setLogLevel(level: keyof typeof LogLevel): void;
 }
 
