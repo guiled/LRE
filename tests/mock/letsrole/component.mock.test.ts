@@ -183,9 +183,9 @@ describe("ComponentMock behavior", () => {
     expect(cbChange).toHaveBeenCalledTimes(1);
   });
 
-  it.todo("text() returns null for multichoice");
+  test.todo("text() returns null for multichoice");
 
-  it.todo("text() returns undefined for choice with no table or label");
+  test.todo("text() returns undefined for choice with no table or label");
 
   test("event delegation behavior", () => {
     let arg: ComponentMock;
@@ -220,11 +220,11 @@ describe("ComponentMock behavior", () => {
     expect(cb2).toHaveBeenCalledTimes(1);
   });
 
-  it.todo("event delegation with class doesn't work with expanded choices");
+  test.todo("event delegation with class doesn't work with expanded choices");
 
-  it.todo("event keyup work only on text input");
+  test.todo("event keyup work only on text input");
 
-  it.todo("event mouseleave and mouseenter");
+  test.todo("event mouseleave and mouseenter");
 
   test("class behavior", () => {
     expect(componentContainer.hasClass("widget")).toBeTruthy();

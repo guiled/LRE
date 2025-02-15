@@ -657,7 +657,7 @@ describe("Component simple event handling", () => {
 });
 
 describe("Component events on sub component", () => {
-  it.todo("Test of event delegation");
+  test.todo("Test of event delegation");
 });
 
 describe("Component behavior with context", () => {
