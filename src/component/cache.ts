@@ -113,7 +113,6 @@ export class ComponentCache {
     silent: boolean = false,
   ): CacheableTypes | null {
     if (this.inCache(realId)) {
-      LRE_DEBUG && lre.trace(`Get component ${realId} from cache`);
       return this.#components[realId];
     }
 
