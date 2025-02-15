@@ -69,6 +69,7 @@ export class LRE extends Logger implements ILRE {
             );
 
           try {
+            LRE_DEBUG && this.trace("Run init");
             callback.call(this, _sheet);
           } catch (e: unknown) {
             this.error("[Init] Unhandled error : " + e);
@@ -235,7 +236,7 @@ export class LRE extends Logger implements ILRE {
         try {
           cb();
         } catch (e) {
-          this.error(`[Wait:${waitName} Unhandled error : ${e}`);
+          this.error(`[Wait] ${waitName} Unhandled error : ${e}`);
         }
       });
     }

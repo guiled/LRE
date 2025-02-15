@@ -32,8 +32,14 @@ export class Container
   value(
     newValue?: DynamicSetValue<LetsRole.ViewData>,
   ): LetsRole.ViewData | void {
+    if (typeof newValue === "undefined") {
+      return undefined;
+    }
+
     if (!lre.isObject(newValue)) {
-      lre.error(`[Container] value() expected object, got ${typeof newValue}`);
+      lre.error(
+        `[Container] value() on ${this.realId()} expected object, got ${typeof newValue}`,
+      );
       return;
     }
 

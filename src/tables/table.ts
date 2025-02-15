@@ -57,6 +57,8 @@ export class Table
     const row = this.raw().get(id);
 
     if (!row) {
+      LRE_DEBUG &&
+        lre.trace(`[Table] get() on ${this.realId()} can't find row ${id}`);
       return row;
     }
 
