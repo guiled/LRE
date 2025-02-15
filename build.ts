@@ -4,9 +4,11 @@ import { transformForLR, postCleanup } from "./transpile.conf";
 import fs from "fs";
 import { formatLRECode } from "./builder/formatLRECode";
 import { assembleLRECode, encloseInRegion } from "./builder/assemble";
+import { getArgv, hasArgv } from "./builder/utils";
 
-const DEBUG_BUILD: boolean = process.argv.includes("debug");
-let OUTPUT_FILE: string = process.argv[2] || "build/lre.js";
+const DEBUG_BUILD: boolean = hasArgv("--debug");
+let OUTPUT_FILE: string = getArgv("--output", "build/lre.js");
+const INPUT_FILE: string = getArgv("--input", "src/index.ts");
 
 if (DEBUG_BUILD) {
   const fileNameParts = OUTPUT_FILE.split(".");
@@ -35,7 +37,7 @@ const swcPlugin: esbuild.Plugin = {
 
 esbuild
   .build({
-    entryPoints: ["src/index.ts"],
+    entryPoints: [INPUT_FILE],
     target: "es2024",
     bundle: true,
     minify: false,

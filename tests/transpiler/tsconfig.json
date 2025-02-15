@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "types": [
+      "../../src/types/types",
+      "../../src/types/mixin",
+      "../../src/types/lre",
+      "./transpiler"
+    ]
+  },
+  "include": ["./**/*.lre.ts", "../../src/**/*"],
+  "exclude": ["../**/*.test.ts"]
+}
