@@ -12,16 +12,27 @@ export class Error {
   public trace: Array<LetsRole.ErrorTrace> = [];
   public stack = {};
 
+  public static tracerFinder(
+    trace: LetsRole.Error["trace"],
+  ): LetsRole.ErrorTrace | undefined {
+    const idx =
+      trace?.findIndex(function (tr) {
+        return (
+          lre.__debug &&
+          tr.type === "CallExpression" &&
+          tr.callee!.name === "throwError"
+        );
+      }) || -1;
+
+    if (idx !== -1) {
+      return trace?.[idx];
+    }
+  }
+
   #handleTrace(trace: LetsRole.Error["trace"]): void {
     if (!trace) return;
     this.trace = trace;
-    const throwErrorLocation = trace.find(function (tr) {
-      return (
-        lre.__debug &&
-        tr.type === "CallExpression" &&
-        tr.callee!.name === "throwError"
-      );
-    });
+    const throwErrorLocation = Error.tracerFinder(trace);
 
     if (throwErrorLocation) {
       this.lineNumber = throwErrorLocation?.loc?.start?.line;
