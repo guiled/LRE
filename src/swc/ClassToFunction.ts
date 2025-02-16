@@ -513,7 +513,7 @@ class ClassToFunction extends Visitor {
     const staticProperties: Array<PropertyToVariable> = [];
     let constructorFunctionStatement: Statement[] | undefined = [];
     let staticStmts: Statement[] = [];
-    const ctor: Constructor | undefined = body.find(
+    const ctor: Constructor | undefined = body?.find(
       (n: ClassMember) => n.type === "Constructor" && n.body,
     ) as Constructor;
 
@@ -525,7 +525,7 @@ class ClassToFunction extends Visitor {
       this.#privateProps = savePrivateProps;
     }
 
-    body.forEach((n: ClassMember) => {
+    body?.forEach((n: ClassMember) => {
       if (n.type === "Constructor" && n.body) {
         // nothing
       } else if (
