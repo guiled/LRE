@@ -1,6 +1,7 @@
 import { registerLreWait } from "../../src/proxy/wait";
 import { newMockedWait } from "../../src/mock/letsrole/wait.mock";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
+import { LRE } from "../../src/lre";
 
 const context = modeHandlerMock();
 const mockedWaitDefs = newMockedWait();
@@ -12,6 +13,7 @@ describe("Wait proxy", () => {
   beforeEach(() => {
     cb = jest.fn();
     context.setMode("real");
+    global.lre = new LRE(context);
   });
 
   test("runs normally in real mode", () => {
