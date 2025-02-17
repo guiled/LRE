@@ -2,10 +2,17 @@ type TestCb = () => void;
 
 declare type TExpect = {
   toBe: (expected: unknown) => void;
+  toStrictEqual: (expected: unknown) => void;
   toHaveBeenCalled: TestCb;
   toHaveBeenCalledTimes: (times: number) => void;
   toBeTruthy: TestCb;
   toBeFalsy: TestCb;
+  toBeGreaterThan: (expected: number) => void;
+  toBeLessThan: (expected: number) => void;
+  toBeGreaterThanOrEqual: (expected: number) => void;
+  toBeLessThanOrEqual: (expected: number) => void;
+  hasBeenCalledBefore: (cb: Callback) => void;
+  hasBeenCalledAfter: (cb: Callback) => void;
   not: Omit<TExpect, "not">;
 };
 

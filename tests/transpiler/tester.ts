@@ -19,10 +19,20 @@ type RunSuite = {
   logPrefix: string;
 };
 
-type MockedFunction<T extends (...args: any[]) => any> = T & {
+type MockCall = {
+  order: number;
+  args: Array<any>;
+  result: any;
+  thrown: boolean;
+};
+
+type MockedFunction<
+  T extends (...args: any[]) => any = (...args: any[]) => any,
+> = T & {
   mock: true;
   called: number;
   clear: () => void;
+  calls: Array<MockCall>;
 };
 
 lreBeforeAll = () => undefined;
@@ -175,17 +185,40 @@ export const tester = (
 };
 
 const mocks: Array<MockedFunction<Callback>> = [];
+const mockCalls: Array<MockCall> = [];
 
 lreMock = <T extends (...args: any[]) => any>(
   cb: T = (() => undefined) as T,
 ): MockedFunction<T> => {
   const fn: MockedFunction<T> = function (...args: any[]): ReturnType<T> {
+    const call: MockCall = {
+      order: mockCalls.length,
+      args,
+      result: undefined,
+      thrown: false,
+    };
     fn.called++;
-    return cb.apply(undefined, args);
+
+    let result;
+
+    try {
+      result = cb.apply(undefined, args);
+      call.result = result;
+    } catch (e) {
+      call.thrown = true;
+      throw e;
+    }
+
+    fn.calls.push(call);
+    mockCalls.push(call);
+
+    return result;
   } as MockedFunction<T>;
   fn.mock = true;
   fn.called = 0;
+  fn.calls = [];
   fn.clear = function () {
+    // @ts-expect-error This is a mock
     this.called = 0;
   }.bind(fn);
   mocks.push(fn);
@@ -214,8 +247,13 @@ type ExpectFailedMessages = {
 const messages: Record<TExpectTests, ExpectFailedMessages> = {
   toBe: {
     general: "Expected value to be a mock but it was not",
-    failed: "Expected function to be called but it was not",
-    not: "Expected function not to be called but it was",
+    failed: "Expected $1 but got $2",
+    not: "Didn't Expect $1 but got it",
+  },
+  toStrictEqual: {
+    general: "Expected value to be a mock but it was not",
+    failed: "Expected $1 but got $2",
+    not: "Didn't Expect $1 but got it",
   },
   toHaveBeenCalled: {
     general: "Expected value to be a mock but it was not",
@@ -236,25 +274,84 @@ const messages: Record<TExpectTests, ExpectFailedMessages> = {
     failed: "`Expected $2 to be falsy",
     not: "`Expected $2 to be truthy",
   },
+  toBeGreaterThan: {
+    failed: "Expected $2 to be greater than $1",
+    not: "Expected $2 not to be greater than $1",
+  },
+  toBeLessThan: {
+    failed: "Expected $2 to be less than $1",
+    not: "Expected $2 not to be less than $1",
+  },
+  toBeGreaterThanOrEqual: {
+    failed: "Expected $2 to be greater than or equal to $1",
+    not: "Expected $2 not to be greater than or equal to $1",
+  },
+  toBeLessThanOrEqual: {
+    failed: "Expected $2 to be less than or equal to $1",
+    not: "Expected $2 not to be less than or equal to $1",
+  },
+  hasBeenCalledBefore: {
+    general: "Expected value to be a mock but it was not",
+    failed: "Expected $2 to be called before $1",
+    not: "Expected $2 not to be called before $1",
+  },
+  hasBeenCalledAfter: {
+    general: "Expected value to be a mock but it was not",
+    failed: "Expected $2 to be called after $1",
+    not: "Expected $2 not to be called after $1",
+  },
+};
+
+const isMock = (value: any): value is MockedFunction => {
+  return value.mock;
 };
 
 const getExpectTests = (
   value: any,
 ): Record<TExpectTests, Callback<boolean>> => ({
   toBe: (expected: unknown): boolean => {
-    return value !== expected;
+    return value == expected;
+  },
+  toStrictEqual: (expected: unknown): boolean => {
+    return value === expected;
   },
   toHaveBeenCalled: () => {
-    return value.called > 0;
+    return isMock(value) && value.called > 0;
   },
   toHaveBeenCalledTimes: (times: number) => {
-    return value.called === times;
+    return isMock(value) && value.called === times;
   },
   toBeFalsy: () => {
     return !value;
   },
   toBeTruthy: () => {
     return !!value;
+  },
+  toBeGreaterThan: (expected: number) => {
+    return value > expected;
+  },
+  toBeLessThan: (expected: number) => {
+    return value < expected;
+  },
+  toBeGreaterThanOrEqual: (expected: number) => {
+    return value >= expected;
+  },
+  toBeLessThanOrEqual: (expected: number) => {
+    return value <= expected;
+  },
+  hasBeenCalledBefore: (cb: MockCall) => {
+    return (
+      isMock(value) &&
+      isMock(cb) &&
+      value.calls.some((call) => cb.calls.some((c) => call.order < c.order))
+    );
+  },
+  hasBeenCalledAfter: (cb: MockCall) => {
+    return (
+      isMock(value) &&
+      isMock(cb) &&
+      value.calls.some((call) => cb.calls.some((c) => call.order > c.order))
+    );
   },
 });
 

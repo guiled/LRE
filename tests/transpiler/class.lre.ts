@@ -17,6 +17,31 @@ export const testClasses = {
 
         lreExpect(fn).toHaveBeenCalledTimes(1);
       });
+
+      lreTest("Public property is reachable from outside", () => {
+        const A = class A {
+          name = "A";
+        };
+
+        const obj = new A();
+
+        lreExpect(obj.name).toBe("A");
+      });
+
+      lreTest("Private property is not reachable from outside", () => {
+        const A = class A {
+          #name = "A";
+
+          getName(): string {
+            return this.#name;
+          }
+        };
+
+        const obj = new A();
+
+        // @ts-expect-error Private property is not reachable from outside
+        lreExpect(obj.name).toBe(undefined);
+      });
     });
 
     lreDescribe("Class inheritance", () => {
@@ -83,6 +108,71 @@ export const testClasses = {
         lreExpect(fnFromB).not.toHaveBeenCalled();
         lreExpect(fnFromC).toHaveBeenCalledTimes(1);
       });
+
+      lreTest(
+        "Obj public & private props are init after super ctor call and before the rest of the ctor",
+        () => {
+          const firstMock = lreMock();
+          const secondMock = lreMock();
+          const thirdMock = lreMock();
+          const fourthMock = lreMock();
+          const fifthMock = lreMock();
+          const lastMock = lreMock();
+
+          const A = class {
+            #n: number;
+
+            constructor(n: number) {
+              secondMock();
+              this.#n = n;
+              thirdMock();
+            }
+
+            fn1(): number {
+              fourthMock();
+              return this.#n;
+            }
+          };
+
+          const B = class extends A {
+            #priv: number = this.fn1();
+            #priv2: number = this.fn2();
+
+            constructor(n: number) {
+              firstMock();
+              super(n);
+              lastMock();
+            }
+
+            fn2(): number {
+              fifthMock();
+              return this.#priv + this.#priv2;
+            }
+          };
+
+          lreExpect(firstMock).not.toHaveBeenCalled();
+          lreExpect(secondMock).not.toHaveBeenCalled();
+          lreExpect(thirdMock).not.toHaveBeenCalled();
+          lreExpect(fourthMock).not.toHaveBeenCalled();
+          lreExpect(fifthMock).not.toHaveBeenCalled();
+          lreExpect(lastMock).not.toHaveBeenCalled();
+
+          new B(5);
+
+          lreExpect(firstMock).toHaveBeenCalledTimes(1);
+          lreExpect(secondMock).toHaveBeenCalledTimes(1);
+          lreExpect(thirdMock).toHaveBeenCalledTimes(1);
+          lreExpect(fourthMock).toHaveBeenCalledTimes(1);
+          lreExpect(fifthMock).toHaveBeenCalledTimes(1);
+          lreExpect(lastMock).toHaveBeenCalledTimes(1);
+
+          lreExpect(firstMock).hasBeenCalledBefore(secondMock);
+          lreExpect(secondMock).hasBeenCalledBefore(thirdMock);
+          lreExpect(thirdMock).hasBeenCalledBefore(fourthMock);
+          lreExpect(fourthMock).hasBeenCalledBefore(fifthMock);
+          lreExpect(fifthMock).hasBeenCalledBefore(lastMock);
+        },
+      );
     });
 
     // lreTest("coucou", () => {
