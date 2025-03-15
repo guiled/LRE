@@ -2,7 +2,7 @@ import { AssignmentExpression, ExpressionStatement } from "@swc/core";
 
 import assignmentExpression from "../expression/assignment";
 
-export default function assignment({
+export function assignmentStatement({
   span,
 }: Omit<AssignmentExpression, "type">): ExpressionStatement {
   return {

@@ -3,6 +3,7 @@ type TestCb = () => void;
 declare type TExpect = {
   toBe: (expected: unknown) => void;
   toStrictEqual: (expected: unknown) => void;
+  toBeUndefined: () => void;
   toHaveBeenCalled: TestCb;
   toHaveBeenCalledTimes: (times: number) => void;
   toBeTruthy: TestCb;

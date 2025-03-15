@@ -888,3 +888,37 @@ describe("Dataprovider from cb refresh", () => {
     expect(derived).toHaveBeenCalledTimes(0);
   });
 });
+
+describe("Dataprovider search", () => {
+  test("Search", () => {
+    const data = { a: "42", b: "13", c: "24" };
+    const dataGetter = jest.fn((_a: any) => {
+      if (_a) {
+        Object.assign(data, _a);
+      }
+
+      return data as any;
+    });
+    const dp = lre.dataProvider("test", dataGetter);
+
+    const search = dp.search("a", "42");
+
+    expect(search.provider).toBeTruthy();
+  });
+});
+
+describe("Dataprovider toArray", () => {
+  test("toArray", () => {
+    const data = { a: "42", b: "13", c: "24" };
+    const dataGetter = jest.fn((_a: any) => {
+      if (_a) {
+        Object.assign(data, _a);
+      }
+
+      return data as any;
+    });
+    const dp = lre.dataProvider("test", dataGetter);
+
+    expect(dp.toArray()).toStrictEqual([data]);
+  });
+});

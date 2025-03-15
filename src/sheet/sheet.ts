@@ -72,7 +72,7 @@ export class Sheet
     this.#batcher.linkEventTo("pending:sheet", this, "data-pending");
     this.#componentCache = new ComponentCache(
       this.#context,
-      this.#componentGetter.bind(this),
+      this.#componentGetter,
     );
     this.#cmp = rawSheet.get(rawSheet.id())!;
     this.#silentFind = this.#cmp.find.bind(this.#cmp);

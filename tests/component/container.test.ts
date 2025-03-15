@@ -164,4 +164,14 @@ describe("Container value", () => {
 
     expect(lre.error).toHaveBeenCalled();
   });
+
+  test("get value returns the value of all known components", () => {
+    const container = sheet.get("container") as Container;
+    jest.spyOn(lre, "error");
+
+    const result = container.value();
+
+    expect(lre.error).not.toHaveBeenCalled();
+    expect(result).toStrictEqual({});
+  });
 });

@@ -12,7 +12,7 @@ import onevariable from "./node/declaration/onevariable";
 import iife from "./node/expression/iife";
 import member from "./node/expression/member";
 import identifier from "./node/identifier";
-import assignment from "./node/statement/assignment";
+import { assignmentStatement } from "./node/statement/assignment";
 import returnstmt from "./node/statement/returnstmt";
 import { Visitor } from "@swc/core/Visitor.js";
 
@@ -65,7 +65,7 @@ class ComputedObjectProps extends Visitor {
               p.key as ComputedPropName,
             );
             const val = this.visitExpression(p.value);
-            return assignment({
+            return assignmentStatement({
               span: key.span,
               left: member({
                 span: key.span,

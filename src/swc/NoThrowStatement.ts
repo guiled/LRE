@@ -10,11 +10,11 @@ import {
 import { Visitor } from "@swc/core/Visitor.js";
 import { call } from "./node/expression/call";
 import identifier from "./node/identifier";
-import assignment from "./node/expression/assignment";
 import member from "./node/expression/member";
 import parenthesis from "./node/expression/parenthesis";
 import or from "./node/expression/binary/or";
 import undefinedidentifier from "./node/undefinedidentifier";
+import { assignmentStatement } from "./node/statement/assignment";
 
 class NoThrowStatement extends Visitor {
   #lastExceptionIdentifier(span: Span): Identifier {
@@ -52,10 +52,8 @@ class NoThrowStatement extends Visitor {
     const stmts: Statement[] = handler.body.stmts;
 
     if (handler.param?.type === "Identifier") {
-      stmts.unshift({
-        type: "ExpressionStatement",
-        span: handler.param.span,
-        expression: assignment({
+      stmts.unshift(
+        assignmentStatement({
           span: handler.param.span,
           left: handler.param,
           right: call({
@@ -106,7 +104,7 @@ class NoThrowStatement extends Visitor {
           }),
           operator: "=",
         }),
-      });
+      );
     }
 
     return super.visitCatchClause({

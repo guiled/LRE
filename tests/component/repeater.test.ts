@@ -473,7 +473,20 @@ describe("Repeater setSorter", () => {
 });
 
 describe("Repeater add and remove", () => {
-  test.todo("Add an entry");
+  test("Add an entry", () => {
+    repeater.add({}, 1);
 
-  test.todo("Remove an entry");
+    expect(repeater.value()).toMatchObject({
+      "1": {},
+    });
+  });
+
+  test("Remove an entry", () => {
+    repeater.value({
+      "1": {},
+    });
+    repeater.remove("1");
+
+    expect(repeater.value()).toMatchObject({});
+  });
 });

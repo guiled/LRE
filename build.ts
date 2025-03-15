@@ -1,10 +1,11 @@
 import esbuild from "esbuild";
-import { transformFile, transformSync } from "@swc/core";
-import { transformForLR, postCleanup } from "./transpile.conf";
+import { transformFile } from "@swc/core";
+import { postCleanup } from "./transpile.conf";
 import fs from "fs";
 import { formatLRECode } from "./builder/formatLRECode";
 import { assembleLRECode, encloseInRegion } from "./builder/assemble";
 import { getArgv, hasArgv } from "./builder/utils";
+import { getEsBuildConfig } from "./builder/config";
 
 const DEBUG_BUILD: boolean = hasArgv("--debug");
 let OUTPUT_FILE: string = getArgv("--output", "build/lre.js");
@@ -16,41 +17,8 @@ if (DEBUG_BUILD) {
   OUTPUT_FILE = fileNameParts.join(".");
 }
 
-const swcPlugin: esbuild.Plugin = {
-  name: "swcPlugin",
-  setup(build) {
-    if (DEBUG_BUILD && transformForLR.jsc) {
-      delete transformForLR.jsc.minify;
-    }
-
-    build.onLoad({ filter: /\.ts?$/ }, async (args) => {
-      const input = await fs.promises.readFile(args.path, "utf8");
-      //var output = transformFileSync(args.path, transformForLR);
-      const output = transformSync(input, transformForLR);
-      return {
-        contents: output.code,
-        loader: "ts",
-      };
-    });
-  },
-};
-
 esbuild
-  .build({
-    entryPoints: [INPUT_FILE],
-    target: "es2024",
-    bundle: true,
-    minify: false,
-    platform: "neutral",
-    outfile: OUTPUT_FILE + ".0.tmp.js",
-    plugins: [swcPlugin],
-    format: "iife",
-    define: {
-      "console.log": "log",
-      LRE_DEBUG: `${DEBUG_BUILD}`,
-    },
-    minifySyntax: true,
-  })
+  .build(getEsBuildConfig(INPUT_FILE, OUTPUT_FILE, DEBUG_BUILD))
   .then(() => {
     if (DEBUG_BUILD && postCleanup.jsc) {
       delete postCleanup.jsc.minify;

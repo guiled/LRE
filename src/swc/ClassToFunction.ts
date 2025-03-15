@@ -1,26 +1,18 @@
 import {
   Argument,
-  ArrowFunctionExpression,
-  AssignmentExpression,
   CallExpression,
-  Class,
   ClassDeclaration,
   ClassExpression,
   ClassMember,
   ClassMethod,
   ClassProperty,
-  Constructor,
+  ComputedPropName,
   Declaration,
   DefaultDecl,
-  ExportDefaultDeclaration,
   ExportDefaultExpression,
-  ExprOrSpread,
   Expression,
-  ExpressionStatement,
-  Fn,
   FunctionExpression,
   Identifier,
-  MemberExpression,
   ModuleDeclaration,
   NewExpression,
   Param,
@@ -28,907 +20,717 @@ import {
   PrivateName,
   PrivateProperty,
   Program,
+  PropertyName,
   Span,
   Statement,
+  StaticBlock,
   SuperPropExpression,
+  TsParameterProperty,
   TsType,
-  VariableDeclaration,
+  VariableDeclarator,
 } from "@swc/core";
-import onevariable from "./node/declaration/onevariable";
-import assignment from "./node/expression/assignment";
-import { call } from "./node/expression/call";
-import iife from "./node/expression/iife";
-import member from "./node/expression/member";
-import thisexpression from "./node/expression/thisexpression";
-import identifier from "./node/identifier";
-import returnstmt from "./node/statement/returnstmt";
-import undefinedidentifier from "./node/undefinedidentifier";
-import { ExpressionWithSpan } from "./types";
-import { newexpression } from "./node/expression/newexpression";
-import { arrayexpression } from "./node/expression/arrayexpression";
-import numericliteral from "./node/literal/numericliteral";
-import { objectassign } from "./node/expression/objectassign";
-import expression from "./node/expression";
-import stringliteral from "./node/literal/stringliteral";
-import { objectexpression } from "./node/expression/objectexpression";
-import { arrayfromarguments } from "./node/expression/arrayfromarguments";
-import { spannewctxt } from "./utils/spannewctxt";
-import { spreadToConcat } from "./utils/spreadToConcat";
 import { Visitor } from "@swc/core/Visitor.js";
+import assignment from "./node/expression/assignment";
+import identifier from "./node/identifier";
+import onevariable from "./node/declaration/onevariable";
+import { arrayexpression } from "./node/expression/arrayexpression";
+import member from "./node/expression/member";
+import { newexpression } from "./node/expression/newexpression";
+import { ExpressionWithSpan } from "./types";
+import { call } from "./node/expression/call";
+import func from "./node/expression/func";
+import thisexpression from "./node/expression/thisexpression";
+import { assignmentStatement } from "./node/statement/assignment";
+import undefinedidentifier from "./node/undefinedidentifier";
+import booleanliteral from "./node/literal/booleanliteral";
+import { unary } from "./node/expression/unary";
+import returnstmt from "./node/statement/returnstmt";
+import { fnApply } from "./node/expression/fnApply";
+import { objectassign } from "./node/expression/objectassign";
+import { objectexpression } from "./node/expression/objectexpression";
+import iife from "./node/expression/iife";
 
-type PublicMethodToFunctionStatement = ExpressionStatement & {
-  expression: AssignmentExpression & {
-    operator: "=";
-    left: MemberExpression;
-    right: FunctionExpression | CallExpression;
-  };
+type ConstructorParts = {
+  stmts: Statement[];
+  args: Param[];
+  propsFromArgs: MemberDeconstruction[];
 };
 
-type PrivateMethodToFunctionStatement = VariableDeclaration & {
-  declarations: (Declaration & {
-    init: FunctionExpression | CallExpression;
-  })[];
+type MemberDeconstruction = {
+  declarator?: VariableDeclarator;
+  assignment?: Statement;
 };
 
-type MethodToFunctionStatement =
-  | VariableDeclaration
-  | (ExpressionStatement & {
-      expression: AssignmentExpression & {
-        operator: "=";
-      };
-    });
-
-type PublicPropertyToVariable = ExpressionStatement & {
-  expression: AssignmentExpression & {
-    operator: "=";
-    left: MemberExpression;
-  };
-};
-
-type PrivatePropertyToVariable = VariableDeclaration & {
-  kind: "let";
-};
-
-type PropertyToVariable = PublicPropertyToVariable | PrivatePropertyToVariable;
-
-type ClassConstructorStates = {
-  exists: boolean;
-  hasSuperCtor: boolean;
-  hasReturn: boolean;
-  superUsed: boolean;
-};
-
-const CONSTRUCTOR_ARG_NAME = "__lrargs__";
-const PARENT = "Parent";
-const PARENT_IN_CTOR = "_super";
+const PARENT_NAME = "__parent";
+const DECL_NAME = "__decl";
+const DECL_DONE_NAME = "__declDone";
 
 class ClassToFunction extends Visitor {
-  #privateMethods: Array<Identifier["value"]> = [];
-  #privateProps: Array<PrivateProperty> = [];
-  #inPrivateCallExpression = false;
-  currentSuperClass?: ExpressionWithSpan;
-  inConstructor: boolean = false;
-  superIdentifierInCtor: Identifier | undefined;
-  isInClass = false;
-  #ctorStates: ClassConstructorStates = {
-    exists: false,
-    hasSuperCtor: false,
-    hasReturn: false,
-    superUsed: false,
-  };
+  currentSuperClass: Expression | undefined;
 
-  #createConstructorReturnStatement(
-    span: Span,
-    originalReturnArgument: Expression | undefined,
-    superIdentifier: Identifier | undefined,
-  ): Statement | undefined {
-    const returnElements: ExprOrSpread[] = [];
+  #classToFunction(
+    n: ClassDeclaration | ClassExpression,
+  ): FunctionExpression | CallExpression {
+    const ctorParts = this.#getCtorParts(n);
+    const methodDecls = this.#getMethods(n);
+    const propDecls = this.#getProps(n);
 
-    if (originalReturnArgument) {
-      returnElements.push({
-        expression: originalReturnArgument,
+    const stmts: Statement[] = [];
+
+    // parent private prop
+    let parentId: Identifier | undefined;
+
+    if (n.superClass) {
+      parentId = identifier({
+        span: {
+          ...(n.superClass as ExpressionWithSpan).span,
+          ctxt: 1,
+        },
+        value: PARENT_NAME,
       });
-    }
-
-    if (superIdentifier) {
-      returnElements.push({
-        expression: superIdentifier,
-      });
-    }
-
-    if (returnElements.length === 0) {
-      return;
-    }
-
-    return super.visitStatement(
-      returnstmt({
-        span,
-        argument:
-          returnElements.length === 1
-            ? returnElements[0].expression
-            : arrayexpression({
-                span,
-                elements: returnElements,
-              }),
-      }),
-    );
-  }
-
-  #initCtorStates(): ClassConstructorStates {
-    const res = this.#ctorStates;
-    this.#ctorStates = {
-      exists: false,
-      hasReturn: false,
-      hasSuperCtor: false,
-      superUsed: false,
-    };
-    return res;
-  }
-
-  #methodToFunction(
-    n: ClassMethod | PrivateMethod,
-  ): Array<MethodToFunctionStatement> {
-    if (n.key.type === "Computed") {
-      throw new Error("Computed method key are not supported yet");
-    }
-
-    const result: Array<MethodToFunctionStatement> = [];
-    const span = n.span;
-
-    let assignmentRight: CallExpression | FunctionExpression = {
-      type: "FunctionExpression",
-      params: n.function.params,
-      decorators: [],
-      span: n.function.span,
-      body: n.function.body,
-      generator: false,
-      async: false,
-    };
-
-    if (n.function.decorators?.length) {
-      const contextCreationCall = call({
-        span,
-        callee: identifier({
-          span,
-          value: "ct",
-        }),
-        args: [
-          {
-            expression: stringliteral({
-              span,
-              value:
-                n.key.type === "PrivateName"
-                  ? n.key.id.value
-                  : (n.key.value as string),
-            }),
-          },
-        ],
-      });
-
-      n.function.decorators.reverse().forEach((decorator) => {
-        assignmentRight = call({
-          callee: decorator.expression,
-          args: [
-            {
-              expression: assignmentRight,
-            },
-            {
-              expression: contextCreationCall,
-            },
-          ],
-        }) as CallExpression;
-      });
-    }
-
-    if (n.key.type === "PrivateName") {
-      result.push(
+      stmts.push(
         onevariable({
-          span: { ...n.span, ctxt: n.span.ctxt + 1 },
-          id: this.#transformPrivateIdentifier(n.key.id),
-          kind: "const",
-          init: assignmentRight,
+          id: parentId,
         }),
       );
-    } else {
-      result.push({
-        type: "ExpressionStatement",
-        span: n.span,
-        expression: {
-          type: "AssignmentExpression",
-          span: n.span,
-          operator: "=",
-          left: member({
-            span,
-            object: thisexpression({ span: n.span }),
-            property: n.key as Identifier,
-          }),
-          right: assignmentRight,
-        },
-      });
     }
 
-    return result;
-  }
+    // declDone private prop
+    const declDoneId = identifier({
+      span: n.span,
+      value: DECL_DONE_NAME,
+    });
+    stmts.push(onevariable({ id: declDoneId }));
 
-  #ConstructorToFunction(n: Constructor): Statement[] {
-    const span = spannewctxt(n.span, 1);
-    const args: Argument[] = [
-      {
-        expression: {
-          type: "Identifier",
-          span,
-          value: CONSTRUCTOR_ARG_NAME,
-          optional: false,
-        },
-      },
+    // private props and method declarations
+    const declarators: Array<VariableDeclarator> = [
+      ...methodDecls.map((m) => m.declarator).filter((d) => !!d),
+      ...propDecls.map((p) => p.declarator).filter((d) => !!d),
+      ...ctorParts.propsFromArgs.map((p) => p.declarator).filter((d) => !!d),
     ];
 
-    const propertyDeclarations: Statement[] = [];
-    const params: Param[] = n.params.map<Param>((p) => {
-      if (p.type === "Parameter") return p;
-      let propName: PrivateName | Identifier;
-
-      if (p.accessibility === "public") {
-        propName = {
-          type: "Identifier",
-          span,
-          optional: false,
-          value:
-            p.param.type === "Identifier"
-              ? p.param.value
-              : p.param.left.type === "Identifier"
-                ? p.param.left.value
-                : "_todo",
-        } as Identifier;
-      } else {
-        propName = {
-          type: "PrivateName",
-          span,
-          id: {
-            type: "Identifier",
-            span,
-            optional: false,
-            value:
-              p.param.type === "Identifier"
-                ? p.param.value
-                : p.param.left.type === "Identifier"
-                  ? p.param.left.value
-                  : "_todo",
-          },
-        } as PrivateName;
-        this.#privateProps.push({
-          type: "PrivateProperty",
-          accessibility: p.accessibility,
-          typeAnnotation: p.param.typeAnnotation,
-          span,
-          key: propName,
-          isStatic: false,
-          isOverride: false,
-          readonly: false,
-          isOptional: false,
-          definite: false,
-        });
-      }
-
-      propertyDeclarations.push({
-        type: "ExpressionStatement",
-        span,
-        expression: assignment({
-          span,
-          operator: "=",
-          left: member({
-            span,
-            object: thisexpression({ span: p.span }),
-            property: propName,
-          }),
-          right:
-            p.param.type === "Identifier"
-              ? p.param
-              : p.param.left.type === "Identifier"
-                ? p.param.left
-                : ({
-                    /* todo */
-                  } as Identifier),
-        }),
-      });
-      return {
-        type: "Parameter",
-        span,
-        pat: p.param,
-      };
-    });
-
-    const stmts = [...propertyDeclarations, ...(n.body?.stmts || [])];
-
-    const returnIdentifier = identifier({
-      span: n.span,
-      value: "ctorReturn",
-    });
-
-    const ctorAsFunction: CallExpression = {
-      type: "CallExpression",
-      span: n.span,
-      callee: {
-        type: "MemberExpression",
-        span: n.span,
-        object: {
-          type: "ParenthesisExpression",
-          span: n.span,
-          expression: {
-            type: "FunctionExpression",
-            params: params,
-            decorators: [],
-            span: n.body?.span || n.span,
-            body: {
-              type: "BlockStatement",
-              span: n.body?.span || n.span,
-              stmts,
-            },
-            generator: false,
-            async: false,
-          },
-        },
-        property: {
-          type: "Identifier",
-          span: n.span,
-          value: "apply",
-          optional: false,
-        },
-      },
-      arguments: [
-        {
-          expression: thisexpression({ span: n.span }),
-        },
-        ...args,
-      ],
-    };
-
-    const result: Statement[] = [];
-
-    if (
-      (this.#ctorStates.exists &&
-        !this.#ctorStates.hasReturn &&
-        !this.#ctorStates.hasSuperCtor) ||
-      !this.#ctorStates.superUsed
-    ) {
-      result.push({
-        type: "ExpressionStatement",
-        span: ctorAsFunction.span,
-        expression: ctorAsFunction,
-      });
-    } else {
-      result.push(
-        onevariable({
-          span: n.span,
-          id: this.#ctorStates.hasReturn
-            ? returnIdentifier
-            : this.#transformPrivateIdentifier({
-                type: "Identifier",
-                span: n.span,
-                value: PARENT,
-                optional: false,
-              }),
-          init: ctorAsFunction,
-        }),
-      );
-
-      if (this.#ctorStates.hasReturn && this.#ctorStates.superUsed) {
-        result.push(
-          onevariable({
-            span: n.span,
-            id: this.#transformPrivateIdentifier({
-              type: "Identifier",
-              span: n.span,
-              value: PARENT,
-              optional: false,
-            }),
-            init: this.#ctorStates.hasReturn
-              ? member({
-                  span: n.span,
-                  object: returnIdentifier,
-                  property: {
-                    type: "Computed",
-                    span: n.span,
-                    expression: numericliteral({
-                      span: n.span,
-                      value: this.#ctorStates.hasReturn ? 1 : 0,
-                    }),
-                  },
-                })
-              : returnIdentifier,
-          }),
-        );
-      }
-
-      if (this.#ctorStates.hasReturn) {
-        result.push(
-          returnstmt({
-            span: n.span,
-            argument: member({
-              span: n.span,
-              object: returnIdentifier,
-              property: {
-                type: "Computed",
-                span: n.span,
-                expression: numericliteral({
-                  span: n.span,
-                  value: 0,
-                }),
-              },
-            }),
-          }),
-        );
-      }
-    }
-
-    return result;
-  }
-
-  #propertyToVariable(n: ClassProperty | PrivateProperty): PropertyToVariable {
-    const span = spannewctxt(n.span);
-
-    if (n.type === "ClassProperty") {
-      return {
-        type: "ExpressionStatement",
-        span,
-        expression: {
-          type: "AssignmentExpression",
-          span,
-          operator: "=",
-          left: {
-            type: "MemberExpression",
-            span,
-            object: thisexpression({ span }),
-            property: n.key as MemberExpression["property"],
-          },
-          right: n.value ?? undefinedidentifier({ span }),
-        },
-      };
-    } else {
-      return {
+    if (declarators.length > 0) {
+      stmts.push({
         type: "VariableDeclaration",
-        span,
+        span: n.span,
         kind: "let",
         declare: false,
-        declarations: [
-          {
-            type: "VariableDeclarator",
-            span,
-            id: this.#transformPrivateIdentifier(n.key.id),
-            init: n.value,
-            definite: n.definite,
-          },
-        ],
-      };
-    }
-  }
-
-  #transformClassBodyToFunction(
-    classStmt: ClassDeclaration | ClassExpression,
-  ): FunctionExpression | CallExpression {
-    const { body, span, identifier: _identifier } = classStmt;
-    const methods: Array<MethodToFunctionStatement> = [];
-    const staticMethods: Array<MethodToFunctionStatement> = [];
-    const properties: Array<PropertyToVariable> = [];
-    const staticProperties: Array<PropertyToVariable> = [];
-    let constructorFunctionStatement: Statement[] | undefined = [];
-    let staticStmts: Statement[] = [];
-    const ctor: Constructor | undefined = body?.find(
-      (n: ClassMember) => n.type === "Constructor" && n.body,
-    ) as Constructor;
-
-    if (ctor) {
-      const savePrivateProps = this.#privateProps;
-      this.#privateProps = [];
-      constructorFunctionStatement = this.#ConstructorToFunction(ctor);
-      body.unshift(...this.#privateProps);
-      this.#privateProps = savePrivateProps;
+        declarations: declarators,
+      });
     }
 
-    body?.forEach((n: ClassMember) => {
-      if (n.type === "Constructor" && n.body) {
-        // nothing
-      } else if (
-        (n.type === "ClassMethod" || n.type === "PrivateMethod") &&
-        !n.isAbstract &&
-        !!n.function.body
-      ) {
-        if (n.isStatic) {
-          staticMethods.push(...this.#methodToFunction(n));
-        } else {
-          methods.push(...this.#methodToFunction(n));
-        }
-      } else if (n.type === "PrivateProperty" || n.type === "ClassProperty") {
-        if (n.isStatic) {
-          staticProperties.push(this.#propertyToVariable(n));
-        } else {
-          properties.push(this.#propertyToVariable(n));
-        }
-      } else if (n.type === "StaticBlock") {
-        // todo?
-        staticStmts = n.body.stmts;
-      }
+    // decl function declaration
+    const initParentId = identifier({ span: n.span, value: "initParent" });
+    const declDoneIfStatement: Statement = {
+      type: "IfStatement",
+      span: n.span,
+      test: unary({
+        operator: "!",
+        argument: declDoneId,
+        span: n.span,
+      }),
+      consequent: {
+        type: "BlockStatement",
+        span: n.span,
+        stmts: [],
+      },
+    };
+    const saveThisId = identifier({
+      span: n.span,
+      value: "savethis",
+    });
+    const declStmts: Statement[] = [
+      {
+        ...declDoneIfStatement,
+        consequent: {
+          type: "BlockStatement",
+          span: n.span,
+          stmts: [
+            ...methodDecls.map((m) => m.assignment).filter((a) => !!a),
+            ...ctorParts.propsFromArgs
+              .map((p) => p.assignment)
+              .filter((a) => !!a),
+            onevariable({
+              span: n.span,
+              id: saveThisId,
+              init: objectassign(n.span, [
+                { expression: objectexpression({}, n.span) },
+                { expression: thisexpression({ span: n.span }) },
+              ]),
+            }),
+          ],
+        },
+      },
+      {
+        ...declDoneIfStatement,
+        consequent: {
+          type: "BlockStatement",
+          span: n.span,
+          stmts: [
+            ...propDecls.map((m) => m.assignment).filter((a) => !!a),
+            {
+              type: "ExpressionStatement",
+              span: n.span,
+              expression: objectassign(n.span, [
+                { expression: thisexpression({ span: n.span }) },
+                { expression: saveThisId },
+              ]),
+            },
+          ],
+        },
+      },
+      assignmentStatement({
+        span: n.span,
+        left: declDoneId,
+        right: booleanliteral({ span: n.span, value: true }),
+        operator: "=",
+      }),
+    ];
+    const declParams: Param[] = [];
+
+    if (parentId) {
+      declStmts.splice(
+        1,
+        0,
+        assignmentStatement({
+          span: n.span,
+          left: parentId,
+          right: call({
+            callee: initParentId,
+          }),
+          operator: "=",
+        }),
+      );
+      declParams.push({
+        type: "Parameter",
+        span: n.span,
+        pat: initParentId,
+      });
+    }
+
+    const declId = identifier({
+      span: n.span,
+      value: DECL_NAME,
     });
 
-    const stmts: Statement[] = [
-      ...properties,
-      ...methods,
-      ...constructorFunctionStatement,
+    // ctor declaration and call
+    const ctorId = identifier({
+      span: n.span,
+      value: "ctor",
+    });
+    const lrArgsId = identifier({ span: n.span, value: "__lrArgs" });
+
+    const ctorStmts: Statement[] = [
+      onevariable({
+        span: n.span,
+        id: declId,
+        init: func({
+          span: n.span,
+          params: declParams,
+          stmts: declStmts,
+        }),
+      }),
     ];
 
-    const classFunction: FunctionExpression = {
-      type: "FunctionExpression",
+    // if no superClass, call decl first in ctor, else decl will be called by super call
+    if (!n.superClass) {
+      ctorStmts.push({
+        type: "ExpressionStatement",
+        span: n.span,
+        expression: call(
+          {
+            callee: declId,
+          },
+          false,
+          {
+            expression: thisexpression({ span: n.span }),
+          },
+        ),
+      });
+    }
+
+    ctorStmts.push(...ctorParts.stmts);
+    ctorStmts.push(
+      returnstmt({
+        span: n.span,
+        argument: thisexpression({ span: n.span }),
+      }),
+    );
+
+    stmts.push(
+      onevariable({
+        span: n.span,
+        id: ctorId,
+        init: this.visitExpression(
+          func({
+            span: n.span,
+            params: ctorParts.args,
+            stmts: ctorStmts,
+          }),
+        ),
+      }),
+    );
+    stmts.push(
+      returnstmt({
+        span: n.span,
+        argument: fnApply({
+          callee: ctorId,
+          thisArg: thisexpression({ span: n.span }),
+          args: [
+            {
+              expression: lrArgsId,
+            },
+          ],
+        }),
+      }),
+    );
+
+    const fn = func({
+      span: n.span,
       params: [
         {
           type: "Parameter",
-          span,
-          decorators: [],
-          pat: {
-            type: "Identifier",
-            span: spannewctxt(span),
-            value: CONSTRUCTOR_ARG_NAME,
-            optional: false,
-          },
+          span: n.span,
+          pat: lrArgsId,
         },
       ],
-      span,
-      body: {
-        type: "BlockStatement",
-        span,
-        stmts,
-      },
-      generator: false,
-      async: false,
-    };
+      stmts,
+    });
 
-    const _: any[] = [];
+    const fnId = identifier({ span: n.span, value: "fn" });
+    const staticMembers = this.#getStatics(n, fnId);
 
-    if (_.concat(staticMethods, staticProperties, staticStmts).length > 0) {
-      const tmpClassFunctionId = identifier({
-        span: classFunction.span,
-        value: "__lreClass" + classStmt.identifier?.value || "anonymous",
-      });
-      const publicStatic: Array<
-        PublicMethodToFunctionStatement | PublicPropertyToVariable
-      > = [
-        ...(staticMethods.filter(
-          (m: MethodToFunctionStatement) => m.type === "ExpressionStatement",
-        ) as Array<PublicMethodToFunctionStatement>),
-        ...(staticProperties.filter(
-          (m: PropertyToVariable) => m.type === "ExpressionStatement",
-        ) as Array<PublicPropertyToVariable>),
-      ];
-      const privateStatic: Array<
-        PrivateMethodToFunctionStatement | PrivatePropertyToVariable
-      > = [
-        ...(staticMethods.filter(
-          (m: MethodToFunctionStatement) => m.type === "VariableDeclaration",
-        ) as Array<PrivateMethodToFunctionStatement>),
-        ...(staticProperties.filter(
-          (m: PropertyToVariable) => m.type === "VariableDeclaration",
-        ) as Array<PrivatePropertyToVariable>),
-      ];
-      return iife({
-        span: classFunction.span,
-        stmts: [
-          ...privateStatic,
-          onevariable({
-            span: classFunction.span,
-            id: tmpClassFunctionId,
-            init: classFunction,
-          }),
-          ...publicStatic.map(
-            (e: PublicMethodToFunctionStatement | PublicPropertyToVariable) => {
-              return {
-                ...e,
-                expression: {
-                  ...e.expression,
-                  left: {
-                    ...e.expression.left,
-                    object: tmpClassFunctionId,
-                  },
-                },
-              };
-            },
-          ),
-          ...staticStmts,
-          returnstmt({
-            span: classFunction.span,
-            argument: tmpClassFunctionId,
-          }),
-        ],
-      }) as CallExpression;
+    if (staticMembers.length === 0) {
+      return fn;
     }
 
-    return classFunction;
-  }
-
-  #transformPrivateIdentifier(i: Identifier, prefix: string = ""): Identifier {
-    return {
-      ...i,
-      span: spannewctxt(i.span),
-      value: "__" + prefix + i.value,
-    };
-  }
-
-  #changePrivateMember(n: MemberExpression): MemberExpression | Expression {
-    if (
-      n.object.type === "ThisExpression" &&
-      n.property.type === "PrivateName"
-    ) {
-      if (
-        this.#privateMethods.includes(n.property.id.value) &&
-        !this.#inPrivateCallExpression
-      ) {
-        return this.visitExpression(
-          call({
-            span: n.span,
-            callee: member({
-              span: n.span,
-              object: this.#transformPrivateIdentifier(n.property.id),
-              property: identifier({
-                span: n.span,
-                value: "bind",
-              }),
-            }),
-            args: [
-              {
-                spread: undefined,
-                expression: thisexpression({ span: n.span }),
-              },
-            ],
-          }),
-        );
-      } else {
-        return this.visitExpression(
-          this.#transformPrivateIdentifier(n.property.id),
-        );
-      }
-    }
-
-    return this.visitMemberExpression(n);
-  }
-
-  #createInstantiateParentAndAssign(
-    stmts: Statement[],
-    {
-      span,
-      id,
-      newexpr,
-    }: {
-      span: Span;
-      id: Identifier;
-      newexpr: NewExpression;
-    },
-  ): void {
-    stmts.push(
-      onevariable({
-        span,
-        id,
-        init: newexpr,
-      }),
-    );
-    stmts.push(
-      onevariable({
-        span,
-        id: identifier({
-          span,
-          value: "prev",
-        }),
-        init: objectassign(span, [
-          { expression: objectexpression({}, span) },
-          { expression: thisexpression({ span }) },
-        ]),
-      }),
-    );
-    stmts.push({
-      type: "ExpressionStatement",
-      span,
-      expression: objectassign(span, [
-        expression(thisexpression({ span })),
-        expression(id),
-      ]),
-    });
-    stmts.push({
-      type: "ExpressionStatement",
-      span,
-      expression: objectassign(span, [
-        { expression: thisexpression({ span }) },
-        {
-          expression: identifier({
-            span,
-            value: "prev",
-          }),
-        },
-      ]),
-    });
-  }
-
-  visitSuperPropExpression(n: SuperPropExpression): Expression {
-    this.#ctorStates.superUsed = true;
-    const result: MemberExpression = member({
+    return iife({
       span: n.span,
-      object: this.inConstructor
-        ? identifier({
-            span: n.span,
-            value: PARENT_IN_CTOR,
-          })
-        : member({
-            span: n.obj.span,
-            object: thisexpression({ span: n.span }),
-            property: {
-              type: "PrivateName",
-              span: n.span,
-              id: identifier({
-                span: n.span,
-                value: PARENT,
-              }),
-            },
-          }),
-      property: n.property,
-    }) as MemberExpression;
-    return super.visitMemberExpression(result);
+      stmts: [
+        onevariable({
+          span: n.span,
+          id: fnId,
+          init: fn,
+        }),
+        ...staticMembers,
+        returnstmt({
+          span: n.span,
+          argument: fnId,
+        }),
+      ],
+    }) as CallExpression;
   }
 
-  visitCallExpression(n: CallExpression): Expression {
-    const oldInPrivateCallExpression = this.#inPrivateCallExpression;
-    this.#inPrivateCallExpression = false;
+  #getCtorParts(n: ClassDeclaration | ClassExpression): ConstructorParts {
+    const ctor = n.body.find((m) => m.type === "Constructor");
 
-    if (
-      n.callee.type === "MemberExpression" &&
-      n.callee.object.type === "ThisExpression" &&
-      n.callee.property.type === "PrivateName"
-    ) {
-      this.#inPrivateCallExpression = true;
-      n.arguments.unshift({
-        spread: undefined,
-        expression: thisexpression({ span: n.callee.object.span }),
-      });
-      n.callee.object = member({
-        ...n.callee,
-      });
-      n.callee.property = identifier({
-        span: n.callee.span,
-        value: "call",
-      });
+    if (!ctor || !ctor.body) {
+      const stmts: Statement[] = [];
+
+      if (n.superClass) {
+        stmts.push({
+          type: "ExpressionStatement",
+          span: n.span,
+          expression: this.#replaceSuperByDeclCall(
+            n.span,
+            n.superClass as ExpressionWithSpan,
+            [{ expression: identifier({ span: n.span, value: "__lrArgs" }) }],
+          ),
+        });
+      }
+
+      return {
+        args: [],
+        stmts: stmts,
+        propsFromArgs: [],
+      };
     }
 
-    const result = super.visitCallExpression(n);
-    this.#inPrivateCallExpression = oldInPrivateCallExpression;
-    return result;
+    return {
+      args: ctor?.params
+        .map(
+          (p): Param =>
+            p.type === "Parameter"
+              ? p
+              : {
+                  span: p.span,
+                  type: "Parameter",
+                  pat: p.param.type === "Identifier" ? p.param : p.param.left,
+                },
+        )
+        .filter((p) => !!p),
+      stmts: ctor.body.stmts,
+      propsFromArgs: this.#deconstructCtorArgs(ctor.params),
+    };
   }
 
-  visitStatements(stmts: Statement[]): Statement[] {
-    const newStmts: Statement[] = [];
+  #replaceSuperByDeclCall(
+    span: Span,
+    superClass: ExpressionWithSpan,
+    params: Argument[],
+  ): CallExpression {
+    return call(
+      {
+        span,
+        callee: identifier({
+          span,
+          value: DECL_NAME,
+        }),
+        args: [
+          {
+            expression: func({
+              binded: { expression: thisexpression({ span }) },
+              span,
+              stmts: [
+                returnstmt({
+                  span,
+                  argument: objectassign(span, [
+                    { expression: objectexpression({}, span) },
+                    {
+                      expression: call(
+                        {
+                          callee: superClass,
+                          args: [
+                            {
+                              expression: arrayexpression({
+                                span,
+                                elements: params,
+                              }),
+                            },
+                          ],
+                        },
+                        false,
+                        { expression: thisexpression({ span }) },
+                      ),
+                    },
+                  ]),
+                }),
+              ],
+            }),
+          },
+        ],
+      },
+      false,
+      { expression: thisexpression({ span }) },
+    ) as CallExpression;
+  }
 
-    stmts.forEach((stmt: Statement) => {
-      if (stmt.type === "ClassDeclaration") {
-        const prevCtorState = this.#initCtorStates();
-        stmt = this.visitStatement(stmt) as ClassDeclaration;
-        const res: VariableDeclaration = {
-          type: "VariableDeclaration",
-          span: stmt.span,
-          kind: "const",
-          declare: false,
-          declarations: [
-            {
+  #deconstructCtorArgs(
+    params: (Param | TsParameterProperty)[],
+  ): MemberDeconstruction[] {
+    return params
+      .filter((p) => p.type === "TsParameterProperty")
+      .map((p) => {
+        if (p.accessibility === "private") {
+          const id = ClassToFunction.getPrivateNameIdentifier(
+            p.param.type === "Identifier"
+              ? p.param
+              : (p.param.left as Identifier),
+          );
+          return {
+            declarator: {
               type: "VariableDeclarator",
-              span: stmt.span,
-              id: stmt.identifier,
-              init: this.#transformClassBodyToFunction(stmt),
+              span: p.span,
+              id,
               definite: false,
             },
-          ],
-        };
-        this.#ctorStates = prevCtorState;
-        newStmts.push(res);
-      } else if (this.inConstructor) {
-        if (
-          stmt.type === "ExpressionStatement" &&
-          stmt.expression.type === "CallExpression" &&
-          this.currentSuperClass &&
-          stmt.expression.callee.type === "Super"
-        ) {
-          this.#ctorStates.hasSuperCtor = true;
-          this.superIdentifierInCtor = identifier({
-            span: stmt.span,
-            value: PARENT_IN_CTOR,
-          });
-          let newexpr: NewExpression;
+            assignment: assignmentStatement({
+              span: p.span,
+              left: id,
+              right:
+                p.param.type === "Identifier"
+                  ? p.param
+                  : (p.param.left as Identifier),
+              operator: "=",
+            }),
+          };
+        }
 
-          if (stmt.expression.arguments.some((a) => !!a.spread)) {
-            const { arrayInit, concatArgs } = spreadToConcat(
-              stmt.span,
-              stmt.expression.arguments,
-            );
-            newexpr = this.#createNewBindApplyArgs({
-              span: stmt.span,
-              classToNew: this.currentSuperClass,
-              args: call({
-                callee: member({
-                  object: arrayexpression({
-                    span: stmt.span,
-                    elements: arrayInit,
-                  }),
-                  property: identifier({
-                    span: stmt.span,
-                    value: "concat",
-                  }),
-                }),
-                args: concatArgs,
+        return {
+          assignment: assignmentStatement({
+            span: p.span,
+            left: member({
+              object: thisexpression({ span: p.span }),
+              property:
+                p.param.type === "Identifier"
+                  ? p.param
+                  : (p.param.left as Identifier),
+            }),
+            right:
+              p.param.type === "Identifier"
+                ? p.param
+                : (p.param.left as Identifier),
+            operator: "=",
+          }),
+        };
+      });
+  }
+
+  #getMethods(
+    n: ClassDeclaration | ClassExpression,
+  ): Array<MemberDeconstruction> {
+    return n.body
+      .filter(ClassToFunction.isInstanceMethod)
+      .map(ClassToFunction.deconstructMethod);
+  }
+
+  static isInstanceMethod(
+    member: ClassMember,
+  ): member is ClassMethod | PrivateMethod {
+    return (
+      (member.type === "ClassMethod" || member.type === "PrivateMethod") &&
+      !member.isStatic &&
+      !member.isAbstract
+    );
+  }
+
+  static deconstructMethod(
+    method: ClassMethod | PrivateMethod,
+  ): MemberDeconstruction {
+    const methodFunction = func({
+      binded: { expression: thisexpression({ span: method.span }) },
+      span: method.span,
+      stmts: method.function.body?.stmts ?? [],
+      params: method.function.params,
+    });
+
+    if (method.type === "PrivateMethod" || method.accessibility === "private") {
+      const id = ClassToFunction.getPrivateNameIdentifier(method.key);
+      return {
+        declarator: {
+          type: "VariableDeclarator",
+          span: method.span,
+          id,
+          definite: false,
+        },
+        assignment: assignmentStatement({
+          span: method.span,
+          left: id,
+          right: methodFunction,
+          operator: "=",
+        }),
+      };
+    }
+
+    let prop: Identifier | ComputedPropName;
+
+    if (method.key.type === "Identifier" || method.key.type === "Computed") {
+      prop = method.key;
+    } else {
+      prop = {
+        type: "Computed",
+        span: method.key.span,
+        expression: method.key,
+      };
+    }
+
+    return {
+      assignment: assignmentStatement({
+        span: method.span,
+        left: member({
+          object: thisexpression({ span: method.span }),
+          property: prop,
+        }),
+        right: methodFunction,
+        operator: "=",
+      }),
+    };
+  }
+
+  #getProps(
+    n: ClassDeclaration | ClassExpression,
+  ): Array<MemberDeconstruction> {
+    return n.body
+      .filter(ClassToFunction.isInstanceProp)
+      .map(ClassToFunction.deconstructProp);
+  }
+
+  static isInstanceProp(
+    member: ClassMember,
+  ): member is ClassProperty | PrivateProperty {
+    return (
+      ((member.type === "ClassProperty" && !member.isAbstract) ||
+        member.type === "PrivateProperty") &&
+      !member.isStatic
+    );
+  }
+
+  static deconstructProp(
+    prop: ClassProperty | PrivateProperty,
+  ): MemberDeconstruction {
+    let propValue: Expression | undefined = undefined;
+
+    if (prop.value) {
+      propValue = prop.value;
+    }
+
+    if (prop.type === "PrivateProperty") {
+      const id = ClassToFunction.getPrivateNameIdentifier(prop.key);
+      const result: MemberDeconstruction = {
+        declarator: {
+          type: "VariableDeclarator",
+          span: prop.span,
+          id,
+          definite: false,
+        },
+      };
+
+      if (propValue) {
+        result.assignment = assignmentStatement({
+          span: prop.span,
+          left: id,
+          right: propValue,
+          operator: "=",
+        });
+      }
+
+      return result;
+    }
+
+    let propKey: Identifier | ComputedPropName;
+
+    if (prop.key.type === "Identifier" || prop.key.type === "Computed") {
+      propKey = prop.key;
+    } else {
+      propKey = {
+        type: "Computed",
+        span: prop.key.span,
+        expression: prop.key,
+      };
+    }
+
+    return {
+      assignment: assignmentStatement({
+        span: prop.span,
+        left: member({
+          object: thisexpression({ span: prop.span }),
+          property: propKey,
+        }),
+        right: propValue || undefinedidentifier({ span: prop.span }),
+        operator: "=",
+      }),
+    };
+  }
+
+  static getPrivateNameIdentifier(
+    name: PrivateName | PropertyName,
+  ): Identifier {
+    if (name.type === "PrivateName") {
+      return identifier({
+        span: name.span,
+        value: `__${name.id.value}`,
+      });
+    }
+
+    if (name.type === "Identifier" || name.type === "StringLiteral") {
+      return identifier({
+        span: name.span,
+        value: `__${name.value}`,
+      });
+    }
+
+    throw new Error("Unsupported private name type " + name.type);
+  }
+
+  #getStatics(
+    n: ClassDeclaration | ClassExpression,
+    fnId: Identifier,
+  ): Statement[] {
+    return n.body
+      .filter(
+        (member): member is ClassMethod | ClassProperty | StaticBlock =>
+          ((member.type === "ClassMethod" || member.type === "ClassProperty") &&
+            member.isStatic) ||
+          member.type === "StaticBlock",
+      )
+      .map(
+        (
+          staticMember: ClassMethod | ClassProperty | StaticBlock,
+        ): Statement => {
+          if (staticMember.type === "StaticBlock") {
+            console.log("static block");
+            return {
+              type: "ExpressionStatement",
+              span: staticMember.span,
+              expression: iife({
+                span: staticMember.span,
+                stmts: staticMember.body.stmts,
               }),
-            });
-          } else {
-            newexpr = newexpression({
-              callee: this.currentSuperClass,
-              arguments: stmt.expression.arguments,
-            });
+            };
           }
 
-          this.#createInstantiateParentAndAssign(newStmts, {
-            span: stmt.span,
-            id: this.superIdentifierInCtor,
-            newexpr,
+          return assignmentStatement({
+            span: staticMember.span,
+            left: member({
+              span: staticMember.span,
+              object: fnId,
+              property:
+                staticMember.key.type === "Identifier" ||
+                staticMember.key.type === "Computed"
+                  ? staticMember.key
+                  : {
+                      type: "Computed",
+                      span: staticMember.key.span,
+                      expression: staticMember.key,
+                    },
+            }),
+            right:
+              staticMember.type === "ClassMethod"
+                ? func({
+                    span: staticMember.span,
+                    params: staticMember.function.params,
+                    stmts: staticMember.function.body?.stmts ?? [],
+                  })
+                : (staticMember.value as Expression),
+            operator: "=",
           });
-        } else if (
-          stmt.type === "VariableDeclaration" &&
-          stmt.declarations.some(
-            (declaration) =>
-              declaration.id.type === "Identifier" &&
-              declaration.id.value === PARENT_IN_CTOR,
-          )
-        ) {
-          this.superIdentifierInCtor = stmt.declarations.find(
-            (declaration) =>
-              declaration.id.type === "Identifier" &&
-              declaration.id.value === PARENT_IN_CTOR,
-          )!.id as Identifier;
-          this.#ctorStates.hasSuperCtor = true;
-          newStmts.push(stmt);
-        } else {
-          newStmts.push(stmt);
-        }
-      } else {
-        newStmts.push(stmt);
-      }
-    });
-    return super.visitStatements(newStmts);
+        },
+      );
   }
 
   visitExpression(n: Expression): Expression {
-    let prevCtorState: ClassConstructorStates;
-    let result: Expression;
+    let savedCurrentSuperClass;
+    let result: Expression | undefined;
 
     switch (n.type) {
       case "ClassExpression":
-        prevCtorState = this.#initCtorStates();
-        n = this.visitClassExpression(n);
-        result = super.visitExpression(this.#transformClassBodyToFunction(n));
-        this.#ctorStates = prevCtorState;
+        savedCurrentSuperClass = this.currentSuperClass;
+        this.currentSuperClass = n.superClass;
+        result = this.visitExpression(this.#classToFunction(n));
+        this.currentSuperClass = savedCurrentSuperClass;
         return result;
       case "MemberExpression":
-        return super.visitExpression(this.#changePrivateMember(n));
+        if (n.property.type === "PrivateName") {
+          return super.visitExpression(
+            ClassToFunction.getPrivateNameIdentifier(n.property),
+          );
+        }
+
+        return super.visitExpression(n);
       default:
         return super.visitExpression(n);
     }
   }
 
-  visitExportDefaultDeclaration(
-    n: ExportDefaultDeclaration,
-  ): ModuleDeclaration {
-    return super.visitExportDefaultDeclaration(n);
-  }
-
-  visitDefaultDeclaration(n: DefaultDecl): DefaultDecl {
-    if (n.type === "ClassExpression") {
-      const prevCtorState = this.#initCtorStates();
-      n = super.visitClassExpression(n);
-      const res = this.#transformClassBodyToFunction(n);
-      this.#ctorStates = prevCtorState;
-      return super.visitExpression(res) as FunctionExpression;
+  visitDeclaration(decl: Declaration): Declaration {
+    if (decl.type === "ClassDeclaration") {
+      const savedCurrentSuperClass = this.currentSuperClass;
+      this.currentSuperClass = decl.superClass;
+      decl = this.visitClassDeclaration(decl) as ClassDeclaration;
+      const result = super.visitDeclaration(
+        onevariable({
+          span: decl.span,
+          id: decl.identifier,
+          init: this.#classToFunction(decl),
+          declare: decl.declare,
+          kind: "const",
+        }),
+      );
+      this.currentSuperClass = savedCurrentSuperClass;
+      return result;
     }
 
-    return super.visitDefaultDeclaration(n);
+    return super.visitDeclaration(decl);
   }
 
   visitModuleDeclaration(n: ModuleDeclaration): ModuleDeclaration {
@@ -936,10 +738,11 @@ class ClassToFunction extends Visitor {
       n.type === "ExportDefaultDeclaration" &&
       n.decl.type === "ClassExpression"
     ) {
-      const prevCtorState = this.#initCtorStates();
+      const savedCurrentSuperClass = this.currentSuperClass;
+      this.currentSuperClass = n.decl.superClass;
       let result: ModuleDeclaration;
       n.decl = this.visitClassExpression(n.decl);
-      const res = this.#transformClassBodyToFunction(n.decl);
+      const res = this.#classToFunction(n.decl);
 
       if (res.type === "CallExpression") {
         const decl: ExportDefaultExpression = {
@@ -962,152 +765,64 @@ class ClassToFunction extends Visitor {
         });
       }
 
-      this.#ctorStates = prevCtorState;
+      this.currentSuperClass = savedCurrentSuperClass;
       return result;
     }
 
     return super.visitModuleDeclaration(n);
   }
 
-  visitFunction<T extends Fn>(n: T): T {
-    const prevCtorState = this.#initCtorStates();
-    const res = super.visitFunction(n);
-    prevCtorState.superUsed =
-      prevCtorState.superUsed || this.#ctorStates.superUsed;
-    this.#ctorStates = prevCtorState;
-    return res;
-  }
-
-  visitArrowFunctionExpression(e: ArrowFunctionExpression): Expression {
-    const prevCtorState = this.#initCtorStates();
-    const res = super.visitArrowFunctionExpression(e);
-    this.#ctorStates = prevCtorState;
-    return res;
-  }
-
-  visitStatement(stmt: Statement): Statement {
-    if (this.inConstructor) {
-      if (stmt.type === "ReturnStatement") {
-        this.#ctorStates.hasReturn = true;
-
-        if (this.#ctorStates.hasSuperCtor) {
-          return this.#createConstructorReturnStatement(
-            stmt.span,
-            stmt.argument,
-            this.superIdentifierInCtor,
-          )!;
-        }
-
-        return this.visitReturnStatement(stmt);
-      }
+  visitDefaultDeclaration(n: DefaultDecl): DefaultDecl {
+    if (n.type === "ClassExpression") {
+      const savedCurrentSuperClass = this.currentSuperClass;
+      n = super.visitClassExpression(n);
+      const res = this.#classToFunction(n);
+      const result = super.visitExpression(res) as FunctionExpression;
+      this.currentSuperClass = savedCurrentSuperClass;
+      return result;
     }
 
-    return super.visitStatement(stmt);
+    return super.visitDefaultDeclaration(n);
   }
 
-  visitConstructor(n: Constructor): ClassMember {
-    this.inConstructor = true;
-    const prevIsSuperConstructorFound = this.superIdentifierInCtor;
-    this.superIdentifierInCtor = undefined;
-    this.#ctorStates.exists = true;
-    const res: Constructor = super.visitConstructor(n) as Constructor;
-
-    if (this.#ctorStates.hasSuperCtor) {
-      if (!this.#ctorStates.hasReturn && this.superIdentifierInCtor) {
-        res.body?.stmts.push(
-          this.#createConstructorReturnStatement(
-            res.body.span,
-            undefined,
-            this.superIdentifierInCtor,
-          )!,
-        );
-      }
+  visitNewExpression(n: NewExpression): Expression {
+    if (n.arguments?.some((a) => !!a.spread)) {
+      return this.#createNewBindApplyArgs({
+        span: n.span,
+        classToNew: n.callee as ExpressionWithSpan,
+        args: arrayexpression({
+          span: n.span,
+          elements: n.arguments,
+        }),
+      });
     }
 
-    this.inConstructor = false;
-    this.superIdentifierInCtor = prevIsSuperConstructorFound;
-    return res;
+    return super.visitNewExpression(n);
   }
 
-  visitClassBody(members: ClassMember[]): ClassMember[] {
-    this.#privateMethods = [];
-    const prevInConstructor = this.inConstructor;
-    this.inConstructor = false;
-    this.isInClass = true;
-
-    members.forEach((m) => {
-      if (m.type === "PrivateMethod" && !!m.function.body) {
-        this.#privateMethods.push(m.key.id.value);
-      }
-    });
-
-    members = super.visitClassBody(members);
-    this.isInClass = false;
-    this.inConstructor = prevInConstructor;
-    return members;
-  }
-
-  visitClass<T extends Class>(n: T): T {
-    const prevSuperClass = this.currentSuperClass;
-    this.currentSuperClass = undefined;
-
-    if (n.superClass) {
-      this.currentSuperClass = n.superClass as ExpressionWithSpan;
-
-      if (!n.body.some((m) => m.type === "Constructor")) {
-        n.body.push(
-          this.#createEmptyConstructorWithSuper(this.currentSuperClass, n.span),
-        );
-      }
+  visitCallExpression(n: CallExpression): Expression {
+    if (n.callee.type === "Super") {
+      return this.#replaceSuperByDeclCall(
+        n.span,
+        this.currentSuperClass as ExpressionWithSpan,
+        n.arguments,
+      );
     }
 
-    const res = super.visitClass(n);
-    this.currentSuperClass = prevSuperClass;
-    return res;
+    return super.visitCallExpression(n);
   }
 
-  #createEmptyConstructorWithSuper(
-    superClass: ExpressionWithSpan,
-    wholeSpan: Span,
-  ): ClassMember {
-    const stmts: Statement[] = [];
-    const span: Span = {
-      start: wholeSpan.start + 1,
-      end: wholeSpan.start + 2,
-      ctxt: wholeSpan.ctxt,
-    };
-
-    const id = identifier({
-      span,
-      value: PARENT_IN_CTOR,
-    });
-
-    this.#createInstantiateParentAndAssign(stmts, {
-      span,
-      id,
-      newexpr: this.#createNewBindApplyArgs({
-        span,
-        classToNew: superClass,
-        args: arrayfromarguments(span),
+  visitSuperPropExpression(n: SuperPropExpression): Expression {
+    return member({
+      object: identifier({
+        span: {
+          ...n.span,
+          ctxt: 1,
+        },
+        value: PARENT_NAME,
       }),
+      property: n.property,
     });
-
-    stmts.push(this.#createConstructorReturnStatement(span, undefined, id)!);
-    return {
-      type: "Constructor",
-      params: [],
-      span,
-      key: identifier({
-        span,
-        value: "constructor",
-      }),
-      body: {
-        type: "BlockStatement",
-        span,
-        stmts: stmts,
-      },
-      isOptional: false,
-    };
   }
 
   #createNewBindApplyArgs({
@@ -1154,46 +869,6 @@ class ClassToFunction extends Visitor {
         }),
       },
     });
-  }
-
-  visitDeclaration(decl: Declaration): Declaration {
-    if (decl.type === "ClassDeclaration") {
-      const prevCtorState = this.#initCtorStates();
-      decl = this.visitClassDeclaration(decl) as ClassDeclaration;
-      const result = super.visitDeclaration(
-        onevariable({
-          span: decl.span,
-          id: decl.identifier,
-          init: this.#transformClassBodyToFunction(decl),
-          declare: decl.declare,
-          kind: "const",
-        }),
-      );
-      this.#ctorStates = prevCtorState;
-      return result;
-    }
-
-    return super.visitDeclaration(decl);
-  }
-
-  visitNewExpression(n: NewExpression): Expression {
-    if (n.arguments?.some((a) => !!a.spread)) {
-      return this.#createNewBindApplyArgs({
-        span: n.span,
-        classToNew: n.callee as ExpressionWithSpan,
-        args: arrayexpression({
-          span: n.span,
-          elements: n.arguments,
-        }),
-      });
-    }
-
-    return super.visitNewExpression(n);
-  }
-
-  visitProgram(n: Program): Program {
-    this.#initCtorStates();
-    return super.visitProgram(n);
   }
 
   visitTsType(n: TsType): TsType {

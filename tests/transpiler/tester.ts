@@ -255,6 +255,10 @@ const messages: Record<TExpectTests, ExpectFailedMessages> = {
     failed: "Expected $1 but got $2",
     not: "Didn't Expect $1 but got it",
   },
+  toBeUndefined: {
+    failed: "Expected $2 to be undefined but it was not",
+    not: "Expected $2 not to be undefined but it was",
+  },
   toHaveBeenCalled: {
     general: "Expected value to be a mock but it was not",
     failed: "Expected function to be called but it was not",
@@ -314,6 +318,9 @@ const getExpectTests = (
   },
   toStrictEqual: (expected: unknown): boolean => {
     return value === expected;
+  },
+  toBeUndefined: (): boolean => {
+    return typeof value === "undefined";
   },
   toHaveBeenCalled: () => {
     return isMock(value) && value.called > 0;
