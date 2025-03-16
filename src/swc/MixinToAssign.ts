@@ -2,54 +2,66 @@ import {
   Argument,
   ArrowFunctionExpression,
   CallExpression,
-  ClassDeclaration,
+  Class,
   ClassExpression,
   ClassMember,
   Constructor,
-  Declaration,
-  ExprOrSpread,
   Expression,
   ExpressionStatement,
+  Identifier,
   Program,
   Span,
   Statement,
   TsType,
 } from "@swc/core";
 import { Visitor } from "@swc/core/Visitor.js";
-import identifier from "./node/identifier";
-import { objectassign } from "./node/expression/objectassign";
-import { newexpression } from "./node/expression/newexpression";
-import thisexpression from "./node/expression/thisexpression";
-import { call } from "./node/expression/call";
 import { arrayexpression } from "./node/expression/arrayexpression";
-import onevariable from "./node/declaration/onevariable";
-import expression from "./node/expression";
-import { arrayfromarguments } from "./node/expression/arrayfromarguments";
+import identifier from "./node/identifier";
+
+type SuperCallExpression = ExpressionStatement & {
+  expression: CallExpression & {
+    callee: { type: "Super" };
+  };
+};
+
+type MixinCall = CallExpression & {
+  callee: Identifier & { value: "Mixin" };
+};
 
 class MixinToAssign extends Visitor {
   #mixinClasses: Argument[] | undefined;
   #constructorFound: boolean = false;
+  #superFound: boolean = false;
 
-  #makeMixinAssigns(span: Span, mixins: Argument[]): CallExpression {
-    return {
-      type: "CallExpression",
-      callee: objectassign(span),
-      span: span,
-      arguments: [
-        { expression: thisexpression({ span }) },
-        ...mixins.map<Argument>((mixin: Argument) => ({
-          expression: newexpression({
-            callee: mixin.expression,
-            arguments: [
-              {
-                spread: span,
-                expression: arrayfromarguments(span),
-              },
-            ],
-          }),
-        })),
-      ],
-    };
+  visitCallExpression(n: CallExpression): Expression {
+    if (
+      this.#mixinClasses &&
+      this.#isSuperCall({
+        type: "ExpressionStatement",
+        expression: n,
+        span: n.span,
+      })
+    ) {
+      this.#superFound = true;
+      return super.visitCallExpression({
+        ...n,
+        arguments: this.#getSuperArgs(n.span, n.arguments),
+      });
+    }
+
+    return super.visitCallExpression(n);
+  }
+
+  #getSuperArgs(span: Span, args: Argument[]): Array<Argument> {
+    return [
+      {
+        expression: arrayexpression({
+          span,
+          elements: this.#mixinClasses,
+        }),
+      },
+      ...args,
+    ];
   }
 
   visitConstructor(n: Constructor): ClassMember {
@@ -58,57 +70,37 @@ class MixinToAssign extends Visitor {
     }
 
     this.#constructorFound = true;
-    const span = n.span;
-    let superFound = false;
-    const parentMixins = identifier({
-      span,
-      value: "_super",
-    });
-    n.body.stmts = n.body?.stmts.map<Statement>(
-      (stmt: Statement): Statement => {
-        if (this.#isSuperCall(stmt)) {
-          superFound = true;
-          const callExpression: CallExpression = (stmt as ExpressionStatement)
-            .expression as CallExpression;
-          return onevariable({
-            span,
-            id: parentMixins,
-            init: call(
-              {
-                span,
-                callee: identifier({ span, value: "mx" }),
-                args: [
-                  expression(
-                    arrayexpression({
-                      span,
-                      elements: this.#mixinClasses!.map<ExprOrSpread>((m) => m),
-                    }),
-                  ),
-                  ...callExpression.arguments,
-                ],
-              },
-              false,
-              { expression: thisexpression({ span }) },
-            ),
-          });
-        }
+    const saveSuperFound = this.#superFound;
+    this.#superFound = false;
 
-        return stmt;
-      },
-    );
+    const res = super.visitConstructor(n);
 
-    if (!superFound) {
-      n.body.stmts.unshift({
-        type: "ExpressionStatement",
-        expression: this.#makeMixinAssigns(span, this.#mixinClasses),
-        span,
-      });
+    if (!this.#superFound) {
+      n.body.stmts.unshift(this.#createSuperCall(n.span));
     }
 
-    return super.visitConstructor(n);
+    this.#superFound = saveSuperFound;
+
+    return res;
   }
 
-  #isSuperCall(stmt: Statement): boolean {
+  #createSuperCall(span: Span): Statement {
+    return {
+      type: "ExpressionStatement",
+      expression: {
+        type: "CallExpression",
+        callee: {
+          type: "Super",
+          span,
+        },
+        arguments: this.#getSuperArgs(span, []),
+        span,
+      },
+      span,
+    };
+  }
+
+  #isSuperCall(stmt: Statement): stmt is SuperCallExpression {
     return (
       stmt.type === "ExpressionStatement" &&
       stmt.expression.type === "CallExpression" &&
@@ -116,42 +108,34 @@ class MixinToAssign extends Visitor {
     );
   }
 
-  visitClassDeclaration(decl: ClassDeclaration): Declaration {
-    const superClass = decl.superClass;
-    const mixinCall = superClass && this.#getMixinCall(superClass);
+  visitClass<T extends Class>(n: T): T {
+    const mixinCall = this.#getMixinCall(n.superClass);
 
     if (mixinCall) {
-      const span = decl.span;
-      const newClass: ClassDeclaration = {
-        ...decl,
-        superClass: undefined,
-      };
       const prevMixinClasses = this.#mixinClasses;
       const prevConstructorFound = this.#constructorFound;
-      this.#mixinClasses = mixinCall.arguments;
       this.#constructorFound = false;
-      const res = super.visitClassDeclaration(newClass);
+      this.#mixinClasses = mixinCall.arguments;
+      n.superClass = identifier({
+        span: n.span,
+        value: "mx",
+      });
+      const res = super.visitClass(n);
 
       if (!this.#constructorFound) {
-        newClass.body.push({
+        res.body.push({
           type: "Constructor",
-          span,
+          span: n.span,
           key: identifier({
-            span,
+            span: n.span,
             value: "constructor",
           }),
           params: [],
           isOptional: false,
           body: {
             type: "BlockStatement",
-            span: span,
-            stmts: [
-              {
-                type: "ExpressionStatement",
-                expression: this.#makeMixinAssigns(span, this.#mixinClasses),
-                span,
-              },
-            ],
+            span: n.span,
+            stmts: [this.#createSuperCall(n.span)],
           },
         });
       }
@@ -161,30 +145,33 @@ class MixinToAssign extends Visitor {
       return res;
     }
 
-    return super.visitClassDeclaration(decl);
+    return super.visitClass(n);
   }
 
-  #getMixinCall(e: Expression): CallExpression | undefined {
-    if (this.#isMixinCall(e)) {
-      return e as CallExpression;
+  #getMixinCall(e: Expression | undefined): MixinCall | undefined {
+    if (!e) {
+      return undefined;
+    } else if (this.#isMixinCall(e)) {
+      return e;
     } else if (
       (e.type === "ParenthesisExpression" || e.type === "TsAsExpression") &&
       this.#isMixinCall(e.expression)
     ) {
-      return e.expression as CallExpression;
+      return e.expression;
     } else if (
       e.type === "ParenthesisExpression" &&
       e.expression.type === "TsAsExpression" &&
       this.#isMixinCall(e.expression.expression)
     ) {
-      return e.expression.expression as CallExpression;
+      return e.expression.expression;
     }
 
     return undefined;
   }
 
-  #isMixinCall(e: Expression): boolean {
+  #isMixinCall(e: Expression | undefined): e is MixinCall {
     return (
+      !!e &&
       e.type === "CallExpression" &&
       e.callee.type === "Identifier" &&
       e.callee.value === "Mixin"

@@ -40,7 +40,9 @@ function tpo(val, idx) {
   return typeof val !== types[-idx];
 }
 
-function mx(m, a) {
+function mx(v) {
+  const m = v[0];
+  const a = v[1];
   const prev = Object.assign({}, this);
   const rev = m.reverse();
   const resParent = rev.reduce(
