@@ -61,7 +61,7 @@ type MemberDeconstruction = {
   assignment?: Statement;
 };
 
-const PARENT_NAME = "__parent";
+const PARENT_NAME = "__super";
 const DECL_NAME = "__decl";
 const DECL_DONE_NAME = "__declDone";
 
