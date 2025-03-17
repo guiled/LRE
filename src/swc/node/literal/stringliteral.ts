@@ -6,6 +6,7 @@ type String_Param = {
   raw?: string;
 };
 
+// ts-unused-exports:disable-next-line
 export default ({ span, value, raw }: String_Param): StringLiteral => {
   return {
     type: "StringLiteral",
