@@ -42,7 +42,7 @@ function tpo(val, idx) {
 
 function mx(v) {
   const m = v[0];
-  const a = v[1];
+  const a = v[1] || [];
   const prev = Object.assign({}, this);
   const rev = m.reverse();
   const resParent = rev.reduce(
