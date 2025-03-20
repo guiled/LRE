@@ -213,12 +213,12 @@ export const testClasses = {
 
         const C = class C extends B {
           fn(): void {
-            log("fnFromC");
             fnFromC();
           }
         };
 
-        new C().call();
+        const obj = new C();
+        obj.call();
 
         lreExpect(fnFromB).not.toHaveBeenCalled();
         lreExpect(fnFromC).toHaveBeenCalledTimes(1);
@@ -288,6 +288,46 @@ export const testClasses = {
           lreExpect(fifthMock).hasBeenCalledBefore(lastMock);
         },
       );
+
+      lreTest("Inheritance through empty class", () => {
+        const inA = lreMock();
+        const inC = lreMock();
+        const A = class A {
+          val(): void {
+            inA();
+          }
+
+          val2(): void {
+            this.val();
+          }
+        };
+        const B = class B extends A {};
+        const C = class C extends B {
+          val(): void {
+            inC();
+          }
+
+          val3(): void {
+            super.val();
+          }
+        };
+        const c = new C();
+        lreExpect(inA).not.toHaveBeenCalled();
+        lreExpect(inC).not.toHaveBeenCalled();
+        c.val();
+        lreExpect(inA).not.toHaveBeenCalled();
+        lreExpect(inC).toHaveBeenCalledTimes(1);
+
+        lreClearAllMocks();
+        c.val2();
+        lreExpect(inA).not.toHaveBeenCalled();
+        lreExpect(inC).toHaveBeenCalledTimes(1);
+
+        lreClearAllMocks();
+        c.val3();
+        lreExpect(inA).toHaveBeenCalledTimes(1);
+        lreExpect(inC).not.toHaveBeenCalled();
+      });
     });
   },
 };

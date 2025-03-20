@@ -901,6 +901,7 @@ describe("Dataprovider search", () => {
     });
     const dp = lre.dataProvider("test", dataGetter);
 
+    // @ts-expect-error not yet implemented
     const search = dp.search("a", "42");
 
     expect(search.provider).toBeTruthy();
@@ -919,6 +920,7 @@ describe("Dataprovider toArray", () => {
     });
     const dp = lre.dataProvider("test", dataGetter);
 
+    // @ts-expect-error not yet implemented
     expect(dp.toArray()).toStrictEqual([data]);
   });
 });

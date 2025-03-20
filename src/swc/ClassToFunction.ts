@@ -13,6 +13,7 @@ import {
   Expression,
   FunctionExpression,
   Identifier,
+  KeyValueProperty,
   ModuleDeclaration,
   NewExpression,
   Param,
@@ -49,6 +50,7 @@ import { fnApply } from "./node/expression/fnApply";
 import { objectassign } from "./node/expression/objectassign";
 import { objectexpression } from "./node/expression/objectexpression";
 import iife from "./node/expression/iife";
+import stringliteral from "./node/literal/stringliteral";
 
 type ConstructorParts = {
   stmts: Statement[];
@@ -58,7 +60,7 @@ type ConstructorParts = {
 
 type MemberDeconstruction = {
   declarator?: VariableDeclarator;
-  assignment?: Statement;
+  assignment?: Statement | KeyValueProperty;
 };
 
 const PARENT_NAME = "__super";
@@ -135,10 +137,38 @@ class ClassToFunction extends Visitor {
         stmts: [],
       },
     };
-    const saveThisId = identifier({
+    const protId = identifier({
       span: n.span,
-      value: "savethis",
+      value: "prot",
     });
+
+    const onlyKeyValueProperty = (
+      m: MemberDeconstruction,
+    ): m is { assignment: KeyValueProperty } =>
+      m.assignment?.type === "KeyValueProperty";
+
+    const onlyAssignStatement = (
+      m: MemberDeconstruction,
+    ): m is { assignment: Statement } =>
+      !!m.assignment && m.assignment.type === "ExpressionStatement";
+
+    const protoMembers: KeyValueProperty[] = [
+      ...methodDecls.filter(onlyKeyValueProperty).map((m) => m.assignment),
+      ...propDecls.filter(onlyKeyValueProperty).map((m) => m.assignment),
+      ...ctorParts.propsFromArgs
+        .filter(onlyKeyValueProperty)
+        .map((m) => m.assignment),
+    ];
+
+    const protThisAssign: Argument[] = [
+      { expression: thisexpression({ span: n.span }) },
+      { expression: protId },
+    ];
+
+    const finalThisAssign: Argument[] | undefined = parentId
+      ? [protThisAssign[0], { expression: parentId }, protThisAssign[1]]
+      : undefined;
+
     const declStmts: Statement[] = [
       {
         ...declDoneIfStatement,
@@ -146,18 +176,20 @@ class ClassToFunction extends Visitor {
           type: "BlockStatement",
           span: n.span,
           stmts: [
-            ...methodDecls.map((m) => m.assignment).filter((a) => !!a),
-            ...ctorParts.propsFromArgs
-              .map((p) => p.assignment)
-              .filter((a) => !!a),
             onevariable({
               span: n.span,
-              id: saveThisId,
-              init: objectassign(n.span, [
-                { expression: objectexpression({}, n.span) },
-                { expression: thisexpression({ span: n.span }) },
-              ]),
+              id: protId,
+              init: {
+                type: "ObjectExpression",
+                span: n.span,
+                properties: protoMembers,
+              },
             }),
+            {
+              type: "ExpressionStatement",
+              span: n.span,
+              expression: objectassign(n.span, protThisAssign),
+            },
           ],
         },
       },
@@ -167,15 +199,20 @@ class ClassToFunction extends Visitor {
           type: "BlockStatement",
           span: n.span,
           stmts: [
-            ...propDecls.map((m) => m.assignment).filter((a) => !!a),
-            {
-              type: "ExpressionStatement",
-              span: n.span,
-              expression: objectassign(n.span, [
-                { expression: thisexpression({ span: n.span }) },
-                { expression: saveThisId },
-              ]),
-            },
+            ...((finalThisAssign
+              ? [
+                  {
+                    type: "ExpressionStatement",
+                    span: n.span,
+                    expression: objectassign(n.span, finalThisAssign),
+                  },
+                ]
+              : []) as Statement[]),
+            ...propDecls.filter(onlyAssignStatement).map((m) => m.assignment),
+            ...methodDecls.filter(onlyAssignStatement).map((m) => m.assignment),
+            ...ctorParts.propsFromArgs
+              .filter(onlyAssignStatement)
+              .map((m) => m.assignment),
           ],
         },
       },
@@ -197,6 +234,7 @@ class ClassToFunction extends Visitor {
           left: parentId,
           right: call({
             callee: initParentId,
+            args: [{ expression: thisexpression({ span: n.span }) }],
           }),
           operator: "=",
         }),
@@ -380,6 +418,13 @@ class ClassToFunction extends Visitor {
           {
             expression: func({
               binded: { expression: thisexpression({ span }) },
+              params: [
+                {
+                  type: "Parameter",
+                  pat: identifier({ span, value: "obj" }),
+                  span,
+                },
+              ],
               span,
               stmts: [
                 returnstmt({
@@ -400,7 +445,7 @@ class ClassToFunction extends Visitor {
                           ],
                         },
                         false,
-                        { expression: thisexpression({ span }) },
+                        { expression: identifier({ span, value: "obj" }) },
                       ),
                     },
                   ]),
@@ -447,21 +492,17 @@ class ClassToFunction extends Visitor {
         }
 
         return {
-          assignment: assignmentStatement({
-            span: p.span,
-            left: member({
-              object: thisexpression({ span: p.span }),
-              property:
-                p.param.type === "Identifier"
-                  ? p.param
-                  : (p.param.left as Identifier),
-            }),
-            right:
+          assignment: {
+            type: "KeyValueProperty",
+            key:
               p.param.type === "Identifier"
                 ? p.param
                 : (p.param.left as Identifier),
-            operator: "=",
-          }),
+            value:
+              p.param.type === "Identifier"
+                ? p.param
+                : (p.param.left as Identifier),
+          },
         };
       });
   }
@@ -480,60 +521,102 @@ class ClassToFunction extends Visitor {
     return (
       (member.type === "ClassMethod" || member.type === "PrivateMethod") &&
       !member.isStatic &&
-      !member.isAbstract
+      !member.isAbstract &&
+      !!member.function.body
     );
   }
 
   static deconstructMethod(
     method: ClassMethod | PrivateMethod,
   ): MemberDeconstruction {
-    const methodFunction = func({
-      binded: { expression: thisexpression({ span: method.span }) },
-      span: method.span,
-      stmts: method.function.body?.stmts ?? [],
-      params: method.function.params,
-    });
+    const span = method.span;
 
-    if (method.type === "PrivateMethod" || method.accessibility === "private") {
-      const id = ClassToFunction.getPrivateNameIdentifier(method.key);
-      return {
-        declarator: {
-          type: "VariableDeclarator",
-          span: method.span,
-          id,
-          definite: false,
-        },
-        assignment: assignmentStatement({
-          span: method.span,
-          left: id,
-          right: methodFunction,
-          operator: "=",
-        }),
-      };
-    }
+    let id: Identifier | ComputedPropName;
+    const isPrivate =
+      method.type === "PrivateMethod" || method.accessibility === "private";
 
-    let prop: Identifier | ComputedPropName;
-
-    if (method.key.type === "Identifier" || method.key.type === "Computed") {
-      prop = method.key;
+    if (isPrivate) {
+      id = ClassToFunction.getPrivateNameIdentifier(method.key);
+    } else if (
+      method.key.type === "Identifier" ||
+      method.key.type === "Computed"
+    ) {
+      id = method.key;
     } else {
-      prop = {
+      id = {
         type: "Computed",
         span: method.key.span,
         expression: method.key,
       };
     }
 
-    return {
-      assignment: assignmentStatement({
-        span: method.span,
-        left: member({
-          object: thisexpression({ span: method.span }),
-          property: prop,
+    let methodFunction = func({
+      binded: isPrivate
+        ? { expression: thisexpression({ span: method.span }) }
+        : null,
+      span,
+      stmts: method.function.body?.stmts ?? [],
+      params: method.function.params,
+    });
+
+    if (method.function.decorators?.length) {
+      const contextCreationCall = call({
+        span,
+        callee: identifier({
+          span,
+          value: "ct",
         }),
-        right: methodFunction,
-        operator: "=",
-      }),
+        args: [
+          {
+            expression:
+              id.type === "Identifier"
+                ? stringliteral({
+                    span,
+                    value: id.value,
+                  })
+                : id.expression,
+          },
+        ],
+      });
+
+      method.function.decorators.reverse().forEach((decorator) => {
+        methodFunction = call({
+          callee: decorator.expression,
+          args: [
+            {
+              expression: methodFunction,
+            },
+            {
+              expression: contextCreationCall,
+            },
+          ],
+        }) as CallExpression;
+      });
+    }
+
+    if (method.type === "PrivateMethod" || method.accessibility === "private") {
+      return {
+        declarator: {
+          type: "VariableDeclarator",
+          span: method.span,
+          id: id as Identifier,
+          definite: false,
+        },
+        assignment: assignmentStatement({
+          span: method.span,
+          left: id as Identifier,
+          right: methodFunction,
+          operator: "=",
+        }),
+      };
+    }
+
+    return {
+      assignment: {
+        type: "KeyValueProperty",
+        key: id,
+        value: methodFunction,
+      },
     };
   }
 
@@ -603,12 +686,21 @@ class ClassToFunction extends Visitor {
       assignment: assignmentStatement({
         span: prop.span,
         left: member({
+          span: prop.span,
           object: thisexpression({ span: prop.span }),
           property: propKey,
         }),
-        right: propValue || undefinedidentifier({ span: prop.span }),
+        right: propValue ?? undefinedidentifier({ span: prop.span }),
         operator: "=",
       }),
+    };
+
+    return {
+      assignment: {
+        type: "KeyValueProperty",
+        key: propKey,
+        value: propValue ?? undefinedidentifier({ span: prop.span }),
+      },
     };
   }
 

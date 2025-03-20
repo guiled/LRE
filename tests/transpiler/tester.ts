@@ -218,7 +218,7 @@ lreMock = <T extends (...args: any[]) => any>(
   fn.called = 0;
   fn.calls = [];
   fn.clear = function () {
-    // @ts-expect-error This is a mock
+    // @ts-expect-error "this" is a mock
     this.called = 0;
   }.bind(fn);
   mocks.push(fn);
@@ -266,9 +266,8 @@ const messages: Record<TExpectTests, ExpectFailedMessages> = {
   },
   toHaveBeenCalledTimes: {
     general: "Expected value to be a mock but it was not",
-    failed:
-      "Expected function to be called $1 times but it was called $2 times",
-    not: "Expected function not to be called $1 times but it was",
+    failed: "Expected function to be called $2 times but it was not",
+    not: "Expected function not to be called $2 times but it was",
   },
   toBeTruthy: {
     failed: "`Expected $2 to be truthy",
@@ -296,18 +295,18 @@ const messages: Record<TExpectTests, ExpectFailedMessages> = {
   },
   hasBeenCalledBefore: {
     general: "Expected value to be a mock but it was not",
-    failed: "Expected $2 to be called before $1",
-    not: "Expected $2 not to be called before $1",
+    failed: "Expected fn to be called before $1",
+    not: "Expected fn not to be called before $1",
   },
   hasBeenCalledAfter: {
     general: "Expected value to be a mock but it was not",
-    failed: "Expected $2 to be called after $1",
-    not: "Expected $2 not to be called after $1",
+    failed: "Expected fn to be called after $1",
+    not: "Expected fn not to be called after $1",
   },
 };
 
 const isMock = (value: any): value is MockedFunction => {
-  return value.mock;
+  return !!value.mock;
 };
 
 const getExpectTests = (
