@@ -2,15 +2,17 @@ enum LogLevel {
   none = 0,
   error,
   warn,
-  profile = 3,
-  trace = 4,
-  all = 5,
+  info,
+  profile,
+  trace,
+  all,
 }
 
 const LOG_PREFIXES: Record<keyof typeof LogLevel, string> = {
   none: "",
   error: "[ERR]",
   warn: "[WRN]",
+  info: "[NFO]",
   profile: "[TRC]",
   trace: "[TRC]",
   all: "",
@@ -48,6 +50,10 @@ export class Logger {
 
   warn(...args: any[]): void {
     this.#_log.apply(this, ["warn", ...args]);
+  }
+
+  info(...args: any[]): void {
+    this.#_log.apply(this, ["info", ...args]);
   }
 
   trace(...args: any[]): void {

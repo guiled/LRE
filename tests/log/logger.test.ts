@@ -33,6 +33,10 @@ describe("Test all log method", () => {
 
     expect(global.log).toHaveBeenCalledTimes(++nbCall);
 
+    logger.info("this is an info");
+
+    expect(global.log).toHaveBeenCalledTimes(++nbCall);
+
     logger.trace("this is a trace");
 
     expect(global.log).toHaveBeenCalledTimes(++nbCall);
@@ -46,6 +50,7 @@ describe("Test all log method", () => {
     logger.setLogLevel("none");
     logger.error("this is an error");
     logger.warn("this is a warning");
+    logger.info("this is a info");
     logger.trace("this is a trace");
     logger.log("this is a log");
 
@@ -62,6 +67,7 @@ describe("Test all log method", () => {
     expect(global.log).toHaveBeenCalledTimes(1);
 
     logger.warn("this is a warning");
+    logger.info("this is a info");
     logger.trace("this is a trace");
     logger.log("this is a log");
 
@@ -81,10 +87,34 @@ describe("Test all log method", () => {
 
     expect(global.log).toHaveBeenCalledTimes(2);
 
+    logger.info("this is a info");
     logger.trace("this is a trace");
     logger.log("this is a log");
 
     expect(global.log).toHaveBeenCalledTimes(2);
+  });
+
+  test("Check log errors, warnings and info", () => {
+    logger.setLogLevel("info");
+
+    expect(global.log).toHaveBeenCalledTimes(0);
+
+    logger.error("this is an error");
+
+    expect(global.log).toHaveBeenCalledTimes(1);
+
+    logger.warn("this is a warning");
+
+    expect(global.log).toHaveBeenCalledTimes(2);
+
+    logger.info("this is a info");
+
+    expect(global.log).toHaveBeenCalledTimes(3);
+
+    logger.trace("this is a trace");
+    logger.log("this is a log");
+
+    expect(global.log).toHaveBeenCalledTimes(3);
   });
 
   test("Check log errors, warnings and trace… so everything", () => {
@@ -100,13 +130,17 @@ describe("Test all log method", () => {
 
     expect(global.log).toHaveBeenCalledTimes(2);
 
-    logger.trace("this is a trace");
+    logger.info("this is a info");
 
     expect(global.log).toHaveBeenCalledTimes(3);
+
+    logger.trace("this is a trace");
+
+    expect(global.log).toHaveBeenCalledTimes(4);
 
     logger.log("this is a log");
 
-    expect(global.log).toHaveBeenCalledTimes(3);
+    expect(global.log).toHaveBeenCalledTimes(4);
   });
 
   test("Check log errors, warnings and trace… so all", () => {
@@ -122,13 +156,17 @@ describe("Test all log method", () => {
 
     expect(global.log).toHaveBeenCalledTimes(2);
 
-    logger.trace("this is a trace");
+    logger.info("this is a info");
 
     expect(global.log).toHaveBeenCalledTimes(3);
 
-    logger.log("this is a log");
+    logger.trace("this is a trace");
 
     expect(global.log).toHaveBeenCalledTimes(4);
+
+    logger.log("this is a log");
+
+    expect(global.log).toHaveBeenCalledTimes(5);
   });
 });
 

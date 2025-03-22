@@ -124,6 +124,7 @@ declare type ProxyMode = "real" | "virtual";
 declare interface Logger {
   error(...args: any[]): void;
   warn(...args: any[]): void;
+  info(...args: any[]): void;
   trace(...args: any[]): void;
   profile(...args: any[]): void;
   log(...args: any[]): void;
