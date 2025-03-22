@@ -474,19 +474,30 @@ describe("Repeater setSorter", () => {
 
 describe("Repeater add and remove", () => {
   test("Add an entry", () => {
-    repeater.add({}, 1);
+    repeater.add({}, "b");
 
     expect(repeater.value()).toMatchObject({
-      "1": {},
+      b: {},
+    });
+
+    const d: LetsRole.ViewData = { a: "123", b: "456" };
+    repeater.add(d, "a");
+
+    expect(repeater.value()).toMatchObject({
+      b: {},
+      a: d,
     });
   });
 
   test("Remove an entry", () => {
-    repeater.value({
-      "1": {},
-    });
-    repeater.remove("1");
+    const d: LetsRole.ViewData = { a: "123", b: "456" };
 
-    expect(repeater.value()).toMatchObject({});
+    repeater.value({
+      b: {},
+      a: d,
+    });
+    repeater.remove("a");
+
+    expect(repeater.value()).toMatchObject({ b: {} });
   });
 });

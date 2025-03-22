@@ -381,11 +381,22 @@ export class Repeater extends Component<
     }
   }
 
-  // add() {
+  add(viewData: LetsRole.ViewData, id?: LetsRole.Index): void {
+    if (typeof id === "undefined") {
+      id = lre.getRandomId();
+    }
 
-  // }
+    const val = this.value() || {};
+    val[id] = viewData || {};
+    this.value(val);
+  }
 
-  // remove() {
+  remove(id: LetsRole.Index): LetsRole.ViewData {
+    const val = this.value() || {};
+    const removed = val[id];
+    delete val[id];
+    this.value(val);
 
-  // }
+    return removed;
+  }
 }
