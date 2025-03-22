@@ -11,10 +11,10 @@ import { Visitor } from "@swc/core/Visitor.js";
 import { call } from "./node/expression/call";
 import identifier from "./node/identifier";
 import member from "./node/expression/member";
-import parenthesis from "./node/expression/parenthesis";
 import or from "./node/expression/binary/or";
 import undefinedidentifier from "./node/undefinedidentifier";
 import { assignmentStatement } from "./node/statement/assignment";
+import onevariable from "./node/declaration/onevariable";
 
 class NoThrowStatement extends Visitor {
   #lastExceptionIdentifier(span: Span): Identifier {
@@ -52,7 +52,42 @@ class NoThrowStatement extends Visitor {
     const stmts: Statement[] = handler.body.stmts;
 
     if (handler.param?.type === "Identifier") {
+      const errId = identifier({
+        span: handler.param.span,
+        value: "_err",
+      });
       stmts.unshift(
+        onevariable({
+          id: errId,
+          init: or({
+            left: this.#lastExceptionIdentifier(handler.span),
+            right: call({
+              callee: identifier({
+                span: handler.param.span,
+                value: "newError",
+              }),
+              args: [
+                {
+                  expression: {
+                    span: handler.param.span,
+                    type: "ConditionalExpression",
+                    test: handler.param,
+                    consequent: member({
+                      object: handler.param,
+                      property: identifier({
+                        span: handler.param.span,
+                        value: "message",
+                      }),
+                    }),
+                    alternate: undefinedidentifier({
+                      span: handler.param.span,
+                    }),
+                  },
+                },
+              ],
+            }),
+          }),
+        }),
         assignmentStatement({
           span: handler.param.span,
           left: handler.param,
@@ -60,37 +95,7 @@ class NoThrowStatement extends Visitor {
             span: handler.param.span,
             callee: member({
               span: handler.param.span,
-              object: parenthesis({
-                span: handler.param.span,
-                expression: or({
-                  left: this.#lastExceptionIdentifier(handler.span),
-                  right: call({
-                    callee: identifier({
-                      span: handler.param.span,
-                      value: "newError",
-                    }),
-                    args: [
-                      {
-                        expression: {
-                          span: handler.param.span,
-                          type: "ConditionalExpression",
-                          test: handler.param,
-                          consequent: member({
-                            object: handler.param,
-                            property: identifier({
-                              span: handler.param.span,
-                              value: "message",
-                            }),
-                          }),
-                          alternate: undefinedidentifier({
-                            span: handler.param.span,
-                          }),
-                        },
-                      },
-                    ],
-                  }),
-                }),
-              }),
+              object: errId,
               property: identifier({
                 span: handler.param.span,
                 value: "thrownBy",
