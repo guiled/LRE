@@ -281,6 +281,8 @@ export class Component<
   }
 
   addClass(className: LetsRole.ClassName): this {
+    this.#checkClassName(className);
+
     if (!this.raw().hasClass(className)) {
       this.#classChanges[className] = 1;
       this.#saveClassChanges();
@@ -291,17 +293,33 @@ export class Component<
   }
 
   removeClass(className: LetsRole.ClassName): this {
+    this.#checkClassName(className);
+
     if (this.raw().hasClass(className)) {
       this.#classChanges[className] = -1;
       this.#saveClassChanges();
       this.trigger("class-updated", className, "removed");
+    } else {
+      LRE_DEBUG && lre.info(`${this.realId()} Class not found: ${className}`);
     }
 
     return this;
   }
 
   hasClass(className: LetsRole.ClassName): boolean {
+    this.#checkClassName(className);
     return this.raw().hasClass(className);
+  }
+
+  #checkClassName(className: LetsRole.ClassName): boolean {
+    const valid = !!className?.match?.(/^[_a-zA-Z][_a-zA-Z0-9-]*$/);
+
+    if (!valid) {
+      LRE_DEBUG &&
+        lre.warn(`${this.realId()} Invalid class name: ${className}`);
+    }
+
+    return valid;
   }
 
   getClasses(): LetsRole.ClassName[] {

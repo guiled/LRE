@@ -277,6 +277,39 @@ describe("Component construction", () => {
     expect(cmp.hasClass("cl2")).toBeFalsy();
   });
 
+  test("Adding invalid class name trigger a warning", () => {
+    jest.spyOn(lre, "warn");
+    cmp.addClass("cl0");
+
+    expect(lre.warn).not.toHaveBeenCalled();
+
+    cmp.addClass(".cl0");
+
+    expect(lre.warn).toHaveBeenCalled();
+
+    jest.clearAllMocks();
+    cmp.removeClass("cl0");
+
+    expect(lre.warn).not.toHaveBeenCalled();
+
+    cmp.removeClass(".cl0");
+
+    expect(lre.warn).toHaveBeenCalled();
+
+    jest.clearAllMocks();
+
+    jest.clearAllMocks();
+    cmp.hasClass("cl0");
+
+    expect(lre.warn).not.toHaveBeenCalled();
+
+    cmp.hasClass(".cl0");
+
+    expect(lre.warn).toHaveBeenCalled();
+
+    jest.clearAllMocks();
+  });
+
   test("Component save classes", () => {
     jest.spyOn(sheet, "persistingCmpClasses");
 
