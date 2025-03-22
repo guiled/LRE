@@ -202,8 +202,7 @@ export const EventHolder = <
         }
 
         const cmp =
-          this.#getTarget?.call?.(this, rawTarget, this.#events[eventId]!) ||
-          this;
+          this.#getTarget?.(rawTarget, this.#events[eventId]!) || this;
 
         this.#runHandlers(eventId, handlers, cmp, ...args);
         this.#propagateToLinks(eventName, ...args);

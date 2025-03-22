@@ -512,7 +512,7 @@ class ClassToFunction extends Visitor {
   ): Array<MemberDeconstruction> {
     return n.body
       .filter(ClassToFunction.isInstanceMethod)
-      .map(ClassToFunction.deconstructMethod);
+      .reduce(ClassToFunction.deconstructMethod, []);
   }
 
   static isInstanceMethod(
@@ -527,13 +527,16 @@ class ClassToFunction extends Visitor {
   }
 
   static deconstructMethod(
+    acc: MemberDeconstruction[],
     method: ClassMethod | PrivateMethod,
-  ): MemberDeconstruction {
+    key: number = 0,
+  ): MemberDeconstruction[] {
     const span = method.span;
 
     let id: Identifier | ComputedPropName;
     const isPrivate =
       method.type === "PrivateMethod" || method.accessibility === "private";
+    const isDecorated = !!method.function.decorators?.length;
 
     if (isPrivate) {
       id = ClassToFunction.getPrivateNameIdentifier(method.key);
@@ -551,15 +554,16 @@ class ClassToFunction extends Visitor {
     }
 
     let methodFunction = func({
-      binded: isPrivate
-        ? { expression: thisexpression({ span: method.span }) }
-        : null,
+      /*binded:
+        isPrivate && !isDecorated
+          ? { expression: thisexpression({ span: method.span }) }
+          : null,*/
       span,
       stmts: method.function.body?.stmts ?? [],
       params: method.function.params,
     });
 
-    if (method.function.decorators?.length) {
+    if (isDecorated) {
       const contextCreationCall = call({
         span,
         callee: identifier({
@@ -579,23 +583,71 @@ class ClassToFunction extends Visitor {
         ],
       });
 
-      method.function.decorators.reverse().forEach((decorator) => {
-        methodFunction = call({
-          callee: decorator.expression,
-          args: [
-            {
-              expression: methodFunction,
-            },
-            {
-              expression: contextCreationCall,
-            },
-          ],
-        }) as CallExpression;
+      method.function.decorators!.reverse().forEach((decorator) => {
+        methodFunction = call(
+          {
+            callee: decorator.expression,
+            args: [
+              {
+                expression: methodFunction,
+              },
+              {
+                expression: contextCreationCall,
+              },
+            ],
+          },
+          false,
+          { expression: thisexpression({ span }) },
+        ) as CallExpression;
+      });
+
+      const decoratedId = ClassToFunction.getPrivateNameIdentifier({
+        type: "Identifier",
+        span,
+        value:
+          "decorated" +
+          (id.type === "Identifier" ? id.value : "Computed" + key),
+      } as Identifier);
+
+      acc.push({
+        declarator: {
+          type: "VariableDeclarator",
+          span: method.span,
+          id: decoratedId,
+          definite: false,
+        },
+        assignment: assignmentStatement({
+          span: method.span,
+          left: decoratedId,
+          right: methodFunction,
+          operator: "=",
+        }),
+      });
+
+      methodFunction = func({
+        binded: isPrivate
+          ? { expression: thisexpression({ span: method.span }) }
+          : null,
+        span,
+        stmts: [
+          returnstmt({
+            span,
+            argument: fnApply({
+              callee: decoratedId,
+              thisArg: thisexpression({ span }),
+              args: [
+                {
+                  expression: identifier({ span, value: "arguments" }),
+                },
+              ],
+            }),
+          }),
+        ],
       });
     }
 
-    if (method.type === "PrivateMethod" || method.accessibility === "private") {
-      return {
+    if (isPrivate) {
+      acc.push({
         declarator: {
           type: "VariableDeclarator",
           span: method.span,
@@ -608,16 +660,18 @@ class ClassToFunction extends Visitor {
           right: methodFunction,
           operator: "=",
         }),
-      };
+      });
+    } else {
+      acc.push({
+        assignment: {
+          type: "KeyValueProperty",
+          key: id,
+          value: methodFunction,
+        },
+      });
     }
 
-    return {
-      assignment: {
-        type: "KeyValueProperty",
-        key: id,
-        value: methodFunction,
-      },
-    };
+    return acc;
   }
 
   #getProps(
@@ -798,10 +852,36 @@ class ClassToFunction extends Visitor {
           );
         }
 
-        return super.visitExpression(n);
-      default:
-        return super.visitExpression(n);
+        break;
+      case "CallExpression":
+        if (
+          n.callee.type === "MemberExpression" &&
+          n.callee.property.type === "PrivateName"
+        ) {
+          return super.visitExpression({
+            ...n,
+            callee: {
+              type: "MemberExpression",
+              span: n.callee.span,
+              object: n.callee,
+              property: identifier({
+                span: n.callee.property.span,
+                value: "call",
+              }),
+            },
+            arguments: [
+              {
+                expression: thisexpression({ span: n.span }),
+              },
+              ...n.arguments,
+            ],
+          });
+        }
+
+        break;
     }
+
+    return super.visitExpression(n);
   }
 
   visitDeclaration(decl: Declaration): Declaration {
