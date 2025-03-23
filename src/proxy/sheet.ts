@@ -19,7 +19,7 @@ export class SheetProxy
       const contextId: string = `sheet-${sheet.getSheetId()}`;
 
       const newData = sheet.getData();
-      this._proxyModeHandler.setContext(contextId, {
+      this._pmHdlr.setContext(contextId, {
         sheetData: newData,
         cmpClasses: {},
         cmpTexts: {},
@@ -28,7 +28,7 @@ export class SheetProxy
       });
 
       const getContext = (): SheetContext => {
-        return this._proxyModeHandler.getContext<SheetContext>(contextId);
+        return this._pmHdlr.getContext<SheetContext>(contextId);
       };
 
       return {
@@ -42,7 +42,7 @@ export class SheetProxy
         },
         setData: (d: LetsRole.ViewData) => {
           const ctx = getContext();
-          this._proxyModeHandler.setContext(contextId, {
+          this._pmHdlr.setContext(contextId, {
             ...ctx,
             sheetData: {
               ...ctx.sheetData,
@@ -86,16 +86,16 @@ export class SheetProxy
     // It will be when it will be necessary to get async data from cmp
     // And make this data in synchronous mode
     if (sheetId) {
-      this._proxyModeHandler.logAccess("cmp", [sheetId, id]);
+      this._pmHdlr.logAccess("cmp", [sheetId, id]);
     }
 
     return new ComponentProxy(
-      this._proxyModeHandler,
+      this._pmHdlr,
       this._realDest.get(id),
       this,
       () => {
         this.getDest();
-        return this._proxyModeHandler.getContext<SheetContext>(
+        return this._pmHdlr.getContext<SheetContext>(
           "sheet-" + this.getSheetId(),
         );
       },

@@ -128,7 +128,7 @@ class ComponentProxy
 
   #proxyIt(raw: LetsRole.Component): ComponentProxy {
     return new ComponentProxy(
-      this._proxyModeHandler,
+      this._pmHdlr,
       raw,
       this.#sheet,
       this.#getVirtualContext,
@@ -243,9 +243,9 @@ class ComponentProxy
     const sheetId = this.#sheet.getSheetId();
 
     if (sheetId) {
-      this._proxyModeHandler.logAccess(type, [sheetId, this.getDest().id()!]);
+      this._pmHdlr.logAccess(type, [sheetId, this.getDest().id()!]);
     } else if (this.#getDest) {
-      this._proxyModeHandler.logAccess(type, this.#getDest());
+      this._pmHdlr.logAccess(type, this.#getDest());
     }
   }
 }
