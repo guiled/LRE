@@ -6,7 +6,7 @@ try {
   errExclFirstLine = e.trace[0].loc.start.line;
 }
 
-const OhO = Object.prototype.hasOwnProperty.call,Obk = Object.keys,Obv = Object.values, Oba = Object.assign, Afr = function (a) { return Array.from.call(a,a);}, Ais = Array.isArray;
+const OhO = function (o, k) { return Object.prototype.hasOwnProperty.call(o, k);},Obk = Object.keys,Obv = Object.values, Oba = Object.assign, Afr = function (a) { return Array.from.call(a,a);}, Ais = Array.isArray;
 
 function iOf(a, b) {
   return a instanceof b;
