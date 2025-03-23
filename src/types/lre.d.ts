@@ -139,6 +139,9 @@ declare module "lre" {
   global {
     /* eslint-disable no-var */
     var LRE_DEBUG: boolean;
+    // This optimization is disabled because it naturally triggers repeater update event on every change
+    // Just kept in case Let's Role changed its behavior one day
+    var REPEATER_OPTIMIZATION_ENABLED: boolean;
     var lre: ILRE & Logger & cb;
     var firstInit: undefined | ((sheet: ISheet) => boolean);
     var errExclFirstLine: number, errExclLastLine: number;

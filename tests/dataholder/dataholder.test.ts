@@ -5,6 +5,7 @@ import { newMockedWait } from "../../src/mock/letsrole/wait.mock";
 import { DataBatcher } from "../../src/sheet/databatcher";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
+import { initLetsRole } from "../../src/mock/letsrole/letsrole.mock";
 
 const { wait, itHasWaitedEverything } = newMockedWait();
 global.wait = wait;
@@ -50,6 +51,7 @@ describe("Dataholder", () => {
         },
       ],
     });
+    initLetsRole(server, context);
     sheet1 = initSheet("main", "4242");
     C = class extends DataHolder() {};
     subject = new C(sheet1, "a.b.c");

@@ -41,6 +41,7 @@ export function getEsBuildConfig(
     define: {
       "console.log": "log",
       LRE_DEBUG: `${debugBuild}`,
+      REPEATER_OPTIMIZATION_ENABLED: "false",
     },
     minifySyntax: true,
   };

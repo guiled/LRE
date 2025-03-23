@@ -15,9 +15,6 @@ type PendingIndexes = Record<LetsRole.ComponentID, number>;
 
 const ASYNC_DATA_SET_DELAY = 50;
 const MAX_DATA_BATCH_SIZE = 20;
-// This optimization is disabled because it naturally triggers repeater update event on every change
-// Just kept in case Let's Role changed its behavior one day
-const REPEATER_OPTIMIZATION_ENABLED = false;
 
 export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
   #modeHandler: ProxyModeHandler;
@@ -180,10 +177,10 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
       }
     }
 
-    if (key === componentId) {
+    if (!REPEATER_OPTIMIZATION_ENABLED) {
       pending[indexes[componentId]].v = value;
     } else {
-      this.#mergeRepeaterValueToPendingData(
+      mergeRepeaterValueToPendingData(
         componentId,
         key as LetsRole.ComponentInRepeaterID,
         value as LetsRole.RepeaterValue,
@@ -204,61 +201,6 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
   ): void {
     indexes[key] = pending.length;
     pending.push({ k: key, v: null });
-  }
-
-  #mergeRepeaterValueToPendingData(
-    repeaterId: LetsRole.ComponentID,
-    key: LetsRole.ComponentInRepeaterID,
-    value: LetsRole.RepeaterValue,
-    pending: AllPendingData,
-    indexes: PendingIndexes,
-  ): void {
-    const repeaterValue: LetsRole.RepeaterValue =
-      this.#generateRepeaterValueFromKey(key, value);
-
-    pending[indexes[repeaterId]].v = lre.deepMerge(
-      pending[indexes[repeaterId]].v,
-      repeaterValue,
-    );
-  }
-
-  #generateRepeaterValueFromKey(
-    key: LetsRole.ComponentInRepeaterID,
-    value: LetsRole.ComponentValue,
-  ): LetsRole.RepeaterValue {
-    const ids = key.split(REP_ID_SEP);
-    return this.#generateNestedValueFromKey(ids, value);
-  }
-
-  #generateNestedValueFromKey(
-    ids: string[],
-    value: LetsRole.ComponentValue,
-  ): LetsRole.RepeaterValue {
-    const result: LetsRole.RepeaterValue = {};
-    let nestedResult: LetsRole.ViewData = result;
-
-    for (let i = 1; i < ids.length - 1; i++) {
-      nestedResult = this.#createNestedValue(nestedResult, ids[i]);
-    }
-
-    nestedResult[ids[ids.length - 1]] = value;
-    return result;
-  }
-
-  #createNestedValue(
-    target: LetsRole.RepeaterValue | LetsRole.ViewData,
-    id: string,
-  ): LetsRole.ViewData {
-    target = typeof target === "undefined" ? ({} as LetsRole.ViewData) : target;
-
-    if (
-      typeof target[id] !== "object" ||
-      !Object.prototype.hasOwnProperty.call(target, id)
-    ) {
-      target[id] = {} as LetsRole.ViewData;
-    }
-
-    return target[id] as LetsRole.ViewData;
   }
 
   getPendingData(
@@ -306,3 +248,60 @@ export class DataBatcher extends Mixin(EventHolder<DataBatcherEventType>) {
     }
   }
 }
+
+const mergeRepeaterValueToPendingData = function (
+  repeaterId: LetsRole.ComponentID,
+  key: LetsRole.ComponentInRepeaterID,
+  value: LetsRole.RepeaterValue,
+  pending: AllPendingData,
+  indexes: PendingIndexes,
+): void {
+  const repeaterValue: LetsRole.RepeaterValue = generateRepeaterValueFromKey(
+    key,
+    value,
+  );
+
+  pending[indexes[repeaterId]].v = lre.deepMerge(
+    pending[indexes[repeaterId]].v,
+    repeaterValue,
+  );
+};
+
+const generateRepeaterValueFromKey = function (
+  key: LetsRole.ComponentInRepeaterID,
+  value: LetsRole.ComponentValue,
+): LetsRole.RepeaterValue {
+  const ids = key.split(REP_ID_SEP);
+  return generateNestedValueFromKey(ids, value);
+};
+
+const generateNestedValueFromKey = function (
+  ids: string[],
+  value: LetsRole.ComponentValue,
+): LetsRole.RepeaterValue {
+  const result: LetsRole.RepeaterValue = {};
+  let nestedResult: LetsRole.ViewData = result;
+
+  for (let i = 1; i < ids.length - 1; i++) {
+    nestedResult = createNestedValue(nestedResult, ids[i]);
+  }
+
+  nestedResult[ids[ids.length - 1]] = value;
+  return result;
+};
+
+const createNestedValue = function (
+  target: LetsRole.RepeaterValue | LetsRole.ViewData,
+  id: string,
+): LetsRole.ViewData {
+  target = typeof target === "undefined" ? ({} as LetsRole.ViewData) : target;
+
+  if (
+    typeof target[id] !== "object" ||
+    !Object.prototype.hasOwnProperty.call(target, id)
+  ) {
+    target[id] = {} as LetsRole.ViewData;
+  }
+
+  return target[id] as LetsRole.ViewData;
+};
