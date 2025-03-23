@@ -796,6 +796,16 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
       return result;
     }
+
+    search(column: string, value: LetsRole.ComponentValue): IDataProvider {
+      return this.filter(
+        (v, k, data) =>
+          (column === "id" && k === value) ||
+          this.#getValueColumn(v, column) === value ||
+          this.#getValueColumn(data, column) === value,
+        `search(${column}=${value})`,
+      );
+    }
   };
 
 type DataProviderEvents = "refresh";

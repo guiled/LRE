@@ -890,7 +890,7 @@ describe("Dataprovider from cb refresh", () => {
 });
 
 describe("Dataprovider search", () => {
-  test("Search", () => {
+  test("Search on id", () => {
     const data = { a: "42", b: "13", c: "24" };
     const dataGetter = jest.fn((_a: any) => {
       if (_a) {
@@ -901,10 +901,41 @@ describe("Dataprovider search", () => {
     });
     const dp = lre.dataProvider("test", dataGetter);
 
-    // @ts-expect-error not yet implemented
-    const search = dp.search("a", "42");
+    const search = dp.search("id", "b");
 
     expect(search.provider).toBeTruthy();
+
+    expect(search.providedValue()).toStrictEqual({
+      b: "13",
+    });
+  });
+
+  test("Search on column", () => {
+    const data = {
+      a: { a: "42", b: "13", c: "24" },
+      b: { a: "1", b: "2", c: "3" },
+      c: { a: "4", b: "5", c: "6" },
+      d: { a: "24", b: "2", c: "6" },
+      e: { a: "111", b: "2", c: "8" },
+    };
+    const dataGetter = jest.fn((_a: any) => {
+      if (_a) {
+        Object.assign(data, _a);
+      }
+
+      return data as any;
+    });
+    const dp = lre.dataProvider("test", dataGetter);
+
+    const search = dp.search("b", "2");
+
+    expect(search.provider).toBeTruthy();
+
+    expect(search.providedValue()).toStrictEqual({
+      b: { a: "1", b: "2", c: "3" },
+      d: { a: "24", b: "2", c: "6" },
+      e: { a: "111", b: "2", c: "8" },
+    });
   });
 });
 

@@ -371,6 +371,7 @@ declare interface IDataProvider {
       | DataProviderCallback<Record<string | number, string | number> | string>,
   ): IDataProvider;
   toArray(transform?: DataProviderCallback): Array<unknown>;
+  search(column: string, value: LetsRole.ComponentValue): IDataProvider;
 }
 
 declare type IDataProviderAsSource = Pick<
