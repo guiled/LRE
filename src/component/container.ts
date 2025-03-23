@@ -5,6 +5,8 @@ export class Container
   extends Component<LetsRole.ViewData>
   implements ComponentContainer
 {
+  #children: Record<LetsRole.ComponentID, Component> = {};
+
   constructor(raw: LetsRole.Component, sheet: ISheet, realId: string) {
     super(raw, sheet, realId);
     this.lreType("container");
@@ -32,6 +34,21 @@ export class Container
   value(
     newValue?: DynamicSetValue<LetsRole.ViewData>,
   ): LetsRole.ViewData | void {
+    if (typeof newValue === "undefined") {
+      const children = this.#children;
+      const result: LetsRole.ViewData = {};
+      Object.keys(children).forEach((childId) => {
+        const child = children[childId];
+        const id = child.id();
+
+        if (id && child.exists()) {
+          result[id] = child.value();
+        }
+      });
+
+      return result;
+    }
+
     if (!lre.isObject(newValue)) {
       lre.error(
         `[Container] value() on ${this.realId()} expected object, got ${typeof newValue}`,
@@ -40,20 +57,31 @@ export class Container
     }
 
     Object.keys(newValue).forEach((key: LetsRole.ComponentID) => {
-      if (this.sheet().componentExists(key)) {
-        const cmp = this.sheet().get(key)!;
+      let cmp = this.#children[key];
+
+      if (!cmp && this.sheet().componentExists(key)) {
+        cmp = this.sheet().get(key) as Component;
+        this.#children[key] = cmp;
+      }
+
+      if (cmp) {
         cmp.value((newValue as any)[key] as LetsRole.ComponentValue);
       }
     });
   }
 
   find(completeId: string): ComponentSearchResult {
+    if (this.#children[completeId]) {
+      return this.#children[completeId];
+    }
+
     const cmp = this.sheet().get(completeId) as Component | null;
 
     if (lre.isComponent(cmp)) {
       const rawChild = this.raw().find(completeId);
 
       if (rawChild.id()) {
+        this.#children[completeId] = cmp;
         return cmp;
       }
 

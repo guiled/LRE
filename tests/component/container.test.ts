@@ -31,6 +31,11 @@ beforeEach(() => {
                 name: "Text",
                 className: "TextInput",
               },
+              {
+                id: "subTxt2",
+                name: "Text",
+                className: "TextInput",
+              },
             ],
           },
           {
@@ -169,9 +174,34 @@ describe("Container value", () => {
     const container = sheet.get("container") as Container;
     jest.spyOn(lre, "error");
 
-    const result = container.value();
+    let result = container.value();
 
     expect(lre.error).not.toHaveBeenCalled();
     expect(result).toStrictEqual({});
+
+    const cmp = container.find("subTxt1");
+
+    expect(cmp?.exists()).toBeTruthy();
+
+    result = container.value();
+
+    expect(result).toStrictEqual({
+      subTxt1: "",
+    });
+
+    container.value({
+      subTxt1: 42,
+      subTxt2: 43,
+    });
+
+    sheet.get("subTxt1")?.value(40);
+    sheet.get("subTxt2")?.value(44);
+
+    result = container.value();
+
+    expect(result).toStrictEqual({
+      subTxt1: 40,
+      subTxt2: 44,
+    });
   });
 });
