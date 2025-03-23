@@ -909,7 +909,7 @@ describe("Dataprovider search", () => {
 });
 
 describe("Dataprovider toArray", () => {
-  test("toArray", () => {
+  test("default toArray with scalar value", () => {
     const data = { a: "42", b: "13", c: "24" };
     const dataGetter = jest.fn((_a: any) => {
       if (_a) {
@@ -920,7 +920,67 @@ describe("Dataprovider toArray", () => {
     });
     const dp = lre.dataProvider("test", dataGetter);
 
-    // @ts-expect-error not yet implemented
-    expect(dp.toArray()).toStrictEqual([data]);
+    expect(dp.toArray()).toEqual(
+      expect.arrayContaining([
+        { id: "a", value: "42" },
+        { id: "b", value: "13" },
+        { id: "c", value: "24" },
+      ]),
+    );
+  });
+
+  test("default toArray with objects", () => {
+    const data = {
+      c: { value: "24", type: 42 },
+      a: { value: "42", type: 13 },
+      b: { value: "13", type: 24 },
+    };
+    const dataGetter = jest.fn((_a: any) => {
+      if (_a) {
+        Object.assign(data, _a);
+      }
+
+      return data as any;
+    });
+    const dp = lre.dataProvider("test", dataGetter);
+
+    expect(dp.toArray()).toEqual(
+      expect.arrayContaining([
+        { id: "a", value: "42", type: 13 },
+        { id: "b", value: "13", type: 24 },
+        { id: "c", value: "24", type: 42 },
+      ]),
+    );
+  });
+
+  test("toArray with custom function", () => {
+    const data = {
+      c: { value: "24", type: 42 },
+      a: { value: "42", type: 13 },
+      b: { value: "13", type: 24 },
+    };
+    const dataGetter = jest.fn((_a: any) => {
+      if (_a) {
+        Object.assign(data, _a);
+      }
+
+      return data as any;
+    });
+    const dp = lre.dataProvider("test", dataGetter);
+
+    const transform = (v: any, k: any, _data: any): any => {
+      return {
+        identifier: k,
+        value: parseInt(v.value) + v.type,
+      };
+    };
+
+    expect(dp.toArray(transform)).toEqual(
+      expect.arrayContaining([
+        { identifier: "b", value: 37 },
+        { identifier: "a", value: 55 },
+        { identifier: "c", value: 66 },
+      ]),
+    );
   });
 });

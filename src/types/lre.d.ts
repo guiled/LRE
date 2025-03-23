@@ -370,6 +370,7 @@ declare interface IDataProvider {
       | string
       | DataProviderCallback<Record<string | number, string | number> | string>,
   ): IDataProvider;
+  toArray(transform?: DataProviderCallback): Array<unknown>;
 }
 
 declare type IDataProviderAsSource = Pick<

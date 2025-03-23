@@ -19,6 +19,24 @@ type Sorter = (
 const defaultSorter: Sorter = ((a: number | string, b: number | string) =>
   a < b ? -1 : a > b ? 1 : 0) as Sorter;
 
+const arrayTransformer: DataProviderCallback<unknown> = (
+  value: DataProviderDataValue,
+  key?: DataProviderDataId,
+): unknown => {
+  if (typeof key === "undefined") {
+    key = lre.getRandomId();
+  }
+
+  if (lre.isObject(value)) {
+    return { id: key, ...value };
+  }
+
+  return {
+    id: key,
+    value,
+  };
+};
+
 // giving a type to the function will break the Mixin usage
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const DataProvider = (superclass: Newable = class {}) =>
@@ -764,6 +782,19 @@ export const DataProvider = (superclass: Newable = class {}) =>
         },
         true,
       );
+    }
+
+    toArray(
+      transform: DataProviderCallback<unknown> = arrayTransformer,
+    ): Array<unknown> {
+      const result: Array<unknown> = [];
+      const data = this.#getCurrentValue();
+
+      this.each((v, k) => {
+        result.push(transform(v, k, data));
+      });
+
+      return result;
     }
   };
 
