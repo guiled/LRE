@@ -174,7 +174,7 @@ class DefaultParameter extends Visitor {
   ): VariableDeclaration {
     return onevariable({
       span,
-      kind: "const",
+      kind: "let",
       init,
       id: {
         type: "ArrayPattern",
