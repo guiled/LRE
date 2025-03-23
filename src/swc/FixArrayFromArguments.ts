@@ -8,7 +8,6 @@ import {
 import { Visitor } from "@swc/core/Visitor.js";
 import member from "./node/expression/member";
 import identifier from "./node/identifier";
-import nullliteral from "./node/literal/nullliteral";
 
 class FixArrayFromArguments extends Visitor {
   visitCallExpression(n: CallExpression): Expression {
@@ -23,10 +22,7 @@ class FixArrayFromArguments extends Visitor {
           object: n.callee,
           property: identifier({ span: n.span, value: "call" }),
         }),
-        arguments: [
-          { expression: nullliteral({ span: n.span }) },
-          ...n.arguments,
-        ],
+        arguments: [...n.arguments],
       };
     }
 

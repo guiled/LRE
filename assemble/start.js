@@ -6,6 +6,8 @@ try {
   errExclFirstLine = e.trace[0].loc.start.line;
 }
 
+const OhO = Object.prototype.hasOwnProperty.call,Obk = Object.keys,Obv = Object.values, Oba = Object.assign, Afr = function (a) { return Array.from.call(a,a);}, Ais = Array.isArray;
+
 function iOf(a, b) {
   return a instanceof b;
 }
@@ -43,21 +45,21 @@ function tpo(val, idx) {
 function mx(v) {
   const m = v[0];
   const a = v[1] || [];
-  const prev = Object.assign({}, this);
+  const prev = Oba({}, this);
   const rev = m.reverse();
   const resParent = rev.reduce(
     function (acc, cur, idx) {
       const p = new (cur.bind.apply(cur, [null, a[m.length - 1 - idx]]))();
-      return Object.assign(acc, p);
+      return Oba(acc, p);
     }.bind(this),
     {}
   );
-  const parentKeys = Object.keys(resParent);
+  const parentKeys = Obk(resParent);
   parentKeys.forEach(
     function (k) {
       tpo(resParent[k], 4) && (resParent[k] = resParent[k].bind(this));
     }.bind(this)
   );
-  Object.assign(this, resParent, prev);
+  Oba(this, resParent, prev);
   return resParent;
 }

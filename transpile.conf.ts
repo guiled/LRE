@@ -12,6 +12,7 @@ import { noDoWhile } from "./src/swc/NoDoWhile";
 import { mixinToAssign } from "./src/swc/MixinToAssign";
 import { noRestElement } from "./src/swc/NoRestElement";
 import noInstanceOf from "./src/swc/NoInstanceOf";
+import { codeAliases } from "./src/swc/CodeAliases";
 import noObjectSpreading from "./src/swc/NoObjectSpread";
 import { noSpreadArgument } from "./src/swc/NoSpreadArgument";
 import fixArrayFromArguments from "./src/swc/FixArrayFromArguments";
@@ -59,6 +60,7 @@ const transformForLR: Options = {
     computedObjectProps(),
     classToFunction(),
     fixArrayFromArguments(),
+    codeAliases(),
     defaultParameter(),
   ]),
   sourceMaps: false,
