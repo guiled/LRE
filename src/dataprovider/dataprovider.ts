@@ -541,6 +541,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
     unsubscribeRefresh(id: string): void {
       LRE_DEBUG &&
+        !!this.#destRefresh[id] &&
         lre.trace(`Remove update subscriber in ${this.realId()}: ${id}`);
       delete this.#destRefresh[id];
     }
