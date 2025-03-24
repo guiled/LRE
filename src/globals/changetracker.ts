@@ -33,6 +33,7 @@ export class ChangeTracker {
   #holder: DynamicSetterHolder;
   #context: ProxyModeHandler;
   #logs: Record<string, Partial<ContextLog>> = {};
+  #isTracking: Record<string, boolean> = {};
 
   constructor(holder: DynamicSetterHolder, context: ProxyModeHandler) {
     this.#holder = holder;
@@ -93,6 +94,9 @@ export class ChangeTracker {
               lre.trace(`Call ${this.realId()}:${name} with dynamic args`);
 
             const newSetter = (): any => {
+              const tracker = this.getChangeTracker();
+              const wasAlreadyTracking = tracker.isTracking(name);
+              tracker.startTracking(name);
               const argsForTarget: Args = [] as unknown as Args;
               argTypes.forEach((t, i) => {
                 const newValue = args[i];
@@ -120,7 +124,10 @@ export class ChangeTracker {
                   providedBy,
                 });
               });
-              this.getChangeTracker().handleChangeLinks(name, newSetter);
+
+              if (!wasAlreadyTracking) {
+                this.getChangeTracker().handleChangeLinks(name, newSetter);
+              }
 
               const values: Args = [] as unknown as Args;
               argsForTarget.forEach((arg, idx) => {
@@ -128,11 +135,14 @@ export class ChangeTracker {
                 providerExtractors[idx]?.call?.(this, arg.providedBy);
               });
 
-              return target.apply(this, values);
+              const result = target.apply(this, values);
+              tracker.stopTracking(name);
+
+              return result;
             };
 
             return newSetter();
-          } else {
+          } else if (!this.getChangeTracker().isTracking(name)) {
             this.getChangeTracker().handleChangeLinks(name);
             providerExtractors.forEach((extractor) =>
               extractor.call(this, undefined),
@@ -186,6 +196,18 @@ export class ChangeTracker {
     }
 
     this.#logs[name] = newLogs;
+  }
+
+  startTracking(name: string): void {
+    this.#isTracking[name] = true;
+  }
+
+  stopTracking(name: string): void {
+    delete this.#isTracking[name];
+  }
+
+  isTracking(name: string): boolean {
+    return !!this.#isTracking[name];
   }
 
   static findLogIndex(

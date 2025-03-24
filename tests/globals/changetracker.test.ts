@@ -611,3 +611,83 @@ describe("ChangeTracker extract data providers", () => {
     expect(a.givenCb).toBe(dp2);
   });
 });
+
+describe("ChangeTracker on derived class", () => {
+  let ClassA: any, ClassB: any;
+
+  beforeEach(() => {
+    const server = new ServerMock({});
+    initLetsRole(server, new Context());
+    global.lre = new LRE(context);
+
+    ClassA = class {
+      #id: string;
+      #fn!: (n: any) => void;
+      #tracker: ChangeTracker = new ChangeTracker(this, context);
+
+      constructor(id: string, fn: (n: any) => void) {
+        this.#id = id;
+
+        if (fn) {
+          this.#fn = fn;
+        }
+      }
+
+      realId(): string {
+        return this.#id;
+      }
+
+      getChangeTracker(): ChangeTracker {
+        return this.#tracker;
+      }
+
+      @ChangeTracker.linkParams()
+      method(n: any): any {
+        this.#fn(n);
+      }
+    };
+
+    ClassB = class extends ClassA {
+      #fn2!: (n: any) => void;
+
+      constructor(id: string, fn1: (n: any) => void, fn2: (n: any) => void) {
+        super(id, fn1);
+        this.#fn2 = fn2;
+      }
+
+      @ChangeTracker.linkParams()
+      method(n: any): any {
+        this.#fn2(n);
+        super.method(n);
+      }
+    };
+  });
+
+  test("ChangeTracker keeps the links on the overloaded tracked method", () => {
+    const fn1 = jest.fn();
+    const fn2 = jest.fn();
+
+    const obj = new ClassB("Aa", fn1, fn2);
+
+    obj.method();
+
+    expect(fn1).toHaveBeenCalledTimes(1);
+    expect(fn2).toHaveBeenCalledTimes(1);
+
+    const val = 42;
+    const dp = new DirectDataProvider("dp", context, () => val);
+    jest.spyOn(dp, "subscribeRefresh");
+    jest.spyOn(dp, "unsubscribeRefresh");
+
+    jest.clearAllMocks();
+
+    obj.method(dp);
+
+    expect(fn1).toHaveBeenCalledTimes(1);
+    expect(fn1).toHaveBeenCalledWith(val);
+    expect(fn2).toHaveBeenCalledTimes(1);
+    expect(fn2).toHaveBeenCalledWith(val);
+    expect(dp.subscribeRefresh).toHaveBeenCalledTimes(1);
+    expect(dp.unsubscribeRefresh).not.toHaveBeenCalled();
+  });
+});
