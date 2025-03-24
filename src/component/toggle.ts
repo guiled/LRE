@@ -27,6 +27,7 @@ export class Toggle<
   #currentTogglingValue: TogglingValue | null = null;
   #saveTogglingData: boolean = false;
   #hadClickableClass: boolean = false;
+  #changeAwaited: boolean = false;
 
   // constructor only for builder compatibility
   constructor(raw: LetsRole.Component, sheet: ISheet, realId: string) {
@@ -199,42 +200,50 @@ export class Toggle<
   }
 
   #changeTogglingData(oldData: TogglingData, newData: TogglingData): void {
-    lre.wait(0, () => {
-      const sheet = this.sheet();
+    if (!this.#changeAwaited) {
+      this.#changeAwaited = true;
+      lre.wait(
+        0,
+        () => {
+          this.#changeAwaited = false;
+          const sheet = this.sheet();
 
-      const showflex = (id: LetsRole.ComponentID): unknown =>
-        sheet.get(id)?.addClass("d-flex").removeClass("d-none");
-      const hideflex = (id: LetsRole.ComponentID): unknown =>
-        sheet.get(id)?.addClass("d-none").removeClass("d-flex");
-      const show = (id: LetsRole.ComponentID): unknown =>
-        sheet.get(id)?.removeClass("d-none");
-      const hide = (id: LetsRole.ComponentID): unknown =>
-        sheet.get(id)?.addClass("d-none");
+          const showflex = (id: LetsRole.ComponentID): unknown =>
+            sheet.get(id)?.addClass("d-flex").removeClass("d-none");
+          const hideflex = (id: LetsRole.ComponentID): unknown =>
+            sheet.get(id)?.addClass("d-none").removeClass("d-flex");
+          const show = (id: LetsRole.ComponentID): unknown =>
+            sheet.get(id)?.removeClass("d-none");
+          const hide = (id: LetsRole.ComponentID): unknown =>
+            sheet.get(id)?.addClass("d-none");
 
-      this.#manageAddedRemoved(
-        oldData,
-        newData,
-        "classes",
-        this.addClass.bind(this),
-        this.removeClass.bind(this),
+          this.#manageAddedRemoved(
+            oldData,
+            newData,
+            "classes",
+            this.addClass.bind(this),
+            this.removeClass.bind(this),
+          );
+          this.#manageAddedRemoved(
+            oldData,
+            newData,
+            "showflex",
+            showflex,
+            hideflex,
+          );
+          this.#manageAddedRemoved(
+            oldData,
+            newData,
+            "hideflex",
+            hideflex,
+            showflex,
+          );
+          this.#manageAddedRemoved(oldData, newData, "show", show, hide);
+          this.#manageAddedRemoved(oldData, newData, "hide", hide, show);
+        },
+        `${this.realId()}:Change Toggling Data`,
       );
-      this.#manageAddedRemoved(
-        oldData,
-        newData,
-        "showflex",
-        showflex,
-        hideflex,
-      );
-      this.#manageAddedRemoved(
-        oldData,
-        newData,
-        "hideflex",
-        hideflex,
-        showflex,
-      );
-      this.#manageAddedRemoved(oldData, newData, "show", show, hide);
-      this.#manageAddedRemoved(oldData, newData, "hide", hide, show);
-    });
+    }
   }
 
   #manageAddedRemoved(
