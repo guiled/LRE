@@ -103,10 +103,12 @@ export class Toggle<
 
   value(): string;
   value(newValue: DynamicSetValue<string>): void;
+  @ChangeTracker.linkParams()
   value(newValue?: DynamicSetValue<string>): void | LetsRole.ComponentValue {
     if (!this.#togglingValues?.length) {
       if (arguments.length === 0) {
         if (this.hasData(VALUE_DATA_ID)) {
+          super.value();
           return this.data(VALUE_DATA_ID) as string;
         }
 
@@ -117,6 +119,7 @@ export class Toggle<
     }
 
     if (arguments.length === 0) {
+      super.value();
       return this.#currentTogglingValue;
     } else {
       this.#setTogglingValue(newValue as string);
@@ -269,6 +272,8 @@ export class Toggle<
       index = 0;
     }
 
+    this.getChangeTracker().startTracking("value");
     this.#setTogglingValue(this.#togglingValues[index]);
+    this.getChangeTracker().stopTracking("value");
   }
 }
