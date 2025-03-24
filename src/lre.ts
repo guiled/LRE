@@ -234,6 +234,7 @@ export class LRE extends Logger implements ILRE {
 
   wait(delay: number, cb: () => void, waitName: string = "No-name"): void {
     if (this.#context.getMode() !== "virtual") {
+      LRE_DEBUG && lre.push(`[Wait] Launch ${waitName} after ${delay}ms`);
       wait(delay, () => {
         try {
           cb();
@@ -241,6 +242,7 @@ export class LRE extends Logger implements ILRE {
           this.error(`[Wait] ${waitName} Unhandled error : ${e}`);
         }
       });
+      LRE_DEBUG && lre.pop();
     }
   }
 
