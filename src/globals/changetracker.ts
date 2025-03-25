@@ -54,6 +54,7 @@ export class ChangeTracker {
   #context: ProxyModeHandler;
   #logs: Record<string, Partial<ContextLog>> = {};
   #isTracking: Record<string, boolean> = {};
+  #applyTrackedChanges: boolean = true;
 
   constructor(holder: DynamicSetterHolder, context: ProxyModeHandler) {
     this.#holder = holder;
@@ -148,7 +149,41 @@ export class ChangeTracker {
     };
   }
 
+  static noChangeHandling(
+    target: DynamicSetterHolder,
+    cb: (...args: any[]) => any,
+    args: any[],
+  ): void {
+    const changeTracker = target.getChangeTracker();
+    changeTracker.disableChangeHandling();
+
+    let result;
+
+    // The try catch secures the call to the callback in order to restore the enableChangeHandling
+    try {
+      result = cb.apply(target, args);
+    } catch (e) {
+      lre.error(`[ChangeTracker] Error in ${target.realId()}:noChangeHandling`);
+    }
+
+    changeTracker.enableChangeHandling();
+
+    return result;
+  }
+
+  disableChangeHandling(): void {
+    this.#applyTrackedChanges = false;
+  }
+
+  enableChangeHandling(): void {
+    this.#applyTrackedChanges = true;
+  }
+
   handleChangeLinks(name: string, setter?: () => any): void {
+    if (!this.#applyTrackedChanges) {
+      return;
+    }
+
     const newLogs: Partial<ContextLog> = this.#context.getLastLog();
 
     if (setter) {

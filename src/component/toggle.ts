@@ -184,9 +184,13 @@ export class Toggle<
     if (
       Object.prototype.hasOwnProperty.call(this.#togglingData[value], "icon")
     ) {
-      super.value(this.#togglingData[value].icon!);
+      ChangeTracker.noChangeHandling(this, super.value, [
+        this.#togglingData[value].icon!,
+      ]);
     } else if (typeof this.#togglingData[value] === "string") {
-      super.value(this.#togglingData[value]);
+      ChangeTracker.noChangeHandling(this, super.value, [
+        this.#togglingData[value],
+      ]);
     } else {
       // update event is triggered by changing icon value, but is not triggered if only style change, etc.
       // So we trigger update event manually if icon value is not changed but the toggle value changed

@@ -653,4 +653,30 @@ describe("Toggle", () => {
 
     expect(toggle.value()).toStrictEqual("on");
   });
+
+  test("Dynamic value is kept after changing toggling data", () => {
+    const toggle = sheet.get("toggle") as Toggle;
+    const data: Record<string, string> = {
+      on: "text1",
+      off: "text2",
+    };
+    toggle.toggling(data);
+
+    const dp = new DirectDataProvider("source", context, () => "on");
+    jest.spyOn(dp, "subscribeRefresh");
+    jest.spyOn(dp, "unsubscribeRefresh");
+
+    toggle.value(dp);
+
+    expect(dp.subscribeRefresh).toHaveBeenCalledTimes(1);
+    expect(dp.unsubscribeRefresh).not.toHaveBeenCalled();
+
+    jest.clearAllMocks();
+    data.on = "text3";
+    data.off = "text4";
+    toggle.toggling(data);
+
+    expect(dp.subscribeRefresh).not.toHaveBeenCalled();
+    expect(dp.unsubscribeRefresh).not.toHaveBeenCalled();
+  });
 });
