@@ -20,6 +20,26 @@ type DecoratorContext<This, Args extends any[], Return> =
 
 type DynamicArgType = "value" | "provider" | "callback" | "component";
 
+type AnalyzedArgValue = [unknown, IDataProvider | undefined];
+
+type ArgType =
+  | {
+      arg: unknown;
+      type: "value";
+    }
+  | {
+      arg: IDataProvider;
+      type: "provider";
+    }
+  | {
+      arg: IComponent;
+      type: "component";
+    }
+  | {
+      arg: Callback;
+      type: "callback";
+    };
+
 const LOG_TYPE_EVENTS: Partial<Record<ProxyModeHandlerLogType, EventType>> = {
   value: "update",
   rawValue: "update",
@@ -40,17 +60,17 @@ export class ChangeTracker {
     this.#context = context;
   }
 
-  static linkValueCallbackLogToTarget<Return>(
-    cb: Callback<Return>,
-    target: Callback,
-    decoratorContextName: string,
-  ): Return {
-    return ChangeTracker.linkParams()
-      .call(this, target, {
-        name: decoratorContextName,
-      })
-      .call(this, cb);
-  }
+  // static linkValueCallbackLogToTarget<Return>(
+  //   cb: Callback<Return>,
+  //   target: Callback,
+  //   decoratorContextName: string,
+  // ): Return {
+  //   return ChangeTracker.linkParams()
+  //     .call(this, target, {
+  //       name: decoratorContextName,
+  //     })
+  //     .call(this, cb);
+  // }
 
   static linkParams<
     This extends DynamicSetterHolder,
@@ -67,27 +87,12 @@ export class ChangeTracker {
       const replacementMethod = function (this: This, ...args: Args): Return {
         if (arguments.length > 0) {
           const name: string = decoratorContext.name as string;
-          let hasDynamicSetter = false;
-          const argTypes: Array<DynamicArgType> = [];
-
-          args.forEach((newValue, idx) => {
-            if (argFlags[idx] === false) {
-              argTypes.push("value");
-            } else if (typeof newValue === "undefined") {
-              argTypes.push("value");
-            } else if (lre.isDataProvider(newValue)) {
-              argTypes.push("provider");
-              hasDynamicSetter = true;
-            } else if (lre.isComponent(newValue)) {
-              argTypes.push("component");
-              hasDynamicSetter = true;
-            } else if (typeof newValue === "function") {
-              argTypes.push("callback");
-              hasDynamicSetter = true;
-            } else {
-              argTypes.push("value");
-            }
+          const analyzedArgs: ArgType[] = args.map((arg, i) => {
+            return ChangeTracker.analyzeArg(arg, argFlags[i]);
           });
+          const hasDynamicSetter = analyzedArgs.some(
+            (argType) => argType.type !== "value",
+          );
 
           if (hasDynamicSetter) {
             LRE_DEBUG &&
@@ -97,42 +102,17 @@ export class ChangeTracker {
               const tracker = this.getChangeTracker();
               const wasAlreadyTracking = tracker.isTracking(name);
               tracker.startTracking(name);
-              const argsForTarget: Args = [] as unknown as Args;
-              argTypes.forEach((t, i) => {
-                const newValue = args[i];
-                let res: ReturnType<ProxyModeHandler["call"]>;
-                let providedBy: IDataProvider | undefined = undefined;
-
-                if (t === "provider") {
-                  res = context.call(
-                    true,
-                    newValue.providedValue.bind(newValue),
-                  );
-                  providedBy = newValue;
-                } else if (t === "callback") {
-                  res = context.call(true, newValue);
-                } else if (t === "component") {
-                  res = context.call(true, newValue.value.bind(newValue));
-                  providedBy =
-                    newValue.valueProvider() || newValue.dataProvider();
-                } else {
-                  res = [args[i], {}];
-                }
-
-                argsForTarget.push({
-                  value: res[0],
-                  providedBy,
-                });
-              });
+              const argValues =
+                ChangeTracker.getAnalyzedArgValues(analyzedArgs);
 
               if (!wasAlreadyTracking) {
                 this.getChangeTracker().handleChangeLinks(name, newSetter);
               }
 
               const values: Args = [] as unknown as Args;
-              argsForTarget.forEach((arg, idx) => {
-                values.push(arg.value);
-                providerExtractors[idx]?.call?.(this, arg.providedBy);
+              argValues.forEach(([value, provider], idx) => {
+                values.push(value);
+                providerExtractors[idx]?.call?.(this, provider);
               });
 
               const result = target.apply(this, values);
@@ -223,6 +203,72 @@ export class ChangeTracker {
 
       return false;
     });
+  }
+
+  static getArgValue(
+    arg: unknown,
+    canBeDynamic: boolean = true,
+    mustTrack: boolean = true,
+  ): [unknown, IDataProvider | undefined] {
+    const analyzedArgs = ChangeTracker.analyzeArg(arg, canBeDynamic);
+
+    return ChangeTracker.getAnalyzedArgValues([analyzedArgs], mustTrack)[0];
+  }
+
+  static analyzeArg(arg: unknown, canBeDynamic: boolean = true): ArgType {
+    let type: DynamicArgType = "value";
+
+    if (canBeDynamic && typeof arg !== "undefined") {
+      if (lre.isDataProvider(arg)) {
+        type = "provider";
+      } else if (lre.isComponent(arg)) {
+        type = "component";
+      } else if (typeof arg === "function") {
+        type = "callback";
+      }
+    }
+
+    return { arg, type } as ArgType;
+  }
+
+  static getAnalyzedArgValues(
+    args: Array<ArgType>,
+    mustTrack: boolean = true,
+  ): Array<AnalyzedArgValue> {
+    if (mustTrack) {
+      const contextCallResult = context.call(true, () =>
+        args.map((arg): AnalyzedArgValue => {
+          if (arg.type === "value") {
+            return [arg.arg, undefined];
+          }
+
+          return ChangeTracker.getAnalyzedArgValue(arg);
+        }),
+      );
+
+      return contextCallResult[0];
+    }
+
+    return args.map(ChangeTracker.getAnalyzedArgValue);
+  }
+
+  static getAnalyzedArgValue({ arg, type }: ArgType): AnalyzedArgValue {
+    let res: ArgType["arg"];
+    let providedBy: IDataProvider | undefined = undefined;
+
+    if (type === "provider") {
+      res = arg.providedValue();
+      providedBy = arg;
+    } else if (type === "callback") {
+      res = arg();
+    } else if (type === "component") {
+      res = arg.value();
+      providedBy = arg.valueProvider() || arg.dataProvider();
+    } else {
+      res = arg;
+    }
+
+    return [res, providedBy];
   }
 
   #createEvent(

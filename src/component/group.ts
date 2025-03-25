@@ -385,4 +385,12 @@ export class Group
 
     return this.#components.findIndex((c) => c.realId() === id);
   }
+
+  valueProvider(): IDataProvider | undefined {
+    return;
+  }
+
+  dataProvider(): IDataProvider | undefined {
+    return;
+  }
 }

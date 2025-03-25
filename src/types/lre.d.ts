@@ -450,6 +450,8 @@ declare interface IComponent
   ): boolean | void;
   setChoices(choices: LetsRole.Choices): void;
   valueData(): LetsRole.TableRow | LetsRole.ComponentValue | null;
+  valueProvider(): IDataProvider | undefined;
+  dataProvider(): IDataProvider | undefined;
 }
 
 declare interface IGroup extends IComponent, IDataProvider, IEventHolder {
