@@ -334,7 +334,7 @@ declare interface IDataProvider {
   each(
     mapper: (val: DataProviderDataValue, key: DataProviderDataId) => void,
   ): void;
-  select(column: LetsRole.ComponentID): IDataProvider;
+  select(column: DynamicSetValue<LetsRole.ComponentID>): IDataProvider;
   getData(
     id?: DataProviderDataId | Array<number | string>,
   ): DataProviderDataValue;

@@ -404,6 +404,46 @@ describe("DataProvider select a column", () => {
       "4": undefined,
     });
   });
+
+  test("Select with a dynamic column", () => {
+    const data: any = {
+      "1": { a: "42", b: "13", c: "24" },
+      "2": { a: "1", b: "2", c: "3" },
+      "4": { b: "5", c: "6" },
+      "3": { a: "4", b: "5", c: "6" },
+    };
+    const dataGetter = jest.fn((_a: any) => {
+      if (_a) {
+        Object.assign(data, _a);
+      }
+
+      return data as any;
+    });
+    const dp = lre.dataProvider("test", dataGetter);
+
+    let val = "a";
+    const dpVal = lre.dataProvider("val", () => val);
+
+    const result = dp.select(dpVal);
+
+    expect(result.provider).toBeTruthy();
+    expect(result.providedValue()).toStrictEqual({
+      "1": "42",
+      "2": "1",
+      "3": "4",
+      "4": undefined,
+    });
+
+    val = "b";
+    dpVal.refresh();
+
+    expect(result.providedValue()).toStrictEqual({
+      "1": "13",
+      "2": "2",
+      "3": "5",
+      "4": "5",
+    });
+  });
 });
 
 describe("Dataprovider getData", () => {

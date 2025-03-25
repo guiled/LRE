@@ -266,12 +266,18 @@ export const DataProvider = (superclass: Newable = class {}) =>
       }
     }
 
-    select(column: string): IDataProvider {
+    select(column: DynamicSetValue<string>): IDataProvider {
       return this.#newProvider(`${this.realId()}-select(${column})`, () => {
+        let [col] = ChangeTracker.getArgValue(column, true, false);
+
+        if (typeof col !== "string" && typeof col !== "number") {
+          col = "id";
+        }
+
         const result: Record<string, TableRow | LetsRole.ComponentValue> = {};
 
         this.each((v, k) => {
-          result[k] = this.#getValueColumn(v, column);
+          result[k] = this.#getValueColumn(v, col as string);
         });
 
         if (
