@@ -66,7 +66,7 @@ describe("ChangeTracker linkParams", () => {
       }
 
       @ChangeTracker.linkParams()
-      method(a: number): any {
+      method(a: number, v: number = 0): any {
         this.#value = a;
         this.#fn(a);
 
@@ -74,7 +74,7 @@ describe("ChangeTracker linkParams", () => {
           this.#refresher[key]();
         }
 
-        return a;
+        return a + v;
       }
 
       providedValue<T extends DataProviderDataValue = DataProviderDataValue>(
@@ -205,6 +205,35 @@ describe("ChangeTracker linkParams", () => {
     expect(cmp1.off).not.toHaveBeenCalled();
     expect(cmp2.on).not.toHaveBeenCalled();
     expect(cmp2.off).not.toHaveBeenCalled();
+  });
+
+  test("Multiple args value log add event", () => {
+    const a = new ClassA("Aa");
+
+    const cmp1 = sheet.get("a")!;
+    cmp1.value("a1");
+    jest.spyOn(cmp1, "on");
+    jest.spyOn(cmp1, "off");
+    const cmp2 = sheet.get("b")!;
+    cmp2.value(1);
+    jest.spyOn(cmp2, "on");
+    jest.spyOn(cmp2, "off");
+
+    const result = a.method(() => {
+      return cmp1.value();
+    }, cmp2);
+
+    expect(context.getLastLog()).toStrictEqual({
+      value: [
+        ["123", "a"],
+        ["123", "b"],
+      ],
+    });
+    expect(cmp1.on).toHaveBeenCalledTimes(1);
+    expect(cmp1.off).not.toHaveBeenCalled();
+    expect(cmp2.on).toHaveBeenCalledTimes(1);
+    expect(cmp2.off).not.toHaveBeenCalled();
+    expect(result).toBe("a11");
   });
 
   test("Events are changed if changing the value", () => {
