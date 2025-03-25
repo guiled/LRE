@@ -102,20 +102,29 @@ export class ChangeTracker {
               const tracker = this.getChangeTracker();
               const wasAlreadyTracking = tracker.isTracking(name);
               tracker.startTracking(name);
-              const argValues =
-                ChangeTracker.getAnalyzedArgValues(analyzedArgs);
+              let result;
 
-              if (!wasAlreadyTracking) {
-                this.getChangeTracker().handleChangeLinks(name, newSetter);
+              try {
+                const argValues =
+                  ChangeTracker.getAnalyzedArgValues(analyzedArgs);
+
+                if (!wasAlreadyTracking) {
+                  this.getChangeTracker().handleChangeLinks(name, newSetter);
+                }
+
+                const values: Args = [] as unknown as Args;
+                argValues.forEach(([value, provider], idx) => {
+                  values.push(value);
+                  providerExtractors[idx]?.call?.(this, provider);
+                });
+
+                result = target.apply(this, values);
+              } catch (e) {
+                lre.error(
+                  `[ChangeTracker] Error in ${this.realId()}:${name} : ${e}`,
+                );
               }
 
-              const values: Args = [] as unknown as Args;
-              argValues.forEach(([value, provider], idx) => {
-                values.push(value);
-                providerExtractors[idx]?.call?.(this, provider);
-              });
-
-              const result = target.apply(this, values);
               tracker.stopTracking(name);
 
               return result;
