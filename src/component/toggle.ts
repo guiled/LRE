@@ -16,6 +16,15 @@ type TogglingDataArrayItem = keyof Omit<TogglingData, "icon">;
 
 type TogglingDataMap = Record<TogglingValue, TogglingData>;
 
+type TogglingOptions = {
+  default?: TogglingValue;
+  save?: boolean;
+};
+
+const defaultOptions: TogglingOptions = {
+  save: true,
+};
+
 const TOGGLING_EVENT_NAME = "click:__lreToggle";
 const VALUE_DATA_ID = "togglingValue";
 
@@ -25,21 +34,41 @@ export class Toggle<
   #togglingData: TogglingDataMap = {};
   #togglingValues: TogglingValue[] = [];
   #currentTogglingValue: TogglingValue | null = null;
-  #saveTogglingData: boolean = false;
   #hadClickableClass: boolean = false;
   #changeAwaited: boolean = false;
+  #options: TogglingOptions = Object.assign({}, defaultOptions);
 
   // constructor only for builder compatibility
   constructor(raw: LetsRole.Component, sheet: ISheet, realId: string) {
     super(raw, sheet, realId);
   }
 
-  @ChangeTracker.linkParams()
+  toggling(
+    data: TogglingDataMap | Record<TogglingValue, string>,
+    defaultValue?: TogglingOptions,
+  ): this;
   toggling(
     data: TogglingDataMap | Record<TogglingValue, string>,
     defaultValue?: TogglingValue,
+    save?: boolean,
+  ): this;
+  @ChangeTracker.linkParams()
+  toggling(
+    data: TogglingDataMap | Record<TogglingValue, string>,
+    defaultValue?: TogglingValue | TogglingOptions,
     save: boolean = true,
   ): this {
+    if (!lre.isObject(defaultValue)) {
+      this.#options.default = defaultValue;
+      this.#options.save = save;
+    } else {
+      this.#options = Object.assign({}, defaultOptions, defaultValue);
+
+      if (arguments.length === 3) {
+        this.#options.save = save;
+      }
+    }
+
     for (const k in data) {
       if (typeof data[k] === "string") {
         data[k] = { icon: data[k] };
@@ -64,17 +93,16 @@ export class Toggle<
       return this;
     }
 
-    defaultValue ??= this.#togglingValues[0];
+    this.#options.default ??= this.#togglingValues[0];
 
-    this.#saveTogglingData = save;
-    const savedValue: string | null = this.#saveTogglingData
+    const savedValue: string | null = this.#options.save
       ? (this.data(VALUE_DATA_ID) as string)
       : null;
 
     if (savedValue && this.#togglingValues.includes(savedValue)) {
       this.#setTogglingValue(savedValue);
-    } else if (this.#togglingValues.includes(defaultValue)) {
-      this.#setTogglingValue(defaultValue);
+    } else if (this.#togglingValues.includes(this.#options.default)) {
+      this.#setTogglingValue(this.#options.default);
     } else {
       const rawValue = this.raw().value();
       const newVal = this.#togglingValues.find(function (k) {
@@ -202,7 +230,7 @@ export class Toggle<
 
     this.#changeTogglingData(oldData, this.#togglingData[value]);
     this.#currentTogglingValue = value;
-    this.#saveTogglingData && this.data(VALUE_DATA_ID, value, true);
+    this.#options.save && this.data(VALUE_DATA_ID, value, true);
 
     if (
       Object.prototype.hasOwnProperty.call(this.#togglingData[value], "icon")

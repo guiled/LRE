@@ -522,7 +522,7 @@ describe("Toggle", () => {
         on: "text1",
         off: "text2",
       },
-      "off",
+      { default: "off", save: true },
     );
 
     expect(toggle.value()).toStrictEqual("off");
