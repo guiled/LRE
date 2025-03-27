@@ -63,6 +63,7 @@ beforeEach(() => {
   rawSheet = server.openView("main", "12345");
   global.lre = new LRE(context);
   sheet = new Sheet(rawSheet, new DataBatcher(context, rawSheet), context);
+  lre.sheets.add(sheet);
 });
 
 afterEach(() => {
@@ -678,5 +679,71 @@ describe("Toggle", () => {
 
     expect(dp.subscribeRefresh).not.toHaveBeenCalled();
     expect(dp.unsubscribeRefresh).not.toHaveBeenCalled();
+  });
+
+  test("Get next value", () => {
+    const toggle = sheet.get("toggle") as Toggle;
+    toggle.toggling({
+      1: "Value 1",
+      2: "Value 2",
+      3: "Value 3",
+      4: "Value 4",
+    });
+
+    expect(toggle.value()).toStrictEqual("1");
+    expect(toggle.next()).toStrictEqual("2");
+    expect(toggle.next(1)).toStrictEqual("2");
+    expect(toggle.next(2)).toStrictEqual("3");
+    expect(toggle.next(3)).toStrictEqual("4");
+    expect(toggle.next(4)).toStrictEqual("1");
+    expect(toggle.next(5)).toStrictEqual("2");
+
+    const lbl1 = sheet.get("lbl1")!;
+    lbl1.value(toggle.next.bind(toggle));
+
+    expect(lbl1.value()).toStrictEqual("2");
+
+    rawSheet.triggerComponentEvent("toggle", "click");
+
+    expect(toggle.value()).toStrictEqual("2");
+    expect(toggle.next()).toStrictEqual("3");
+    expect(lbl1.value()).toStrictEqual("3");
+
+    rawSheet.triggerComponentEvent("toggle", "click");
+
+    expect(toggle.next()).toStrictEqual("4");
+
+    rawSheet.triggerComponentEvent("toggle", "click");
+
+    expect(toggle.next()).toStrictEqual("1");
+  });
+
+  test("Get previous value", () => {
+    const toggle = sheet.get("toggle") as Toggle;
+    toggle.toggling({
+      1: "Value 1",
+      2: "Value 2",
+      3: "Value 3",
+      4: "Value 4",
+    });
+
+    expect(toggle.value()).toStrictEqual("1");
+    expect(toggle.prev()).toStrictEqual("4");
+    expect(toggle.prev(1)).toStrictEqual("4");
+    expect(toggle.prev(2)).toStrictEqual("3");
+    expect(toggle.prev(3)).toStrictEqual("2");
+    expect(toggle.prev(4)).toStrictEqual("1");
+    expect(toggle.prev(5)).toStrictEqual("4");
+
+    const lbl1 = sheet.get("lbl1")!;
+    lbl1.value(toggle.prev.bind(toggle));
+
+    expect(lbl1.value()).toStrictEqual("4");
+
+    rawSheet.triggerComponentEvent("toggle", "click");
+
+    expect(toggle.value()).toStrictEqual("2");
+    expect(toggle.prev()).toStrictEqual("1");
+    expect(lbl1.value()).toStrictEqual("1");
   });
 });

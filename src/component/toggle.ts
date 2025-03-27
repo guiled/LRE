@@ -127,6 +127,29 @@ export class Toggle<
     }
   }
 
+  next(num: number = 1): LetsRole.ComponentValue {
+    return this.#getNextOrPrev(num);
+  }
+
+  prev(num: number = 1): LetsRole.ComponentValue {
+    return this.#getNextOrPrev(-num);
+  }
+
+  #getNextOrPrev(num: number): LetsRole.ComponentValue {
+    const current = this.value();
+    const index = this.#togglingValues.findIndex((v) => v === current);
+
+    if (index === -1) {
+      LRE_DEBUG &&
+        lre.warn(`[Toggle] Unable to get next/prev value of ${current}`);
+      return current;
+    }
+
+    const nb = this.#togglingValues.length;
+
+    return this.#togglingValues[(nb + index + (num % nb)) % nb];
+  }
+
   refreshRaw(
     newRaw?: LetsRole.Component<LetsRole.ComponentValue> | undefined,
   ): LetsRole.Component<LetsRole.ComponentValue> {
