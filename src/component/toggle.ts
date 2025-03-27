@@ -19,10 +19,12 @@ type TogglingDataMap = Record<TogglingValue, TogglingData>;
 type TogglingOptions = {
   default?: TogglingValue;
   save?: boolean;
+  clickable?: boolean;
 };
 
 const defaultOptions: TogglingOptions = {
   save: true,
+  clickable: true,
 };
 
 const TOGGLING_EVENT_NAME = "click:__lreToggle";
@@ -77,7 +79,7 @@ export class Toggle<
 
     this.#togglingData = data as TogglingDataMap;
 
-    if (this.#togglingValues.length === 0) {
+    if (this.#togglingValues.length === 0 && this.#options.clickable) {
       // Add click handler only if component is not yet toggling
       this.on(TOGGLING_EVENT_NAME, this.#handleToggleClick);
       this.#hadClickableClass = this.hasClass("clickable");
@@ -120,11 +122,14 @@ export class Toggle<
   untoggling(): this {
     this.#togglingData = {};
     this.#togglingValues = [];
-    this.off(TOGGLING_EVENT_NAME);
-    this.deleteData(VALUE_DATA_ID, true);
 
-    if (!this.#hadClickableClass) {
-      this.removeClass("clickable");
+    if (this.#options.clickable) {
+      this.off(TOGGLING_EVENT_NAME);
+      this.deleteData(VALUE_DATA_ID, true);
+
+      if (!this.#hadClickableClass) {
+        this.removeClass("clickable");
+      }
     }
 
     return this;

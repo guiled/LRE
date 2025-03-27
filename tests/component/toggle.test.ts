@@ -746,4 +746,29 @@ describe("Toggle", () => {
     expect(toggle.prev()).toStrictEqual("1");
     expect(lbl1.value()).toStrictEqual("1");
   });
+
+  test("Disable click", () => {
+    const toggle = sheet.get("toggle") as Toggle;
+    toggle.toggling(
+      {
+        1: "Value 1",
+        2: "Value 2",
+        3: "Value 3",
+        4: "Value 4",
+      },
+      {
+        clickable: false,
+      },
+    );
+    const updateEventMock = jest.fn();
+    toggle.on("update", updateEventMock);
+
+    expect(toggle.hasClass("clickable")).toStrictEqual(false);
+    expect(toggle.value()).toBe("1");
+
+    rawSheet.triggerComponentEvent("toggle", "click");
+
+    expect(toggle.value()).toBe("1");
+    expect(updateEventMock).not.toHaveBeenCalled();
+  });
 });
