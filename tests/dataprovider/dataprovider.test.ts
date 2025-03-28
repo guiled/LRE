@@ -516,7 +516,7 @@ describe("DataProvider filter and where", () => {
   test("Where", () => {
     const data: Record<string, LetsRole.TableRow> = {
       "1": { id: "1", a: "42", b: "13", c: "24" },
-      "2": { id: "2", a: "1", b: "2", c: "3" },
+      "2": { id: "2", a: "1", b: "5", c: "3" },
       "3": { id: "3", a: "4", b: "5", c: "6" },
     };
     const dataGetter = jest.fn((_a: any) => {
@@ -530,12 +530,60 @@ describe("DataProvider filter and where", () => {
       2: "1",
     });
 
+    result = dp.select("a").where("b", "5");
+
+    expect(result.provider).toBeTruthy();
+    expect(result.providedValue()).toStrictEqual({
+      2: "1",
+      3: "4",
+    });
+  });
+
+  test("Where with function", () => {
+    const data: Record<string, LetsRole.TableRow> = {
+      "1": { id: "1", a: "42", b: "13", c: "24" },
+      "2": { id: "2", a: "1", b: "2", c: "3" },
+      "3": { id: "3", a: "4", b: "5", c: "6" },
+    };
+    const dataGetter = jest.fn((_a: any) => {
+      return data as any;
+    });
+    const dp = lre.dataProvider("test", dataGetter);
+    let result = dp.where((v: any) => {
+      return v.b === "2";
+    });
+
+    expect(result.providedValue()).toStrictEqual({
+      "2": { id: "2", a: "1", b: "2", c: "3" },
+    });
+
     result = dp.where((v: any) => {
       return v.b === "2";
     });
 
     expect(result.providedValue()).toStrictEqual({
       "2": { id: "2", a: "1", b: "2", c: "3" },
+    });
+  });
+
+  test("Where with array", () => {
+    const data: Record<string, LetsRole.TableRow> = {
+      "1": { id: "1", a: "42", b: "13", c: "24" },
+      "2": { id: "2", a: "1", b: "2", c: "3" },
+      "3": { id: "3", a: "4", b: "5", c: "6" },
+      "4": { id: "3", a: "4", b: "5", c: "6" },
+    };
+    const dataGetter = jest.fn((_a: any) => {
+      return data as any;
+    });
+    const dp = lre.dataProvider("test", dataGetter);
+    const result = dp.select("a").where("b", ["2", "5"]);
+
+    expect(result.provider).toBeTruthy();
+    expect(result.providedValue()).toStrictEqual({
+      2: "1",
+      3: "4",
+      4: "4",
     });
   });
 });

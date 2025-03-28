@@ -403,10 +403,12 @@ export const DataProvider = (superclass: Newable = class {}) =>
       column:
         | string
         | LetsRole.ComponentValue
+        | Array<LetsRole.ComponentValue>
         | DataProviderWhereConditioner
         | IComponent,
       condition?:
         | LetsRole.ComponentValue
+        | Array<LetsRole.ComponentValue>
         | DataProviderWhereConditioner
         | IComponent,
     ): IDataProvider {
@@ -419,21 +421,28 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
       if (typeof condition === "undefined") return this;
 
-      let conditioner: DataProviderWhereConditioner = (v) => v === condition;
+      let comparator: DataProviderWhereConditioner = (a: unknown): boolean =>
+        a === condition;
 
-      if (lre.isComponent(condition)) {
-        if (typeof column === "undefined") {
-          conditioner = (v) => lre.deepEqual(v, condition.value());
-        } else if (typeof column === "string") {
-          filterName = `where(${column}=?)`;
-          const dataValueOrColumn = this.#getDataValueGetter(column)[1];
-          conditioner = (v, k, data) =>
-            dataValueOrColumn(v, k, data) === condition.value();
-        } else {
-          throw new Error("Invalid where condition");
-        }
+      if (Array.isArray(condition)) {
+        comparator = (a: unknown): boolean => condition.includes(a as string);
+      } else if (lre.isComponent(condition)) {
+        comparator = (a: unknown): boolean =>
+          lre.deepEqual(a, condition.value());
       } else if (typeof condition === "function") {
-        conditioner = condition as DataProviderWhereConditioner;
+        comparator = condition as DataProviderWhereConditioner;
+      }
+
+      let conditioner: DataProviderWhereConditioner;
+
+      if (typeof column === "undefined") {
+        conditioner = comparator;
+      } else if (typeof column === "string") {
+        filterName = `where(${column}=?)`;
+        const dataValueOrColumn = this.#getDataValueGetter(column)[1];
+        conditioner = (v, k, data) => comparator(dataValueOrColumn(v, k, data));
+      } else {
+        throw new Error("Invalid where condition");
       }
 
       return this.filter(conditioner, filterName);
