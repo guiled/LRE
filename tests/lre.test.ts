@@ -7,6 +7,8 @@ import {
   itHasWaitedEverything,
   terminateLetsRole,
 } from "../src/mock/letsrole/letsrole.mock";
+import { setLang } from "../src/mock/letsrole/i18n";
+import { LREi18n } from "../src/globals/i18n";
 
 jest.mock("../src/log");
 
@@ -21,6 +23,16 @@ beforeEach(() => {
         className: "View",
       },
     ],
+    i18n: {
+      defaultLang: "en",
+      texts: ["trad1", "trad2", "trad3"],
+      translations: {
+        fr: {
+          trad1: "frTrad1",
+          trad2: "frTrad2",
+        },
+      },
+    },
   });
   initLetsRole(server);
   global.wait = wait;
@@ -311,6 +323,55 @@ describe("LRE autonum", () => {
     expect(subject.value(init)).toStrictEqual(result ?? init);
 
     subject.autoNum(false);
+
+    expect(subject.value(init)).toBe(init);
+
+    if (result !== undefined) {
+      expect(subject.value(init)).not.toBe(result);
+    }
+  });
+});
+
+describe("LRE autoTrad", () => {
+  let subject: LRE;
+
+  beforeEach(() => {
+    setLang("fr");
+    subject = new LRE(context);
+    subject.i18n = new LREi18n(_);
+  });
+
+  test.each([
+    /* put undefined to specify that the input is not changed */
+    [42, undefined],
+    ["a", undefined],
+    ["1", undefined],
+    ["0123", undefined],
+    ["", undefined],
+    ["1as", undefined],
+    [{}, undefined],
+    [{ 42: 1 }, undefined],
+    [[], undefined],
+    [[1, 2], undefined],
+    ["trad1", "frTrad1"],
+    ["trad2", "frTrad2"],
+    ["trad3", undefined],
+    [
+      ["oui", "trad1", 42, "43"],
+      ["oui", "frTrad1", 42, "43"],
+    ],
+    [
+      { a: "trad1", trad2: "trad1", c: "trad3", d: "42" },
+      { a: "frTrad1", trad2: "frTrad1", c: "trad3", d: "42" },
+    ],
+  ])("Value %s auto translation", (init, result?) => {
+    expect(subject.value(init)).toBe(init);
+
+    subject.autoTransl();
+
+    expect(subject.value(init)).toStrictEqual(result ?? init);
+
+    subject.autoTransl(false);
 
     expect(subject.value(init)).toBe(init);
 

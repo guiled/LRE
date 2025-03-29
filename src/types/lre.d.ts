@@ -20,6 +20,7 @@ declare interface ILRE {
   getRandomId(length?: number): string;
   wait(delay: number, cb: () => void, name: string = "");
   autoNum(v: boolean = true): void;
+  autoTransl(v: boolean = true): void;
   value<T = any>(n: T): T;
   isComponent(value: any): value is IComponent;
   isDataProvider(value: any): value is IDataProvider;
