@@ -1,4 +1,5 @@
 import { DirectDataProvider, ValueGetterSetter } from "./dataprovider";
+import { LREi18n } from "./globals/i18n";
 import { Logger } from "./log";
 import { SheetProxy } from "./proxy/sheet";
 import { Sheet } from "./sheet";
@@ -19,6 +20,7 @@ export class LRE extends Logger implements ILRE {
   #context: ProxyModeHandler;
   #autoNum: boolean = false;
   sheets: SheetCollection;
+  i18n!: LREi18n;
   public __debug: boolean = false;
   public __enableGroupedSetValue: boolean = true;
   #firstLaunchCb?: (ctx: ProxyModeHandler) => void;

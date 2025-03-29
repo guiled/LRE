@@ -292,6 +292,8 @@ declare namespace LetsRole {
           d: T extends undefined ? unknown : T[keyof T],
           k?: T extends undefined ? unknown : keyof T,
         ) => U;
+
+  export type i18n = (text: string) => string;
 }
 declare module "letsrole" {
   global {
@@ -300,6 +302,7 @@ declare module "letsrole" {
     var log: (input: unknown) => void;
     var wait: (delay: number, callback: Callback) => void;
     var each: <T extends EachValue>(data: T, callback: EachCallback<T>) => void;
+    var _: i18n;
     var init: InitCallback;
     var Tables: Tables;
 

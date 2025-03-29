@@ -6,6 +6,11 @@ declare interface ISheetCollection {
   get(sheetId: LetsRole.SheetID): Sheet | undefined;
 }
 
+declare interface ILREi18n {
+  _(text: string): string;
+  getUntranslated(): string[];
+}
+
 declare interface ILRE {
   sheets: ISheetCollection;
   deepMerge(target: any, ...sources: any[]): any;
@@ -43,6 +48,7 @@ declare interface ILRE {
     value: T,
     cb: LetsRole.EachCallback<T, T>,
   ): T;
+  i18n: ILREi18n;
 }
 
 declare interface ISheet extends LetsRole.Sheet, ComponentContainer<IGroup> {

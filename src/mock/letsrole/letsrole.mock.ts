@@ -2,6 +2,7 @@ import { virtualCall } from "../../globals/virtualcall";
 import { ServerMock } from "./server.mock";
 import { modeHandlerMock } from "../../../tests/mock/modeHandler.mock";
 import { newMockedWait } from "./wait.mock";
+import { i18n } from "./i18n";
 
 const { wait, itHasWaitedEnough, itHasWaitedEverything } = newMockedWait();
 
@@ -41,6 +42,7 @@ const initLetsRole = (server: ServerMock, context?: ProxyModeHandler): void => {
   });
 
   global.wait = wait;
+  global._ = i18n(server.getI18n());
   global.Bindings = Bindings;
   global.RollBuilder = RollBuilderClass;
   global.Tables = server.getMockOfTables();

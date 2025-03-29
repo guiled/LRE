@@ -1,10 +1,12 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 namespace LetsRoleMock {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   declare type SystemDefinitions = Partial<{
     tables: Record<LetsRole.TableID, Array<LetsRole.TableRow>>;
     views: Array<ViewDefinitions>;
-    i18n: Record<string, Record<string, string>>;
+    i18n: {
+      defaultLang: string;
+      texts: Array<string>;
+      translations: Record<string, Record<string, string>>;
+    };
     viewVariables: Record<LetsRole.ViewID, Record<string, number>>;
   }>;
 
@@ -76,7 +78,6 @@ namespace LetsRoleMock {
     children?: Array<ComponentDefinitions>;
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   type ComponentClassName =
     | LetsRoleMock.CommonComponentDefinitions["className"]
     | "View"; // deprecated

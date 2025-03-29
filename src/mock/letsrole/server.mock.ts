@@ -13,11 +13,21 @@ export class ServerMock {
   > = {};
 
   #tables: Record<string, LetsRole.TableRow[]>;
+  #i18n: LetsRoleMock.SystemDefinitions["i18n"] = {
+    defaultLang: "en",
+    texts: [],
+    translations: {},
+  };
 
   constructor(system: LetsRoleMock.SystemDefinitions) {
     this.#views = system.views || [];
     this.#tables = system.tables || {};
     this.#viewVariables = system.viewVariables || {};
+    this.#i18n = system.i18n || {
+      defaultLang: "en",
+      texts: [],
+      translations: {},
+    };
   }
 
   openView(
@@ -129,6 +139,10 @@ export class ServerMock {
 
   getTable(tableId: string): TableMock | null {
     return this.#tables[tableId] ? new TableMock(this.#tables[tableId]) : null;
+  }
+
+  getI18n(): LetsRoleMock.SystemDefinitions["i18n"] {
+    return structuredClone(this.#i18n);
   }
 
   showError(_destView: ViewMock, _message: string): void {}

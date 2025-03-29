@@ -1,6 +1,7 @@
 import { Context } from "./context";
 import { Error as LreError } from "./error";
 import { globals } from "./globals";
+import { LREi18n } from "./globals/i18n";
 import { LRE } from "./lre";
 import { registerLreBindings } from "./proxy/bindings";
 import { registerLreRollBuilder } from "./proxy/rollBuilder";
@@ -28,6 +29,8 @@ export const bootstrap = (): ProxyModeHandler => {
     LRE_DEBUG && lre.trace("LRE first launch bootstrap");
     overloadTables(Tables, ctx);
     wait = registerLreWait(ctx, wait);
+    lre.i18n = new LREi18n(_);
+    _ = lre.i18n._;
     Bindings = registerLreBindings(ctx, Bindings);
     RollBuilder = registerLreRollBuilder(ctx, RollBuilder);
   };
