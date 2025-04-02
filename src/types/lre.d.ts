@@ -492,6 +492,6 @@ declare interface ITable extends LetsRole.Table, IDataProvider {
 }
 
 declare interface ITables extends LetsRole.Tables {
-  get(id: LetsRole.TableID): ITable | null;
+  get(id: LetsRole.TableID, arg?: unknown): ITable | null;
   register(id: LetsRole.TableID, data: ScriptTableSource): void;
 }

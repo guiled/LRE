@@ -193,4 +193,42 @@ describe("Script tables", () => {
 
     expect(fn2).toHaveBeenNthCalledWith(1, data[0]);
   });
+
+  test("register a table from a function with an arg", () => {
+    const data = [
+      { id: "a", col1: "val1", col2: "val2" },
+      { id: "b", col1: "val3", col2: "val4" },
+      { id: "c", col1: "val5", col2: "val6" },
+    ];
+
+    const obj = {};
+
+    const fnData = jest.fn(() => data);
+    Tables.register("testTable", fnData);
+    const table = Tables.get("testTable", obj);
+
+    expect(table).not.toBeNull();
+    expect(table!.id()).toBe("testTable");
+    expect(table!.get("a")).toEqual(data[0]);
+    expect(fnData).toHaveBeenNthCalledWith(1, obj);
+    expect(table!.get("b")).toEqual(data[1]);
+    expect(table!.get("c")).toEqual(data[2]);
+    expect(table!.get("d")).toBeNull();
+
+    const fn = jest.fn();
+    table!.each(fn);
+
+    expect(fn).toHaveBeenCalledTimes(3);
+    expect(fn).toHaveBeenNthCalledWith(1, data[0], "a", data[0]);
+    expect(fn).toHaveBeenNthCalledWith(2, data[1], "b", data[1]);
+    expect(fn).toHaveBeenNthCalledWith(3, data[2], "c", data[2]);
+
+    jest.spyOn(global.Math, "random").mockReturnValue(0);
+    const fn2 = jest.fn();
+    table!.random(fn2);
+
+    expect(fn2).toHaveBeenCalledTimes(1);
+
+    expect(fn2).toHaveBeenNthCalledWith(1, data[0]);
+  });
 });

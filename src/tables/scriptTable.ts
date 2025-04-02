@@ -2,12 +2,12 @@ import { DataProvider } from "../dataprovider";
 import { ChangeTracker } from "../globals/changetracker";
 import { Mixin } from "../mixin";
 
-export type ScriptTableSourceArray = Array<LetsRole.TableRow>;
+type ScriptTableSourceArray = Array<LetsRole.TableRow>;
 
 type ScriptTableSourceObject = Record<string, Omit<LetsRole.TableRow, "id">>;
-type ScriptTableSourceFunction = () =>
-  | ScriptTableSourceObject
-  | ScriptTableSourceArray;
+type ScriptTableSourceFunction = (
+  arg?: unknown,
+) => ScriptTableSourceObject | ScriptTableSourceArray;
 
 type InternalScriptTableSource =
   | ScriptTableSourceArray
@@ -23,11 +23,13 @@ export class ScriptTable extends Mixin(DataProvider) implements ITable {
   #data!: InternalScriptTableSource;
   #index: Record<string, number> | null;
   #tracker: ChangeTracker;
+  #functionArg: unknown | undefined;
 
   constructor(
     data: AcceptedScriptTableSource,
     context: ProxyModeHandler,
     id: LetsRole.TableID,
+    arg: unknown | undefined = undefined,
   ) {
     super([
       [
@@ -42,6 +44,7 @@ export class ScriptTable extends Mixin(DataProvider) implements ITable {
       ],
     ]);
     this.#tracker = new ChangeTracker(this, context);
+    this.#functionArg = arg;
 
     if (typeof data === "function") {
       this.#data = data;
@@ -155,7 +158,7 @@ export class ScriptTable extends Mixin(DataProvider) implements ITable {
   }
 
   #functionToArray(data: ScriptTableSourceFunction): ScriptTableSourceArray {
-    const result = data();
+    const result = this.#functionArg ? data(this.#functionArg) : data();
 
     if (typeof result === "function") {
       return this.#functionToArray(result);

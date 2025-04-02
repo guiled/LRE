@@ -8,6 +8,7 @@ export class LreTables
   implements ITables
 {
   #tables: Record<LetsRole.TableID, ITable | null> = {};
+  #dynamicTableDef: Record<LetsRole.TableID, AcceptedScriptTableSource> = {};
   #context: ProxyModeHandler;
 
   constructor(raw: LetsRole.Tables, context: ProxyModeHandler) {
@@ -21,8 +22,12 @@ export class LreTables
     this.#context = context;
   }
 
-  get(id: LetsRole.TableID): ITable | null {
+  get(id: LetsRole.TableID, arg?: unknown): ITable | null {
     LRE_DEBUG && lre.trace(`[Table] Get table "${id}"`);
+
+    if (Object.prototype.hasOwnProperty.call(this.#dynamicTableDef, id)) {
+      return new ScriptTable(this.#dynamicTableDef[id], this.#context, id, arg);
+    }
 
     if (!Object.prototype.hasOwnProperty.call(this.#tables, id)) {
       const foundTable = this.raw().get(id);
@@ -38,10 +43,13 @@ export class LreTables
     return this.#tables[id];
   }
 
-  register(id: LetsRole.TableID, data: AcceptedScriptTableSource): ITable {
+  register(id: LetsRole.TableID, data: AcceptedScriptTableSource): void {
     LRE_DEBUG && lre.trace(`[Table] Register table "${id}"`);
-    this.#tables[id] = new ScriptTable(data, this.#context, id);
 
-    return this.#tables[id];
+    if (typeof data === "function") {
+      this.#dynamicTableDef[id] = data;
+    } else {
+      this.#tables[id] = new ScriptTable(data, this.#context, id);
+    }
   }
 }
