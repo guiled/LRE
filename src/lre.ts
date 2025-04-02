@@ -185,7 +185,7 @@ export class LRE extends Logger implements ILRE {
     return true;
   }
 
-  isUseableAsIndex(value: any): value is number | string {
+  isIndex(value: any): value is number | string {
     return typeof value === "number" || typeof value === "string";
   }
 

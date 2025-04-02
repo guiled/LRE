@@ -346,7 +346,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
       }
 
       if (Array.isArray(originalValues) || lre.isObject(originalValues)) {
-        if (lre.isUseableAsIndex(id)) {
+        if (lre.isIndex(id)) {
           return this.#getFromArrOrObj(originalValues, id);
         }
 

@@ -36,7 +36,7 @@ declare interface ILRE {
   ): object is LetsRole.RepeaterValue;
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   isObjectEmpty<T extends BasicObject = BasicObject>(object: T): object is {};
-  isUseableAsIndex(value: any): value is number | string | bigint;
+  isIndex(value: any): value is number | string | bigint;
   __debug: boolean;
   __enableGroupedSetValue: boolean;
   dataProvider(

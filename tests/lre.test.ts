@@ -489,7 +489,7 @@ describe("LRE global methods", () => {
     [1, true],
     [true, false],
   ])("Value %s is useable as index", (init, result) => {
-    expect(subject.isUseableAsIndex(init)).toBe(result);
+    expect(subject.isIndex(init)).toBe(result);
   });
 
   test.each([
