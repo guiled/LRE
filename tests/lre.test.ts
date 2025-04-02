@@ -571,3 +571,32 @@ describe("LRE create a data provider with context", () => {
     expect(dataProvider.providedValue()).toStrictEqual(data);
   });
 });
+
+describe("LRE util to overload tables", () => {
+  test("LRE overload tables", () => {
+    const save = Tables;
+
+    expect(Tables).toBeDefined();
+
+    const lre = new LRE(context);
+    lre.tables(Tables);
+
+    expect(Tables).not.toStrictEqual(save);
+  });
+
+  test("LRE overload tables only once", () => {
+    const save = Tables;
+
+    const lre = new LRE(context);
+    lre.tables(Tables);
+    const save2 = Tables;
+
+    expect(Tables).not.toStrictEqual(save);
+    expect(save2).not.toStrictEqual(save);
+
+    lre.tables(Tables);
+
+    expect(Tables).not.toStrictEqual(save);
+    expect(Tables).toStrictEqual(save2);
+  });
+});

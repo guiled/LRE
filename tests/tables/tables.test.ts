@@ -4,7 +4,7 @@ import {
   terminateLetsRole,
 } from "../../src/mock/letsrole/letsrole.mock";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
-import { LreTables, overloadTables } from "../../src/tables";
+import { LreTables } from "../../src/tables";
 
 beforeEach(() => {
   initLetsRole(
@@ -41,7 +41,7 @@ describe("Tables overload", () => {
 
     expect(get).toHaveBeenCalledTimes(0);
 
-    overloadTables(global.Tables, context);
+    lre.tables(global.Tables);
     Tables.get("123");
 
     expect(get).toHaveBeenCalledTimes(1);
@@ -70,7 +70,7 @@ describe("Tables overload", () => {
 
 describe("Script tables", () => {
   beforeEach(() => {
-    overloadTables(global.Tables, context);
+    lre.tables(global.Tables);
   });
 
   test("register a table from an array", () => {

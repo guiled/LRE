@@ -50,6 +50,7 @@ declare interface ILRE {
     cb: LetsRole.EachCallback<T, T>,
   ): T;
   i18n: ILREi18n;
+  tables(_Tables: LetsRole.Tables): void;
 }
 
 declare interface ISheet extends LetsRole.Sheet, ComponentContainer<IGroup> {

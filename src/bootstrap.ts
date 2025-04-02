@@ -6,7 +6,6 @@ import { LRE } from "./lre";
 import { registerLreBindings } from "./proxy/bindings";
 import { registerLreRollBuilder } from "./proxy/rollBuilder";
 import { registerLreWait } from "./proxy/wait";
-import { overloadTables } from "./tables";
 
 export const bootstrap = (): ProxyModeHandler => {
   const ctx = new Context();
@@ -27,7 +26,7 @@ export const bootstrap = (): ProxyModeHandler => {
 
   const firstLaunch = (ctx: ProxyModeHandler): void => {
     LRE_DEBUG && lre.trace("LRE first launch bootstrap");
-    overloadTables(Tables, ctx);
+    lre.tables(Tables);
     wait = registerLreWait(ctx, wait);
     lre.i18n = new LREi18n(_);
     _ = lre.i18n._;

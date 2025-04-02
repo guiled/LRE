@@ -45,10 +45,3 @@ export class LreTables
     return this.#tables[id];
   }
 }
-
-export function overloadTables(
-  _Tables: LetsRole.Tables,
-  context: ProxyModeHandler,
-): void {
-  Tables = new LreTables(_Tables, context);
-}

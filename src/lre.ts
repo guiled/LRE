@@ -5,6 +5,7 @@ import { SheetProxy } from "./proxy/sheet";
 import { Sheet } from "./sheet";
 import { SheetCollection } from "./sheet/collection";
 import { DataBatcher } from "./sheet/databatcher";
+import { LreTables } from "./tables";
 
 firstInit = undefined;
 let firstLaunchDone: boolean = false;
@@ -20,6 +21,7 @@ export class LRE extends Logger implements ILRE {
   #context: ProxyModeHandler;
   #autoNum: boolean = false;
   #autoTrad: boolean = false;
+  #tablesOverloaded: boolean = false;
   sheets: SheetCollection;
   i18n!: LREi18n;
   public __debug: boolean = false;
@@ -315,5 +317,15 @@ export class LRE extends Logger implements ILRE {
     each(value, (v: T[keyof T], k: keyof T) => (result[k] = cb(v, k)));
 
     return result;
+  }
+
+  tables(_Tables: LetsRole.Tables): void {
+    if (this.#tablesOverloaded) {
+      return;
+    }
+
+    this.#tablesOverloaded = true;
+    LRE_DEBUG && this.trace("Overload tables");
+    Tables = new LreTables(_Tables, this.#context);
   }
 }
