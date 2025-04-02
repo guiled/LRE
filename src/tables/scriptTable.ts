@@ -31,11 +31,6 @@ export class ScriptTable extends Mixin(DataProvider) implements ITable {
   ) {
     super([
       [
-        {
-          getRaw: () => this,
-        },
-      ],
-      [
         context,
         () => {
           const result: { [key: keyof TableRow]: TableRow } = {};
