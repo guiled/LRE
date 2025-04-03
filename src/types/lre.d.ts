@@ -383,6 +383,7 @@ declare interface IDataProvider {
   ): IDataProvider;
   toArray(transform?: DataProviderCallback): Array<unknown>;
   search(column: string, value: LetsRole.ComponentValue): IDataProvider;
+  union(dataProvider: IDataProvider): IDataProvider;
 }
 
 declare type IDataProviderAsSource = Pick<

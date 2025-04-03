@@ -1103,3 +1103,67 @@ describe("Dataprovider toArray", () => {
     );
   });
 });
+
+describe("DataProvider join", () => {
+  let dp1: IDataProvider;
+  let dp2: IDataProvider;
+  let data1: any;
+  let data2: any;
+
+  beforeEach(() => {
+    data1 = {
+      c: { value: "24", type: 42 },
+    };
+    const dataGetter = jest.fn((_a: any) => {
+      if (_a) {
+        Object.assign(data1, _a);
+      }
+
+      return data1 as any;
+    });
+    dp1 = lre.dataProvider("test", dataGetter);
+    data2 = {
+      d: { value: "24", type: 42 },
+    };
+    const dataGetter2 = jest.fn((_a: any) => {
+      if (_a) {
+        Object.assign(data2, _a);
+      }
+
+      return data2 as any;
+    });
+    dp2 = lre.dataProvider("test", dataGetter2);
+  });
+
+  test("Join two data providers works well", () => {
+    const dp = dp1.union(dp2);
+
+    expect(dp.provider).toBeTruthy();
+  });
+
+  test("Each on joined dp run the cb on both dp lines", () => {
+    const dp = dp1.union(dp2);
+
+    const fn = jest.fn();
+    dp.each(fn);
+
+    expect(fn).toHaveBeenCalledTimes(2);
+    expect(fn.mock.calls[0][0]).toStrictEqual({ value: "24", type: 42 });
+    expect(fn.mock.calls[1][0]).toStrictEqual({ value: "24", type: 42 });
+    expect(fn.mock.calls[0][1]).toBe("c");
+    expect(fn.mock.calls[1][1]).toBe("d");
+  });
+
+  test("Union on duplicate id overwrites the first one", () => {
+    data2 = {
+      c: { value: "111", type: 123 },
+    };
+    dp2.refresh();
+    const dp = dp1.union(dp2);
+
+    expect(dp.length()).toBe(1);
+    expect(dp.providedValue()).toStrictEqual({
+      c: { value: "111", type: 123 },
+    });
+  });
+});

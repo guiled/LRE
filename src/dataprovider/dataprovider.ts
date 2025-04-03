@@ -822,6 +822,26 @@ export const DataProvider = (superclass: Newable = class {}) =>
         `search(${column}=${value})`,
       );
     }
+
+    union(dataProvider: IDataProvider): IDataProvider {
+      return this.#newProvider(
+        this.realId() + "-union-" + dataProvider.realId(),
+        () => {
+          const result: DataProviderDataValue = {};
+
+          this.each((v, k) => {
+            result[k] = v;
+          });
+
+          dataProvider.each((v, k) => {
+            result[k] = v;
+          });
+
+          return result;
+        },
+        true,
+      );
+    }
   };
 
 type DataProviderEvents = "refresh";
