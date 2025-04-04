@@ -24,6 +24,7 @@
     "databatcher",
     "dataholder",
     "dataprovider",
+    "diceresult",
     "endregion",
     "entrychange",
     "eventhandler",

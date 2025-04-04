@@ -28,7 +28,13 @@ export class LRE extends Logger implements ILRE {
   public __enableGroupedSetValue: boolean = true;
   #firstLaunchCb?: (ctx: ProxyModeHandler) => void;
 
-  apply(_thisArg: any, argArray?: any) {
+  apply(_thisArg: any, argArray?: any): LetsRole.InitCallback {
+    return this.init(argArray?.[0]);
+  }
+
+  init(
+    callback: LetsRole.InitCallback<LetsRole.Sheet | ISheet>,
+  ): LetsRole.InitCallback {
     LRE_DEBUG && this.log("prepare init");
 
     if (!firstLaunchDone && this.#firstLaunchCb) {
@@ -36,7 +42,6 @@ export class LRE extends Logger implements ILRE {
       this.#firstLaunchCb(this.#context);
     }
 
-    const [callback] = argArray;
     // this aliasing for Let's Role compatibility
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const thisLre = this;
@@ -46,32 +51,7 @@ export class LRE extends Logger implements ILRE {
       thisLre.wait(
         0,
         () => {
-          const sheetId = rawSheet.getSheetId();
-          const sheetProxy = new SheetProxy(this.#context, rawSheet);
-          const _sheet = new Sheet(
-            sheetProxy,
-            new DataBatcher(this.#context, sheetProxy),
-            this.#context,
-          );
-          _sheet.cleanCmpData();
-          this.sheets.add(_sheet);
-
-          if (!_sheet.isInitialized() && firstInit !== void 0) {
-            LRE_DEBUG && this.log(`sheet first initialization`);
-
-            try {
-              _sheet.persistingData("initialized", firstInit(_sheet));
-            } catch (e) {
-              this.error("[First init] Unhandled error : " + e);
-            }
-          }
-
-          LRE_DEBUG &&
-            this.log(
-              `init sheet ${rawSheet.id()} (${rawSheet.name()} ${
-                rawSheet.properName() || ""
-              } ${sheetId ? "#" + sheetId : ""})`,
-            );
+          const _sheet = this.#getSheet(rawSheet);
 
           try {
             LRE_DEBUG && this.trace("Run init");
@@ -83,6 +63,38 @@ export class LRE extends Logger implements ILRE {
           }
         },
         "sheet init",
+      );
+    };
+  }
+
+  #getSheet(rawSheet: LetsRole.Sheet): ISheet {
+    const sheetId = rawSheet.getSheetId();
+    const sheetProxy = new SheetProxy(this.#context, rawSheet);
+    const _sheet = new Sheet(
+      sheetProxy,
+      new DataBatcher(this.#context, sheetProxy),
+      this.#context,
+    );
+    _sheet.cleanCmpData();
+    this.sheets.add(_sheet);
+
+    if (!_sheet.isInitialized() && firstInit !== void 0) {
+      LRE_DEBUG && this.log(`sheet first initialization`);
+
+      try {
+        _sheet.persistingData("initialized", firstInit(_sheet));
+      } catch (e) {
+        this.error("[First init] Unhandled error : " + e);
+      }
+    }
+
+    LRE_DEBUG &&
+      this.log(
+        `init sheet ${rawSheet.id()} (${rawSheet.name()} ${rawSheet.properName() || ""} ${sheetId ? "#" + sheetId : ""})`,
+      );
+    return _sheet;
+  }
+
       );
     };
   }
