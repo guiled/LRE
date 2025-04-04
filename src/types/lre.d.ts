@@ -11,8 +11,20 @@ declare interface ILREi18n {
   getUntranslated(): string[];
 }
 
+declare type LREInitRollCallback = (
+  result: DiceResult,
+  callback: (
+    viewId: LetsRole.SheetID,
+    onRender: (sheet: ISheet) => void,
+  ) => void,
+) => void;
+
 declare interface ILRE {
   sheets: ISheetCollection;
+  init(
+    callback: LetsRole.InitCallback<LetsRole.Sheet | Sheet>,
+  ): LetsRole.InitCallback;
+  initRoll: LREInitRollCallback;
   deepMerge(target: any, ...sources: any[]): any;
   deepEqual(x: any, y: any): boolean;
   numToAlpha(n: number): string;

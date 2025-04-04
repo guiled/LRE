@@ -67,6 +67,7 @@ declare namespace LetsRole {
   export type VariableID = string;
   export type TooltipPlacement = "top" | "right" | "bottom" | "left";
   export type RollVisibility = "visible" | "gm" | "gmonly";
+  export type RollType = "number" | "dice" | "comparison";
   export type SheetType = "character" | "craft" | "prompt";
 
   export interface Sheet extends object {
@@ -195,11 +196,80 @@ declare namespace LetsRole {
     clear: (componentId: ComponentID) => void;
   };
 
-  export type DiceResult = unknown; // todo
+  export type DiceResultDebugData = {
+    _children: Array<any>; // todo
+    _dice: Array<any>; // todo
+    _expression: string;
+    _raw: any; // todo
+    _hasExtractedChildren: boolean;
+    _hasExtractedDice: boolean;
+    _hasExtractedTags: boolean;
+    _tags: Array<string>;
+    _title: string | null;
+    _visibility: RollVisibility;
+  }; // todo
+
+  export type SingleDiceResult = {
+    dimension: number;
+    value: number;
+    discarded: boolean;
+  };
+
+  interface DiceResultDefault {
+    title: string;
+    expression: string;
+    visibility: RollVisibility;
+    type: RollType;
+    total: number;
+    tags: Array<string>;
+    allTags: Array<string>;
+    all: Array<SingleDiceResult>;
+    children: Array<DiceResult>;
+    size: null;
+    dimension: null;
+    values: null;
+    discarded: Array<number>;
+    left: null;
+    right: null;
+    success: null;
+    failure: null;
+    containsTag(tag: string): boolean;
+  }
+
+  interface ComparisonDiceResult extends DiceResultDefault {
+    type: "comparison";
+    left: DiceResult;
+    right: DiceResult;
+    success: number;
+    failure: number;
+  }
+
+  interface DiceDiceResult extends DiceResultDefault {
+    type: "dice";
+    left: DiceResult;
+    right: DiceResult;
+    size: number;
+    dimension: number;
+    values: Array<number>;
+  }
+
+  interface NumberDiceResult extends DiceResultDefault {
+    type: "number";
+  }
+
+  export type DiceResult = Partial<DiceResultDebugData> &
+    (ComparisonDiceResult | DiceDiceResult | NumberDiceResult);
+
+  export type DiceRollSheetInitCallback = (sheet: Sheet) => void;
+
+  export type InitRollDefineSheetCallback = (
+    viewIdToRender: ViewID,
+    onRender: DiceRollSheetInitCallback,
+  ) => void;
 
   export type InitRollCallback = (
     result: DiceResult,
-    callback: (view: ViewID, onRender: (sheet: Sheet) => void) => void,
+    callback: InitRollDefineSheetCallback,
   ) => void;
 
   export type GetReferenceCallback = (sheet: Sheet) => ViewData;

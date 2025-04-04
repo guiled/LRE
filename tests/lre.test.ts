@@ -9,6 +9,7 @@ import {
 } from "../src/mock/letsrole/letsrole.mock";
 import { setLang } from "../src/mock/letsrole/i18n";
 import { LREi18n } from "../src/globals/i18n";
+import { DiceResult } from "../src/roll/diceresult";
 
 jest.mock("../src/log");
 
@@ -19,6 +20,11 @@ beforeEach(() => {
     views: [
       {
         id: "main",
+        children: [],
+        className: "View",
+      },
+      {
+        id: "diceResultView",
         children: [],
         className: "View",
       },
@@ -598,5 +604,28 @@ describe("LRE util to overload tables", () => {
 
     expect(Tables).not.toStrictEqual(save);
     expect(Tables).toStrictEqual(save2);
+  });
+});
+
+describe("LRE initRoll overload", () => {
+  test("LRE overload initRoll", () => {
+    const lre = new LRE(context);
+    global.lre = lre;
+    const cbToCall = jest.fn();
+    const fn = jest.fn((_r, cb) => {
+      cb("diceResultView", cbToCall);
+    });
+    global.initRoll = lre.initRoll(fn);
+
+    expect(fn).toHaveBeenCalledTimes(0);
+
+    server.triggerDiceRoll([{ nb: 1, sides: 6 }]);
+
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(fn.mock.calls[0][0]).toBeInstanceOf(DiceResult);
+    expect(fn.mock.calls[0][1]).toBeInstanceOf(Function);
+
+    expect(cbToCall).toHaveBeenCalledTimes(1);
+    expect(cbToCall.mock.calls[0][0]).toBeInstanceOf(Sheet);
   });
 });

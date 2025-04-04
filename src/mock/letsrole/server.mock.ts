@@ -196,4 +196,34 @@ export class ServerMock {
 
     this.#openedPrompts[view.id()](view.getData());
   }
+
+  triggerDiceRoll(dice: Array<{ nb: number; sides: number }>): void {
+    const result: Partial<LetsRole.DiceResult> = {
+      expression: dice.map((d) => `${d.nb}d${d.sides}`).join(" + "),
+      total: 0,
+    };
+
+    dice.forEach((d) => {
+      for (let i = 0; i < d.nb; i++) {
+        result.total! += this.#rand(d.sides);
+      }
+    });
+
+    if (initRoll?.call) {
+      (initRoll as LetsRole.InitRollCallback)(
+        result as LetsRole.DiceResult,
+        (
+          viewId: LetsRole.ViewID,
+          onRender: LetsRole.DiceRollSheetInitCallback,
+        ) => {
+          const view = this.openView(viewId, undefined, {}, undefined);
+          onRender(view);
+        },
+      );
+    }
+  }
+
+  #rand(max: number, min: number = 1): number {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
 }
