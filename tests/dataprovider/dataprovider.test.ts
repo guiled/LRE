@@ -1109,30 +1109,32 @@ describe("DataProvider join", () => {
   let dp2: IDataProvider;
   let data1: any;
   let data2: any;
+  let getter1: any;
+  let getter2: any;
 
   beforeEach(() => {
     data1 = {
       c: { value: "24", type: 42 },
     };
-    const dataGetter = jest.fn((_a: any) => {
+    getter1 = jest.fn((_a: any) => {
       if (_a) {
         Object.assign(data1, _a);
       }
 
       return data1 as any;
     });
-    dp1 = lre.dataProvider("test", dataGetter);
+    dp1 = lre.dataProvider("test", getter1);
     data2 = {
       d: { value: "24", type: 42 },
     };
-    const dataGetter2 = jest.fn((_a: any) => {
+    getter2 = jest.fn((_a: any) => {
       if (_a) {
         Object.assign(data2, _a);
       }
 
       return data2 as any;
     });
-    dp2 = lre.dataProvider("test", dataGetter2);
+    dp2 = lre.dataProvider("test2", getter2);
   });
 
   test("Join two data providers works well", () => {
@@ -1143,6 +1145,8 @@ describe("DataProvider join", () => {
 
   test("Each on joined dp run the cb on both dp lines", () => {
     const dp = dp1.union(dp2);
+
+    expect(dp.length()).toBe(2);
 
     const fn = jest.fn();
     dp.each(fn);
@@ -1158,10 +1162,14 @@ describe("DataProvider join", () => {
     data2 = {
       c: { value: "111", type: 123 },
     };
-    dp2.refresh();
     const dp = dp1.union(dp2);
 
+    expect(getter1).not.toHaveBeenCalled();
+    expect(getter2).not.toHaveBeenCalled();
+
     expect(dp.length()).toBe(1);
+    expect(getter1).toHaveBeenCalledTimes(1);
+    expect(getter2).toHaveBeenCalledTimes(1);
     expect(dp.providedValue()).toStrictEqual({
       c: { value: "111", type: 123 },
     });
