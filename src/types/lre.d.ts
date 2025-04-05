@@ -21,6 +21,7 @@ declare type LREInitRollCallback = (
 
 declare interface ILRE {
   sheets: ISheetCollection;
+  getSheet(sheet: LetsRole.Sheet): ISheet;
   init(
     callback: LetsRole.InitCallback<LetsRole.Sheet | Sheet>,
   ): LetsRole.InitCallback;
@@ -98,6 +99,12 @@ declare interface ISheet extends LetsRole.Sheet, ComponentContainer<IGroup> {
   remember(realId: LetsRole.ComponentID): void;
   knownChildren(cmp: IComponent): Array<IComponent>;
   group(groupId: string, componentIds: Array<LetsRole.ComponentID> = []): Group;
+  prompt(
+    title: string,
+    view: string,
+    callback: (result: LetsRole.ViewData) => void = () => {},
+    callbackInit: (promptView: ISheet) => void = () => {},
+  ): void;
 }
 
 declare type ProxyModeHandlerLogType =

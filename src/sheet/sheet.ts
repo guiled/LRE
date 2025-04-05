@@ -30,7 +30,7 @@ export class Sheet
   ) => IEventHolder<SubTypeEventHolder> &
     InstanceType<ReturnType<typeof HasRaw<LetsRole.Sheet>>>)<SheetEvents>
   implements
-    Omit<LetsRole.Sheet, "get" | "find" | "getData">,
+    Omit<LetsRole.Sheet, "get" | "find" | "getData" | "prompt">,
     ISheet,
     ComponentContainer<ComponentSearchResult | IGroup>,
     ComponentCommon
@@ -284,9 +284,11 @@ export class Sheet
     title: string,
     view: string,
     callback: (result: LetsRole.ViewData) => void = () => {},
-    callbackInit: (promptView: LetsRole.Sheet) => void = () => {},
+    callbackInit: (promptView: ISheet) => void = () => {},
   ): void {
-    return this.raw().prompt(title, view, callback, callbackInit);
+    return this.raw().prompt(title, view, callback, (sheet: LetsRole.Sheet) =>
+      callbackInit(lre.getSheet(sheet)),
+    );
   }
 
   id(): string {

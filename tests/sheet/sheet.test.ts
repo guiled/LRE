@@ -153,14 +153,12 @@ describe("Sheet basics", () => {
 
   test("prompt calls raw method", () => {
     jest.spyOn(raw, "prompt");
-    sheet.prompt(
-      "title",
-      "viewId",
-      () => {},
-      () => {},
-    );
+    const fn = jest.fn();
+    sheet.prompt("title", "testedSheet", () => {}, fn);
 
     expect(raw.prompt).toHaveBeenCalledTimes(1);
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(fn.mock.calls[0][0]).toBeInstanceOf(Sheet);
   });
 
   test("id() and readId() calls", () => {

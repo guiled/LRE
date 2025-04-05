@@ -52,7 +52,7 @@ export class LRE extends Logger implements ILRE {
       thisLre.wait(
         0,
         () => {
-          const _sheet = this.#getSheet(rawSheet);
+          const _sheet = this.getSheet(rawSheet);
 
           try {
             LRE_DEBUG && this.trace("Run init");
@@ -68,7 +68,7 @@ export class LRE extends Logger implements ILRE {
     };
   }
 
-  #getSheet(rawSheet: LetsRole.Sheet): ISheet {
+  getSheet(rawSheet: LetsRole.Sheet): ISheet {
     const sheetId = rawSheet.getSheetId();
     const sheetProxy = new SheetProxy(this.#context, rawSheet);
     const _sheet = new Sheet(
@@ -107,7 +107,7 @@ export class LRE extends Logger implements ILRE {
         result,
         (sheetId: LetsRole.SheetID, cb: (sheet: ISheet) => void) => {
           rawCallback(sheetId, (rawSheet: LetsRole.Sheet) => {
-            const _sheet = this.#getSheet(rawSheet);
+            const _sheet = this.getSheet(rawSheet);
 
             try {
               LRE_DEBUG && this.trace("Run initRoll sheet init");
