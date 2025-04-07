@@ -229,12 +229,8 @@ declare const EVENT_SEP = ":";
 declare type EventHolderDefaultEvents = EventHolderEvents;
 declare type EventType<T extends string = string> =
   | EventHolderDefaultEvents
-  | EventHolderDefaultEvents
   | T
-  | `${
-      | EventHolderDefaultEvents
-      | EventHolderDefaultEvents
-      | T}${EVENT_SEP}${string}`;
+  | `${EventHolderDefaultEvents | T}${EVENT_SEP}${string}`;
 
 declare type WithValue = {
   value: LetsRole.Component["value"];
