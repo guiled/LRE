@@ -1,4 +1,4 @@
-import { NumericLiteral, Span, StringLiteral } from "@swc/core";
+import { NumericLiteral } from "@swc/core";
 
 export default function numericliteral({
   span,

@@ -1,8 +1,8 @@
 import { UnaryExpression } from "@swc/core";
-import unary from ".";
+import { unary } from ".";
 
 export default function typeofexpression(
-  args: Omit<UnaryExpression, "type" | "operator">
+  args: Omit<UnaryExpression, "type" | "operator">,
 ): UnaryExpression {
   return unary({
     ...args,

@@ -1,40 +1,48 @@
 import esbuild from "esbuild";
-import { transformFile, transformSync } from "@swc/core";
-import { transformForLR, noVoid0Plugin } from "./transpile.conf";
+import { transformFile } from "@swc/core";
+import { postCleanup } from "./transpile.conf";
 import fs from "fs";
+import { formatLRECode } from "./builder/formatLRECode";
+import { assembleLRECode, encloseInRegion } from "./builder/assemble";
+import { getArgv, hasArgv } from "./builder/utils";
+import { getEsBuildConfig } from "./builder/config";
 
-let swcPlugin: esbuild.Plugin = {
-  name: "swcPlugin",
-  setup(build) {
-    build.onLoad({ filter: /\.ts?$/ }, async (args) => {
-      let input = await fs.promises.readFile(args.path, "utf8");
-      //var output = transformFileSync(args.path, transformForLR);
-      var output = transformSync(input, transformForLR);
-      return {
-        contents: output.code,
-        loader: "ts",
-      };
-    });
-  },
-};
+const DEBUG_BUILD: boolean = hasArgv("--debug");
+let OUTPUT_FILE: string = getArgv("--output", "build/lre.js");
+const INPUT_FILE: string = getArgv("--input", "src/index.ts");
+
+if (DEBUG_BUILD) {
+  const fileNameParts = OUTPUT_FILE.split(".");
+  fileNameParts.splice(-1, 0, "debug");
+  OUTPUT_FILE = fileNameParts.join(".");
+}
 
 esbuild
-  .build({
-    entryPoints: ["src/index.ts"],
-    target: "es2022",
-    bundle: true,
-    minify: false,
-    platform: "neutral",
-    outfile: "build/lre.tmp.js",
-    plugins: [swcPlugin],
-    format: "iife",
-    define: {
-      "console.log": "log",
-    },
-  })
-  .then(() => transformFile("build/lre.tmp.js", noVoid0Plugin))
-  .then((result) => fs.writeFileSync("build/lre.js", `//region LRE ${process.env.npm_package_version}
-${result.code.trim()}
-//endregion LRE ${process.env.npm_package_version}
-`));
+  .build(getEsBuildConfig(INPUT_FILE, OUTPUT_FILE, DEBUG_BUILD))
+  .then(() => {
+    if (DEBUG_BUILD && postCleanup.jsc) {
+      delete postCleanup.jsc.minify;
+    }
 
+    return transformFile(OUTPUT_FILE + ".0.tmp.js", postCleanup);
+  })
+  .then((result) =>
+    result.code
+      .trim()
+      .replace(/void 0/g, "undefined")
+      .replace(/\(\)=>\{/g, "function() {")
+      .replace(/`\n`/gm, '"\\n"')
+      .replace(/bind\(this\)\.(bind|apply)\(this/gm, "$1(this"),
+  )
+  .then((code) => {
+    code = assembleLRECode(code);
+    fs.writeFileSync(OUTPUT_FILE + ".1.tmp.js", code);
+    return code;
+  })
+  .then((code) => {
+    if (!DEBUG_BUILD) {
+      code = formatLRECode(code, true);
+    }
+
+    return fs.writeFileSync(OUTPUT_FILE, encloseInRegion(code));
+  });

@@ -1,15 +1,9 @@
-import {
-  AssignmentExpression,
-  ExpressionStatement,
-} from "@swc/core";
+import { AssignmentExpression, ExpressionStatement } from "@swc/core";
 
-import assignmentExpression from '../expression/assignment';
+import assignmentExpression from "../expression/assignment";
 
-export default function assignment({
+export function assignmentStatement({
   span,
-  left,
-  right,
-  operator,
 }: Omit<AssignmentExpression, "type">): ExpressionStatement {
   return {
     type: "ExpressionStatement",

@@ -1,17 +1,15 @@
 import {
   BinaryExpression,
-  Declaration,
+  EmptyStatement,
   Expression,
-  FunctionDeclaration,
   Program,
   Statement,
-  UnaryExpression,
 } from "@swc/core";
-import Visitor from "@swc/core/Visitor";
+import { Visitor } from "@swc/core/Visitor.js";
 import undefinedidentifier from "./node/undefinedidentifier";
 
 /**
- * This module set Symbol to undefined in order to be able to use "instanceof"
+ * This module set Symbol to undefined in order to be abe to use "instanceof"
  * Because swc change instanceof operator by a function call _instanceof that first need
  */
 class KeepInstanceOf extends Visitor {
@@ -21,6 +19,7 @@ class KeepInstanceOf extends Visitor {
     this.instanceOfFound = false;
     super.visitProgram(n);
     const span = n.span;
+
     if (this.instanceOfFound) {
       n.body.unshift({
         type: "ExpressionStatement",
@@ -39,6 +38,7 @@ class KeepInstanceOf extends Visitor {
         },
       });
     }
+
     return n;
   }
 
@@ -46,28 +46,22 @@ class KeepInstanceOf extends Visitor {
     if (n.operator === "instanceof") {
       this.instanceOfFound = true;
     }
-    return n;
+
+    return super.visitBinaryExpression(n);
   }
 
   visitStatement(stmt: Statement): Statement {
     if (
       stmt.type === "FunctionDeclaration" &&
-      stmt.identifier.value === "_instanceof"
+      /instanceof\d*$/.test(stmt.identifier.value)
     ) {
-      Object.assign(stmt, {
+      const newStmt: EmptyStatement = {
         type: "EmptyStatement",
         span: stmt.span,
-      });
-      delete stmt.identifier;
-      delete stmt.declare;
-      delete stmt.params;
-      delete stmt.body;
-      delete stmt.generator;
-      delete stmt.async;
-      delete stmt.typeParameters;
-      delete stmt.returnType;
-      delete stmt.decorators;
+      };
+      return super.visitStatement(newStmt);
     }
+
     return super.visitStatement(stmt);
   }
 
@@ -84,24 +78,23 @@ class KeepInstanceOf extends Visitor {
     if (
       n.type === "CallExpression" &&
       n.callee.type === "Identifier" &&
-      n.callee.value === "_instanceof"
+      /instanceof\d*$/.test(n.callee.value)
     ) {
-      const span = n.span;
-      Object.assign(n, {
+      const binaryExpression: BinaryExpression = {
         type: "BinaryExpression",
-        span,
+        span: n.span,
         operator: "instanceof",
         left: n.arguments[0].expression,
         right: n.arguments[1].expression,
-      });
-      delete n.arguments;
-      delete n.callee;
-      delete n.typeArguments;
+      };
+      return super.visitExpression(binaryExpression);
     }
+
     return super.visitExpression(n);
   }
 }
 
+// ts-unused-exports:disable-next-line
 export default function keepInstanceOf() {
   return (program: Program) => new KeepInstanceOf().visitProgram(program);
 }

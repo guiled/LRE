@@ -1,67 +1,105 @@
+type Callback<ReturnType = void> = (...args: any[]) => ReturnType;
+
 declare namespace LetsRole {
   export type Name = string;
-  export type ViewData = {
-    [key: LetsRole.ComponentID]: LetsRole.ComponentValue;
-  };
+  export type ViewData = Partial<{
+    [key: string]: ComponentValue;
+  }>;
   export type Index = string;
 
-  export type EventType =
-    | "click"
-    | "update"
-    | "mouseenter"
-    | "mouseleave"
-    | "keyup";
+  const RAW_EVENTS = [
+    "click",
+    "update",
+    "mouseenter",
+    "mouseleave",
+    "keyup",
+    "change",
+  ] as const;
+  export type EventType = (typeof RAW_EVENTS)[number];
+  export type EventCallback<T = Component> = (
+    cmp: T,
+    ...args: unknown[]
+  ) => void;
   export type ClassName = string;
   export type ClassSelector = `.${ClassName}`;
 
   export type BaseComponentValue = undefined | null | number | string | boolean;
-  export type RepeaterValue = {
-    [key: Index]: LetsRole.ViewData;
-  };
-  export type MultiChoiceValue = Array<string>;
+  export type RepeaterValue =
+    | {
+        [key: Index]: ViewData;
+      }
+    | undefined;
+  export type ChoiceValue = string;
+  export type ChoiceValues = Array<string>;
+  export type MultiChoiceValue = Array<ChoiceValue>;
+  export type AvatarValue =
+    | {
+        avatar: string;
+        token: string;
+        frame: {
+          avatar: string | null;
+          token: string | null;
+        };
+      }
+    | undefined;
+  export type ComposedComponentValue =
+    | RepeaterValue
+    | MultiChoiceValue
+    | ViewData
+    | AvatarValue;
   export type ComponentValue =
-    | LetsRole.BaseComponentValue
-    | LetsRole.RepeaterValue
-    | LetsRole.MultiChoiceValue;
-  export type Choices = Record<string, string>;
+    | BaseComponentValue
+    | ChoiceValue
+    | ComposedComponentValue;
+  export type ValueAsObject =
+    | Exclude<RepeaterValue, undefined>
+    | ViewData
+    | AvatarValue;
+  export type Choices = Record<ChoiceValue, string>;
 
-  export type Selector = LetsRole.ComponentID | LetsRole.ClassSelector;
+  export type Selector = ComponentID | ClassSelector;
 
   export type ViewID = string;
-  export type SheetID = ViewID;
+  export type SheetID = string;
+  export type SheetRealID = string | undefined; // undefined is for prompt view
   export type ComponentID = string;
+  export type ComponentInRepeaterID = `${string}.${string}`;
   export type VariableID = string;
+  export type TooltipPlacement = "top" | "right" | "bottom" | "left";
+  export type RollVisibility = "visible" | "gm" | "gmonly";
+  export type RollType = "number" | "dice" | "comparison";
+  export type SheetType = "character" | "craft" | "prompt";
 
-  export interface View {
+  export interface Sheet extends object {
     /** get the id of the sheet */
-    id(): LetsRole.ViewID;
+    id(): SheetID;
 
-    getSheetId(): string;
+    getSheetId(): SheetRealID;
 
     name(): Name;
+    properName(): Name;
 
-    get(id: LetsRole.ComponentID): LetsRole.Component;
+    get: ComponentFinder;
+    getVariable(id: VariableID): number | null;
+
+    prompt(
+      title: string,
+      view: ViewID,
+      callback: (result: ViewData) => void,
+      callbackInit: (promptView: Sheet) => void,
+    ): void;
 
     setData(data: ViewData): void;
 
     getData(): ViewData;
+
+    getSheetType(): SheetType;
   }
 
-  export interface Sheet extends View {
-    getVariable(id: LetsRole.VariableID): number | null;
+  export interface Component<ValueType = ComponentValue> extends object {
+    id(): ComponentID | null;
 
-    prompt(
-      title: string,
-      view: LetsRole.ViewID,
-      callback: (result: ViewData) => void,
-      callbackInit: (promptView: View) => void
-    ): void;
-  }
-
-  export interface Component<ValueType = ComponentValue> {
-    id(): LetsRole.ComponentID;
-
-    index(): Index;
+    index(): Index | null;
 
     name(): Name;
 
@@ -69,14 +107,10 @@ declare namespace LetsRole {
 
     parent(): Component;
 
-    find(id: LetsRole.ComponentID): Component;
+    find: ComponentFinder;
 
-    on(event: EventType, callback: (cmp: Component) => void): void;
-    on(
-      event: EventType,
-      delegate: Selector,
-      callback: (cmp: Component) => void
-    ): void;
+    on(event: EventType, callback: EventCallback): void;
+    on(event: EventType, delegate: Selector, callback: EventCallback): void;
 
     off(event: EventType): void;
     off(event: EventType, delegate: Selector): void;
@@ -86,27 +120,273 @@ declare namespace LetsRole {
 
     addClass(className: ClassName): void;
     removeClass(className: ClassName): void;
+    getClasses(): ClassName[];
+    hasClass(className: ClassName): boolean;
+    toggleClass(className: ClassName): void;
 
-    value(): ValueType;
+    value(): ValueType | undefined;
     value(newValue: ValueType): void;
-    virtualValue(): ValueType;
+    virtualValue(): ValueType | null;
     virtualValue(newValue: ValueType): void;
 
     rawValue(): ValueType;
 
-    text(): string;
+    text(): string | null; // null is for choice expanded multiple
     text(replacement: string): void;
 
     visible(): boolean;
 
-    setChoices(choices: LetsRole.Choices): void;
+    setChoices(choices: Choices): void;
+
+    setToolTip(text: string, placement?: TooltipPlacement): void;
   }
 
-  export type Variable = {};
+  export type Variable = Record<VariableID, number>;
 
-  export type InitCallback<T =  LetsRole.Sheet> = (sheet: T) => void;
+  export type TableID = string;
+  export type TableColumn = string;
+  export type TableValue = string;
+  export type TableRow<T = TableValue> = { id: T } & Record<TableColumn, T>;
+  export type ColumnId = string;
+
+  export type Tables = {
+    get: (id: TableID) => Table | null;
+  };
+
+  export type Table = {
+    get: (id: TableValue) => TableRow | null;
+    each: (callback: (row: TableRow) => void) => void;
+    random: (callback: (row: TableRow) => void) => void;
+    random: (count: number, callback: (row: TableRow) => void) => void;
+  };
+
+  export type InitCallback<T = Sheet> = (sheet: T) => void;
+  export type ComponentFinder<T = Component> = (id: ComponentID) => T;
+
+  type ErrorTraceLocation = {
+    column: number;
+    line: number;
+  };
+  type ErrorTraceLoc = {
+    start: ErrorTraceLocation;
+    end: ErrorTraceLocation;
+  };
+  type ErrorTrace = {
+    type: string;
+    loc: ErrorTraceLoc;
+    callee?: {
+      name: string;
+    };
+  };
+  export type Error = {
+    name?: string;
+    message?: string;
+    trace?: ErrorTrace[];
+  };
+
+  export type Bindings = {
+    add: (
+      name: string,
+      componentId: ComponentID,
+      viewId: ViewID,
+      dataCallback: Callback<ViewData>,
+    ) => void;
+    send: (sheet: Sheet, name: string) => void;
+    remove: (name: string) => void;
+    clear: (componentId: ComponentID) => void;
+  };
+
+  export type DiceResultDebugData = {
+    _children: Array<any>; // todo
+    _dice: Array<any>; // todo
+    _expression: string;
+    _raw: any; // todo
+    _hasExtractedChildren: boolean;
+    _hasExtractedDice: boolean;
+    _hasExtractedTags: boolean;
+    _tags: Array<string>;
+    _title: string | null;
+    _visibility: RollVisibility;
+  }; // todo
+
+  export type SingleDiceResult = {
+    dimension: number;
+    value: number;
+    discarded: boolean;
+  };
+
+  interface DiceResultDefault {
+    title: string;
+    expression: string;
+    visibility: RollVisibility;
+    type: RollType;
+    total: number;
+    tags: Array<string>;
+    allTags: Array<string>;
+    all: Array<SingleDiceResult>;
+    children: Array<DiceResult>;
+    size: null;
+    dimension: null;
+    values: null;
+    discarded: Array<number>;
+    left: null;
+    right: null;
+    success: null;
+    failure: null;
+    containsTag(tag: string): boolean;
+  }
+
+  interface ComparisonDiceResult extends DiceResultDefault {
+    type: "comparison";
+    left: DiceResult;
+    right: DiceResult;
+    success: number;
+    failure: number;
+  }
+
+  interface DiceDiceResult extends DiceResultDefault {
+    type: "dice";
+    left: DiceResult;
+    right: DiceResult;
+    size: number;
+    dimension: number;
+    values: Array<number>;
+  }
+
+  interface NumberDiceResult extends DiceResultDefault {
+    type: "number";
+  }
+
+  export type DiceResult = Partial<DiceResultDebugData> &
+    (ComparisonDiceResult | DiceDiceResult | NumberDiceResult);
+
+  export type DiceRollSheetInitCallback = (sheet: Sheet) => void;
+
+  export type InitRollDefineSheetCallback = (
+    viewIdToRender: ViewID,
+    onRender: DiceRollSheetInitCallback,
+  ) => void;
+
+  export type InitRollCallback = (
+    result: DiceResult,
+    callback: InitRollDefineSheetCallback,
+  ) => void;
+
+  export type GetReferenceCallback = (sheet: Sheet) => ViewData;
+
+  export type BarAttributes = Record<
+    ComponentID,
+    [ComponentID, ComponentID | number]
+  >;
+
+  export type GetBarAttributesCallback = (sheet: Sheet) => BarAttributes;
+
+  type NumericalString = `${number}` | number;
+
+  export type CriticalHits = Record<
+    NumericalString,
+    Record<CriticalHitColors, Array<number>>
+  >;
+
+  export type CriticalHitColors =
+    | "critical"
+    | "fumble"
+    | "red"
+    | "orange"
+    | "yellow"
+    | "green"
+    | "cyan"
+    | "magenta"
+    | "pink";
+
+  export type GetCriticalHitsCallback = (result: DiceResult) => CriticalHits;
+
+  export type DropDiceCallback = (result: DiceResult, to: Sheet) => void;
+
+  export type DropCallback = (from: Sheet, to: Sheet) => void | string;
+
+  export type DiceCompare = "<" | ">" | "<=" | ">=";
+
+  export type DiceCreated = {
+    add: (value: number) => DiceCreated;
+    minus: (value: number) => DiceCreated;
+    multiply: (value: number) => DiceCreated;
+    divide: (value: number) => DiceCreated;
+    tag: (...tags: string[]) => DiceCreated;
+    compare: (
+      type: DiceCompare,
+      right: number,
+      weights?: unknown,
+    ) => DiceCreated;
+    round: () => DiceCreated;
+    ceil: () => DiceCreated;
+    floor: () => DiceCreated;
+    keeph: (max: number) => DiceCreated;
+    keepl: (max: number) => DiceCreated;
+    remh: (max: number) => DiceCreated;
+    reml: (max: number) => DiceCreated;
+    expl: (...explodes: number[]) => DiceCreated;
+    expladd: (...explodes: number[]) => DiceCreated;
+    mul: (multiplier: number) => DiceCreated;
+    reroll: (...reroll: number[]) => DiceCreated;
+    rerolln: (...reroll: number[], max) => DiceCreated;
+    ternary: (then: string, _else: string) => DiceCreated;
+  };
+
+  export type DiceAPI = {
+    create: (formula: string) => DiceCreated;
+    roll: (dice: DiceCreated) => void;
+  };
+
+  export type RollBuilderInstance = {
+    roll();
+    expression(expr: string);
+    title(title: string);
+    visibility(visibility: RollVisibility);
+    addAction(title: string, callback: Callback);
+    removeAction(title: string);
+    onRoll(callback: Callback);
+  };
+
+  export type RollBuilder = new (...args: unknown[]) => RollBuilderInstance;
+
+  export type EachValue<T = any> = Array<T> | Record<string, T> | string;
+  export type EachCallback<
+    T extends Array<any> | Record<string, any> | string,
+    U = void,
+  > = T extends string
+    ? (d: string, i?: number) => U
+    : T extends Array<infer V>
+      ? (d: V, i?: number) => void
+      : (
+          d: T extends undefined ? unknown : T[keyof T],
+          k?: T extends undefined ? unknown : keyof T,
+        ) => U;
+
+  export type i18n = (text: string) => string;
 }
-declare function log(input: any): void;
-declare function wait(delay: number, callback: (...args: any[]) => void);
-declare function each(data: Array|Object, callback: (d: any, k?: any) => void);
-declare var init: LetsRole.InitCallback;
+declare module "letsrole" {
+  global {
+    /* eslint-disable no-var */
+    var enableLog: boolean;
+    var log: (input: unknown) => void;
+    var wait: (delay: number, callback: Callback) => void;
+    var each: <T extends EachValue>(data: T, callback: EachCallback<T>) => void;
+    var _: i18n;
+    var init: InitCallback;
+    var Tables: Tables;
+
+    var Bindings: Bindings;
+
+    var RollBuilder: RollBuilder;
+
+    var initRoll: InitRollCallback;
+    var getReferences: GetReferenceCallback;
+    var getBarAttributes: GetBarAttributesCallback;
+    var getCriticalHits: GetCriticalHitsCallback;
+    var dropDice: DropDiceCallback;
+    var drop: DropCallback;
+    var Dice: DiceAPI;
+    /* eslint-enable no-var */
+  }
+}

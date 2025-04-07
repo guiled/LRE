@@ -1,4 +1,12 @@
-import { FunctionExpression, Span, Statement } from "@swc/core";
+import {
+  Argument,
+  CallExpression,
+  FunctionExpression,
+  Span,
+  Statement,
+} from "@swc/core";
+import member from "./member";
+import identifier_ from "../identifier";
 
 type FUNC_PARAM = {
   span: Span;
@@ -10,6 +18,7 @@ type FUNC_PARAM = {
   async?: FunctionExpression["async"];
   typeParameters?: FunctionExpression["typeParameters"];
   returnType?: FunctionExpression["returnType"];
+  binded?: Argument | null;
 };
 
 export default ({
@@ -22,8 +31,9 @@ export default ({
   async = false,
   typeParameters = undefined,
   returnType = undefined,
-}: FUNC_PARAM): FunctionExpression => {
-  return {
+  binded = null,
+}: FUNC_PARAM): FunctionExpression | CallExpression => {
+  const fcn: FunctionExpression = {
     type: "FunctionExpression",
     identifier,
     params,
@@ -39,4 +49,23 @@ export default ({
     typeParameters,
     returnType,
   };
+
+  if (binded) {
+    return {
+      type: "CallExpression",
+      span,
+      callee: member({
+        span,
+        object: {
+          type: "ParenthesisExpression",
+          span,
+          expression: fcn,
+        },
+        property: identifier_({ span, value: "bind" }),
+      }),
+      arguments: [binded],
+    };
+  }
+
+  return fcn;
 };

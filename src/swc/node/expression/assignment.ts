@@ -1,18 +1,16 @@
-import {
-  AssignmentExpression,
-} from "@swc/core";
+import { AssignmentExpression } from "@swc/core";
 
 export default function assignment({
   span,
   left,
   right,
-  operator,
+  operator = "=",
 }: Omit<AssignmentExpression, "type">): AssignmentExpression {
   return {
-      type: "AssignmentExpression",
-      span,
-      operator,
-      left,
-      right,
-    };
+    type: "AssignmentExpression",
+    span,
+    operator,
+    left,
+    right,
+  };
 }

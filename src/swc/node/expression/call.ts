@@ -1,16 +1,61 @@
-import { CallExpression, Span } from "@swc/core";
+import {
+  CallExpression,
+  Expression,
+  HasSpan,
+  OptionalChainingCall,
+  OptionalChainingExpression,
+  Span,
+} from "@swc/core";
+import member from "./member";
+import identifier from "../identifier";
 
 export type Call_Param = {
-  span: Span;
-  callee: CallExpression["callee"];
+  callee: Expression;
+  span?: Span;
   args?: CallExpression["arguments"];
-  typeArguments?: CallExpression["typeArguments"]
+  typeArguments?: CallExpression["typeArguments"];
 };
 
-export default ({ span, callee, args = [], typeArguments }: Call_Param): CallExpression => {
+export const call = (
+  { span, callee, args = [], typeArguments }: Call_Param,
+  optional: boolean = false,
+  called?: CallExpression["arguments"][number],
+): CallExpression | OptionalChainingExpression => {
+  span ??= (callee as HasSpan).span;
+
+  if (called) {
+    return call(
+      {
+        span,
+        callee: member({
+          span,
+          object: callee,
+          property: identifier({ span, value: "call" }),
+        }),
+        args: [called, ...args],
+      },
+      optional,
+    );
+  }
+
+  if (optional) {
+    return {
+      type: "OptionalChainingExpression",
+      span: span || (callee as HasSpan).span,
+      questionDotToken: span || (callee as HasSpan).span,
+      base: {
+        type: "CallExpression",
+        span: span || (callee as HasSpan).span,
+        callee: callee as OptionalChainingCall["callee"],
+        arguments: args,
+        typeArguments,
+      },
+    };
+  }
+
   return {
     type: "CallExpression",
-    span,
+    span: span || (callee as HasSpan).span,
     callee,
     arguments: args,
     typeArguments,

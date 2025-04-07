@@ -1,0 +1,41 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "javascript.format.semicolons": "insert",
+  "typescript.format.semicolons": "insert",
+  "editor.tabSize": 2,
+  "editor.detectIndentation": false,
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.formatOnSave": false
+  },
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.fixAll.ts": "never"
+  },
+  "eslint.codeActionsOnSave.rules": ["!prefer-const", "*"],
+  "eslint.rules.customizations": [
+    {
+      "rule": "prettier/prettier",
+      "severity": "off"
+    },
+    {
+      "rule": "@stylistic/padding-line-between-statements",
+      "severity": "off"
+    },
+    {
+      "rule": "@stylistic/lines-between-class-members",
+      "severity": "off"
+    },
+    {
+      "rule": "no-empty",
+      "severity": "off"
+    },
+    {
+      "rule": "jest/padding-around-all",
+      "severity": "off"
+    }
+  ]
+}

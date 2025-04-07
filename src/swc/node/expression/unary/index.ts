@@ -1,8 +1,6 @@
 import { UnaryExpression } from "@swc/core";
 
-export default function unary(
-  args: Omit<UnaryExpression, "type">
-): UnaryExpression {
+export function unary(args: Omit<UnaryExpression, "type">): UnaryExpression {
   return {
     ...args,
     type: "UnaryExpression",
