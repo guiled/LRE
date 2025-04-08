@@ -102,10 +102,20 @@ declare interface ISheet extends LetsRole.Sheet, ComponentContainer<IGroup> {
   prompt(
     title: string,
     view: string,
-    callback: (result: LetsRole.ViewData) => void = () => {},
-    callbackInit: (promptView: ISheet) => void = () => {},
+    callback: PromptResultCallback = () => {},
+    callbackInit: PromptInitCallback = () => {},
   ): void;
 }
+
+declare type PromptResultCallback = (
+  result: LetsRole.ViewData,
+  originalView: ISheet,
+) => void;
+
+declare type PromptInitCallback = (
+  promptView: ISheet,
+  originalView: ISheet,
+) => void;
 
 declare type ProxyModeHandlerLogType =
   | "value"

@@ -283,11 +283,15 @@ export class Sheet
   prompt(
     title: string,
     view: string,
-    callback: (result: LetsRole.ViewData) => void = () => {},
-    callbackInit: (promptView: ISheet) => void = () => {},
+    callback: PromptResultCallback = () => {},
+    callbackInit: PromptInitCallback = () => {},
   ): void {
-    return this.raw().prompt(title, view, callback, (sheet: LetsRole.Sheet) =>
-      callbackInit(lre.getSheet(sheet)),
+    return this.raw().prompt(
+      title,
+      view,
+      (result) => callback(result, this),
+      (promptSheet: LetsRole.Sheet) =>
+        callbackInit(lre.getSheet(promptSheet), this),
     );
   }
 

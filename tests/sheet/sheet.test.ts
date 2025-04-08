@@ -152,13 +152,33 @@ describe("Sheet basics", () => {
   });
 
   test("prompt calls raw method", () => {
+    let view: LetsRole.Sheet;
     jest.spyOn(raw, "prompt");
-    const fn = jest.fn();
-    sheet.prompt("title", "testedSheet", () => {}, fn);
+    const fnResult = jest.fn();
+    const fnInit = jest.fn((promptView, _v) => (view = promptView.raw()));
+    sheet.prompt("title", "testedSheet", fnResult, fnInit);
 
     expect(raw.prompt).toHaveBeenCalledTimes(1);
-    expect(fn).toHaveBeenCalledTimes(1);
-    expect(fn.mock.calls[0][0]).toBeInstanceOf(Sheet);
+    expect(fnInit).toHaveBeenCalledTimes(1);
+    expect(fnInit.mock.calls[0][0]).toBeInstanceOf(Sheet);
+    expect(fnInit.mock.calls[0][0].id()).toBe("testedSheet");
+    expect(fnInit.mock.calls[0][1]).toStrictEqual(sheet);
+    expect(view!).not.toBeUndefined();
+
+    const data = {
+      a: 1,
+      b: "2",
+      c: {
+        d: 3,
+        e: 4,
+      },
+    };
+    view!.setData(data);
+    server.validatePrompt(view!);
+
+    expect(fnResult).toHaveBeenCalledTimes(1);
+    expect(fnResult.mock.calls[0][0]).toMatchObject(data);
+    expect(fnResult.mock.calls[0][1]).toStrictEqual(sheet);
   });
 
   test("id() and readId() calls", () => {
