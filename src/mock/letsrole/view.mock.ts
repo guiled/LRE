@@ -630,10 +630,12 @@ export class ViewMock implements LetsRole.Sheet {
     return parts.reduce(
       (acc: Array<LetsRole.ComponentID>, part: LetsRole.ComponentID) => {
         if (acc.length === 0) {
-          return [part];
+          acc.push(part);
+        } else {
+          acc.push(acc[acc.length - 1] + "." + part);
         }
 
-        return [...acc, acc[acc.length - 1] + "." + part];
+        return acc;
       },
       [],
     );
