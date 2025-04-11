@@ -1104,7 +1104,7 @@ describe("Dataprovider toArray", () => {
   });
 });
 
-describe("DataProvider join", () => {
+describe("DataProvider union", () => {
   let dp1: IDataProvider;
   let dp2: IDataProvider;
   let data1: any;
@@ -1137,13 +1137,13 @@ describe("DataProvider join", () => {
     dp2 = lre.dataProvider("test2", getter2);
   });
 
-  test("Join two data providers works well", () => {
+  test("Union two data providers works well", () => {
     const dp = dp1.union(dp2);
 
     expect(dp.provider).toBeTruthy();
   });
 
-  test("Each on joined dp run the cb on both dp lines", () => {
+  test("Each on union-ed dp run the cb on both dp lines", () => {
     const dp = dp1.union(dp2);
 
     expect(dp.length()).toBe(2);
