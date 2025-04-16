@@ -1175,3 +1175,102 @@ describe("DataProvider union", () => {
     });
   });
 });
+
+describe("DataProvider join", () => {
+  let dp1: IDataProvider;
+  let dp2: IDataProvider;
+  let data1: any;
+  let data2: any;
+  let getter1: any;
+  let getter2: any;
+
+  beforeEach(() => {
+    data1 = {
+      a: { value: "24", type: 42, ref: "d" },
+      b: { value: "25", type: 43, ref: "d" },
+      c: { value: "26", type: 44, ref: "e" },
+      d: { value: "27", type: 45, ref: "f" },
+    };
+    getter1 = jest.fn((_a: any) => data1);
+    dp1 = lre.dataProvider("test", getter1);
+    data2 = [
+      { id: "a", name: "nameA", strength: 1, value: "42" },
+      { id: "b", name: "nameB", strength: 2, value: "52" },
+      { id: "c", name: "nameC", strength: 3, value: "62" },
+      { id: "d", name: "nameD", strength: 4, value: "72" },
+      { id: "e", name: "nameE", strength: 5, value: "82" },
+    ];
+    getter2 = jest.fn((_a: any) => data2);
+    dp2 = lre.dataProvider("test2", getter2);
+  });
+
+  test("Union two data providers with strings works well", () => {
+    const join = dp1.innerJoin(dp2, "ref", "id");
+
+    expect(join.provider).toBeTruthy();
+    expect(join.length()).toBe(3);
+    expect(join.providedValue()).toStrictEqual({
+      a: {
+        value: "24",
+        type: 42,
+        ref: "d",
+        name: "nameD",
+        strength: 4,
+        value_: "72",
+      },
+      b: {
+        value: "25",
+        type: 43,
+        ref: "d",
+        name: "nameD",
+        strength: 4,
+        value_: "72",
+      },
+      c: {
+        value: "26",
+        type: 44,
+        ref: "e",
+        name: "nameE",
+        strength: 5,
+        value_: "82",
+      },
+    });
+  });
+
+  test("Join with function works well", () => {
+    const join = dp1.innerJoin(dp2, (v1: any, v2: any): boolean => {
+      return v1.ref === v2.id;
+    });
+
+    console.log(join.providedValue());
+
+    expect(join.provider).toBeTruthy();
+    expect(join.length()).toBe(3);
+    expect(join.providedValue()).toStrictEqual({
+      a: {
+        value: "24",
+        type: 42,
+        ref: "d",
+        name: "nameD",
+        strength: 4,
+        value_: "72",
+      },
+      b: {
+        value: "25",
+        type: 43,
+        ref: "d",
+        name: "nameD",
+        strength: 4,
+        value_: "72",
+      },
+      c: {
+        value: "26",
+        type: 44,
+        ref: "e",
+        name: "nameE",
+        strength: 5,
+        value_: "82",
+      },
+    });
+  });
+});

@@ -345,11 +345,6 @@ declare type SortDirection = "ASC" | "DESC";
 declare type DataProviderGetValue =
   DataProviderCallback<LetsRole.ComponentValue>;
 
-declare type DataProviderValueComparator = (
-  a: DataProviderDataValue,
-  b: DataProviderDataValue,
-) => boolean;
-
 declare interface IDataProvider {
   provider: boolean;
   providedValue<T extends DataProviderDataValue = DataProviderDataValue>(
@@ -365,7 +360,11 @@ declare interface IDataProvider {
     direction: SortDirection = "ASC",
   ): IDataProvider;
   each(
-    mapper: (val: DataProviderDataValue, key: DataProviderDataId) => void,
+    mapper: (
+      val: DataProviderDataValue,
+      key: DataProviderDataId,
+      originalValue: LetsRole.ComponentValue | TableRow,
+    ) => void,
   ): void;
   select(column: DynamicSetValue<LetsRole.ComponentID>): IDataProvider;
   getData(
@@ -409,7 +408,57 @@ declare interface IDataProvider {
   toArray(transform?: DataProviderCallback): Array<unknown>;
   search(column: string, value: LetsRole.ComponentValue): IDataProvider;
   union(dataProvider: IDataProvider): IDataProvider;
+  innerJoin(
+    dataProvider: IDataProvider,
+    arg1: string,
+    arg2?: string,
+  ): IDataProvider;
+  innerJoin(dataProvider: IDataProvider, arg1: JoinOptions): IDataProvider;
+  innerJoin(
+    dataProvider: IDataProvider,
+    arg1: DataProviderValueComparator<boolean>,
+  ): IDataProvider;
+  leftJoin(
+    dataProvider: IDataProvider,
+    arg1: string,
+    arg2?: string,
+  ): IDataProvider;
+  leftJoin(dataProvider: IDataProvider, arg1: JoinOptions): IDataProvider;
+  leftJoin(
+    dataProvider: IDataProvider,
+    arg1: DataProviderValueComparator<boolean>,
+  ): IDataProvider;
 }
+
+declare type DataProviderValueComparator<ReturnType> = (
+  a: DataProviderDataValue,
+  b: DataProviderDataValue,
+  keyA?: DataProviderDataId,
+  keyB?: DataProviderDataId,
+  dataA?: DataProviderDataValue,
+  dataB?: DataProviderDataValue,
+) => ReturnType;
+
+declare type JoiningFunction =
+  | ((
+      dataProvider: IDataProvider,
+      arg1: string,
+      arg2?: string,
+    ) => IDataProvider)
+  | ((dataProvider: IDataProvider, arg1: JoinOptions) => IDataProvider)
+  | ((
+      dataProvider: IDataProvider,
+      arg1: DataProviderValueComparator<boolean>,
+    ) => IDataProvider);
+
+declare type JoinOptions = {
+  leftAlias?: string;
+  rightAlias?: string;
+  //mode: "first" | "all";
+  on?: DataProviderValueComparator<boolean>;
+  leftColumn?: string;
+  rightColumn?: string;
+};
 
 declare type IDataProviderAsSource = Pick<
   IDataProvider,

@@ -8,16 +8,10 @@ export type ValueGetterSetter<
   newValue?: T,
 ) => T extends undefined ? LetsRole.ComponentValue | TableRow : void;
 
-type Sorter = (
-  a: DataProviderDataValue,
-  b: DataProviderDataValue,
-  keyA?: DataProviderDataId,
-  keyB?: DataProviderDataId,
-  dataA?: DataProviderDataValue,
-  dataB?: DataProviderDataValue,
-) => number;
-const defaultSorter: Sorter = ((a: number | string, b: number | string) =>
-  a < b ? -1 : a > b ? 1 : 0) as Sorter;
+const defaultSorter: DataProviderValueComparator<number> = ((
+  a: number | string,
+  b: number | string,
+) => (a < b ? -1 : a > b ? 1 : 0)) as DataProviderValueComparator<number>;
 
 const arrayTransformer: DataProviderCallback<unknown> = (
   value: DataProviderDataValue,
@@ -148,10 +142,12 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     sort(
-      sorterOrString: Sorter | string = defaultSorter,
+      sorterOrString:
+        | DataProviderValueComparator<number>
+        | string = defaultSorter,
       direction: SortDirection = "ASC",
     ): IDataProvider {
-      let sorter: Sorter;
+      let sorter: DataProviderValueComparator<number>;
 
       if (typeof sorterOrString === "string") {
         const field: string = sorterOrString;
@@ -166,7 +162,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
           defaultSorter(
             a[field] ?? (dataA as Record<string, any>)?.[field],
             b[field] ?? (dataB as Record<string, any>)?.[field],
-          )) as Sorter;
+          )) as DataProviderValueComparator<number>;
       } else {
         sorter = sorterOrString;
       }
@@ -188,7 +184,10 @@ export const DataProvider = (superclass: Newable = class {}) =>
       );
     }
 
-    #sortData(sorter: Sorter, direction: SortDirection): IDataProvider {
+    #sortData(
+      sorter: DataProviderValueComparator<number>,
+      direction: SortDirection,
+    ): IDataProvider {
       return this.#newProvider(
         this.realId() + "-sort",
         () => {
@@ -841,6 +840,194 @@ export const DataProvider = (superclass: Newable = class {}) =>
         },
         true,
       );
+    }
+
+    innerJoin(
+      dataProvider: IDataProvider,
+      arg1: string,
+      arg2?: string,
+    ): IDataProvider;
+    innerJoin(dataProvider: IDataProvider, arg1: JoinOptions): IDataProvider;
+    innerJoin(
+      dataProvider: IDataProvider,
+      arg1: DataProviderValueComparator<boolean>,
+    ): IDataProvider;
+    innerJoin(
+      dataProvider: IDataProvider,
+      arg1: string | JoinOptions | DataProviderValueComparator<boolean>,
+      arg2?: string,
+    ): IDataProvider {
+      return this.#dataJoin(dataProvider, false, arg1, arg2);
+    }
+
+    leftJoin(
+      dataProvider: IDataProvider,
+      arg1: string,
+      arg2?: string,
+    ): IDataProvider;
+    leftJoin(dataProvider: IDataProvider, arg1: JoinOptions): IDataProvider;
+    leftJoin(
+      dataProvider: IDataProvider,
+      arg1: DataProviderValueComparator<boolean>,
+    ): IDataProvider;
+    leftJoin(
+      dataProvider: IDataProvider,
+      arg1: string | JoinOptions | DataProviderValueComparator<boolean>,
+      arg2?: string,
+    ): IDataProvider {
+      return this.#dataJoin(dataProvider, true, arg1, arg2);
+    }
+
+    #dataJoin(
+      dataProvider: IDataProvider,
+      _optional: boolean,
+      arg1: string | JoinOptions | DataProviderValueComparator<boolean>,
+      arg2?: string,
+    ): IDataProvider {
+      const joinOptions: JoinOptions = this.#getJoinOptionFromArgs(arg1, arg2);
+
+      return this.#newProvider(
+        this.realId() + "-join-" + dataProvider.realId(),
+        () => {
+          const result: DataProviderDataValue = {};
+
+          const indexedRightData: Record<string, DataProviderDataValue> = {};
+
+          this.each((rowLeft, keyLeft, originalValueLeft) => {
+            if (!lre.isObject(rowLeft)) {
+              result[keyLeft] = rowLeft;
+              return;
+            }
+
+            let leftColumnValue: LetsRole.ComponentValue;
+
+            if (joinOptions.leftColumn) {
+              leftColumnValue = this.#getValueColumn(
+                rowLeft,
+                joinOptions.leftColumn,
+              );
+
+              if (!lre.isIndex(leftColumnValue)) {
+                throw new Error("Invalid left column value");
+              }
+
+              if (indexedRightData[leftColumnValue]) {
+                result[keyLeft] = this.#mergeRows(
+                  rowLeft,
+                  indexedRightData[leftColumnValue],
+                );
+                return;
+              }
+            }
+
+            dataProvider.each((rowRight, keyRight, originalValueRight) => {
+              if (
+                joinOptions.on!(
+                  rowLeft,
+                  rowRight,
+                  keyLeft,
+                  keyRight,
+                  originalValueLeft,
+                  originalValueRight,
+                )
+              ) {
+                if (lre.isIndex(leftColumnValue)) {
+                  indexedRightData[leftColumnValue] = rowRight;
+                }
+
+                result[keyLeft] = this.#mergeRows(rowLeft, rowRight);
+                return false;
+              }
+
+              return true;
+            });
+          });
+          return result;
+        },
+      );
+    }
+
+    #getJoinOptionFromArgs(
+      arg1: string | JoinOptions | DataProviderValueComparator<boolean>,
+      arg2?: string,
+    ): JoinOptions {
+      const joinOptions: any = {};
+
+      if (lre.isIndex(arg1)) {
+        joinOptions.leftColumn = arg1;
+
+        if (lre.isIndex(arg2)) {
+          joinOptions.rightColumn = arg2;
+        } else {
+          joinOptions.rightColumn = "id";
+        }
+      } else if (lre.isObject(arg1)) {
+        Object.assign(joinOptions, arg1);
+      } else if (typeof arg1 === "function") {
+        joinOptions.on = arg1;
+      } else {
+        throw new Error("Invalid join options");
+      }
+
+      if (!joinOptions.on) {
+        if (
+          !lre.isIndex(joinOptions.leftColumn) ||
+          !lre.isIndex(joinOptions.rightColumn)
+        ) {
+          throw new Error(
+            "Invalid join options, missing comparison function and bad column types",
+          );
+        }
+
+        joinOptions.on = (
+          valA: DataProviderDataValue,
+          valB: DataProviderDataValue,
+        ): boolean => {
+          return (
+            this.#getValueColumn(valA, joinOptions.leftColumn) ===
+            this.#getValueColumn(valB, joinOptions.rightColumn)
+          );
+        };
+      }
+
+      return joinOptions;
+    }
+
+    #mergeRows(
+      rowLeft: DataProviderDataValue,
+      rowRight: DataProviderDataValue,
+    ): DataProviderDataValue {
+      const result: DataProviderDataValue = {};
+      let keys: Array<string | number> = [];
+
+      if (lre.isObject(rowLeft)) {
+        keys = Object.keys(rowLeft);
+        keys.forEach((k) => {
+          result[k] = (rowLeft as Record<string, LetsRole.ComponentValue>)[k];
+        });
+      }
+
+      if (lre.isObject(rowRight)) {
+        Object.keys(rowRight).forEach((k) => {
+          if (k === "id") return;
+
+          result[this.#getUniqueKey(k, keys)] = (
+            rowRight as Record<string, LetsRole.ComponentValue>
+          )[k];
+        });
+      }
+
+      return result;
+    }
+
+    #getUniqueKey(key: string, keys: Array<string | number>): string {
+      let suffix = "";
+
+      while (keys.includes(key + suffix)) {
+        suffix += "_";
+      }
+
+      return key + suffix;
     }
   };
 
