@@ -1242,8 +1242,6 @@ describe("DataProvider join", () => {
       return v1.ref === v2.id;
     });
 
-    console.log(join.providedValue());
-
     expect(join.provider).toBeTruthy();
     expect(join.length()).toBe(3);
     expect(join.providedValue()).toStrictEqual({
