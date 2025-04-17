@@ -26,7 +26,7 @@ export class ComponentCache {
     this.#isWaitingForget = false;
     if (this.#toDelete.length === 0) return;
 
-    const cmp = this.inCache("*" + this.#toDelete[0]);
+    const cmp = this.inCache(this.#toDelete[0] + "*");
 
     if (cmp) {
       this.unset(cmp.realId());
@@ -78,10 +78,9 @@ export class ComponentCache {
   }
 
   inCache(realId: LetsRole.ComponentID): CacheableTypes | false {
-    // Why * at 0 ? Because it is quite slow to test realId[strlen(realId)] as realId.length doesn't work
-    if (realId.charAt(0) === "*") {
+    if (realId.at(-1) === "*") {
       for (const k in this.#components) {
-        if (k.indexOf(realId.substring(1) + REP_ID_SEP) === 0) {
+        if (k.indexOf(realId.slice(0, -1) + REP_ID_SEP) === 0) {
           return this.#components[k];
         }
       }

@@ -201,10 +201,10 @@ describe("Component cache set/get/unset/inCache", () => {
     newCmp("rep.1.b");
     cache.set("rep.2.b", cmp1b);
 
-    expect(cache.inCache("*rep")).toBeTruthy();
-    expect(cache.inCache("*noRep")).toBeFalsy();
-    expect(cache.inCache("*rep.1")).toBeTruthy();
-    expect(cache.inCache("*rep.1")).toBeTruthy();
+    expect(cache.inCache("rep*")).toBeTruthy();
+    expect(cache.inCache("noRep*")).toBeFalsy();
+    expect(cache.inCache("rep.1*")).toBeTruthy();
+    expect(cache.inCache("rep.1*")).toBeTruthy();
     expect(cache.children("rep.1").sort()).toEqual(
       ["rep.1.a", "rep.1.b"].sort(),
     );
