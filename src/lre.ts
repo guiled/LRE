@@ -21,7 +21,7 @@ export interface LRE extends ILRE, Logger, cb {}
 export class LRE extends Logger implements ILRE {
   #context: ProxyModeHandler;
   #autoNum: boolean = false;
-  #autoTrad: boolean = false;
+  #autoTransl: boolean = false;
   #tablesOverloaded: boolean = false;
   sheets: SheetCollection;
   i18n!: LREi18n;
@@ -295,18 +295,18 @@ export class LRE extends Logger implements ILRE {
   autoTransl(v: boolean = true): void {
     LRE_DEBUG &&
       this.trace(`auto translate ${v ? "activated" : "deactivated"}`);
-    this.#autoTrad = v;
+    this.#autoTransl = v;
   }
 
   value<T = any>(value: T): T {
-    if (!this.#autoNum && !this.#autoTrad) return value;
+    if (!this.#autoNum && !this.#autoTransl) return value;
 
     if (typeof value === "string" && value !== "") {
       if (this.#autoNum && !isNaN(Number(value))) {
         return Number(value) as T;
       }
 
-      if (this.#autoTrad && isNaN(Number(value))) {
+      if (this.#autoTransl && isNaN(Number(value))) {
         return this.i18n._(value) as T;
       }
     }

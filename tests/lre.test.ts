@@ -338,7 +338,7 @@ describe("LRE autonum", () => {
   });
 });
 
-describe("LRE autoTrad", () => {
+describe("LRE autoTransl", () => {
   let subject: LRE;
 
   beforeEach(() => {
