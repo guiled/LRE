@@ -1,4 +1,5 @@
 import { isNaN } from "./isNaN";
+import { mt_rand } from "./mt_rand";
 import { stringify } from "./stringify";
 import { structuredClone } from "./structuredClone";
 import { throwError, newError } from "./throwError";
@@ -16,4 +17,5 @@ export const globals = {
   structuredClone,
   stringify,
   virtualCall,
+  mt_rand,
 };

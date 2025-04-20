@@ -190,6 +190,7 @@ declare module "lre" {
     var newError: (err: message) => unknown;
     var stringify: (obj: unknown, indent?: boolean) => string | undefined;
     var virtualCall: <T>(cb: () => T) => T;
+    var mt_rand: (min: number, max: number) => number;
     /* eslint-enable no-var */
   }
 }
