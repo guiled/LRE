@@ -998,6 +998,30 @@ describe("Dataprovider search", () => {
     });
   });
 
+  test("Search object row on id", () => {
+    const data = {
+      a: { id: "a", a: "42", b: "13", c: "24" },
+      b: { id: "b", a: "1", b: "2", c: "3" },
+      c: { id: "c", a: "4", b: "5", c: "6" },
+    };
+    const dataGetter = jest.fn((_a: any) => {
+      if (_a) {
+        Object.assign(data, _a);
+      }
+
+      return data as any;
+    });
+    const dp = lre.dataProvider("test", dataGetter);
+
+    const search = dp.search("id", "b");
+
+    expect(search.provider).toBeTruthy();
+
+    expect(search.providedValue()).toStrictEqual({
+      b: { id: "b", a: "1", b: "2", c: "3" },
+    });
+  });
+
   test("Search on column", () => {
     const data = {
       a: { a: "42", b: "13", c: "24" },
