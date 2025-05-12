@@ -9,7 +9,7 @@ While it keeps all the original behaviour of the System Builder, LRE adds many n
 It takes only 30 sec and 3 steps to manually include LRE in your project.
 
 - Step 1 : Download this file https://github.com/guiled/LRE/releases/latest/download/lre.js
-- Step 2 : copy and paste its content at the beginning of your system script. (Note: you can reduce the code by clicking on the `>` next to the first line `//region LRE 7.0.0`)
+- Step 2 : copy and paste its content at the beginning of your system script. (Note: you can reduce the code by clicking on the `>` next to the first line `//region LRE 7.0.1`)
 - Step 3 : embed your init function into `lre.init()`. And it's done !
 
 ## Details on installation in your system
@@ -39,7 +39,7 @@ LRE's goal is to facilitate Let's Rôle system coding of some common works that 
 - no more value change blocked (sync problems are highly avoided)
 - no more `parseInt()` or number conversions everywhere in your code
 - texts can be automatically translated
-- get rid of all the `update` events
+- get rid of most of the `update` events
 - like with computed values, write how a field is computed instead of writing what a field changes in a sheet
 - Know where an error is in your code
 - specific easy to use custom events for Repeaters
