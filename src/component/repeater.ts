@@ -68,6 +68,7 @@ export class Repeater extends Component<
       entry: Entry,
       entryId: LetsRole.Index,
       value: LetsRole.ViewData,
+      oldValue: LetsRole.ViewData,
     ) => void,
   ): void {
     if (event === "initread") {
@@ -77,7 +78,7 @@ export class Repeater extends Component<
         const entry = this.find(entryId) as Entry;
 
         if (!entry?.hasClass("editing")) {
-          callback.call(this, this, entry, entryId, val[entryId]);
+          callback.call(this, this, entry, entryId, val[entryId], {});
         }
       }
     }
@@ -202,7 +203,13 @@ export class Repeater extends Component<
             !entry.hasClass("lre_initread") ||
             !lre.deepEqual(newEntryValue, oldEntryData)
           ) {
-            this.trigger("initread", entryId, newEntryValue, oldEntryData);
+            this.trigger(
+              "initread",
+              entry,
+              entryId,
+              newEntryValue,
+              oldEntryData,
+            );
             entry.addClass("lre_initread");
           }
 
