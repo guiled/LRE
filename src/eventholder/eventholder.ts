@@ -1,5 +1,10 @@
 import { Error } from "../error";
 
+type RunnableEventHandler = {
+  handler: EventHandler<any>;
+  alwaysRan: boolean;
+};
+
 export type EventDef<EventType extends string = LetsRole.EventType> = {
   name: EventType;
   eventId: EventType;
@@ -7,7 +12,7 @@ export type EventDef<EventType extends string = LetsRole.EventType> = {
   delegated: boolean;
   subComponent: LetsRole.ComponentID | null;
   state: boolean;
-  handlers: Record<string, EventHandler<any>>;
+  handlers: Record<string, RunnableEventHandler>;
   rawHandler: LetsRole.EventCallback;
 };
 
@@ -115,7 +120,7 @@ export const EventHolder = <
     ): boolean {
       let isHandlerRan: boolean = false;
       Object.keys(handlers).some((hId) => {
-        const fcn = handlers[hId];
+        const fcn = handlers[hId].handler;
 
         if (!this.isEventEnabled(eventId)) {
           LRE_DEBUG && lre.trace(`Event ${eventId} is disabled`);
@@ -196,7 +201,22 @@ export const EventHolder = <
         // This variable is necessary to avoid an infinite loop in let's role system builder v1
         const canBeRan = this.#eventCanBeRan(eventId);
 
+        let runnableHandlers = handlers;
+
         if (!canBeRan) {
+          runnableHandlers = Object.keys(handlers).reduce(
+            (acc, hId) => {
+              if (handlers[hId].alwaysRan) {
+                acc[hId] = handlers[hId];
+              }
+
+              return acc;
+            },
+            {} as EventDef["handlers"],
+          );
+        }
+
+        if (Object.keys(runnableHandlers).length === 0) {
           LRE_DEBUG && lre.pop();
           return;
         }
@@ -226,7 +246,24 @@ export const EventHolder = <
     on(
       event: EventType<AdditionalEvents>,
       subComponent: EventSubComponent,
-      handler?: EventHandler,
+      handler: EventHandler | undefined = undefined,
+    ): void {
+      this.#callOn(false, event, subComponent, handler);
+    }
+
+    onAlways(
+      event: EventType<AdditionalEvents>,
+      subComponent: EventSubComponent,
+      handler: EventHandler | undefined = undefined,
+    ): void {
+      this.#callOn(true, event, subComponent, handler);
+    }
+
+    #callOn(
+      alwaysRan: boolean,
+      event: EventType<AdditionalEvents>,
+      subComponent: EventSubComponent,
+      handler: EventHandler | undefined,
     ): void {
       const { eventId, rest } = this.#getEventIdAndRest(event);
       const handlerId: string = rest.join(EVENT_SEP) || DEFAULT_HANDLER_ID;
@@ -234,13 +271,13 @@ export const EventHolder = <
       //let eventId: EventType<AdditionalEvents> = eventParts[0];
       let eventName = eventId;
 
-      if (arguments.length === 3 && subComponent !== void 0) {
+      if (handler !== void 0 && subComponent !== void 0) {
         delegated = true;
         eventName = (eventId +
           DELEGATED_SEP +
           subComponent) as EventType<AdditionalEvents>;
-      } else if (arguments.length === 2) {
-        handler = subComponent as EventHandler;
+      } else if (typeof subComponent === "function") {
+        handler = subComponent;
         subComponent = undefined;
       }
 
@@ -268,7 +305,10 @@ export const EventHolder = <
         this.#events[eventName]!.handlers,
         handlerId!,
       );
-      this.#events[eventName]!.handlers[handlerId] = handler!;
+      this.#events[eventName]!.handlers[handlerId] = {
+        handler: handler!,
+        alwaysRan,
+      };
       const cnt = Object.keys(this.#events[eventName]!.handlers).length;
 
       let logText = "Handler added";

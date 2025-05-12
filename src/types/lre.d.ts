@@ -266,6 +266,12 @@ declare interface IEventHolder<
     handler?: EventHandler,
   ): void;
 
+  onAlways(
+    event: EventType<AdditionalEvents>,
+    subComponent: LetsRole.ComponentID | EventHandler | undefined,
+    handler?: EventHandler,
+  ): void;
+
   once(
     event: EventType<AdditionalEvents>,
     handlerOrId: LetsRole.ComponentID | EventHandler,

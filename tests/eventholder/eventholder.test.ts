@@ -1281,3 +1281,42 @@ describe("Copy events from a component to an other", () => {
     jest.clearAllMocks();
   });
 });
+
+describe("Event can be ran or not", () => {
+  let subject: Dummy;
+
+  beforeEach(() => {
+    subject = new Dummy(rawCmp, undefined, () => false);
+  });
+
+  test("Not-runnable event is triggered manually", () => {
+    const eventHandler = jest.fn();
+    subject.on("click", eventHandler);
+
+    expect(eventHandler).not.toHaveBeenCalled();
+
+    subject.trigger("click");
+
+    expect(eventHandler).toHaveBeenCalledTimes(1);
+  });
+
+  test("Not-runnable event is not triggered from raw event", () => {
+    const eventHandler = jest.fn();
+    subject.on("click", eventHandler);
+
+    expect(eventHandler).not.toHaveBeenCalled();
+
+    rawCmp.trigger("click");
+
+    expect(eventHandler).not.toHaveBeenCalled();
+  });
+
+  test("Not-runnable event is triggered from raw event when added with onAlways", () => {
+    const eventHandler = jest.fn();
+    subject.onAlways("click", eventHandler);
+
+    rawCmp.trigger("click");
+
+    expect(eventHandler).toHaveBeenCalledTimes(1);
+  });
+});
