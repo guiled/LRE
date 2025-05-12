@@ -41,7 +41,7 @@ export class Repeater extends Component<
     }
 
     this.on("click:__lre__", this.#clickHandler.bind(this));
-    this.on("update:__lre__", this.#updateHandler.bind(this));
+    this.onAlways("update:__lre__", this.#updateHandler.bind(this));
   }
 
   #saveValue(value?: LetsRole.RepeaterValue): DefinedRepeaterValue {
@@ -189,7 +189,11 @@ export class Repeater extends Component<
             }
           });
 
-          if (entry.hasData("saved") && !entry.data("saved")) {
+          if (
+            entry.hasData("saved") &&
+            !entry.data("saved") &&
+            !entry.hasClass("editing")
+          ) {
             entry.data("saved", true);
             this.trigger("save", entry, entryId, newEntryValue, oldEntryData);
           }

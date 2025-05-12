@@ -246,6 +246,83 @@ describe("Repeater events", () => {
       name: "test2",
     });
   });
+
+  test("edit event is correctly launched", () => {
+    const edited = jest.fn();
+    repeater.on("edit", edited);
+    const values: Record<string, any> = {
+      "1": {
+        name: "test",
+      },
+      "2": {
+        name: "test2",
+      },
+      "3": {
+        name: "test3",
+      },
+    };
+    repeater.value(values);
+
+    expect(edited).not.toHaveBeenCalled();
+
+    rawSheet.repeaterClickOnEdit(repeater.id()! + "." + "2");
+
+    expect(edited).toHaveBeenCalledTimes(1);
+    expect(edited.mock.calls[0][0]).toStrictEqual(repeater);
+    expect(edited.mock.calls[0][2]).toStrictEqual("2");
+    expect(edited.mock.calls[0][3]).toMatchObject(values["2"]);
+
+    rawSheet.repeaterClickOnDone(repeater.id()! + "." + "2");
+
+    expect(edited).toHaveBeenCalledTimes(1);
+
+    rawSheet.repeaterClickOnEdit(repeater.id()! + "." + "2");
+
+    expect(edited).toHaveBeenCalledTimes(2);
+
+    rawSheet.repeaterClickOnDone(repeater.id()! + "." + "2");
+
+    expect(edited).toHaveBeenCalledTimes(2);
+
+    rawSheet.repeaterClickOnEdit(repeater.id()! + "." + "2");
+
+    expect(edited).toHaveBeenCalledTimes(3);
+
+    rawSheet.repeaterClickOnDone(repeater.id()! + "." + "2");
+
+    expect(edited).toHaveBeenCalledTimes(3);
+  });
+
+  test("edit event is launched only once for each entry", () => {
+    const edited = jest.fn();
+    repeater.on("edit", edited);
+    const values: Record<string, any> = {
+      "1": {
+        name: "test",
+      },
+      "2": {
+        name: "test2",
+      },
+      "3": {
+        name: "test3",
+      },
+    };
+    repeater.value(values);
+
+    expect(edited).not.toHaveBeenCalled();
+
+    rawSheet.repeaterClickOnEdit(repeater.id()! + "." + "2");
+
+    expect(edited).toHaveBeenCalledTimes(1);
+
+    rawSheet.repeaterClickOnEdit(repeater.id()! + "." + "3");
+
+    expect(edited).toHaveBeenCalledTimes(2);
+
+    rawSheet.repeaterClickOnDone(repeater.id()! + "." + "2");
+
+    expect(edited).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe("Repeater as data provider", () => {

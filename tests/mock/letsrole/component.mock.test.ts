@@ -975,6 +975,47 @@ describe("Repeaters", () => {
     expect(repeaterOk.value()).toEqual({});
   });
 
+  test("Repeater click on edit add the editing class, click on done remove it", () => {
+    let hasEditingOnUpdate = false;
+    const fnUpdate = jest.fn(() => {
+      hasEditingOnUpdate = entry.hasClass("editing");
+    });
+    const values = {
+      1: {
+        input: "ok",
+        choice: "1",
+      },
+      2: {
+        input: "ko",
+        choice: "2",
+      },
+      3: {
+        input: "ko",
+        choice: "3",
+      },
+    };
+    repeaterOk.value(values);
+    repeaterOk.on("update", fnUpdate);
+    const keys = Object.keys(values!);
+
+    const entryId = repeaterOk.realId() + "." + keys[0];
+    const entry = sheet.get(entryId);
+
+    expect(entry.hasClass("editing")).toBeFalsy();
+
+    sheet.repeaterClickOnEdit(entryId);
+
+    expect(entry.hasClass("editing")).toBeTruthy();
+    expect(fnUpdate).toHaveBeenCalledTimes(0);
+    expect(hasEditingOnUpdate).toBeFalsy();
+
+    sheet.repeaterClickOnDone(entryId);
+
+    expect(entry.hasClass("editing")).toBeFalsy();
+    expect(fnUpdate).toHaveBeenCalledTimes(1);
+    expect(hasEditingOnUpdate).toBeFalsy();
+  });
+
   test.todo(
     "One view opened on two screens, it two different repeater entries are edited at the same time, an update on one screen will trigger update AND un-edit entries on the other screen",
   );

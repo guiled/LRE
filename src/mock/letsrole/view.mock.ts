@@ -254,6 +254,8 @@ export class ViewMock implements LetsRole.Sheet {
       this.getEntryState(id) === "write"
     ) {
       cmp.addClass("editing");
+    } else {
+      cmp.removeClass("editing");
     }
 
     return cmp;
@@ -856,6 +858,7 @@ export class ViewMock implements LetsRole.Sheet {
     }
 
     this.setEntryState(entryRealId, "read");
+    this.removeComponentClass(entryRealId, "editing");
     this.setData({
       [repeaterRealId]: this.getData()[repeaterRealId],
     });
