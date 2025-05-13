@@ -7,6 +7,7 @@ import stylisticTs from "@stylistic/eslint-plugin-ts";
 import prettierRecommended from "eslint-plugin-prettier/recommended";
 import pluginJest from "eslint-plugin-jest";
 
+// ts-unused-exports:disable-next-line
 export default tsESlint.config(
   eslint.configs.recommended,
   ...tsESlint.configs.recommended,
