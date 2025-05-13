@@ -9,7 +9,7 @@ While it keeps all the original behaviour of the System Builder, LRE adds many n
 It takes only 30 sec and 3 steps to manually include LRE in your project.
 
 - Step 1 : Download this file https://github.com/guiled/LRE/releases/latest/download/lre.js
-- Step 2 : copy and paste its content at the beginning of your system script. (Note: you can reduce the code by clicking on the `>` next to the first line `//region LRE 7.0.1`)
+- Step 2 : copy and paste its content at the beginning of your system script. (Note: you can reduce the code by clicking on the `>` next to the first line `//region LRE 7.0.2`)
 - Step 3 : embed your init function into `lre.init()`. And it's done !
 
 ## Details on installation in your system
