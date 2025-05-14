@@ -333,6 +333,18 @@ describe("Component construction", () => {
     expect(cmp2.hasClass("clX")).toBeTruthy();
     expect(cmp2.hasClass("clY")).toBeFalsy();
   });
+
+  test("Component num value", () => {
+    const cmp2 = new Component(rawSheet.get("cmp2"), sheet, "cmp2");
+    const cmp3 = new Component(rawSheet.get("cmp3"), sheet, "cmp3");
+
+    expect(cmp.id()).toBe("cmp");
+    expect(cmp.num).toBeNull();
+    expect(cmp2.id()).toBe("cmp2");
+    expect(cmp2.num).toBe(2);
+    expect(cmp3.id()).toBe("cmp3");
+    expect(cmp3.num).toBe(3);
+  });
 });
 
 describe("Component tree", () => {

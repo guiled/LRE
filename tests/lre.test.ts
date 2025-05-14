@@ -499,6 +499,21 @@ describe("LRE global methods", () => {
   });
 
   test.each([
+    [undefined, null],
+    [null, null],
+    ["", null],
+    ["component", null],
+    ["component-0", 0],
+    ["component-1", 1],
+    ["component-42", 42],
+    ["component-1234567", 1234567],
+    ["component-1234567-aze", null],
+  ])("Extract component number", (init, result) => {
+    /* @ts-expect-error The next error is deliberate to test every cases */
+    expect(subject.extractNumber(init)).toBe(result);
+  });
+
+  test.each([
     [undefined, false],
     [null, false],
     ["", true],

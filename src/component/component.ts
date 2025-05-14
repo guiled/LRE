@@ -68,6 +68,7 @@ export class Component<
     ComponentCommon
 {
   component: boolean = true;
+  num: number | null;
   #realId: string;
   #tracker: ChangeTracker;
   #sheet: ISheet;
@@ -165,6 +166,8 @@ export class Component<
       ],
       [/* DataHolder*/ sheet, realId],
     ]);
+
+    this.num = lre.extractNumber(realId);
 
     this.#tracker = new ChangeTracker(this, context);
 

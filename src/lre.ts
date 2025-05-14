@@ -364,4 +364,18 @@ export class LRE extends Logger implements ILRE {
     LRE_DEBUG && this.trace("Overload tables");
     Tables = new LreTables(_Tables, this.#context);
   }
+
+  extractNumber(value: string): number | null {
+    if (!value) {
+      return null;
+    }
+
+    const match = value.match(/\d+$/);
+
+    if (!match) {
+      return null;
+    }
+
+    return parseInt(match[0], 10);
+  }
 }

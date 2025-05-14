@@ -25,6 +25,7 @@ export class Group
   #sheet: ISheet;
   #components: Array<IComponent> = [];
   #context: ProxyModeHandler;
+  num = null;
 
   constructor(
     context: ProxyModeHandler,

@@ -64,6 +64,7 @@ declare interface ILRE {
   ): T;
   i18n: ILREi18n;
   tables(_Tables: LetsRole.Tables): void;
+  extractNumber(value: string): number | null;
 }
 
 declare interface ISheet extends LetsRole.Sheet, ComponentContainer<IGroup> {
@@ -504,6 +505,7 @@ declare interface IComponent
     IEventHolder,
     IDataHolder,
     IHasRaw {
+  num: number | null;
   init(): this;
   repeater(repeater?: Repeater): Repeater | undefined;
   entry(entry?: Entry): Entry | undefined;
