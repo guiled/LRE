@@ -19,7 +19,7 @@ export type ChoiceEvents =
   | "valselect"
   | "unselect"
   | "valunselect"
-  | "valclick";
+  | "valclick"; // todo : check if this is still necessary and remove it. This event seems to be triggered only when value doesn't change but the update event that execute this event should NOT be triggered when the value doesn't change
 
 const choiceEvents: Array<ChoiceEvents> = [
   "select",
@@ -287,10 +287,6 @@ export class Choice<
   ): void {
     this.#valueProvider = undefined;
 
-    if (arguments.length >= 2) {
-      this.optional(optional);
-    }
-
     if (Array.isArray(tableOrCb)) {
       const choices: ChoicesWithData = {};
       tableOrCb.every((row) => {
@@ -299,6 +295,10 @@ export class Choice<
           return false;
         } else if (typeof row[label] === "undefined") {
           lre.warn(`Table row misses a ${label} field`);
+        }
+
+        if (arguments.length >= 2) {
+          this.optional(optional);
         }
 
         return (choices[row.id] = {
@@ -334,10 +334,20 @@ export class Choice<
           choices[choiceId] = currentChoice;
         }
       });
+
+      if (arguments.length >= 2) {
+        this.optional(optional);
+      }
+
       this.setChoices(choices);
     } else if (typeof tableOrCb === "string") {
       const table = Tables.get(tableOrCb) as Table | null;
       if (!table) return;
+
+      if (arguments.length >= 2) {
+        this.optional(optional);
+      }
+
       this.setChoices(table.select(label));
     }
   }
