@@ -375,25 +375,39 @@ describe("MultiChoice", () => {
     multiChoice.maxChoiceNb(2);
     multiChoice.minChoiceNb(1);
     const limitEvent = jest.fn();
+    const limitEventMin = jest.fn();
+    const limitEventMax = jest.fn();
     multiChoice.on("limit", limitEvent);
+    multiChoice.on("limitmin", limitEventMin);
+    multiChoice.on("limitmax", limitEventMax);
 
     expect(limitEvent).not.toHaveBeenCalled();
+    expect(limitEventMin).not.toHaveBeenCalled();
+    expect(limitEventMax).not.toHaveBeenCalled();
 
     rawMultiChoice.value(["1"]);
 
     expect(limitEvent).not.toHaveBeenCalled();
+    expect(limitEventMin).not.toHaveBeenCalled();
+    expect(limitEventMax).not.toHaveBeenCalled();
 
     rawMultiChoice.value([]);
 
     expect(limitEvent).toHaveBeenCalledTimes(1);
+    expect(limitEventMin).toHaveBeenCalledTimes(1);
+    expect(limitEventMax).not.toHaveBeenCalled();
 
     rawMultiChoice.value(["1", "2"]);
 
     expect(limitEvent).toHaveBeenCalledTimes(1);
+    expect(limitEventMin).toHaveBeenCalledTimes(1);
+    expect(limitEventMax).not.toHaveBeenCalled();
 
     rawMultiChoice.value(["1", "2", "3"]);
 
     expect(limitEvent).toHaveBeenCalledTimes(2);
+    expect(limitEventMin).toHaveBeenCalledTimes(1);
+    expect(limitEventMax).toHaveBeenCalledTimes(1);
   });
 
   test("Limit multichoice with object as condition", () => {

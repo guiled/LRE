@@ -330,23 +330,35 @@ export class MultiChoice extends Choice<
     const minValue = this.#getLimiterValue(this.#minLimiter);
     const maxValue = this.#getLimiterValue(this.#maxLimiter);
 
-    if (
-      this.#testExceedLimit(
-        minValue,
-        resultMin,
-        newValue,
-        this.#valuesSavedForMinMax,
-        UNDER,
-      ) ||
-      this.#testExceedLimit(
-        maxValue,
-        resultMax,
-        newValue,
-        this.#valuesSavedForMinMax,
-        OVER,
-      )
-    ) {
-      this.trigger("limit");
+    const maxExceeded = this.#testExceedLimit(
+      maxValue,
+      resultMax,
+      newValue,
+      this.#valuesSavedForMinMax,
+      OVER,
+    );
+    const minExceeded = this.#testExceedLimit(
+      minValue,
+      resultMin,
+      newValue,
+      this.#valuesSavedForMinMax,
+      UNDER,
+    );
+
+    if (minExceeded || maxExceeded) {
+      let type = "min";
+
+      if (minExceeded) {
+        this.trigger("limitmin", type, minValue, maxValue);
+      }
+
+      if (maxExceeded) {
+        this.trigger("limitmax", type, minValue, maxValue);
+        type = "max";
+      }
+
+      this.trigger("limit", type, minValue, maxValue);
+
       this.disableEvent("update");
       this.value(this.#valuesSavedForMinMax.slice());
       this.sheet().sendPendingDataFor(this.realId());

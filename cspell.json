@@ -43,6 +43,8 @@
     "keeph",
     "keepl",
     "letsrole",
+    "limitmax",
+    "limitmin",
     "multichoice",
     "outfile",
     "remh",
