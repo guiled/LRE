@@ -36,7 +36,10 @@ export class ComponentMock<
   }
 
   index(): LetsRole.Index | null {
-    return null;
+    const parts = this.#realId.split(".");
+    const indexIdx = 2 * Math.ceil((parts.length - 1) / 2) - 1;
+
+    return parts[indexIdx] || null;
   }
 
   name(): LetsRole.Name {

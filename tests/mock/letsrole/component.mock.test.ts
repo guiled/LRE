@@ -92,6 +92,30 @@ describe("ComponentMock behavior", () => {
     expect(componentContainer.index()).toBe(null);
   });
 
+  test.each([
+    ["a", null],
+    ["a.b", "b"],
+    ["a.b.c", "b"],
+    ["a.b.c.d", "d"],
+    ["a.b.c.d.e", "d"],
+    ["a.b.c.d.e.f", "f"],
+    ["a.b.c.d.e.f.g", "f"],
+  ])("Index in %s", (init, result) => {
+    const cmp = new ComponentMock(
+      sheet,
+      init,
+      {
+        id: "ah",
+        name: "ah",
+        className: "Container",
+        children: [],
+      },
+      0,
+    );
+
+    expect(cmp.index()).toBe(result);
+  });
+
   test("name behavior", () => {
     expect(componentContainer.name()).toBe(system.views![0].children[0].name);
     expect(componentLabel.name()).toBe(system.views![0].children[1].name);
