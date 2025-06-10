@@ -65,7 +65,13 @@ export class ComponentMock<
       return new FailingExistingComponent(this.#sheet, id);
     }
 
-    const foundInSheet = this.#sheet.get(id);
+    const thisParts = this.#realId.split(".");
+    const parts = id.split(".");
+    thisParts.pop();
+    thisParts.push(...parts);
+    const idToFind = thisParts.join(".");
+
+    const foundInSheet = this.#sheet.get(idToFind);
 
     if (this.#definitions.className !== "_CmpFromSheet_") {
       const childDefs = ViewMock.findIdInDefinition(

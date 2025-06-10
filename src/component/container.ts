@@ -1,5 +1,5 @@
 import { ChangeTracker } from "../globals/changetracker";
-import { Component } from "./component";
+import { Component, REP_ID_SEP } from "./component";
 
 export class Container
   extends Component<LetsRole.ViewData>
@@ -75,7 +75,15 @@ export class Container
       return this.#children[completeId];
     }
 
-    const cmp = this.sheet().get(completeId) as Component | null;
+    const idParts = this.realId().split(REP_ID_SEP);
+    idParts.pop();
+
+    const searchedId =
+      idParts.length > 0
+        ? idParts.join(REP_ID_SEP) + REP_ID_SEP + completeId
+        : completeId;
+
+    const cmp = this.sheet().get(searchedId) as Component | null;
 
     if (lre.isComponent(cmp)) {
       const rawChild = this.raw().find(completeId);

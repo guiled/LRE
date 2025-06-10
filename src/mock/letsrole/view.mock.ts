@@ -110,17 +110,17 @@ export class ViewMock implements LetsRole.Sheet {
       usedId = usedId.substring(this.#idPrefix.length + 1);
     }
 
-    const parts = usedId.split(".");
-    let cmpId = parts[0];
-    const [_unused, entryId, ...rest] = parts;
-
     if (id === this.id()) {
-      return this.toComponent(
+      return this.viewToComponent(
         id,
         "_CmpFromSheet_",
         this.#getDefinitions()?.children,
       );
     }
+
+    const parts = usedId.split(".");
+
+    const [cmpId, entryId, ...rest] = parts;
 
     const definition = ViewMock.findIdInDefinition(
       this.#getDefinitions().children,
@@ -135,58 +135,86 @@ export class ViewMock implements LetsRole.Sheet {
     const sheetData = this.#server.loadViewData(this.#sheetId);
 
     if (parts.length === 1) {
-      if (this.#idPrefix) {
-        cmpId = this.#idPrefix + "." + cmpId;
-      }
-
-      CommonComponentClasses.forEach((cl) =>
-        this.addComponentClass(cmpId, cl, true),
-      );
-      definition.classes
-        ?.split(" ")
-        .forEach((cl) => this.addComponentClass(cmpId, cl, true));
-
-      if (Array.isArray(ComponentClasses[definition.className])) {
-        ComponentClasses[definition.className]?.forEach((cl) =>
-          this.addComponentClass(cmpId, cl || "view", true),
-        );
-      }
-
-      if (
-        definition.className === "Label" ||
-        definition.className === "TextInput" ||
-        definition.className === "Textarea" ||
-        definition.className === "NumberInput"
-      ) {
-        if (definition.computed) {
-          this.addComponentClass(cmpId, "is-computed", true);
-        }
-
-        if (definition.tooltip) {
-          this.addComponentClass(cmpId, "with-tooltip", true);
-        }
-      }
-
-      if (definition.className === "Container") {
-        if (definition.layout === "vertical") {
-          this.addComponentClass(cmpId, "flex-column", true);
-        } else {
-          this.addComponentClass(cmpId, "flex-row", true);
-        }
-      }
-
-      if (definition.className === "Choice" && definition.multiple) {
-        this.addComponentClass(cmpId, "multiple", true);
-      }
-
-      return new ComponentMock(
-        this.#realView || this,
-        cmpId,
+      return this.#buildComponent(
+        (this.#idPrefix ? this.#idPrefix + "." : "") + cmpId,
         definition,
-        sheetData[cmpId] || null,
+        sheetData,
       );
     }
 
+    return this.buildComponentInRepeater(
+      id,
+      usedId,
+      [cmpId, entryId, rest],
+      definition,
+      sheetData,
+    );
+  }
+
+  #buildComponent(
+    cmpId: LetsRole.ComponentID = this.#idPrefix || this.id(),
+    definition: LetsRoleMock.ComponentDefinitions,
+    sheetData: LetsRole.ViewData,
+  ): ComponentMock {
+    CommonComponentClasses.forEach((cl) =>
+      this.addComponentClass(cmpId, cl, true),
+    );
+    definition.classes
+      ?.split(" ")
+      .forEach((cl) => this.addComponentClass(cmpId, cl, true));
+
+    if (Array.isArray(ComponentClasses[definition.className])) {
+      ComponentClasses[definition.className]?.forEach((cl) =>
+        this.addComponentClass(cmpId, cl || "view", true),
+      );
+    }
+
+    if (
+      definition.className === "Label" ||
+      definition.className === "TextInput" ||
+      definition.className === "Textarea" ||
+      definition.className === "NumberInput"
+    ) {
+      if (definition.computed) {
+        this.addComponentClass(cmpId, "is-computed", true);
+      }
+
+      if (definition.tooltip) {
+        this.addComponentClass(cmpId, "with-tooltip", true);
+      }
+    }
+
+    if (definition.className === "Container") {
+      if (definition.layout === "vertical") {
+        this.addComponentClass(cmpId, "flex-column", true);
+      } else {
+        this.addComponentClass(cmpId, "flex-row", true);
+      }
+    }
+
+    if (definition.className === "Choice" && definition.multiple) {
+      this.addComponentClass(cmpId, "multiple", true);
+    }
+
+    return new ComponentMock(
+      this.#realView || this,
+      cmpId,
+      definition,
+      sheetData[cmpId] || null,
+    );
+  }
+
+  buildComponentInRepeater(
+    id: LetsRole.ComponentID,
+    usedId: LetsRole.ComponentID,
+    [cmpId, entryId, rest]: [
+      LetsRole.ComponentID,
+      LetsRole.ComponentID,
+      Array<LetsRole.ComponentID>,
+    ],
+    definition: LetsRoleMock.ComponentDefinitions,
+    sheetData: LetsRole.ViewData,
+  ): ComponentMock | FailingExistingComponent | FailingComponent {
     if (definition.className !== "Repeater") {
       if (
         ViewMock.findIdInDefinition(definition.children || [], entryId) !== null
@@ -223,7 +251,7 @@ export class ViewMock implements LetsRole.Sheet {
     entryView.setRealView(this, cmpId + "." + entryId);
 
     if (rest.length === 0) {
-      return entryView.toComponent(
+      return entryView.viewToComponent(
         usedId,
         "RepeaterElement",
         definition.children || [],
@@ -233,7 +261,7 @@ export class ViewMock implements LetsRole.Sheet {
     return entryView.get(id);
   }
 
-  toComponent(
+  viewToComponent(
     id: LetsRole.ComponentID,
     className: Exclude<LetsRoleMock.ComponentClassName, "View">,
     children: Array<LetsRoleMock.ComponentDefinitions>,
@@ -722,6 +750,11 @@ export class ViewMock implements LetsRole.Sheet {
     className: LetsRole.ClassName,
     unique: boolean = false,
   ): void {
+    if (this.#realView) {
+      this.#realView.addComponentClass(realId, className, unique);
+      return;
+    }
+
     if (!this.#componentClasses[realId]) {
       this.#componentClasses[realId] = [];
     }

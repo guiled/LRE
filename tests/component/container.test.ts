@@ -6,11 +6,13 @@ import {
   terminateLetsRole,
 } from "../../src/mock/letsrole/letsrole.mock";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
+import { ViewMock } from "../../src/mock/letsrole/view.mock";
 import { SheetProxy } from "../../src/proxy/sheet";
 import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
 
 let server: ServerMock;
+let rawSheet: ViewMock;
 let sheet: Sheet;
 
 beforeEach(() => {
@@ -63,13 +65,50 @@ beforeEach(() => {
             className: "TextInput",
             defaultValue: "World2",
           },
+          {
+            id: "rep",
+            name: "Repeater",
+            className: "Repeater",
+            readViewId: "read",
+            viewId: "write",
+          },
         ],
+      },
+      {
+        id: "read",
+        name: "Read",
+        className: "View",
+        children: [
+          {
+            id: "container",
+            name: "Container",
+            className: "Container",
+            children: [
+              {
+                id: "repTxt1",
+                name: "Text",
+                className: "TextInput",
+              },
+              {
+                id: "repTxt2",
+                name: "Text",
+                className: "TextInput",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: "write",
+        name: "Write",
+        className: "View",
+        children: [],
       },
     ],
   });
   initLetsRole(server);
   global.lre = new LRE(context);
-  const rawSheet = server.openView("main", "123");
+  rawSheet = server.openView("main", "123");
   const sheetProxy = new SheetProxy(context, rawSheet);
   sheet = new Sheet(sheetProxy, new DataBatcher(context, sheetProxy), context);
 });
@@ -203,5 +242,31 @@ describe("Container value", () => {
       subTxt1: 40,
       subTxt2: 44,
     });
+  });
+});
+
+describe("Container in repeater", () => {
+  beforeEach(() => {
+    rawSheet.setData({
+      rep: {
+        "1": {
+          repTxt1: "Hello",
+          repTxt2: "World",
+        },
+      },
+    });
+  });
+
+  test("get component in container in repeater", () => {
+    const container = sheet.get("rep.1.container") as Container;
+
+    expect(container).not.toBeNull();
+    expect(container.exists()).toBeTruthy();
+    expect(container.lreType()).toBe("container");
+
+    const repTxt1 = container.find("repTxt1");
+
+    expect(repTxt1).not.toBeNull();
+    expect(repTxt1?.exists()).toBeTruthy();
   });
 });
