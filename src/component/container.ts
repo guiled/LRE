@@ -57,14 +57,14 @@ export class Container
     }
 
     Object.keys(newValue).forEach((key: LetsRole.ComponentID) => {
-      let cmp = this.#children[key];
+      const cmp = this.#children[key] || this.find(key);
 
-      if (!cmp && this.sheet().componentExists(key)) {
-        cmp = this.sheet().get(key) as Component;
-        this.#children[key] = cmp;
-      }
-
-      if (cmp) {
+      if (!cmp) {
+        lre.error(
+          `[Container] value() on ${this.realId()} could not find component with id ${key}`,
+        );
+        return;
+      } else {
         cmp.value((newValue as any)[key] as LetsRole.ComponentValue);
       }
     });
