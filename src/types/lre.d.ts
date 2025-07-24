@@ -175,7 +175,6 @@ type cb = (thisArg?: any, argArray?: any) => (rawSheet: LetsRole.Sheet) => void;
 
 declare module "lre" {
   global {
-    /* eslint-disable no-var */
     var LRE_DEBUG: boolean;
     // This optimization is disabled because it naturally triggers repeater update event on every change
     // Just kept in case Let's Role changed its behavior one day
@@ -192,7 +191,6 @@ declare module "lre" {
     var stringify: (obj: unknown, indent?: boolean) => string | undefined;
     var virtualCall: <T>(cb: () => T) => T;
     var mt_rand: (min: number, max: number) => number;
-    /* eslint-enable no-var */
   }
 }
 

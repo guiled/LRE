@@ -3,7 +3,7 @@ import tsESlint from "typescript-eslint";
 
 import tsParser from "@typescript-eslint/parser";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
-import stylisticTs from "@stylistic/eslint-plugin-ts";
+import stylisticTs from "@stylistic/eslint-plugin";
 import prettierRecommended from "eslint-plugin-prettier/recommended";
 import pluginJest from "eslint-plugin-jest";
 

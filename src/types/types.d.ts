@@ -367,7 +367,6 @@ declare namespace LetsRole {
 }
 declare module "letsrole" {
   global {
-    /* eslint-disable no-var */
     var enableLog: boolean;
     var log: (input: unknown) => void;
     var wait: (delay: number, callback: Callback) => void;
@@ -387,6 +386,5 @@ declare module "letsrole" {
     var dropDice: DropDiceCallback;
     var drop: DropCallback;
     var Dice: DiceAPI;
-    /* eslint-enable no-var */
   }
 }
