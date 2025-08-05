@@ -11,6 +11,7 @@
     /* Language and Environment */
     "target": "es2023" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
     "lib": [
+      "ES2022.String",
       "ES2023.Array",
       "ES2024.Object"
     ] /* Specify a set of bundled library declaration files that describe the target runtime environment. */,
