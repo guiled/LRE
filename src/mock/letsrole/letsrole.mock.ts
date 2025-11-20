@@ -46,6 +46,7 @@ const initLetsRole = (server: ServerMock, context?: ProxyModeHandler): void => {
   global.Bindings = Bindings;
   global.RollBuilder = RollBuilderClass;
   global.Tables = server.getMockOfTables();
+  global.Dice = server.getMockOfDiceAPI();
   global.virtualCall = virtualCall;
   global.context = context ?? modeHandlerMock();
   global.LRE_DEBUG = true;

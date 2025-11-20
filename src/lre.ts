@@ -180,6 +180,10 @@ export class LRE extends Logger implements ILRE {
     return this.numToAlpha(rnd);
   }
 
+  isSheet(value: any): value is ISheet {
+    return !!value?.lre;
+  }
+
   isComponent(value: any): value is IComponent {
     return !!value?.component;
   }

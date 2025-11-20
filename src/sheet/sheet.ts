@@ -35,6 +35,7 @@ export class Sheet
     ComponentContainer<ComponentSearchResult | IGroup>,
     ComponentCommon
 {
+  lre: boolean = true;
   #silentFind: LetsRole.Component["find"];
   #batcher: DataBatcher;
   #storedState: SheetStoredState | undefined;

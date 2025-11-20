@@ -1,4 +1,5 @@
 import { Context } from "./context";
+import { registerLreDiceAPI } from "./dice/dice";
 import { Error as LreError } from "./error";
 import { globals } from "./globals";
 import { LREi18n } from "./globals/i18n";
@@ -33,6 +34,7 @@ export const bootstrap = (): ProxyModeHandler => {
     _ = lre.i18n._;
     Bindings = registerLreBindings(ctx, Bindings);
     RollBuilder = registerLreRollBuilder(ctx, RollBuilder);
+    Dice = registerLreDiceAPI(ctx, Dice);
   };
 
   lre = new LRE(ctx, firstLaunch);

@@ -168,6 +168,21 @@ export class ServerMock {
     };
   }
 
+  getMockOfDiceAPI(): LetsRole.DiceAPI {
+    return {
+      create: (_formula: string): LetsRole.DiceBuilder => {
+        return {} as LetsRole.DiceBuilder; // todo. All DiceBuilder methods should be create here
+      },
+      roll: (
+        _sheet: LetsRole.Sheet,
+        _expression: string | LetsRole.DiceBuilder,
+        _title: string,
+        _visibility: LetsRole.RollVisibility = "visible",
+        _actions?: LetsRole.DiceRollActions,
+      ) => void {},
+    };
+  }
+
   openPrompt(
     viewId: LetsRole.SheetID,
     resultCallback: (result: LetsRole.ViewData) => void,

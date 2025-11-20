@@ -215,7 +215,7 @@ declare namespace LetsRole {
     discarded: boolean;
   };
 
-  interface DiceResultDefault {
+  interface DiceResultDefault<T = null> {
     title: string;
     expression: string;
     visibility: RollVisibility;
@@ -224,41 +224,44 @@ declare namespace LetsRole {
     tags: Array<string>;
     allTags: Array<string>;
     all: Array<SingleDiceResult>;
-    children: Array<DiceResult>;
-    size: null;
-    dimension: null;
-    values: null;
+    children: T extends null ? null : Array<T>;
+    size: number | null;
+    dimension: number | null;
+    values: Array<number> | null;
     discarded: Array<number>;
-    left: null;
-    right: null;
-    success: null;
-    failure: null;
+    left: T;
+    right: T;
+    success: number | null;
+    failure: number | null;
     containsTag(tag: string): boolean;
   }
 
-  interface ComparisonDiceResult extends DiceResultDefault {
+  interface ComparisonDiceResult<T> extends DiceResultDefault<T> {
     type: "comparison";
-    left: DiceResult;
-    right: DiceResult;
+    left: T;
+    right: T;
     success: number;
     failure: number;
   }
 
-  interface DiceDiceResult extends DiceResultDefault {
+  interface DiceDiceResult<T> extends DiceResultDefault<T> {
     type: "dice";
-    left: DiceResult;
-    right: DiceResult;
+    left: T;
+    right: T;
     size: number;
     dimension: number;
     values: Array<number>;
   }
-
   interface NumberDiceResult extends DiceResultDefault {
     type: "number";
   }
 
-  export type DiceResult = Partial<DiceResultDebugData> &
-    (ComparisonDiceResult | DiceDiceResult | NumberDiceResult);
+  export type GenericDiceResult<T> = Partial<DiceResultDebugData> &
+    (ComparisonDiceResult<T> | DiceDiceResult<T> | NumberDiceResult);
+
+  export type DiceResult = GenericDiceResult<IDiceResult>;
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  interface IDiceResult extends DiceResult {}
 
   export type DiceRollSheetInitCallback = (sheet: Sheet) => void;
 
@@ -307,35 +310,44 @@ declare namespace LetsRole {
 
   export type DiceCompare = "<" | ">" | "<=" | ">=";
 
-  export type DiceCreated = {
-    add: (value: number) => DiceCreated;
-    minus: (value: number) => DiceCreated;
-    multiply: (value: number) => DiceCreated;
-    divide: (value: number) => DiceCreated;
-    tag: (...tags: string[]) => DiceCreated;
+  export type DiceBuilder = {
+    add: (value: number) => DiceBuilder;
+    minus: (value: number) => DiceBuilder;
+    multiply: (value: number) => DiceBuilder;
+    divide: (value: number) => DiceBuilder;
+    tag: (...tags: string[]) => DiceBuilder;
     compare: (
       type: DiceCompare,
       right: number,
       weights?: unknown,
-    ) => DiceCreated;
-    round: () => DiceCreated;
-    ceil: () => DiceCreated;
-    floor: () => DiceCreated;
-    keeph: (max: number) => DiceCreated;
-    keepl: (max: number) => DiceCreated;
-    remh: (max: number) => DiceCreated;
-    reml: (max: number) => DiceCreated;
-    expl: (...explodes: number[]) => DiceCreated;
-    expladd: (...explodes: number[]) => DiceCreated;
-    mul: (multiplier: number) => DiceCreated;
-    reroll: (...reroll: number[]) => DiceCreated;
-    rerolln: (...reroll: number[], max) => DiceCreated;
-    ternary: (then: string, _else: string) => DiceCreated;
+    ) => DiceBuilder;
+    round: () => DiceBuilder;
+    ceil: () => DiceBuilder;
+    floor: () => DiceBuilder;
+    keeph: (max: number) => DiceBuilder;
+    keepl: (max: number) => DiceBuilder;
+    remh: (max: number) => DiceBuilder;
+    reml: (max: number) => DiceBuilder;
+    expl: (...explodes: number[]) => DiceBuilder;
+    expladd: (...explodes: number[]) => DiceBuilder;
+    mul: (multiplier: number) => DiceBuilder;
+    reroll: (...reroll: number[]) => DiceBuilder;
+    rerolln: (...reroll: number[], max) => DiceBuilder;
+    ternary: (then: string, _else: string) => DiceBuilder;
   };
 
-  export type DiceAPI = {
-    create: (formula: string) => DiceCreated;
-    roll: (dice: DiceCreated) => void;
+  export type DiceRollAction = (result: DiceResult) => void;
+  export type DiceRollActions = Record<string, DiceRollAction>;
+
+  export type DiceAPI<T = DiceBuilder> = {
+    create: (formula: string) => T;
+    roll: (
+      sheet: Sheet,
+      expression: string | DiceBuilder,
+      title: string,
+      visibility: RollVisibility = "all",
+      actions?: DiceRollActions,
+    ) => void;
   };
 
   export type RollBuilderInstance = {

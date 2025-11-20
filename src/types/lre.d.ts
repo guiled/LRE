@@ -11,8 +11,14 @@ declare interface ILREi18n {
   getUntranslated(): string[];
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+declare interface LREDiceResult
+  extends LetsRole.GenericDiceResult<ILREDiceResult> {}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface ILREDiceResult extends LREDiceResult {}
+
 declare type LREInitRollCallback = (
-  result: DiceResult,
+  result: LREDiceResult,
   callback: (
     viewId: LetsRole.SheetID,
     onRender: (sheet: ISheet) => void,
@@ -25,7 +31,7 @@ declare interface ILRE {
   init(
     callback: LetsRole.InitCallback<LetsRole.Sheet | Sheet>,
   ): LetsRole.InitCallback;
-  initRoll: LREInitRollCallback;
+  initRoll: (callback: LREInitRollCallback) => LetsRole.InitRollCallback;
   deepMerge(target: any, ...sources: any[]): any;
   deepEqual(x: any, y: any): boolean;
   numToAlpha(n: number): string;
@@ -35,6 +41,7 @@ declare interface ILRE {
   autoNum(v: boolean = true): void;
   autoTransl(v: boolean = true): void;
   value<T = any>(n: T): T;
+  isSheet(value: any): value is ISheet;
   isComponent(value: any): value is IComponent;
   isDataProvider(value: any): value is IDataProvider;
   isIterableByEach(
