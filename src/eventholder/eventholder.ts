@@ -1,5 +1,3 @@
-import { Error } from "../error";
-
 type RunnableEventHandler = {
   handler: EventHandler<any>;
   alwaysRan: boolean;
@@ -86,8 +84,6 @@ export const EventHolder = <
       eventCanBeRan?: EventRunnableChecker<AdditionalEvents>,
     ) {
       super();
-
-      (() => new Error())(); // todo see what is the use of that
 
       this.#holderId = holderId;
       this.#getTarget = targetGetter;
