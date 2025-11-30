@@ -459,7 +459,9 @@ export const DataProvider = (superclass: Newable = class {}) =>
       }
     }
 
-    countDistinct(dataValueOrColumn?: string | DataProviderGetValue): number {
+    countDistinct(
+      dataValueOrColumn?: string | DataProviderGetValue | undefined,
+    ): number {
       const values: Array<LetsRole.ComponentValue> = [];
       dataValueOrColumn = this.#getDataValueGetter(dataValueOrColumn)[1];
       this.each((value, key, data) => {
@@ -655,7 +657,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
       return [comparisonId, dataValueOrColumn];
     }
 
-    sum(dataValueOrColumn?: string | DataProviderGetValue): number {
+    sum(dataValueOrColumn?: string | DataProviderGetValue | undefined): number {
       let total: number = 0;
       let hasNaN = false;
 
@@ -706,7 +708,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     getBy(
-      dataValueOrColumn: string | DataProviderGetValue,
+      dataValueOrColumn: string | DataProviderGetValue | undefined,
       value: LetsRole.ComponentValue,
     ): DataProviderDataValue {
       dataValueOrColumn = this.#getDataValueGetter(dataValueOrColumn)[1];
