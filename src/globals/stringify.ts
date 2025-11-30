@@ -23,7 +23,10 @@ const _stringify = function <T>(
     } else if (typeof obj === "string") {
       return (
         '"' +
-        obj.replace(/\\/g, "\\\\").replace('"', '\\"').replace("\n", "\\n") +
+        obj
+          .replace(/\\/g, "\\\\")
+          .replaceAll('"', '\\"')
+          .replaceAll("\n", "\\n") +
         '"'
       );
     } else if (typeof obj === "number" || typeof obj === "boolean") {
