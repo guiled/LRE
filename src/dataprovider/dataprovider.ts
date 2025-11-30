@@ -665,7 +665,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
       this.each((v, k, data) => {
         const val = dataValueOrColumn(v, k, data);
 
-        if (typeof val === "number" || !isNaN(val as unknown as number)) {
+        if (typeof val !== "number" || isNaN(val as unknown as number)) {
           hasNaN = true;
         }
 
