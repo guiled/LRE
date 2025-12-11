@@ -814,3 +814,43 @@ describe("Multichoice filled with data", () => {
     });
   });
 });
+
+describe("MultiChoice toString", () => {
+  test("toString shows multichoice info with empty selection", () => {
+    multiChoice.setChoices({ a: "A", b: "B", c: "C" });
+    multiChoice.value([]);
+    const result = multiChoice.toString();
+
+    expect(result).toBe("MultiChoice<multi>([])");
+  });
+
+  test("toString shows multichoice info with single selection", () => {
+    multiChoice.setChoices({ a: "A", b: "B", c: "C" });
+    multiChoice.value(["a"]);
+    const result = multiChoice.toString();
+
+    expect(result).toBe("MultiChoice<multi>([a])");
+  });
+
+  test("toString shows multichoice info with multiple selections (≤3)", () => {
+    multiChoice.setChoices({ a: "A", b: "B", c: "C" });
+    multiChoice.value(["a", "b", "c"]);
+    const result = multiChoice.toString();
+
+    expect(result).toBe("MultiChoice<multi>([a, b, c])");
+  });
+
+  test("toString shows multichoice info with many selections (>3)", () => {
+    multiChoice.setChoices({
+      a: "A",
+      b: "B",
+      c: "C",
+      d: "D",
+      e: "E",
+    });
+    multiChoice.value(["a", "b", "c", "d", "e"]);
+    const result = multiChoice.toString();
+
+    expect(result).toBe("MultiChoice<multi>([5 items])");
+  });
+});

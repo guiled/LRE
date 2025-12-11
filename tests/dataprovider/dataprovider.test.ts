@@ -1296,3 +1296,41 @@ describe("DataProvider join", () => {
     });
   });
 });
+
+describe("DataProvider toString", () => {
+  test("toString shows dataprovider info with single value", () => {
+    const data = "42";
+    const dataGetter = jest.fn((_a: any) => data as any);
+    const dp = lre.dataProvider("test", dataGetter);
+    const result = dp.toString();
+
+    expect(result).toBe("DataProvider<test>(1 items)");
+  });
+
+  test("toString shows dataprovider info with array", () => {
+    const data = ["a", "b", "c"];
+    const dataGetter = jest.fn((_a: any) => data as any);
+    const dp = lre.dataProvider("test", dataGetter);
+    const result = dp.toString();
+
+    expect(result).toBe("DataProvider<test>(3 items)");
+  });
+
+  test("toString shows dataprovider info with object", () => {
+    const data = { a: 1, b: 2, c: 3, d: 4 };
+    const dataGetter = jest.fn((_a: any) => data as any);
+    const dp = lre.dataProvider("test", dataGetter);
+    const result = dp.toString();
+
+    expect(result).toBe("DataProvider<test>(4 items)");
+  });
+
+  test("toString shows dataprovider info with empty object", () => {
+    const data = {};
+    const dataGetter = jest.fn((_a: any) => data as any);
+    const dp = lre.dataProvider("test", dataGetter);
+    const result = dp.toString();
+
+    expect(result).toBe("DataProvider<test>(0 items)");
+  });
+});

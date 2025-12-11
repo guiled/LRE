@@ -533,4 +533,10 @@ export class Sheet
 
     return grp;
   }
+
+  toString(): string {
+    const id = this.id();
+    const name = this.name();
+    return `Sheet<${id}>(${name})`;
+  }
 }

@@ -772,3 +772,71 @@ describe("Toggle", () => {
     expect(updateEventMock).not.toHaveBeenCalled();
   });
 });
+
+describe("Toggle toString", () => {
+  test("toString returns empty string when no toggling data", () => {
+    // Create a Toggle instance directly (not a Label subclass)
+    const rawToggle = rawSheet.get("toggle");
+    const toggle = new Toggle(rawToggle, sheet, "toggle");
+    const result = toggle.toString();
+
+    expect(result).toBe("");
+  });
+
+  test("toString shows toggle info with toggling active", () => {
+    const rawToggle = rawSheet.get("toggle");
+    const toggle = new Toggle(rawToggle, sheet, "toggle");
+    toggle.toggling({ "1": "icon1", "2": "icon2" }, "1");
+    const result = toggle.toString();
+
+    expect(result).toBe("Toggle<toggle>(component, toggling=1)");
+  });
+
+  test("toString shows toggle info with different toggling value", () => {
+    const rawToggle = rawSheet.get("toggle");
+    const toggle = new Toggle(rawToggle, sheet, "toggle");
+    toggle.toggling({ "1": "icon1", "2": "icon2" }, "2");
+    const result = toggle.toString();
+
+    expect(result).toBe("Toggle<toggle>(component, toggling=2)");
+  });
+
+  test("toString returns empty string after untoggling", () => {
+    const rawToggle = rawSheet.get("toggle");
+    const toggle = new Toggle(rawToggle, sheet, "toggle");
+    toggle.toggling({ "1": "icon1", "2": "icon2" }, "1");
+
+    expect(toggle.toString()).not.toBe("");
+
+    toggle.untoggling();
+
+    expect(toggle.toString()).toBe("");
+  });
+});
+
+describe("Label toString", () => {
+  test("toString shows label info without toggling", () => {
+    const label = sheet.get("lbl1") as Toggle;
+
+    expect(label).not.toBeNull();
+
+    if (label && label.lreType && label.lreType() === "label") {
+      const result = label.toString();
+
+      expect(result).toMatch(/^Label<lbl1>\(label\)$/);
+    }
+  });
+
+  test("toString shows label info with toggling active", () => {
+    const label = sheet.get("lbl2") as Toggle;
+
+    expect(label).not.toBeNull();
+
+    if (label && label.toggling) {
+      label.toggling({ "1": "text1", "2": "text2" }, "2");
+      const result = label.toString();
+
+      expect(result).toBe("Label<lbl2>(label, toggling=2)");
+    }
+  });
+});

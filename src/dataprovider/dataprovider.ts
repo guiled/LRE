@@ -1031,6 +1031,27 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
       return key + suffix;
     }
+
+    toString(): string {
+      const id = this.id();
+      let count = 0;
+
+      try {
+        const values = this.#getCurrentValue();
+
+        if (Array.isArray(values)) {
+          count = values.length;
+        } else if (lre.isObject(values)) {
+          count = Object.keys(values).length;
+        } else {
+          count = 1;
+        }
+      } catch (e) {
+        // Ignore errors when counting
+      }
+
+      return `DataProvider<${id}>(${count} items)`;
+    }
   };
 
 type DataProviderEvents = "refresh";

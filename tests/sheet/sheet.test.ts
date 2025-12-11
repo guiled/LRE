@@ -9,6 +9,7 @@ import {
   terminateLetsRole,
 } from "../../src/mock/letsrole/letsrole.mock";
 import { ViewMock } from "../../src/mock/letsrole/view.mock";
+import { SheetProxy } from "../../src/proxy/sheet";
 
 const createLargeObject = (nbKeys: number): Record<string, number> =>
   Array(nbKeys)
@@ -841,5 +842,35 @@ describe("Sheet get component", () => {
     const grp4 = sheet1.get(`grpUnknown`);
 
     expect(grp4).toBe(grp);
+  });
+});
+
+describe("Sheet toString", () => {
+  test("toString shows sheet info with id and name", () => {
+    const rawSheet = server.openView("main", "12345");
+    const sheetProxy = new SheetProxy(context, rawSheet);
+    const sheet = new Sheet(
+      sheetProxy,
+      new DataBatcher(context, sheetProxy),
+      context,
+    );
+    const result = sheet.toString();
+    const name = sheet.name();
+
+    expect(result).toBe(`Sheet<main>(${name || ""})`);
+  });
+
+  test("toString shows sheet info with different sheet", () => {
+    const rawSheet = server.openView("testedSheet", "12345");
+    const sheetProxy = new SheetProxy(context, rawSheet);
+    const sheet = new Sheet(
+      sheetProxy,
+      new DataBatcher(context, sheetProxy),
+      context,
+    );
+    const result = sheet.toString();
+    const name = sheet.name();
+
+    expect(result).toBe(`Sheet<testedSheet>(${name || ""})`);
   });
 });

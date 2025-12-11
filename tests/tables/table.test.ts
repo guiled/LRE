@@ -219,3 +219,28 @@ describe("Table as DataProvider", () => {
     );
   });
 });
+
+describe("Table toString", () => {
+  test("toString shows table info with row count", () => {
+    const table = new Table(Tables.get("theTable")!, context, "theTable");
+    const result = table.toString();
+
+    expect(result).toBe("Table<theTable>(4 rows)");
+  });
+
+  test("toString shows table info with different table", () => {
+    const table = new Table(Tables.get("a")!, context, "a");
+    const result = table.toString();
+
+    expect(result).toBe("Table<a>(4 rows)");
+  });
+
+  test("toString shows table info with empty table", () => {
+    const emptyTable = Tables.get("theTable")!;
+    jest.spyOn(emptyTable, "each").mockImplementation(() => {});
+    const table = new Table(emptyTable, context, "empty");
+    const result = table.toString();
+
+    expect(result).toBe("Table<empty>(0 rows)");
+  });
+});

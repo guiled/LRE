@@ -501,3 +501,31 @@ describe("set choices with optional", () => {
     });
   });
 });
+
+describe("Choice toString", () => {
+  test("toString shows choice info with selected value", () => {
+    const choice = new Choice(rawSheet.get("chA"), sheet, "chA");
+    choice.setChoices({ a: "Choice A", b: "Choice B" });
+    rawSheet.setData({ chA: "a" });
+    const result = choice.toString();
+    expect(result).toMatch(/^Choice<chA>\(selected=a "theChoiceA"\)$/);
+  });
+
+  test("toString shows choice info without label when label equals value", () => {
+    const choice = new Choice(raw, sheet, "ch");
+    choice.setChoices({ a: "a", b: "b" });
+    rawSheet.setData({ ch: "a" });
+    // Mock text() to return the same as value to simulate label equals value
+    jest.spyOn(choice.raw(), "text").mockImplementation(() => "a");
+    const result = choice.toString();
+    expect(result).toBe("Choice<ch>(selected=a)");
+  });
+
+  test("toString shows choice info with null value", () => {
+    const choice = new Choice(raw, sheet, "ch");
+    choice.setChoices({ a: "Choice A", b: "Choice B" });
+    rawSheet.setData({ ch: null });
+    const result = choice.toString();
+    expect(result).toMatch(/^Choice<ch>\(selected=null\)$/);
+  });
+});

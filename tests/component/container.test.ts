@@ -270,3 +270,22 @@ describe("Container in repeater", () => {
     expect(repTxt1?.exists()).toBeTruthy();
   });
 });
+
+describe("Container toString", () => {
+  test("toString shows container info with no children", () => {
+    const container = sheet.get("containerWithDNone") as Container;
+    const result = container.toString();
+
+    expect(result).toBe("Container<containerWithDNone>(0 children)");
+  });
+
+  test("toString shows container info with children", () => {
+    const container = sheet.get("container") as Container;
+    // Find children to populate the internal children map
+    container.find("subTxt1");
+    container.find("subTxt2");
+    const result = container.toString();
+
+    expect(result).toBe("Container<container>(2 children)");
+  });
+});

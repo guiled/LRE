@@ -578,3 +578,64 @@ describe("Repeater add and remove", () => {
     expect(repeater.value()).toMatchObject({ b: {} });
   });
 });
+
+describe("Entry toString", () => {
+  test("toString shows entry info with index", () => {
+    repeater.value({ "1": { name: "Test" } });
+    const entry = repeater.find("1") as Entry;
+    const result = entry.toString();
+
+    expect(result).toBe("Entry<rep.1>(1)");
+  });
+
+  test("toString shows entry info with different index", () => {
+    repeater.value({ "42": { name: "Test" } });
+    const entry = repeater.find("42") as Entry;
+    const result = entry.toString();
+
+    expect(result).toBe("Entry<rep.42>(42)");
+  });
+
+  test("toString shows entry info with no index", () => {
+    repeater.value({ test: { name: "Test" } });
+    const entry = repeater.find("test") as Entry;
+
+    if (entry) {
+      // Mock index() to return null
+      jest.spyOn(entry.raw(), "index").mockReturnValue(null);
+      const result = entry.toString();
+
+      expect(result).toBe("Entry<rep.test>(no index)");
+    } else {
+      // If entry is null, skip this test
+      expect(entry).not.toBeNull();
+    }
+  });
+});
+
+describe("Repeater toString", () => {
+  test("toString shows repeater info with no entries", () => {
+    repeater.value({});
+    const result = repeater.toString();
+
+    expect(result).toBe("Repeater<rep>(0 entries)");
+  });
+
+  test("toString shows repeater info with one entry", () => {
+    repeater.value({ "1": { name: "Test" } });
+    const result = repeater.toString();
+
+    expect(result).toBe("Repeater<rep>(1 entries)");
+  });
+
+  test("toString shows repeater info with multiple entries", () => {
+    repeater.value({
+      "1": { name: "Test 1" },
+      "2": { name: "Test 2" },
+      "3": { name: "Test 3" },
+    });
+    const result = repeater.toString();
+
+    expect(result).toBe("Repeater<rep>(3 entries)");
+  });
+});

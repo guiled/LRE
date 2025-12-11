@@ -410,4 +410,12 @@ export class Repeater extends Component<
 
     return removed;
   }
+
+  toString(): string {
+    const id = this.realId();
+    const value = this.value();
+    const entryCount =
+      value && typeof value === "object" ? Object.keys(value).length : 0;
+    return `Repeater<${id}>(${entryCount} entries)`;
+  }
 }

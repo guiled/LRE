@@ -347,6 +347,57 @@ describe("Component construction", () => {
   });
 });
 
+describe("Component toString", () => {
+  test("toString shows component info with string value", () => {
+    rawSheet.setData({ cmp: "test value" });
+    const result = cmp.toString();
+
+    expect(result).toMatch(/^Component<cmp>\(component="test value"\)$/);
+  });
+
+  test("toString shows component info with number value", () => {
+    rawSheet.setData({ cmp: 42 });
+    const result = cmp.toString();
+
+    expect(result).toMatch(/^Component<cmp>\(component=42\)$/);
+  });
+
+  test("toString shows component info with long string value (truncated)", () => {
+    rawSheet.setData({ cmp: "a".repeat(30) });
+    const result = cmp.toString();
+
+    expect(result).toMatch(/^Component<cmp>\(component=".{17}\.\.\."\)$/);
+  });
+
+  test("toString shows component info with object value", () => {
+    rawSheet.setData({ cmp: { a: 1, b: 2, c: 3 } });
+    const result = cmp.toString();
+
+    expect(result).toMatch(/^Component<cmp>\(component=\{3 keys\}\)$/);
+  });
+
+  test("toString shows component info with array value", () => {
+    rawSheet.setData({ cmp: ["a", "b", "c", "d", "e"] });
+    const result = cmp.toString();
+
+    expect(result).toMatch(/^Component<cmp>\(component=\[5\]\)$/);
+  });
+
+  test("toString shows component info with empty value", () => {
+    rawSheet.setData({ cmp: null });
+    const result = cmp.toString();
+
+    expect(result).toMatch(/^Component<cmp>\(component\)$/);
+  });
+
+  test("toString shows component info with different lreType", () => {
+    cmp.lreType("container");
+    const result = cmp.toString();
+
+    expect(result).toMatch(/^Component<cmp>\(container/);
+  });
+});
+
 describe("Component tree", () => {
   test("Getters and setters test", () => {
     expect(cmp.repeater()).toBeUndefined();

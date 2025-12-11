@@ -351,4 +351,22 @@ export class Choice<
       this.setChoices(table.select(label));
     }
   }
+
+  toString(): string {
+    const id = this.realId();
+    const value = this.value();
+    let labelStr = "";
+
+    try {
+      const label = this.label();
+
+      if (label && label !== String(value)) {
+        labelStr = ` "${label}"`;
+      }
+    } catch (e) {
+      // Ignore errors when getting label
+    }
+
+    return `Choice<${id}>(selected=${value}${labelStr})`;
+  }
 }

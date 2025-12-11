@@ -345,4 +345,17 @@ export class Toggle<
     this.#setTogglingValue(this.#togglingValues[index]);
     this.getChangeTracker().stopTracking("value");
   }
+
+  toString(): string {
+    // Return empty string if there are no togglingData
+    if (this.#togglingValues.length === 0) {
+      return "";
+    }
+
+    const id = this.realId();
+    const type = this.lreType();
+    const togglingValue = this.#currentTogglingValue || "none";
+    const valueStr = `, toggling=${togglingValue}`;
+    return `Toggle<${id}>(${type}${valueStr})`;
+  }
 }

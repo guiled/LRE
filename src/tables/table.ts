@@ -100,4 +100,19 @@ export class Table
       return result;
     }
   }
+
+  toString(): string {
+    const id = this.id();
+    let rowCount = 0;
+
+    try {
+      this.each(() => {
+        rowCount++;
+      });
+    } catch (e) {
+      // Ignore errors when counting rows
+    }
+
+    return `Table<${id}>(${rowCount} rows)`;
+  }
 }

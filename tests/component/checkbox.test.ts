@@ -142,3 +142,31 @@ describe("Checkbox disabling", () => {
     expect(cmp.isEnabled()).toBe(false);
   });
 });
+
+describe("Checkbox toString", () => {
+  test("toString shows checkbox info when enabled", () => {
+    rawSheet.setData({ checkbox: true });
+    const cmp = new Checkbox(rawCheckbox, sheet, "checkbox");
+    const result = cmp.toString();
+
+    expect(result).toBe("Checkbox<checkbox>(true)");
+  });
+
+  test("toString shows checkbox info when disabled", () => {
+    rawSheet.setData({ checkbox: false });
+    const cmp = new Checkbox(rawCheckbox, sheet, "checkbox");
+    cmp.disable();
+    const result = cmp.toString();
+
+    expect(result).toBe("Checkbox<checkbox>(false, disabled)");
+  });
+
+  test("toString shows checkbox info when enabled after being disabled", () => {
+    const cmp = new Checkbox(rawCheckbox, sheet, "checkbox");
+    cmp.disable();
+    cmp.enable();
+    const result = cmp.toString();
+
+    expect(result).toBe("Checkbox<checkbox>(false)");
+  });
+});

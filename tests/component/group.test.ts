@@ -654,3 +654,41 @@ describe("Group as data provider", () => {
     //const cmp1 = sheet.get("cmp1")!;
   });
 });
+
+describe("Group toString", () => {
+  test("toString shows group info with no components", () => {
+    const group = new Group(context, "testGroup", sheet);
+    const result = group.toString();
+
+    expect(result).toBe("Group<testGroup>(0 components)");
+  });
+
+  test("toString shows group info with components", () => {
+    const group = new Group(context, "testGroup", sheet, ["cmp1", "cmp2"]);
+    const result = group.toString();
+
+    expect(result).toBe("Group<testGroup>(2 components)");
+  });
+
+  test("toString shows group info after adding components", () => {
+    const group = new Group(context, "testGroup", sheet);
+    group.add("cmp1");
+    group.add("cmp2");
+    group.add("cmp3");
+    const result = group.toString();
+
+    expect(result).toBe("Group<testGroup>(3 components)");
+  });
+
+  test("toString shows group info after removing components", () => {
+    const group = new Group(context, "testGroup", sheet, [
+      "cmp1",
+      "cmp2",
+      "cmp3",
+    ]);
+    group.remove("cmp2");
+    const result = group.toString();
+
+    expect(result).toBe("Group<testGroup>(2 components)");
+  });
+});
