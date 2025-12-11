@@ -310,7 +310,7 @@ export class LRE extends Logger implements ILRE {
         return Number(value) as T;
       }
 
-      if (this.#autoTransl && isNaN(Number(value))) {
+      if (this.i18n && this.#autoTransl && isNaN(Number(value))) {
         return this.i18n._(value) as T;
       }
     }
