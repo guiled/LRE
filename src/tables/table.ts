@@ -109,9 +109,7 @@ export class Table
       this.each(() => {
         rowCount++;
       });
-    } catch (e) {
-      // Ignore errors when counting rows
-    }
+    } catch (e) {}
 
     return `Table<${id}>(${rowCount} rows)`;
   }

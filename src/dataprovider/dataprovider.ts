@@ -1046,9 +1046,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
         } else {
           count = 1;
         }
-      } catch (e) {
-        // Ignore errors when counting
-      }
+      } catch (e) {}
 
       return `DataProvider<${id}>(${count} items)`;
     }

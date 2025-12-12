@@ -510,15 +510,17 @@ export class Component<
   toString(): string {
     const id = this.realId();
     const type = this.lreType();
-    
+
     // Safely get value without triggering side effects
     let valueStr = "";
+
     try {
       const value = this.#getValue();
-      
+
       if (value !== null && value !== undefined) {
         if (typeof value === "string") {
-          valueStr = value.length > 20 ? `"${value.substring(0, 17)}..."` : `"${value}"`;
+          valueStr =
+            value.length > 20 ? `"${value.substring(0, 17)}..."` : `"${value}"`;
         } else if (typeof value === "object" && !Array.isArray(value)) {
           const keys = Object.keys(value);
           valueStr = keys.length > 0 ? `{${keys.length} keys}` : "{}";
@@ -531,7 +533,7 @@ export class Component<
     } catch (e) {
       valueStr = "<error>";
     }
-    
+
     return `Component<${id}>(${type}${valueStr ? `=${valueStr}` : ""})`;
   }
 }

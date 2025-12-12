@@ -46,6 +46,7 @@
     "spell": "yarn cspell --no-progress --no-summary --gitignore .",
     "testsilent": "jest --reporters jest-silent-reporter --collectCoverage=false",
     "tscheck": "tsc --noEmit",
+    "checkcode": "yarn ts-unused-exports tsconfig.json && yarn spell && yarn tscheck && yarn eslint",
     "checkall": "yarn ts-unused-exports tsconfig.json && yarn spell && yarn tscheck && yarn eslint && yarn testsilent"
   }
 }

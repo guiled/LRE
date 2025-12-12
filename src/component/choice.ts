@@ -363,9 +363,7 @@ export class Choice<
       if (label && label !== String(value)) {
         labelStr = ` "${label}"`;
       }
-    } catch (e) {
-      // Ignore errors when getting label
-    }
+    } catch (e) {}
 
     return `Choice<${id}>(selected=${value}${labelStr})`;
   }

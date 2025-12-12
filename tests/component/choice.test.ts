@@ -508,6 +508,7 @@ describe("Choice toString", () => {
     choice.setChoices({ a: "Choice A", b: "Choice B" });
     rawSheet.setData({ chA: "a" });
     const result = choice.toString();
+
     expect(result).toMatch(/^Choice<chA>\(selected=a "theChoiceA"\)$/);
   });
 
@@ -518,6 +519,7 @@ describe("Choice toString", () => {
     // Mock text() to return the same as value to simulate label equals value
     jest.spyOn(choice.raw(), "text").mockImplementation(() => "a");
     const result = choice.toString();
+
     expect(result).toBe("Choice<ch>(selected=a)");
   });
 
@@ -526,6 +528,7 @@ describe("Choice toString", () => {
     choice.setChoices({ a: "Choice A", b: "Choice B" });
     rawSheet.setData({ ch: null });
     const result = choice.toString();
+
     expect(result).toMatch(/^Choice<ch>\(selected=null\)$/);
   });
 });
