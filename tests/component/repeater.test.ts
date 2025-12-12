@@ -78,6 +78,31 @@ beforeEach(() => {
             className: "Label",
             name: "name",
           },
+          {
+            id: "iconUp",
+            className: "Icon",
+            iconName: "arrow-up",
+          },
+          {
+            id: "iconDown",
+            className: "Icon",
+            iconName: "arrow-down",
+          },
+          {
+            id: "iconTop",
+            className: "Icon",
+            iconName: "arrow-top",
+          },
+          {
+            id: "iconBottom",
+            className: "Icon",
+            iconName: "arrow-bottom",
+          },
+          {
+            id: "iconUp2",
+            className: "Icon",
+            iconName: "arrow-up-2",
+          },
         ],
       },
     ],
@@ -576,6 +601,452 @@ describe("Repeater add and remove", () => {
     repeater.remove("a");
 
     expect(repeater.value()).toMatchObject({ b: {} });
+  });
+});
+
+describe("Repeater setMoveComponents", () => {
+  test("logs warning when called with empty configuration", () => {
+    const warnSpy = jest.spyOn(lre, "warn");
+
+    repeater.setMoveComponents({});
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      "setMoveComponents called with empty configuration object",
+    );
+
+    warnSpy.mockRestore();
+  });
+
+  test("can be called with up configuration", () => {
+    expect(() => {
+      repeater.setMoveComponents({ up: "iconUp" });
+    }).not.toThrow();
+  });
+
+  test("can be called with down configuration", () => {
+    expect(() => {
+      repeater.setMoveComponents({ down: "iconDown" });
+    }).not.toThrow();
+  });
+
+  test("can be called with top configuration", () => {
+    expect(() => {
+      repeater.setMoveComponents({ top: "iconTop" });
+    }).not.toThrow();
+  });
+
+  test("can be called with bottom configuration", () => {
+    expect(() => {
+      repeater.setMoveComponents({ bottom: "iconBottom" });
+    }).not.toThrow();
+  });
+
+  test("can be called with all configurations", () => {
+    expect(() => {
+      repeater.setMoveComponents({
+        up: "iconUp",
+        down: "iconDown",
+        top: "iconTop",
+        bottom: "iconBottom",
+      });
+    }).not.toThrow();
+  });
+
+  test("can be called multiple times without error", () => {
+    repeater.setMoveComponents({ up: "iconUp" });
+
+    expect(() => {
+      repeater.setMoveComponents({ up: "iconUp2" });
+    }).not.toThrow();
+  });
+
+  test("sets up handlers that can move entries when components are clicked", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+      c: { name: "Third" },
+    });
+
+    itHasWaitedEverything();
+
+    repeater.setMoveComponents({ up: "iconUp" });
+
+    rawSheet.triggerComponentEvent(repeater.id() + ".b.iconUp", "click");
+
+    itHasWaitedEverything();
+
+    const keys = Object.keys(repeater.value()!);
+
+    expect(keys).toEqual(["a", "b", "c"]);
+  });
+});
+
+describe("Repeater moveEntryUp", () => {
+  test("moves entry up by one position", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+      c: { name: "Third" },
+    });
+
+    itHasWaitedEverything();
+
+    let keys = Object.keys(repeater.value()!);
+
+    expect(keys).toEqual(["a", "b", "c"]);
+
+    repeater.moveEntryUp("b");
+
+    itHasWaitedEverything();
+
+    keys = Object.keys(repeater.value()!);
+
+    expect(keys).toEqual(["b", "a", "c"]);
+    expect(repeater.value()).toMatchObject({
+      a: { name: "First" },
+      b: { name: "Second" },
+      c: { name: "Third" },
+    });
+  });
+
+  test("does nothing if entry is already at top", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+    });
+
+    repeater.moveEntryUp("a");
+
+    const keys = Object.keys(repeater.value()!);
+
+    expect(keys).toEqual(["a", "b"]);
+  });
+
+  test("does nothing if entry is first in array", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+      c: { name: "Third" },
+    });
+
+    repeater.moveEntryUp("a");
+
+    const keys = Object.keys(repeater.value()!);
+
+    expect(keys).toEqual(["a", "b", "c"]);
+  });
+
+  test("does nothing if entryId does not exist", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+    });
+
+    repeater.moveEntryUp("unknown");
+
+    const keys = Object.keys(repeater.value()!);
+
+    expect(keys).toEqual(["a", "b"]);
+  });
+
+  test("preserves entry data when moving", () => {
+    const entryData = { name: "Test", value: 42, nested: { key: "value" } };
+    repeater.value({
+      a: { name: "First" },
+      b: entryData,
+      c: { name: "Third" },
+    });
+
+    repeater.moveEntryUp("b");
+
+    expect(repeater.value()!.b).toMatchObject(entryData);
+  });
+});
+
+describe("Repeater moveEntryDown", () => {
+  test("moves entry down by one position", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+      c: { name: "Third" },
+    });
+
+    itHasWaitedEverything();
+
+    let keys = Object.keys(repeater.value()!);
+
+    expect(keys).toEqual(["a", "b", "c"]);
+
+    repeater.moveEntryDown("b");
+
+    itHasWaitedEverything();
+
+    keys = Object.keys(repeater.value()!);
+
+    expect(keys).toEqual(["a", "c", "b"]);
+    expect(repeater.value()).toMatchObject({
+      a: { name: "First" },
+      b: { name: "Second" },
+      c: { name: "Third" },
+    });
+  });
+
+  test("does nothing if entry is already at bottom", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+    });
+
+    repeater.moveEntryDown("b");
+
+    const keys = Object.keys(repeater.value()!);
+
+    expect(keys).toEqual(["a", "b"]);
+  });
+
+  test("does nothing if entry is last in array", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+      c: { name: "Third" },
+    });
+
+    repeater.moveEntryDown("c");
+
+    const keys = Object.keys(repeater.value()!);
+
+    expect(keys).toEqual(["a", "b", "c"]);
+  });
+
+  test("does nothing if entryId does not exist", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+    });
+
+    repeater.moveEntryDown("unknown");
+
+    const keys = Object.keys(repeater.value()!);
+
+    expect(keys).toEqual(["a", "b"]);
+  });
+});
+
+describe("Repeater moveEntryTop", () => {
+  test("moves entry to top position", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+      c: { name: "Third" },
+    });
+
+    itHasWaitedEverything();
+
+    let keys = Object.keys(repeater.value()!);
+
+    expect(keys).toEqual(["a", "b", "c"]);
+
+    repeater.moveEntryTop("c");
+
+    itHasWaitedEverything();
+
+    keys = Object.keys(repeater.value()!);
+
+    expect(keys).toEqual(["c", "a", "b"]);
+    expect(repeater.value()).toMatchObject({
+      a: { name: "First" },
+      b: { name: "Second" },
+      c: { name: "Third" },
+    });
+  });
+
+  test("does nothing if entry is already at top", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+    });
+
+    repeater.moveEntryTop("a");
+
+    const keys = Object.keys(repeater.value()!);
+
+    expect(keys).toEqual(["a", "b"]);
+  });
+
+  test("does nothing if entry is first in array", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+      c: { name: "Third" },
+    });
+
+    repeater.moveEntryTop("a");
+
+    const keys = Object.keys(repeater.value()!);
+
+    expect(keys).toEqual(["a", "b", "c"]);
+  });
+
+  test("does nothing if entryId does not exist", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+    });
+
+    repeater.moveEntryTop("unknown");
+
+    const keys = Object.keys(repeater.value()!);
+
+    expect(keys).toEqual(["a", "b"]);
+  });
+});
+
+describe("Repeater moveEntryBottom", () => {
+  test("moves entry to bottom position", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+      c: { name: "Third" },
+    });
+
+    itHasWaitedEverything();
+
+    let keys = Object.keys(repeater.value()!);
+
+    expect(keys).toEqual(["a", "b", "c"]);
+
+    repeater.moveEntryBottom("a");
+
+    itHasWaitedEverything();
+
+    keys = Object.keys(repeater.value()!);
+
+    expect(keys).toEqual(["b", "c", "a"]);
+    expect(repeater.value()).toMatchObject({
+      a: { name: "First" },
+      b: { name: "Second" },
+      c: { name: "Third" },
+    });
+  });
+
+  test("does nothing if entry is already at bottom", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+    });
+
+    repeater.moveEntryBottom("b");
+
+    const keys = Object.keys(repeater.value()!);
+
+    expect(keys).toEqual(["a", "b"]);
+  });
+
+  test("does nothing if entry is last in array", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+      c: { name: "Third" },
+    });
+
+    repeater.moveEntryBottom("c");
+
+    const keys = Object.keys(repeater.value()!);
+
+    expect(keys).toEqual(["a", "b", "c"]);
+  });
+
+  test("does nothing if entryId does not exist", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+    });
+
+    repeater.moveEntryBottom("unknown");
+
+    const keys = Object.keys(repeater.value()!);
+
+    expect(keys).toEqual(["a", "b"]);
+  });
+});
+
+describe("Entry move methods", () => {
+  test("moveUp delegates to repeater.moveEntryUp", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+    });
+    const entry = repeater.find("b") as Entry;
+    const moveSpy = jest.spyOn(repeater, "moveEntryUp");
+
+    entry.moveUp();
+
+    expect(moveSpy).toHaveBeenCalledWith("b");
+  });
+
+  test("moveDown delegates to repeater.moveEntryDown", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+    });
+    const entry = repeater.find("a") as Entry;
+    const moveSpy = jest.spyOn(repeater, "moveEntryDown");
+
+    entry.moveDown();
+
+    expect(moveSpy).toHaveBeenCalledWith("a");
+  });
+
+  test("moveTop delegates to repeater.moveEntryTop", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+    });
+    const entry = repeater.find("b") as Entry;
+    const moveSpy = jest.spyOn(repeater, "moveEntryTop");
+
+    entry.moveTop();
+
+    expect(moveSpy).toHaveBeenCalledWith("b");
+  });
+
+  test("moveBottom delegates to repeater.moveEntryBottom", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+    });
+    const entry = repeater.find("a") as Entry;
+    const moveSpy = jest.spyOn(repeater, "moveEntryBottom");
+
+    entry.moveBottom();
+
+    expect(moveSpy).toHaveBeenCalledWith("a");
+  });
+
+  test("moveUp does nothing if entry has no index", () => {
+    repeater.value({
+      a: { name: "First" },
+    });
+    const entry = repeater.find("a") as Entry;
+    jest.spyOn(entry, "index").mockReturnValue(null);
+    const moveSpy = jest.spyOn(repeater, "moveEntryUp");
+
+    entry.moveUp();
+
+    expect(moveSpy).not.toHaveBeenCalled();
+  });
+
+  test("moveUp does nothing if entry has no repeater", () => {
+    repeater.value({
+      a: { name: "First" },
+    });
+    const entry = repeater.find("a") as Entry;
+    jest.spyOn(entry, "repeater").mockReturnValue(undefined);
+    const moveSpy = jest.spyOn(repeater, "moveEntryUp");
+
+    entry.moveUp();
+
+    expect(moveSpy).not.toHaveBeenCalled();
   });
 });
 

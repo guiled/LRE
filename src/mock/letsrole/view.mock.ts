@@ -608,7 +608,7 @@ export class ViewMock implements LetsRole.Sheet {
         }
       });
 
-      parent = this.findParent(parent.id()!);
+      parent = this.findParent(parent.realId()!);
     }
   }
 
@@ -681,7 +681,7 @@ export class ViewMock implements LetsRole.Sheet {
       (definition) => !!definition.children?.some((child) => child.id === id),
     );
 
-    if (!def) {
+    if (!def || (def.id === this.#definitionId && !!this.#realView)) {
       return new FailingComponent(this, id);
     }
 

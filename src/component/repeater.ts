@@ -21,11 +21,21 @@ type RepeaterEachCallback = (
   entryId: LetsRole.Index,
 ) => void;
 
+type EntryMoveAction = "up" | "down" | "top" | "bottom";
+type EntryMoveActionConfig = {
+  [key in EntryMoveAction]?: LetsRole.ComponentID;
+};
+type EntryMoveActionCallback = (entry: LetsRole.Index) => void;
+type EntryMoveActionCallbacks = {
+  [key in EntryMoveAction]?: EntryMoveActionCallback;
+};
+
 export class Repeater extends Component<
   LetsRole.RepeaterValue,
   RepeaterEvents
 > {
   #savedValue: DefinedRepeaterValue = {};
+  #moveActionCallbacks: Array<LetsRole.ComponentID> = [];
 
   constructor(raw: LetsRole.Component, sheet: ISheet, realId: string) {
     super(raw, sheet, realId);
@@ -123,7 +133,6 @@ export class Repeater extends Component<
             .map((c) => c.realId()),
         );
 
-        // Refresh all raw component of each entry children
         entry.knownChildren().forEach(function (child) {
           if (child && child.exists()) {
             child.refreshRaw();
@@ -258,7 +267,6 @@ export class Repeater extends Component<
   }
 
   find(id: LetsRole.ComponentID, silent = false): ComponentSearchResult {
-    // Apply new repeater values if pending, in order to have up to date entries
     this.sheet().sendPendingDataFor(this.realId());
     return this.sheet().get(
       this.realId() + REP_ID_SEP + id,
@@ -392,6 +400,45 @@ export class Repeater extends Component<
     }
   }
 
+  setMoveComponents(config: EntryMoveActionConfig): void {
+    if (lre.isObjectEmpty(config)) {
+      lre.warn("setMoveComponents called with empty configuration object");
+      return;
+    }
+
+    this.#moveActionCallbacks.forEach((moverComponentId) => {
+      this.off("click:__lre__:move", moverComponentId);
+    });
+
+    this.#moveActionCallbacks = Object.values(config);
+
+    const movers: EntryMoveActionCallbacks = {
+      up: this.moveEntryUp,
+      down: this.moveEntryDown,
+      top: this.moveEntryTop,
+      bottom: this.moveEntryBottom,
+    };
+
+    each(
+      config,
+      (componentId: LetsRole.ComponentID, moveAction: EntryMoveAction) => {
+        if (typeof componentId !== "string") {
+          lre.warn("setMoveComponents called with invalid component ID");
+          return;
+        }
+
+        if (typeof movers[moveAction] !== "function") {
+          lre.warn("setMoveComponents called with invalid move action");
+          return;
+        }
+
+        this.on("click:__lre__:move", componentId, (cmp: Component) =>
+          movers[moveAction]!(cmp!.index()!),
+        );
+      },
+    );
+  }
+
   add(viewData: LetsRole.ViewData, id?: LetsRole.Index): void {
     if (typeof id === "undefined") {
       id = lre.getRandomId();
@@ -409,6 +456,86 @@ export class Repeater extends Component<
     this.value(val);
 
     return removed;
+  }
+
+  #getEntryIds(): Array<LetsRole.Index> {
+    const val = this.value() || {};
+    return Object.keys(val);
+  }
+
+  #getEntriesFromEntryIds(entryIds: Array<LetsRole.Index>): LetsRole.ViewData {
+    const values = this.value() || {};
+    const newValues: LetsRole.ViewData = {};
+
+    entryIds.forEach(function (k) {
+      newValues[k] = values[k];
+    });
+
+    return newValues;
+  }
+
+  moveEntryUp(entryId: LetsRole.Index): void {
+    const keys = this.#getEntryIds();
+    const currentIndex = keys.indexOf(entryId);
+
+    if (currentIndex <= 0 || currentIndex === -1) {
+      return;
+    }
+
+    const newKeys = [...keys];
+    [newKeys[currentIndex - 1], newKeys[currentIndex]] = [
+      newKeys[currentIndex],
+      newKeys[currentIndex - 1],
+    ];
+
+    this.value(this.#getEntriesFromEntryIds(newKeys));
+  }
+
+  moveEntryDown(entryId: LetsRole.Index): void {
+    const keys = this.#getEntryIds();
+    const currentIndex = keys.indexOf(entryId);
+
+    if (currentIndex === -1 || currentIndex >= keys.length - 1) {
+      return;
+    }
+
+    const newKeys = [...keys];
+    [newKeys[currentIndex], newKeys[currentIndex + 1]] = [
+      newKeys[currentIndex + 1],
+      newKeys[currentIndex],
+    ];
+
+    this.value(this.#getEntriesFromEntryIds(newKeys));
+  }
+
+  moveEntryTop(entryId: LetsRole.Index): void {
+    const keys = this.#getEntryIds();
+    const currentIndex = keys.indexOf(entryId);
+
+    if (currentIndex <= 0 || currentIndex === -1) {
+      return;
+    }
+
+    const newKeys = [...keys];
+    newKeys.splice(currentIndex, 1);
+    newKeys.unshift(entryId);
+
+    this.value(this.#getEntriesFromEntryIds(newKeys));
+  }
+
+  moveEntryBottom(entryId: LetsRole.Index): void {
+    const keys = this.#getEntryIds();
+    const currentIndex = keys.indexOf(entryId);
+
+    if (currentIndex === -1 || currentIndex >= keys.length - 1) {
+      return;
+    }
+
+    const newKeys = [...keys];
+    newKeys.splice(currentIndex, 1);
+    newKeys.push(entryId);
+
+    this.value(this.#getEntriesFromEntryIds(newKeys));
   }
 
   toString(): string {
