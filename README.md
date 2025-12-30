@@ -51,6 +51,7 @@ LRE's goal is to facilitate Let's Rôle system coding of some common works that 
 
 - [Vampire The Masquerade, 5 Ed.](https://lets-role.com/system/vampire-the-masquerade-5-ed-5234)
 - [ALIEN RPG (unofficial)](https://lets-role.com/system/alien-rpg-unofficial-2001)
+- [Avatar Legends: The Roleplaying Game](https://lets-role.com/system/avatar-legends-the-roleplaying-game-22719)
 - [shadowrun 6](https://lets-role.com/system/shadowrun-6-8150)
 - [Cyberpunk Red](https://lets-role.com/system/cyberpunk-red-10661)
 - Sigillum Divina Caelest
@@ -72,3 +73,10 @@ LRE's goal is to facilitate Let's Rôle system coding of some common works that 
 - [Post Apo ! Year Zero Engine](https://lets-role.com/system/post-apo-year-zero-engine-24447)
 - [Legend of the Five Rings, 4 Ed.](https://lets-role.com/system/legend-of-the-five-rings-4-ed-11073)
 - [Beyond the Wall](https://lets-role.com/system/beyond-the-wall-16441)
+- [Chroniques Oubliées Fantasy 2e édition](https://lets-role.com/system/chroniques-oubliees-fantasy-2e-edition-19614)
+- [Dungeon Crawl Classics](https://lets-role.com/system/dungeon-crawl-classics-2946)
+- [Faut {Pas} Pousser !](https://lets-role.com/system/faut-pas-pousser--17703)
+- [Monster Of The Week [FR]](https://lets-role.com/system/monster-of-the-week-fr-8060)
+- [NightProwler-2è-édition](https://lets-role.com/system/nightprowler2eedition-12110)
+- [Nightprowler V2](https://lets-role.com/system/nightprowler-v2-19838)
+- [Sigil & Shadow](https://lets-role.com/system/sigil-shadow-14787)
