@@ -389,7 +389,7 @@ describe("Toggle", () => {
 
   test("Update event trigger on toggle", () => {
     const toggle = sheet.get("toggle") as Toggle;
-    const cb = jest.fn();
+    const cb = vi.fn();
     toggle.toggling({
       state1: "Value 1",
       state2: "Value 1",
@@ -434,7 +434,7 @@ describe("Toggle", () => {
 
     expect(cb).toHaveBeenCalledTimes(4);
 
-    const rawCb = jest.fn();
+    const rawCb = vi.fn();
     const rawToggle = rawSheet.get("toggle")!;
     rawToggle.on("update", rawCb);
 
@@ -485,7 +485,7 @@ describe("Toggle", () => {
   test("Update is triggered even is no value change", () => {
     const toggle = sheet.get("toggle") as Toggle;
     toggle.value("OK");
-    const cb = jest.fn();
+    const cb = vi.fn();
     toggle.toggling({
       state1: {
         classes: ["class1"],
@@ -623,7 +623,7 @@ describe("Toggle", () => {
       on: "text1",
       off: "text2",
     };
-    const fn = jest.fn(() => data);
+    const fn = vi.fn(() => data);
     const dp = new DirectDataProvider("source", context, fn);
     toggle.toggling(dp);
 
@@ -664,15 +664,15 @@ describe("Toggle", () => {
     toggle.toggling(data);
 
     const dp = new DirectDataProvider("source", context, () => "on");
-    jest.spyOn(dp, "subscribeRefresh");
-    jest.spyOn(dp, "unsubscribeRefresh");
+    vi.spyOn(dp, "subscribeRefresh");
+    vi.spyOn(dp, "unsubscribeRefresh");
 
     toggle.value(dp);
 
     expect(dp.subscribeRefresh).toHaveBeenCalledTimes(1);
     expect(dp.unsubscribeRefresh).not.toHaveBeenCalled();
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     data.on = "text3";
     data.off = "text4";
     toggle.toggling(data);
@@ -760,7 +760,7 @@ describe("Toggle", () => {
         clickable: false,
       },
     );
-    const updateEventMock = jest.fn();
+    const updateEventMock = vi.fn();
     toggle.on("update", updateEventMock);
 
     expect(toggle.hasClass("clickable")).toStrictEqual(false);

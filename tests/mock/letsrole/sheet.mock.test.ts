@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { ServerMock } from "../../../src/mock/letsrole/server.mock";
 
 let server: ServerMock;
@@ -67,7 +68,7 @@ describe("SheetMock behavior", () => {
 
 describe("Open view", () => {
   test("Open view launch init", () => {
-    global.init = jest.fn();
+    global.init = vi.fn();
     const sheet = server.openView("main", "12345");
 
     expect(global.init).toHaveBeenCalled();
@@ -78,14 +79,14 @@ describe("Open view", () => {
 describe("Open prompt", () => {
   test("Prompt run init on view", () => {
     const main = server.openView("main", "12345");
-    global.init = jest.fn();
-    const initCb = jest.fn();
-    main.prompt("title", "prompt", jest.fn(), initCb);
+    global.init = vi.fn();
+    const initCb = vi.fn();
+    main.prompt("title", "prompt", vi.fn(), initCb);
 
     expect(global.init).toHaveBeenCalled();
     expect(initCb).toHaveBeenCalled();
 
-    const init: jest.Mock = global.init as jest.Mock;
+    const init: Mock = global.init as Mock;
 
     expect(init.mock.invocationCallOrder[0]).toBeLessThan(
       initCb.mock.invocationCallOrder[0],
@@ -108,21 +109,21 @@ describe("Prompt sheet", () => {
 
   test("A prompt can be opened one at a time", () => {
     const main = server.openView("main", "12345");
-    global.init = jest.fn();
-    const initCb = jest.fn();
+    global.init = vi.fn();
+    const initCb = vi.fn();
 
-    main.prompt("title", "prompt", jest.fn(), initCb);
+    main.prompt("title", "prompt", vi.fn(), initCb);
 
     expect(global.init).toHaveBeenCalledTimes(1);
     expect(initCb).toHaveBeenCalledTimes(1);
 
-    main.prompt("title", "prompt", jest.fn(), initCb);
+    main.prompt("title", "prompt", vi.fn(), initCb);
 
     expect(global.init).toHaveBeenCalledTimes(1);
     expect(initCb).toHaveBeenCalledTimes(1);
 
     server.closePrompt("prompt");
-    main.prompt("title", "prompt", jest.fn(), initCb);
+    main.prompt("title", "prompt", vi.fn(), initCb);
 
     expect(global.init).toHaveBeenCalledTimes(2);
     expect(initCb).toHaveBeenCalledTimes(2);
@@ -148,7 +149,7 @@ describe("Prompt sheet", () => {
 
     const main = server.openView("main", "12345");
 
-    main.prompt("title", "prompt", jest.fn(), cb);
+    main.prompt("title", "prompt", vi.fn(), cb);
 
     expect(promptView?.getData()).toMatchObject({});
 
@@ -159,7 +160,7 @@ describe("Prompt sheet", () => {
     });
 
     server.closePrompt("prompt");
-    main.prompt("title", "prompt", jest.fn(), cb);
+    main.prompt("title", "prompt", vi.fn(), cb);
 
     expect(promptView?.getData()).toMatchObject({});
   });

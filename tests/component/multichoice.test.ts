@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { Component } from "../../src/component";
 import { MultiChoice } from "../../src/component/multichoice";
 import { LRE } from "../../src/lre";
@@ -66,7 +67,7 @@ beforeEach(() => {
 
   sheet = new Sheet(proxySheet, new DataBatcher(context, proxySheet), context);
   lre.sheets.add(sheet);
-  sheet.raw = jest.fn(() => proxySheet);
+  sheet.raw = vi.fn(() => proxySheet);
   multiChoice = sheet.get("multi") as MultiChoice;
   proxyMultiChoice = multiChoice.raw() as ComponentProxy;
   rawMultiChoice = proxyMultiChoice.getDest() as ComponentMock;
@@ -97,8 +98,8 @@ describe("MultiChoice", () => {
 
   test("Remove values in the multichoice values call a setChoices", () => {
     multiChoice.value(["1", "2"]);
-    jest.spyOn(rawMultiChoice, "setChoices");
-    jest.spyOn(rawSheet, "setData");
+    vi.spyOn(rawMultiChoice, "setChoices");
+    vi.spyOn(rawSheet, "setData");
 
     expect(rawSheet.setData).toHaveBeenCalledTimes(0);
     expect(rawMultiChoice.setChoices).toHaveBeenCalledTimes(0);
@@ -111,7 +112,7 @@ describe("MultiChoice", () => {
 
   test("Set value of the sames values doesn't trigger update event", () => {
     multiChoice.value(["1", "2"]);
-    const mockUpdateEvent = jest.fn();
+    const mockUpdateEvent = vi.fn();
     multiChoice.on("update", mockUpdateEvent);
     multiChoice.value(["1", "2"]);
 
@@ -120,7 +121,7 @@ describe("MultiChoice", () => {
 
   test("Multichoice value change triggers select event", () => {
     let value = ["1"];
-    const mockSelectEvent = jest.fn();
+    const mockSelectEvent = vi.fn();
     multiChoice.on("select", mockSelectEvent);
     rawMultiChoice.value(value);
 
@@ -148,7 +149,7 @@ describe("MultiChoice", () => {
   test("Multichoice value change triggers unselect event", () => {
     const value = ["1", "2"];
     rawMultiChoice.value(value);
-    const mockUnselectEvent = jest.fn();
+    const mockUnselectEvent = vi.fn();
     multiChoice.on("unselect", mockUnselectEvent);
     rawMultiChoice.value([]);
 
@@ -164,7 +165,7 @@ describe("MultiChoice", () => {
   test("Multichoice selection operations", () => {
     const value = ["1", "2"];
     rawMultiChoice.value(value);
-    const mockUnselectEvent = jest.fn();
+    const mockUnselectEvent = vi.fn();
     multiChoice.setChoices({
       "1": "One",
       "2": "Two",
@@ -214,7 +215,7 @@ describe("MultiChoice", () => {
   });
 
   test("Limit min and max choices with numbers", () => {
-    multiChoice.on("click:other", jest.fn());
+    multiChoice.on("click:other", vi.fn());
     const data = lre.dataProvider("test", () => {
       return {
         1: { id: "1", lbl: "One", nb: 10 },
@@ -227,7 +228,7 @@ describe("MultiChoice", () => {
     });
     multiChoice.setChoices(data.select("lbl"));
     rawMultiChoice.value([]);
-    multiChoice.on("click", jest.fn());
+    multiChoice.on("click", vi.fn());
     multiChoice.maxChoiceNb(2);
     rawMultiChoice.value(["1"]);
 
@@ -282,7 +283,7 @@ describe("MultiChoice", () => {
         .map((l) => (l as Array<string>).join("-")),
     ).toContain(sheet.getSheetId() + "-cmd");
 
-    const updateEvent = jest.fn();
+    const updateEvent = vi.fn();
     multiChoice.on("update", updateEvent);
 
     rawMultiChoice.value(["1"]);
@@ -374,9 +375,9 @@ describe("MultiChoice", () => {
     multiChoice.setChoices(data.select("lbl"));
     multiChoice.maxChoiceNb(2);
     multiChoice.minChoiceNb(1);
-    const limitEvent = jest.fn();
-    const limitEventMin = jest.fn();
-    const limitEventMax = jest.fn();
+    const limitEvent = vi.fn();
+    const limitEventMin = vi.fn();
+    const limitEventMax = vi.fn();
     multiChoice.on("limit", limitEvent);
     multiChoice.on("limitmin", limitEventMin);
     multiChoice.on("limitmax", limitEventMax);
@@ -474,9 +475,9 @@ describe("MultiChoice", () => {
 });
 
 describe("Multichoice setChoices", () => {
-  let fnUpdate: jest.Mock;
-  let fnSelect: jest.Mock;
-  let fnUnselect: jest.Mock;
+  let fnUpdate: Mock;
+  let fnSelect: Mock;
+  let fnUnselect: Mock;
 
   beforeEach(() => {
     multiChoice.setChoices({
@@ -486,15 +487,15 @@ describe("Multichoice setChoices", () => {
     });
     multiChoice.value(["b"]);
     itHasWaitedEverything();
-    fnUpdate = jest.fn(() => {
+    fnUpdate = vi.fn(() => {
       return true;
     });
-    fnSelect = jest.fn();
-    fnUnselect = jest.fn();
+    fnSelect = vi.fn();
+    fnUnselect = vi.fn();
     multiChoice.on("update", fnUpdate);
     multiChoice.on("select", fnSelect);
     multiChoice.on("unselect", fnUnselect);
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   test("Unique value is kept if in new choices, no update event", () => {
@@ -518,7 +519,7 @@ describe("Multichoice setChoices", () => {
 
     expect(multiChoice.value()).toEqual(["b"]);
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     multiChoice.setChoices({
       a: "One",
@@ -537,7 +538,7 @@ describe("Multichoice setChoices", () => {
 
     expect(multiChoice.value()).toEqual(["b", "c"]);
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     multiChoice.setChoices({
       a: "One",
@@ -557,7 +558,7 @@ describe("Multichoice setChoices", () => {
 
     expect(multiChoice.value()).toEqual(["b", "c"]);
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     multiChoice.setChoices({
       a: "One",
@@ -577,7 +578,7 @@ describe("Multichoice setChoices", () => {
 
     expect(multiChoice.value()).toEqual(["b", "c"]);
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     multiChoice.setChoices({
       a: "One",
@@ -704,8 +705,8 @@ describe("Multichoice checked and unchecked", () => {
   test("Value is reset if choices totally changed", () => {
     const checked = multiChoice.checked() as DirectDataProvider;
     const unchecked = multiChoice.unchecked() as DirectDataProvider;
-    const fnCheckedUpdate = jest.fn();
-    const fnUncheckedUpdate = jest.fn();
+    const fnCheckedUpdate = vi.fn();
+    const fnUncheckedUpdate = vi.fn();
     checked.on("refresh", fnCheckedUpdate);
     unchecked.on("refresh", fnUncheckedUpdate);
     checked.refresh(); // force data provider dependencies

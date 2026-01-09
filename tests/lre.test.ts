@@ -1,3 +1,4 @@
+import type { Mock, MockInstance } from "vitest";
 import { Error } from "../src/error";
 import { LRE } from "../src/lre";
 import { ServerMock } from "../src/mock/letsrole/server.mock";
@@ -11,7 +12,7 @@ import { setLang } from "../src/mock/letsrole/i18n";
 import { LREi18n } from "../src/globals/i18n";
 import { DiceResult } from "../src/roll/diceresult";
 
-jest.mock("../src/log");
+vi.mock("../src/log");
 
 let server: ServerMock;
 
@@ -45,7 +46,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  jest.restoreAllMocks();
+  vi.restoreAllMocks();
   // @ts-expect-error The next error is deliberate
   delete global.wait;
   terminateLetsRole();
@@ -53,11 +54,11 @@ afterEach(() => {
 
 describe("LRE tests", () => {
   let subject: LRE;
-  let spyOnMathRandom: jest.SpyInstance;
+  let spyOnMathRandom: MockInstance;
 
   beforeEach(() => {
     subject = new LRE(context);
-    spyOnMathRandom = jest.spyOn(global.Math, "random").mockReturnValue(1);
+    spyOnMathRandom = vi.spyOn(global.Math, "random").mockReturnValue(1);
   });
 
   afterEach(() => {
@@ -116,7 +117,7 @@ describe("LRE tests", () => {
   });
 
   test("random id generation", () => {
-    const mathRandomSpy = jest.spyOn(Math, "random");
+    const mathRandomSpy = vi.spyOn(Math, "random");
     mathRandomSpy.mockImplementation(() => 0);
 
     expect(subject.getRandomId()).toEqual("A");
@@ -134,7 +135,7 @@ describe("LRE tests", () => {
   });
 
   test("random id generation with length", () => {
-    const mathRandomSpy = jest.spyOn(Math, "random");
+    const mathRandomSpy = vi.spyOn(Math, "random");
     mathRandomSpy.mockImplementation(() => 0);
 
     expect(subject.getRandomId(1)).toEqual("A");
@@ -147,8 +148,8 @@ describe("LRE tests", () => {
   });
 
   test("LRE call as a function", () => {
-    const sheetInit: jest.Mock = jest.fn();
-    global.firstInit = jest.fn();
+    const sheetInit: Mock = vi.fn();
+    global.firstInit = vi.fn();
     global.lre = subject;
 
     const sheet1 = server.openView("main", "13");
@@ -168,9 +169,7 @@ describe("LRE tests", () => {
     expect(sheetInit).toHaveBeenCalledTimes(1);
     expect(sheetInit.mock.calls[0][0]).toBeInstanceOf(Sheet);
     expect(global.firstInit).toHaveBeenCalledTimes(1);
-    expect((global.firstInit as jest.Mock).mock.calls[0][0]).toBeInstanceOf(
-      Sheet,
-    );
+    expect((global.firstInit as Mock).mock.calls[0][0]).toBeInstanceOf(Sheet);
 
     init(sheet2);
     itHasWaitedEverything();
@@ -178,10 +177,10 @@ describe("LRE tests", () => {
     expect(sheetInit).toHaveBeenCalledTimes(2);
     expect(sheetInit.mock.calls[1][0]).toBeInstanceOf(Sheet);
 
-    const cbErr: jest.Mock = jest.fn(() => {
+    const cbErr: Mock = vi.fn(() => {
       throw new Error("arf");
     });
-    global.firstInit = jest.fn(() => {
+    global.firstInit = vi.fn(() => {
       throw new Error("wow");
     });
     const initErr = subject.apply(subject, [cbErr]);
@@ -264,8 +263,8 @@ describe("LRE wait", () => {
   });
 
   test("calls native wait", () => {
-    (wait as jest.Mock).mockClear();
-    const cb = jest.fn();
+    (wait as Mock).mockClear();
+    const cb = vi.fn();
     subject.wait(100, cb, "hop");
 
     expect(wait).toHaveBeenCalledTimes(1);
@@ -279,7 +278,7 @@ describe("LRE wait", () => {
     /* @ts-expect-error The next error is deliberate */
     const cb = (): void => null();
     subject.wait(100, cb, "hop");
-    jest.spyOn(subject, "error");
+    vi.spyOn(subject, "error");
 
     expect(itHasWaitedEverything).not.toThrow();
     expect(subject.error).toHaveBeenCalled();
@@ -534,7 +533,7 @@ describe("LRE each", () => {
   test("lre.each is like let's role each but return the modified object", () => {
     const lre = new LRE(context);
     const obj = { a: 1, b: 2, c: 3 };
-    const cb = jest.fn((v) => v + 1);
+    const cb = vi.fn((v) => v + 1);
     const res = lre.each(obj, cb);
 
     expect(cb).toHaveBeenCalledTimes(3);
@@ -556,7 +555,7 @@ describe("LRE launch", () => {
   });
 
   test("LRE first launch is launched once", () => {
-    const cb = jest.fn();
+    const cb = vi.fn();
     const subject = new LRE(context, cb);
     subject.apply(subject, [server.openView("main", "13")]);
     subject.apply(subject, [server.openView("main", "14")]);
@@ -580,10 +579,10 @@ describe("LRE create a data provider with context", () => {
 
   test("dataProvider returns a DataProvider", () => {
     const data = { a: 1, b: 2 };
-    const cb = jest.fn(() => data);
+    const cb = vi.fn(() => data);
     const randomNumber = "123";
     const dpId = "test";
-    lre.getRandomId = jest.fn(() => randomNumber);
+    lre.getRandomId = vi.fn(() => randomNumber);
 
     const dataProvider = subject.dataProvider(dpId, cb);
 
@@ -626,8 +625,8 @@ describe("LRE initRoll overload", () => {
   test("LRE overload initRoll", () => {
     const lre = new LRE(context);
     global.lre = lre;
-    const cbToCall = jest.fn();
-    const fn = jest.fn((_r, cb) => {
+    const cbToCall = vi.fn();
+    const fn = vi.fn((_r, cb) => {
       cb("diceResultView", cbToCall);
     });
     global.initRoll = lre.initRoll(fn);

@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { Logger } from "../../src/log";
 import { LRE } from "../../src/lre";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
@@ -6,11 +7,11 @@ let context: ProxyModeHandler;
 let logger: Logger;
 
 beforeEach(() => {
-  global.log = jest.fn();
+  global.log = vi.fn();
   context = modeHandlerMock();
   global.lre = new LRE(context);
   logger = new Logger();
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
 
 afterEach(() => {
@@ -182,9 +183,9 @@ describe("Log many args", () => {
     logger.log(firstParam, secondParam, thirdParam);
 
     expect(global.log).toHaveBeenCalledTimes(3);
-    expect((global.log as jest.Mock).mock.calls[0][0]).toContain(firstParam);
-    expect((global.log as jest.Mock).mock.calls[1][0]).toContain(secondParam);
-    expect((global.log as jest.Mock).mock.calls[2][0]).toContain(thirdParam);
+    expect((global.log as Mock).mock.calls[0][0]).toContain(firstParam);
+    expect((global.log as Mock).mock.calls[1][0]).toContain(secondParam);
+    expect((global.log as Mock).mock.calls[2][0]).toContain(thirdParam);
   });
 
   test("Log with non string args", () => {
@@ -197,19 +198,19 @@ describe("Log many args", () => {
 
     expect(global.log).toHaveBeenCalledTimes(1);
 
-    (global.log as jest.Mock).mockClear();
+    (global.log as Mock).mockClear();
     arg = [42];
     logger.log(arg);
 
     expect(global.log).toHaveBeenCalledTimes(2);
-    expect((global.log as jest.Mock).mock.calls[1][0]).toStrictEqual(arg);
+    expect((global.log as Mock).mock.calls[1][0]).toStrictEqual(arg);
 
-    (global.log as jest.Mock).mockClear();
+    (global.log as Mock).mockClear();
     arg = { a: 42 };
     logger.log(arg);
 
     expect(global.log).toHaveBeenCalledTimes(2);
-    expect((global.log as jest.Mock).mock.calls[1][0]).toStrictEqual(arg);
+    expect((global.log as Mock).mock.calls[1][0]).toStrictEqual(arg);
   });
 
   test("Unknown log level", () => {

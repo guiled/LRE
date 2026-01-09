@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { DataBatcher } from "../../src/sheet/databatcher";
 import { LRE } from "../../src/lre";
 import { SheetProxy } from "../../src/proxy/sheet";
@@ -56,12 +57,12 @@ describe("DataBatcher async send data", () => {
 
   beforeEach(() => {
     sheet = server.openView("main", "123");
-    jest.spyOn(sheet, "setData");
+    vi.spyOn(sheet, "setData");
     dataBatcher = new DataBatcher(context, sheet);
   });
 
   it("delayed data send and getPendingData", () => {
-    jest.spyOn(sheet, "setData");
+    vi.spyOn(sheet, "setData");
     const data = {
       fortyTwo: 42,
       fortyThree: 43,
@@ -76,7 +77,7 @@ describe("DataBatcher async send data", () => {
     itHasWaitedEverything();
 
     expect(sheet.setData).toHaveBeenCalled();
-    expect((sheet.setData as jest.Mock).mock.calls[0][0]).toEqual(data);
+    expect((sheet.setData as Mock).mock.calls[0][0]).toEqual(data);
   });
 
   it("setData triggers event", () => {
@@ -84,8 +85,8 @@ describe("DataBatcher async send data", () => {
       fortyTwo: 42,
       fortyThree: 43,
     };
-    const pendingCallback = jest.fn();
-    const processedCallback = jest.fn();
+    const pendingCallback = vi.fn();
+    const processedCallback = vi.fn();
     dataBatcher.on("pending", pendingCallback);
     dataBatcher.on("processed", processedCallback);
 
@@ -117,7 +118,7 @@ describe("DataBatcher async send data", () => {
     itHasWaitedEverything();
 
     expect(sheet.setData).toHaveBeenCalled();
-    expect((sheet.setData as jest.Mock).mock.calls[0][0]).toEqual({
+    expect((sheet.setData as Mock).mock.calls[0][0]).toEqual({
       fortyTwo: 42,
       fortyThree: 43,
     });
@@ -149,12 +150,12 @@ describe("DataBatcher async send data", () => {
     itHasWaitedEnough();
 
     expect(sheet.setData).toHaveBeenCalledTimes(2);
-    expect(
-      Object.keys((sheet.setData as jest.Mock).mock.calls[0][0]),
-    ).toHaveLength(max);
-    expect(
-      Object.keys((sheet.setData as jest.Mock).mock.calls[1][0]),
-    ).toHaveLength(max / 2);
+    expect(Object.keys((sheet.setData as Mock).mock.calls[0][0])).toHaveLength(
+      max,
+    );
+    expect(Object.keys((sheet.setData as Mock).mock.calls[1][0])).toHaveLength(
+      max / 2,
+    );
   });
 
   it("delayed data send", () => {
@@ -177,7 +178,7 @@ describe("DataBatcher async send data", () => {
     itHasWaitedEverything();
 
     expect(sheet.setData).toHaveBeenCalledTimes(1);
-    expect((sheet.setData as jest.Mock).mock.calls[0][0]).toEqual(data);
+    expect((sheet.setData as Mock).mock.calls[0][0]).toEqual(data);
   });
 
   it("delayed data send with last value", () => {
@@ -196,14 +197,14 @@ describe("DataBatcher async send data", () => {
     itHasWaitedEverything();
 
     expect(sheet.setData).toHaveBeenCalledTimes(1);
-    expect((sheet.setData as jest.Mock).mock.calls[0][0]).toEqual({
+    expect((sheet.setData as Mock).mock.calls[0][0]).toEqual({
       fortyTwo: 44,
       fortyThree: 43,
     });
   });
 
   test("Databatcher raise and log an error when data pending failed", () => {
-    jest.spyOn(lre, "error");
+    vi.spyOn(lre, "error");
     dataBatcher.on("pending", () => {
       /* @ts-expect-error this error is desired */
       no();
@@ -216,7 +217,7 @@ describe("DataBatcher async send data", () => {
   });
 
   test("Databatcher raise and log an error when data processed failed", () => {
-    jest.spyOn(lre, "error");
+    vi.spyOn(lre, "error");
     dataBatcher.on("processed", () => {
       /* @ts-expect-error this error is desired */
       no();
@@ -241,15 +242,15 @@ describe("Handle virtual and real modes", () => {
   beforeEach(() => {
     sheet = server.openView("main", "123");
     sheetProxy = new SheetProxy(context, sheet);
-    jest.spyOn(sheetProxy, "setData");
+    vi.spyOn(sheetProxy, "setData");
     dataBatcher = new DataBatcher(context, sheetProxy);
-    jest.spyOn(sheet, "setData");
+    vi.spyOn(sheet, "setData");
   });
 
   test("Virtual mode", () => {
     context.setMode("virtual");
-    const pendingCallback = jest.fn();
-    const processedCallback = jest.fn();
+    const pendingCallback = vi.fn();
+    const processedCallback = vi.fn();
     dataBatcher.on("pending", pendingCallback);
     dataBatcher.on("processed", processedCallback);
     const data = {

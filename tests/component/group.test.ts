@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { Group } from "../../src/component/group";
 import { LRE } from "../../src/lre";
 import { ComponentMock } from "../../src/mock/letsrole/component.mock";
@@ -100,7 +101,7 @@ afterEach(() => {
 
 describe("Component group is like a component", () => {
   test("Group construction", () => {
-    jest.spyOn(sheet, "get");
+    vi.spyOn(sheet, "get");
     const group: Group = new Group(context, "group1", sheet);
 
     expect(sheet.get).not.toHaveBeenCalled();
@@ -137,8 +138,8 @@ describe("Component group is like a component", () => {
 
     (methods as Array<CommonMethodsBetweenComponentAndGroup>).forEach(
       (method) => {
-        jest.spyOn(cmp1, method);
-        jest.spyOn(cmp2, method);
+        vi.spyOn(cmp1, method);
+        vi.spyOn(cmp2, method);
         group[method]();
 
         expect(cmp1[method]).toHaveBeenCalled();
@@ -153,22 +154,22 @@ describe("Component group is like a component", () => {
         .sort(),
     ).toEqual([cmp1.realId(), cmp2.realId()].sort());
 
-    jest.spyOn(cmp1, "setToolTip");
-    jest.spyOn(cmp2, "setToolTip");
+    vi.spyOn(cmp1, "setToolTip");
+    vi.spyOn(cmp2, "setToolTip");
     group.setToolTip("test");
 
     expect(cmp1.setToolTip).toHaveBeenCalledTimes(1);
     expect(cmp2.setToolTip).toHaveBeenCalledTimes(1);
-    expect((cmp1.setToolTip as jest.Mock).mock.calls[0].length).toBe(1);
-    expect((cmp1.setToolTip as jest.Mock).mock.calls[0][0]).toBe("test");
+    expect((cmp1.setToolTip as Mock).mock.calls[0].length).toBe(1);
+    expect((cmp1.setToolTip as Mock).mock.calls[0][0]).toBe("test");
 
     group.setToolTip("test", "right");
 
     expect(cmp1.setToolTip).toHaveBeenCalledTimes(2);
     expect(cmp2.setToolTip).toHaveBeenCalledTimes(2);
-    expect((cmp1.setToolTip as jest.Mock).mock.calls[1].length).toBe(2);
-    expect((cmp1.setToolTip as jest.Mock).mock.calls[1][0]).toBe("test");
-    expect((cmp1.setToolTip as jest.Mock).mock.calls[1][1]).toBe("right");
+    expect((cmp1.setToolTip as Mock).mock.calls[1].length).toBe(2);
+    expect((cmp1.setToolTip as Mock).mock.calls[1][0]).toBe("test");
+    expect((cmp1.setToolTip as Mock).mock.calls[1][1]).toBe("right");
 
     sheet.get("a")!.lreType("repeater");
     sheet.get("a.b")!.lreType("entry");
@@ -180,15 +181,15 @@ describe("Component group is like a component", () => {
     expect(group.find("a.b.c")).toBe(subCmp);
 
     cmp1.addClass("unique");
-    jest.spyOn(cmp1, "addClass");
-    jest.spyOn(cmp2, "addClass");
-    jest.spyOn(subCmp, "addClass");
-    jest.spyOn(cmp1, "removeClass");
-    jest.spyOn(cmp2, "removeClass");
-    jest.spyOn(subCmp, "removeClass");
-    jest.spyOn(cmp1, "toggleClass");
-    jest.spyOn(cmp2, "toggleClass");
-    jest.spyOn(subCmp, "toggleClass");
+    vi.spyOn(cmp1, "addClass");
+    vi.spyOn(cmp2, "addClass");
+    vi.spyOn(subCmp, "addClass");
+    vi.spyOn(cmp1, "removeClass");
+    vi.spyOn(cmp2, "removeClass");
+    vi.spyOn(subCmp, "removeClass");
+    vi.spyOn(cmp1, "toggleClass");
+    vi.spyOn(cmp2, "toggleClass");
+    vi.spyOn(subCmp, "toggleClass");
 
     expect(group.addClass("test")).toBe(group);
     expect(group.hasClass("test")).toBeTruthy();
@@ -215,10 +216,10 @@ describe("Component group basics", () => {
   });
 
   test("Add / remove components", () => {
-    jest.spyOn(sheet, "get");
+    vi.spyOn(sheet, "get");
     const group: Group = new Group(context, "group1", sheet, ["cmp1"]);
 
-    const updateCb = jest.fn();
+    const updateCb = vi.fn();
 
     expect(sheet.get).toHaveBeenCalledTimes(1);
     expect(group.count()).toBe(1);
@@ -226,8 +227,8 @@ describe("Component group basics", () => {
     expect(group.contains("cmp1")).toBeTruthy();
     expect(group.has("cmp1")).toBeTruthy();
 
-    const addCb = jest.fn();
-    const removeCb = jest.fn();
+    const addCb = vi.fn();
+    const removeCb = vi.fn();
     group.on("add", addCb);
     group.on("remove", removeCb);
     group.on("update", updateCb);
@@ -242,7 +243,7 @@ describe("Component group basics", () => {
     expect(addCb).toHaveBeenCalledTimes(1);
 
     const cmp3 = sheet.get("cmp3")! as IComponent;
-    (sheet.get as jest.Mock).mockClear();
+    (sheet.get as Mock).mockClear();
 
     expect(group.includes("cmp3")).toBeFalsy();
     expect(group.contains("cmp3")).toBeFalsy();
@@ -264,7 +265,7 @@ describe("Component group basics", () => {
     expect(group.contains(cmp3)).toBeTruthy();
     expect(group.has(cmp3)).toBeTruthy();
 
-    (sheet.get as jest.Mock).mockClear();
+    (sheet.get as Mock).mockClear();
     updateCb.mockClear();
     group.add("cmp3");
 
@@ -303,7 +304,7 @@ describe("Component group basics", () => {
   });
 
   test("Large group", () => {
-    jest.spyOn(sheet, "get");
+    vi.spyOn(sheet, "get");
     const group: Group = new Group(context, "group1", sheet, [
       "cmp1",
       "cmp2",
@@ -331,18 +332,18 @@ describe("Component group basics", () => {
     "Group add / remove throws error with $desc",
     ({ val: invalidAddedElement }) => {
       const group: Group = new Group(context, "group1", sheet);
-      jest.spyOn(lre, "error");
+      vi.spyOn(lre, "error");
 
       /* @ts-expect-error Intended error to test */
       expect(() => group.add(invalidAddedElement)).toThrow();
 
-      (lre.error as jest.Mock).mockClear();
+      (lre.error as Mock).mockClear();
 
       /* @ts-expect-error Intended error to test */
       expect(group.includes(invalidAddedElement)).toBeFalsy();
       expect(lre.error).toHaveBeenCalled();
 
-      (lre.error as jest.Mock).mockClear();
+      (lre.error as Mock).mockClear();
       /* @ts-expect-error Intended error to test */
       group.remove(invalidAddedElement);
 
@@ -354,7 +355,7 @@ describe("Component group basics", () => {
 describe("Event attached to group are attached to all items", () => {
   test("Update events are linked between component and group", () => {
     const group: Group = new Group(context, "group1", sheet, ["cmp1", "cmp2"]);
-    const updateFn = jest.fn();
+    const updateFn = vi.fn();
     group.on("update", updateFn);
     const cmp1: ComponentMock = sheet.raw().get("cmp1") as ComponentMock;
     const cmp2: ComponentMock = sheet.raw().get("cmp2") as ComponentMock;
@@ -389,7 +390,7 @@ describe("Event attached to group are attached to all items", () => {
       "cmp2",
       "cmp3",
     ]);
-    const clickFn = jest.fn();
+    const clickFn = vi.fn();
     group.on("click:label", clickFn);
     const cmp1: ComponentMock = sheet.raw().get("cmp1") as ComponentMock;
 
@@ -400,7 +401,7 @@ describe("Event attached to group are attached to all items", () => {
     expect(clickFn).toHaveBeenCalled();
 
     clickFn.mockClear();
-    const clickFn2 = jest.fn();
+    const clickFn2 = vi.fn();
     group.on("click:label", clickFn2);
     cmp1.trigger("click");
 
@@ -442,7 +443,7 @@ describe("Event attached to group are attached to all items", () => {
 
   test("Events are added to newly added components", () => {
     const group: Group = new Group(context, "group1", sheet);
-    const clickFn = jest.fn();
+    const clickFn = vi.fn();
     group.on("click:label", clickFn);
 
     group.add("cmp1");

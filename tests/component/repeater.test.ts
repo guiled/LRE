@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { Repeater } from "../../src/component/repeater";
 import { LRE } from "../../src/lre";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
@@ -135,9 +136,9 @@ beforeEach(() => {
 
   sheet = new Sheet(proxySheet, new DataBatcher(context, proxySheet), context);
   lre.sheets.add(sheet);
-  jest.spyOn(sheet, "get");
-  jest.spyOn(sheet, "componentExists");
-  jest.spyOn(sheet, "knownChildren");
+  vi.spyOn(sheet, "get");
+  vi.spyOn(sheet, "componentExists");
+  vi.spyOn(sheet, "knownChildren");
   repeater = sheet.get("rep") as Repeater;
   rawRepeater = repeater.raw();
 });
@@ -154,12 +155,12 @@ describe("Repeater is correctly initialized", () => {
   });
 
   test("text() is protected", () => {
-    jest.spyOn(rawRepeater, "text");
+    vi.spyOn(rawRepeater, "text");
     /* @ts-expect-error repeater.text() is protected and cannot receive parameter */
     repeater.text("test");
 
     expect(rawRepeater.text).toHaveBeenCalled();
-    expect((rawRepeater.text as jest.Mock).mock.calls[0].length).toBe(0);
+    expect((rawRepeater.text as Mock).mock.calls[0].length).toBe(0);
   });
 
   test.each([
@@ -197,7 +198,7 @@ describe("Repeater events", () => {
       },
     };
     rawRepeater.value(values);
-    const handler = jest.fn();
+    const handler = vi.fn();
     repeater.on("initread", handler);
 
     expect(handler).toHaveBeenCalledTimes(3);
@@ -218,7 +219,7 @@ describe("Repeater events", () => {
   });
 
   test("Initedit event is correctly launched for new entries", () => {
-    const handler = jest.fn();
+    const handler = vi.fn();
     repeater.on("initedit", handler);
 
     expect(handler).toHaveBeenCalledTimes(0);
@@ -229,7 +230,7 @@ describe("Repeater events", () => {
   });
 
   test("Initedit event is correctly launched for existing entries", () => {
-    const handler = jest.fn();
+    const handler = vi.fn();
     repeater.on("initedit", handler);
     repeater.value({
       "1": {
@@ -245,7 +246,7 @@ describe("Repeater events", () => {
   });
 
   test("Delete event is correctly launched", () => {
-    const deleteCb = jest.fn();
+    const deleteCb = vi.fn();
     repeater.on("delete", deleteCb);
     repeater.value({
       "1": {
@@ -273,7 +274,7 @@ describe("Repeater events", () => {
   });
 
   test("edit event is correctly launched", () => {
-    const edited = jest.fn();
+    const edited = vi.fn();
     repeater.on("edit", edited);
     const values: Record<string, any> = {
       "1": {
@@ -319,7 +320,7 @@ describe("Repeater events", () => {
   });
 
   test("edit event is launched only once for each entry", () => {
-    const edited = jest.fn();
+    const edited = vi.fn();
     repeater.on("edit", edited);
     const values: Record<string, any> = {
       "1": {
@@ -412,7 +413,7 @@ describe("Repeater each", () => {
         name: "test3",
       },
     });
-    const cb = jest.fn();
+    const cb = vi.fn();
     repeater.each(cb);
 
     expect(cb).toHaveBeenCalledTimes(3);
@@ -443,7 +444,7 @@ describe("Repeater each", () => {
         name: "test3",
       },
     });
-    const cb = jest.fn();
+    const cb = vi.fn();
     repeater.each("name", cb);
 
     expect(cb).toHaveBeenCalledTimes(3);
@@ -484,7 +485,7 @@ describe("Repeater map", () => {
         name: "test3",
       },
     });
-    const cb = jest.fn((entry) => entry["name"]);
+    const cb = vi.fn((entry) => entry["name"]);
     const res = repeater.map(cb);
 
     expect(cb).toHaveBeenCalledTimes(3);
@@ -606,7 +607,7 @@ describe("Repeater add and remove", () => {
 
 describe("Repeater setMoveComponents", () => {
   test("logs warning when called with empty configuration", () => {
-    const warnSpy = jest.spyOn(lre, "warn");
+    const warnSpy = vi.spyOn(lre, "warn");
 
     repeater.setMoveComponents({});
 
@@ -977,7 +978,7 @@ describe("Entry move methods", () => {
       b: { name: "Second" },
     });
     const entry = repeater.find("b") as Entry;
-    const moveSpy = jest.spyOn(repeater, "moveEntryUp");
+    const moveSpy = vi.spyOn(repeater, "moveEntryUp");
 
     entry.moveUp();
 
@@ -990,7 +991,7 @@ describe("Entry move methods", () => {
       b: { name: "Second" },
     });
     const entry = repeater.find("a") as Entry;
-    const moveSpy = jest.spyOn(repeater, "moveEntryDown");
+    const moveSpy = vi.spyOn(repeater, "moveEntryDown");
 
     entry.moveDown();
 
@@ -1003,7 +1004,7 @@ describe("Entry move methods", () => {
       b: { name: "Second" },
     });
     const entry = repeater.find("b") as Entry;
-    const moveSpy = jest.spyOn(repeater, "moveEntryTop");
+    const moveSpy = vi.spyOn(repeater, "moveEntryTop");
 
     entry.moveTop();
 
@@ -1016,7 +1017,7 @@ describe("Entry move methods", () => {
       b: { name: "Second" },
     });
     const entry = repeater.find("a") as Entry;
-    const moveSpy = jest.spyOn(repeater, "moveEntryBottom");
+    const moveSpy = vi.spyOn(repeater, "moveEntryBottom");
 
     entry.moveBottom();
 
@@ -1028,8 +1029,8 @@ describe("Entry move methods", () => {
       a: { name: "First" },
     });
     const entry = repeater.find("a") as Entry;
-    jest.spyOn(entry, "index").mockReturnValue(null);
-    const moveSpy = jest.spyOn(repeater, "moveEntryUp");
+    vi.spyOn(entry, "index").mockReturnValue(null);
+    const moveSpy = vi.spyOn(repeater, "moveEntryUp");
 
     entry.moveUp();
 
@@ -1041,8 +1042,8 @@ describe("Entry move methods", () => {
       a: { name: "First" },
     });
     const entry = repeater.find("a") as Entry;
-    jest.spyOn(entry, "repeater").mockReturnValue(undefined);
-    const moveSpy = jest.spyOn(repeater, "moveEntryUp");
+    vi.spyOn(entry, "repeater").mockReturnValue(undefined);
+    const moveSpy = vi.spyOn(repeater, "moveEntryUp");
 
     entry.moveUp();
 
@@ -1073,7 +1074,7 @@ describe("Entry toString", () => {
 
     if (entry) {
       // Mock index() to return null
-      jest.spyOn(entry.raw(), "index").mockReturnValue(null);
+      vi.spyOn(entry.raw(), "index").mockReturnValue(null);
       const result = entry.toString();
 
       expect(result).toBe("Entry<rep.test>(no index)");

@@ -90,7 +90,7 @@ describe("Checkbox basics", () => {
 
 describe("Checkbox disabling", () => {
   test("Disabled checkbox doesn't change value", () => {
-    const update = jest.fn();
+    const update = vi.fn();
     const cmp = new Checkbox(rawCheckbox, sheet, "checkbox");
     cmp.on("update", update);
 

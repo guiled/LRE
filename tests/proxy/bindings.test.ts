@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { registerLreBindings } from "../../src/proxy/bindings";
 import {
@@ -21,10 +22,10 @@ describe("Bindings proxy", () => {
     });
     initLetsRole(server);
     subject = registerLreBindings(context, Bindings);
-    (Bindings.add as jest.Mock).mockClear();
-    (Bindings.clear as jest.Mock).mockClear();
-    (Bindings.remove as jest.Mock).mockClear();
-    (Bindings.send as jest.Mock).mockClear();
+    (Bindings.add as Mock).mockClear();
+    (Bindings.clear as Mock).mockClear();
+    (Bindings.remove as Mock).mockClear();
+    (Bindings.send as Mock).mockClear();
   });
 
   afterEach(() => {

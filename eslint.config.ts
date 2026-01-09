@@ -5,7 +5,7 @@ import tsParser from "@typescript-eslint/parser";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
 import stylisticTs from "@stylistic/eslint-plugin";
 import prettierRecommended from "eslint-plugin-prettier/recommended";
-import pluginJest from "eslint-plugin-jest";
+import pluginVitest from "@vitest/eslint-plugin";
 
 // ts-unused-exports:disable-next-line
 export default tsESlint.config(
@@ -25,12 +25,14 @@ export default tsESlint.config(
     files: ["**/*.ts"],
     languageOptions: {
       parser: tsParser,
-      globals: pluginJest.environments.globals.globals,
+      globals: {
+        ...pluginVitest.environments.env.globals,
+      },
     },
     plugins: {
       "@typescript-eslint": tsPlugin,
       "@stylistic": stylisticTs,
-      jest: pluginJest,
+      vitest: pluginVitest,
     },
     rules: {
       "@stylistic/padding-line-between-statements": [
@@ -78,8 +80,8 @@ export default tsESlint.config(
           allowTernary: true,
         },
       ],
-      "jest/no-identical-title": "error",
-      "jest/padding-around-all": "error",
+      "vitest/no-identical-title": "error",
+      "vitest/padding-around-all": "error",
     },
   },
 );

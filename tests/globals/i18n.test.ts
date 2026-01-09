@@ -25,7 +25,7 @@ beforeEach(() => {
 
 describe("_ is used by LREi18n", () => {
   test("_ is called", () => {
-    jest.spyOn(global, "_");
+    vi.spyOn(global, "_");
     lre.i18n = new LREi18n(_);
 
     expect(_).not.toHaveBeenCalled();

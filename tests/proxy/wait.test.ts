@@ -11,7 +11,7 @@ describe("Wait proxy", () => {
   let cb: () => void;
 
   beforeEach(() => {
-    cb = jest.fn();
+    cb = vi.fn();
     context.setMode("real");
     global.lre = new LRE(context);
   });

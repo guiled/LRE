@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import {
   ComponentMock,
   FailingComponent,
@@ -140,9 +141,9 @@ describe("ComponentMock behavior", () => {
   });
 
   test("events behavior", () => {
-    const cb0 = jest.fn();
+    const cb0 = vi.fn();
     let arg: ComponentMock;
-    const cb = jest.fn((a) => (arg = a));
+    const cb = vi.fn((a) => (arg = a));
     componentContainer.on("click", cb0);
     componentContainer.on("click", cb);
     componentContainer.trigger("click");
@@ -161,7 +162,7 @@ describe("ComponentMock behavior", () => {
   });
 
   test("click and change bubbling behavior", () => {
-    const cb = jest.fn();
+    const cb = vi.fn();
     componentContainer.on("click", cb);
     componentSubLabel.trigger("click");
 
@@ -173,8 +174,8 @@ describe("ComponentMock behavior", () => {
   });
 
   test("value changed events", () => {
-    const cbUpdate = jest.fn();
-    const cbChange = jest.fn();
+    const cbUpdate = vi.fn();
+    const cbChange = vi.fn();
     componentInput.on("update", cbUpdate);
     componentInput.on("change", cbChange);
     componentInput.value("42");
@@ -213,7 +214,7 @@ describe("ComponentMock behavior", () => {
 
   test("event delegation behavior", () => {
     let arg: ComponentMock;
-    const cb = jest.fn((a) => (arg = a));
+    const cb = vi.fn((a) => (arg = a));
     componentContainer.on("click", ".label", cb);
     componentSubLabel.trigger("click");
 
@@ -234,8 +235,8 @@ describe("ComponentMock behavior", () => {
   });
 
   test("update event delegation must not work, but change does work", () => {
-    const cb = jest.fn();
-    const cb2 = jest.fn();
+    const cb = vi.fn();
+    const cb2 = vi.fn();
     componentContainer.on("update", ".widget", cb);
     componentContainer.on("change", ".widget", cb2);
     sheet.componentChangedManually(componentInput.id()!, Math.random());
@@ -492,9 +493,9 @@ describe("ComponentMock event bubbling behavior", () => {
   });
 
   test("delegated click events are bubbled in the good order", () => {
-    const clickContainer = jest.fn();
-    const clickSub = jest.fn();
-    const clickLabel = jest.fn();
+    const clickContainer = vi.fn();
+    const clickSub = vi.fn();
+    const clickLabel = vi.fn();
 
     componentContainer.on("click", clickContainer);
     componentSub.on("click", clickSub);
@@ -512,7 +513,7 @@ describe("ComponentMock event bubbling behavior", () => {
       clickContainer.mock.invocationCallOrder[0],
     );
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     componentSub.trigger("click");
 
@@ -525,9 +526,9 @@ describe("ComponentMock event bubbling behavior", () => {
   });
 
   test("Events (direct or delegated) are launched in order of declaration", () => {
-    const clickContainer = jest.fn();
-    const clickDelegated = jest.fn();
-    const clickDirect = jest.fn();
+    const clickContainer = vi.fn();
+    const clickDelegated = vi.fn();
+    const clickDirect = vi.fn();
 
     componentContainer.on("click", ".classOnLabel", clickDelegated);
     componentLabel.on("click", clickDirect);
@@ -547,22 +548,22 @@ describe("ComponentMock event bubbling behavior", () => {
   });
 
   test("Complete event test sequence", () => {
-    const clickContainer = jest.fn();
-    const clickSub = jest.fn();
-    const clickLabel = jest.fn();
+    const clickContainer = vi.fn();
+    const clickSub = vi.fn();
+    const clickLabel = vi.fn();
 
     componentContainer.on("click", clickContainer);
     componentSub.on("click", clickSub);
     componentLabel.on("click", clickLabel);
 
-    const clickLabelDelegatedByIdOnContainer = jest.fn();
-    const clickLabelDelegatedByIdOnSub = jest.fn();
+    const clickLabelDelegatedByIdOnContainer = vi.fn();
+    const clickLabelDelegatedByIdOnSub = vi.fn();
 
     componentContainer.on("click", "label", clickLabelDelegatedByIdOnContainer);
     componentSub.on("click", "label", clickLabelDelegatedByIdOnSub);
 
-    const clickLabelDelegatedByClassOnContainer = jest.fn();
-    const clickLabelDelegatedByClassOnSub = jest.fn();
+    const clickLabelDelegatedByClassOnContainer = vi.fn();
+    const clickLabelDelegatedByClassOnSub = vi.fn();
 
     componentContainer.on(
       "click",
@@ -571,8 +572,8 @@ describe("ComponentMock event bubbling behavior", () => {
     );
     componentSub.on("click", ".classOnLabel", clickLabelDelegatedByClassOnSub);
 
-    const clickSubDelegatedByClassOnContainer = jest.fn();
-    const clickSubDelegatedByIdOnContainer = jest.fn();
+    const clickSubDelegatedByClassOnContainer = vi.fn();
+    const clickSubDelegatedByIdOnContainer = vi.fn();
 
     componentContainer.on(
       "click",
@@ -593,7 +594,7 @@ describe("ComponentMock event bubbling behavior", () => {
     expect(clickSubDelegatedByClassOnContainer).toHaveBeenCalledTimes(0);
     expect(clickSubDelegatedByIdOnContainer).toHaveBeenCalledTimes(0);
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     componentSub.trigger("click");
 
@@ -619,7 +620,7 @@ describe("ComponentMock event bubbling behavior", () => {
       clickSubDelegatedByIdOnContainer.mock.invocationCallOrder[0],
     );
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     componentLabel.trigger("click");
 
     expect(clickContainer).toHaveBeenCalledTimes(1);
@@ -640,7 +641,7 @@ describe("ComponentMock event bubbling behavior", () => {
       clickContainer,
       clickLabelDelegatedByIdOnContainer,
       clickLabelDelegatedByClassOnContainer,
-    ].reduce((previousValue: jest.Mock | null, currentValue: jest.Mock) => {
+    ].reduce((previousValue: Mock | null, currentValue: Mock) => {
       if (previousValue) {
         expect(currentValue.mock.invocationCallOrder[0]).toBeGreaterThan(
           previousValue.mock.invocationCallOrder[0],
@@ -870,14 +871,14 @@ describe("Repeaters", () => {
   });
 
   test("Change in a repeater edit view triggers update events", () => {
-    const fnOnRepeater = jest.fn();
-    const fnClickOnRepeater = jest.fn();
+    const fnOnRepeater = vi.fn();
+    const fnClickOnRepeater = vi.fn();
     repeaterOk.on("update", fnOnRepeater);
     repeaterOk.on("click", fnClickOnRepeater);
 
     const otherSheet = server.openView(sheet.id(), sheet.getSheetId()!, {});
     const repeaterOkOther = otherSheet.get("rep2") as ComponentMock;
-    const fnOnRepeaterOther = jest.fn();
+    const fnOnRepeaterOther = vi.fn();
     repeaterOkOther.on("update", fnOnRepeaterOther);
 
     sheet.repeaterClickOnAdd(repeaterOk.realId());
@@ -892,7 +893,7 @@ describe("Repeaters", () => {
     const values = repeaterOk.value() as LetsRole.RepeaterValue;
     const keys = Object.keys(values!);
     const input = repeaterOk.find(keys[0]).find("input");
-    const fnOnInput = jest.fn();
+    const fnOnInput = vi.fn();
     input.on("update", fnOnInput);
     const newVal = "Eh !";
     input.value(newVal);
@@ -913,14 +914,14 @@ describe("Repeaters", () => {
   });
 
   test("Repeater entry validation, edition or deletion triggers events", () => {
-    const fnOnRepeater = jest.fn();
-    const fnClickOnRepeater = jest.fn();
+    const fnOnRepeater = vi.fn();
+    const fnClickOnRepeater = vi.fn();
     repeaterOk.on("update", fnOnRepeater);
     repeaterOk.on("click", fnClickOnRepeater);
 
     const otherSheet = server.openView(sheet.id(), sheet.getSheetId()!, {});
     const repeaterOkOther = otherSheet.get("rep2") as ComponentMock;
-    const fnOnRepeaterOther = jest.fn();
+    const fnOnRepeaterOther = vi.fn();
     repeaterOkOther.on("update", fnOnRepeaterOther);
 
     sheet.repeaterClickOnAdd(repeaterOk.realId());
@@ -970,8 +971,8 @@ describe("Repeaters", () => {
 
     input = repeaterOk.find(keys[0]).find("input");
     const inputOther = repeaterOkOther.find(keys[0]).find("input");
-    const fnOnInput = jest.fn();
-    const fnOnInputOther = jest.fn();
+    const fnOnInput = vi.fn();
+    const fnOnInputOther = vi.fn();
     input.on("update", fnOnInput);
     inputOther.on("update", fnOnInputOther);
 
@@ -1001,7 +1002,7 @@ describe("Repeaters", () => {
 
   test("Repeater click on edit add the editing class, click on done remove it", () => {
     let hasEditingOnUpdate = false;
-    const fnUpdate = jest.fn(() => {
+    const fnUpdate = vi.fn(() => {
       hasEditingOnUpdate = entry.hasClass("editing");
     });
     const values = {
@@ -1106,10 +1107,10 @@ describe("Checkbox mock", () => {
   test("Checkbox click event sequence", () => {
     let clickValue: boolean | null = null;
     let updateValue: boolean | null = null;
-    const click = jest.fn((chk) => {
+    const click = vi.fn((chk) => {
       clickValue = chk.value();
     });
-    const update = jest.fn((chk) => {
+    const update = vi.fn((chk) => {
       updateValue = chk.value();
     });
     rawCheckbox.on("click", click);

@@ -34,8 +34,10 @@
       "severity": "off"
     },
     {
-      "rule": "jest/padding-around-all",
+      "rule": "vitest/padding-around-all",
       "severity": "off"
     }
-  ]
+  ],
+  "vitest.enable": true,
+  "vitest.commandLine": "yarn vitest"
 }

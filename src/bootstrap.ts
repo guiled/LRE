@@ -5,7 +5,7 @@ import { globals } from "./globals";
 import { LREi18n } from "./globals/i18n";
 import { LRE } from "./lre";
 import { registerLreBindings } from "./proxy/bindings";
-import { registerLreRollBuilder } from "./proxy/rollBuilder";
+import { registerLreRollBuilder } from "./dice/rollBuilder";
 import { registerLreWait } from "./proxy/wait";
 
 export const bootstrap = (): ProxyModeHandler => {
@@ -17,6 +17,7 @@ export const bootstrap = (): ProxyModeHandler => {
   Error = LreError;
   /* eslint-enable no-global-assign */
 
+  // @ts-expect-error: defining structuredClone for polyfill
   structuredClone = globals.structuredClone;
 
   lastException = null;

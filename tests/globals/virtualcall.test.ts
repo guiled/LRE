@@ -3,37 +3,37 @@ import { LRE } from "../../src/lre";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 
 global.context = modeHandlerMock();
-jest.mock("../../src/lre");
+vi.mock("../../src/lre");
 
 describe("Virtual call", () => {
   const env: any = {};
 
   beforeEach(() => {
-    global.init = env.init = jest.fn();
-    global.initRoll = env.initRoll = jest.fn();
-    global.getReferences = env.getReferences = jest.fn();
-    global.getBarAttributes = env.getBarAttributes = jest.fn();
-    global.getCriticalHits = env.getCriticalHits = jest.fn();
-    global.dropDice = env.dropDice = jest.fn();
-    global.drop = env.drop = jest.fn();
+    global.init = env.init = vi.fn();
+    global.initRoll = env.initRoll = vi.fn();
+    global.getReferences = env.getReferences = vi.fn();
+    global.getBarAttributes = env.getBarAttributes = vi.fn();
+    global.getCriticalHits = env.getCriticalHits = vi.fn();
+    global.dropDice = env.dropDice = vi.fn();
+    global.drop = env.drop = vi.fn();
     global.Dice = env.Dice = {
-      roll: jest.fn(),
-      create: jest.fn(),
+      roll: vi.fn(),
+      create: vi.fn(),
     };
   });
 
   test("runs the callback", () => {
     const result = Math.random();
-    const cb = jest.fn(() => {
+    const cb = vi.fn(() => {
       Dice.roll(Dice.create("1d2"));
-      global.init = jest.fn();
-      global.initRoll = jest.fn();
-      global.getReferences = jest.fn();
-      global.getBarAttributes = jest.fn();
-      global.getCriticalHits = jest.fn();
-      global.dropDice = jest.fn();
-      global.drop = jest.fn();
-      global.Dice.roll = jest.fn();
+      global.init = vi.fn();
+      global.initRoll = vi.fn();
+      global.getReferences = vi.fn();
+      global.getBarAttributes = vi.fn();
+      global.getCriticalHits = vi.fn();
+      global.dropDice = vi.fn();
+      global.drop = vi.fn();
+      global.Dice.roll = vi.fn();
       return result;
     });
 
@@ -52,7 +52,7 @@ describe("Virtual call", () => {
   test("catches errors", () => {
     global.lre = new LRE(context);
     let modeDuringVirtualCall = "";
-    const cb = jest.fn(() => {
+    const cb = vi.fn(() => {
       modeDuringVirtualCall = context.getMode();
       /* @ts-expect-error Intended error */
       null();

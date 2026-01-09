@@ -139,7 +139,7 @@ describe("Container", () => {
 
   test("Find a child is successful", () => {
     const container = sheet.get("container") as Container;
-    jest.spyOn(lre, "error");
+    vi.spyOn(lre, "error");
 
     const child = container.find("subTxt1");
 
@@ -150,7 +150,7 @@ describe("Container", () => {
 
   test("Find a child that does not exist returns null and error be logged", () => {
     const container = sheet.get("container") as Container;
-    jest.spyOn(lre, "error");
+    vi.spyOn(lre, "error");
 
     const child = container.find("unknownCmp");
 
@@ -160,7 +160,7 @@ describe("Container", () => {
 
   test("Find a child that exists elsewhere returns null and error must be logged", () => {
     const container = sheet.get("container") as Container;
-    jest.spyOn(lre, "error");
+    vi.spyOn(lre, "error");
 
     const child = container.find("txt1");
 
@@ -202,7 +202,7 @@ describe("Container value", () => {
 
   test("set value with invalid data logs error", () => {
     const container = sheet.get("container") as Container;
-    jest.spyOn(lre, "error");
+    vi.spyOn(lre, "error");
 
     container.value(42);
 
@@ -211,7 +211,7 @@ describe("Container value", () => {
 
   test("get value returns the value of all known components", () => {
     const container = sheet.get("container") as Container;
-    jest.spyOn(lre, "error");
+    vi.spyOn(lre, "error");
 
     let result = container.value();
 

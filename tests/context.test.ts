@@ -40,7 +40,7 @@ describe("Context access logs", () => {
 
       const logMessage: [string, string] = [
         "123",
-        "This is log type " + logType,
+        `This is log type ${logType}`,
       ];
 
       expect(context.logAccess(logType, logMessage)).toBe(context);
@@ -160,7 +160,7 @@ describe("Context callback call", () => {
   });
 
   test("Callback is called", () => {
-    const fn = jest.fn();
+    const fn = vi.fn();
 
     context.call(true, fn);
 
@@ -199,7 +199,7 @@ describe("Context callback call", () => {
   test("Enabled state is restored with nested calls", () => {
     let before1, after1, after2: boolean;
 
-    const fn = jest.fn(() => {
+    const fn = vi.fn(() => {
       before1 = context.getLogEnabled();
       context.call(false, () => {
         after2 = context.getLogEnabled();
@@ -274,7 +274,7 @@ describe("Context callback call", () => {
   });
 
   test("Returns access log with nested calls", () => {
-    const fn = jest.fn(() => {
+    const fn = vi.fn(() => {
       context.logAccess("value", ["123", "b"]);
     });
     const result = "theResult";

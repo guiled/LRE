@@ -54,7 +54,7 @@ afterEach(() => {
 describe("Data provider basics", () => {
   test("Get value", () => {
     const data = "42";
-    const dataGetter = jest.fn((_a: any) => data as any);
+    const dataGetter = vi.fn((_a: any) => data as any);
     const dp = lre.dataProvider("test", dataGetter);
 
     expect(dp.providedValue()).toBe(data);
@@ -65,7 +65,7 @@ describe("Data provider basics", () => {
 describe("Data provider sort", () => {
   test("Sort single value", () => {
     const data = "42";
-    const dataGetter = jest.fn((_a: any) => data as any);
+    const dataGetter = vi.fn((_a: any) => data as any);
     const dp = lre.dataProvider("test", dataGetter);
     const sorted = dp.sort();
 
@@ -75,7 +75,7 @@ describe("Data provider sort", () => {
 
   test("Sort array", () => {
     const data = ["42", "4", "24", "24"];
-    const dataGetter = jest.fn((_a: any) => data as any);
+    const dataGetter = vi.fn((_a: any) => data as any);
     const dp = lre.dataProvider("test", dataGetter);
     const sorted = dp.sort();
 
@@ -85,7 +85,7 @@ describe("Data provider sort", () => {
 
   test("Sort array of object", () => {
     const data = [{ a: "42" }, { a: "4" }, { a: "24" }, { a: "24" }];
-    const dataGetter = jest.fn((_a: any) => data as any);
+    const dataGetter = vi.fn((_a: any) => data as any);
     const dp = lre.dataProvider("test", dataGetter);
     const sorted = dp.sort("a");
 
@@ -110,7 +110,7 @@ describe("Data provider sort", () => {
 
   test("Sort object", () => {
     const data = { a: "42", b: "13", c: "24" };
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       if (_a) {
         Object.assign(data, _a);
       }
@@ -144,7 +144,7 @@ describe("Data provider sort", () => {
 
   test("Sort object of object", () => {
     const data = { a: "42", b: "13", c: "24" };
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       if (_a) {
         Object.assign(data, _a);
       }
@@ -175,7 +175,7 @@ describe("Data provider sort", () => {
       c: { a: "24", b: "3" },
       d: { a: "24", b: "4" },
     };
-    const dataGetter = jest.fn((_a: any) => data as any);
+    const dataGetter = vi.fn((_a: any) => data as any);
     const dp = lre.dataProvider("test", dataGetter);
 
     const sorter = (a: any, b: any): number => {
@@ -200,7 +200,7 @@ describe("Data provider sort", () => {
       c: { a: "2", b: "3" },
       d: { a: "1", b: "6" },
     };
-    const dataGetter = jest.fn((_a: any) => data as any);
+    const dataGetter = vi.fn((_a: any) => data as any);
     const dp = lre.dataProvider("test", dataGetter);
     const cols = dp.select("a");
 
@@ -240,7 +240,7 @@ describe("Data provider sort", () => {
       c: { a: "2", b: "3", c: "150" },
       d: { a: "1", b: "6", c: "30" },
     };
-    const dataGetter = jest.fn((_a: any) => data as any);
+    const dataGetter = vi.fn((_a: any) => data as any);
     const dp = lre.dataProvider("test", dataGetter);
     const sorted = dp.select("a").sort("c");
 
@@ -274,7 +274,7 @@ describe("Data provider sort", () => {
       b: { a: "4", b: "2", c: "100" },
       d: { a: "1", b: "6", c: "30" },
     };
-    const dataGetter = jest.fn((_a: any) => data as any);
+    const dataGetter = vi.fn((_a: any) => data as any);
     const dp = lre.dataProvider("test", dataGetter);
     const sorted2 = dp.select("a").sort("c", "DESC");
 
@@ -291,12 +291,12 @@ describe("Data provider sort", () => {
 
 describe("DataProvider each", () => {
   test("empty each", () => {
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       return undefined;
     });
     const dp = lre.dataProvider("test", dataGetter);
 
-    const fn = jest.fn();
+    const fn = vi.fn();
 
     dp.each(fn);
 
@@ -305,12 +305,12 @@ describe("DataProvider each", () => {
 
   test("each single value", () => {
     const data = "42";
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       return data as any;
     });
     const dp = lre.dataProvider("test", dataGetter);
 
-    const fn = jest.fn();
+    const fn = vi.fn();
 
     dp.each(fn);
 
@@ -320,12 +320,12 @@ describe("DataProvider each", () => {
 
   test("each array", () => {
     const data = ["42", "13", "24"];
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       return data as any;
     });
     const dp = lre.dataProvider("test", dataGetter);
 
-    const fn = jest.fn();
+    const fn = vi.fn();
 
     dp.each(fn);
 
@@ -337,7 +337,7 @@ describe("DataProvider each", () => {
 
   test("each", () => {
     const data = { a: "42", b: "13", c: "24" };
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       if (_a) {
         Object.assign(data, _a);
       }
@@ -346,7 +346,7 @@ describe("DataProvider each", () => {
     });
     const dp = lre.dataProvider("test", dataGetter);
 
-    const fn = jest.fn();
+    const fn = vi.fn();
 
     dp.each(fn);
 
@@ -359,7 +359,7 @@ describe("DataProvider each", () => {
   test("each stops when cb returns false", () => {
     const data = { a: "42", b: "13", c: "24" };
 
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       if (_a) {
         Object.assign(data, _a);
       }
@@ -369,7 +369,7 @@ describe("DataProvider each", () => {
     const dp = lre.dataProvider("test", dataGetter);
     let cnt = 0;
     const MAX = 2;
-    const fn = jest.fn(() => ++cnt < MAX);
+    const fn = vi.fn(() => ++cnt < MAX);
 
     dp.each(fn);
 
@@ -385,7 +385,7 @@ describe("DataProvider select a column", () => {
       "4": { b: "5", c: "6" },
       "3": { a: "4", b: "5", c: "6" },
     };
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       if (_a) {
         Object.assign(data, _a);
       }
@@ -412,7 +412,7 @@ describe("DataProvider select a column", () => {
       "4": { b: "5", c: "6" },
       "3": { a: "4", b: "5", c: "6" },
     };
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       if (_a) {
         Object.assign(data, _a);
       }
@@ -449,7 +449,7 @@ describe("DataProvider select a column", () => {
 describe("Dataprovider getData", () => {
   test("getData", () => {
     let data: any = 42;
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       return data as any;
     });
     const dp = lre.dataProvider("test", dataGetter);
@@ -477,7 +477,7 @@ describe("Dataprovider getData", () => {
       "2": { a: "1", b: "2", c: "3" },
       "3": { a: "4", b: "5", c: "6" },
     };
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       return data as any;
     });
     const dp = lre.dataProvider("test", dataGetter);
@@ -498,7 +498,7 @@ describe("DataProvider filter and where", () => {
       "2": { id: "2", a: "1", b: "2", c: "3" },
       "3": { id: "3", a: "4", b: "5", c: "6" },
     };
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       return data as any;
     });
     const dp = lre.dataProvider("test", dataGetter);
@@ -519,7 +519,7 @@ describe("DataProvider filter and where", () => {
       "2": { id: "2", a: "1", b: "5", c: "3" },
       "3": { id: "3", a: "4", b: "5", c: "6" },
     };
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       return data as any;
     });
     const dp = lre.dataProvider("test", dataGetter);
@@ -545,7 +545,7 @@ describe("DataProvider filter and where", () => {
       "2": { id: "2", a: "1", b: "2", c: "3" },
       "3": { id: "3", a: "4", b: "5", c: "6" },
     };
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       return data as any;
     });
     const dp = lre.dataProvider("test", dataGetter);
@@ -573,7 +573,7 @@ describe("DataProvider filter and where", () => {
       "3": { id: "3", a: "4", b: "5", c: "6" },
       "4": { id: "3", a: "4", b: "5", c: "6" },
     };
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       return data as any;
     });
     const dp = lre.dataProvider("test", dataGetter);
@@ -595,7 +595,7 @@ describe("DataProvider get single value", () => {
       "2": { a: "1", b: "2", c: "3" },
       "3": { a: "4", b: "5", c: "6" },
     };
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       return data as any;
     });
     const dp = lre.dataProvider("test", dataGetter);
@@ -637,7 +637,7 @@ describe("DataProvider get single value", () => {
       "2": { a: "1", b: "2", c: "3" },
       "3": { a: "4", b: "5", c: "6" },
     };
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       return data as any;
     });
     const dp = lre.dataProvider("test", dataGetter).select("a");
@@ -666,7 +666,7 @@ describe("DataProvider analysis", () => {
       _2: { a: "1", b: "9", c: "3" },
       _3: { a: "41", b: "5", c: "6" },
     };
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       return data as any;
     });
     dp = lre.dataProvider("test", dataGetter);
@@ -818,7 +818,7 @@ describe("DataProvider transform", () => {
       _2: { a: "1", b: "9", c: "3" },
       _3: { a: "41", b: "5", c: "6" },
     };
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       return data as any;
     });
     dp = lre.dataProvider("testTransform", dataGetter);
@@ -933,13 +933,13 @@ describe("Dataprovider from cb refresh", () => {
   test("Refresh from component change", () => {
     const txt1 = sheet.get("txt1")!;
     const txt2 = sheet.get("txt2")!;
-    const fn = jest.fn(() => {
+    const fn = vi.fn(() => {
       return {
         one: txt1.value(),
         two: txt2.value(),
       };
     });
-    const derived = jest.fn(() => {
+    const derived = vi.fn(() => {
       const a = 1;
       return a;
     });
@@ -957,14 +957,14 @@ describe("Dataprovider from cb refresh", () => {
     expect(derived).toHaveBeenCalledTimes(0);
     expect(fn).toHaveBeenCalledTimes(1);
 
-    jest.spyOn(txt1, "value");
+    vi.spyOn(txt1, "value");
 
     rawSheet.componentChangedManually("txt1", "Hello");
 
     expect(fn).toHaveBeenCalledTimes(2);
     expect(derived).toHaveBeenCalledTimes(1);
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     expect(dp.providedValue()).toStrictEqual({
       one: "Hello",
@@ -980,7 +980,7 @@ describe("Dataprovider from cb refresh", () => {
 describe("Dataprovider search", () => {
   test("Search on id", () => {
     const data = { a: "42", b: "13", c: "24" };
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       if (_a) {
         Object.assign(data, _a);
       }
@@ -1004,7 +1004,7 @@ describe("Dataprovider search", () => {
       b: { id: "b", a: "1", b: "2", c: "3" },
       c: { id: "c", a: "4", b: "5", c: "6" },
     };
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       if (_a) {
         Object.assign(data, _a);
       }
@@ -1030,7 +1030,7 @@ describe("Dataprovider search", () => {
       d: { a: "24", b: "2", c: "6" },
       e: { a: "111", b: "2", c: "8" },
     };
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       if (_a) {
         Object.assign(data, _a);
       }
@@ -1054,7 +1054,7 @@ describe("Dataprovider search", () => {
 describe("Dataprovider toArray", () => {
   test("default toArray with scalar value", () => {
     const data = { a: "42", b: "13", c: "24" };
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       if (_a) {
         Object.assign(data, _a);
       }
@@ -1078,7 +1078,7 @@ describe("Dataprovider toArray", () => {
       a: { value: "42", type: 13 },
       b: { value: "13", type: 24 },
     };
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       if (_a) {
         Object.assign(data, _a);
       }
@@ -1102,7 +1102,7 @@ describe("Dataprovider toArray", () => {
       a: { value: "42", type: 13 },
       b: { value: "13", type: 24 },
     };
-    const dataGetter = jest.fn((_a: any) => {
+    const dataGetter = vi.fn((_a: any) => {
       if (_a) {
         Object.assign(data, _a);
       }
@@ -1140,7 +1140,7 @@ describe("DataProvider union", () => {
     data1 = {
       c: { value: "24", type: 42 },
     };
-    getter1 = jest.fn((_a: any) => {
+    getter1 = vi.fn((_a: any) => {
       if (_a) {
         Object.assign(data1, _a);
       }
@@ -1151,7 +1151,7 @@ describe("DataProvider union", () => {
     data2 = {
       d: { value: "24", type: 42 },
     };
-    getter2 = jest.fn((_a: any) => {
+    getter2 = vi.fn((_a: any) => {
       if (_a) {
         Object.assign(data2, _a);
       }
@@ -1172,7 +1172,7 @@ describe("DataProvider union", () => {
 
     expect(dp.length()).toBe(2);
 
-    const fn = jest.fn();
+    const fn = vi.fn();
     dp.each(fn);
 
     expect(fn).toHaveBeenCalledTimes(2);
@@ -1215,7 +1215,7 @@ describe("DataProvider join", () => {
       c: { value: "26", type: 44, ref: "e" },
       d: { value: "27", type: 45, ref: "f" },
     };
-    getter1 = jest.fn((_a: any) => data1);
+    getter1 = vi.fn((_a: any) => data1);
     dp1 = lre.dataProvider("test", getter1);
     data2 = [
       { id: "a", name: "nameA", strength: 1, value: "42" },
@@ -1224,7 +1224,7 @@ describe("DataProvider join", () => {
       { id: "d", name: "nameD", strength: 4, value: "72" },
       { id: "e", name: "nameE", strength: 5, value: "82" },
     ];
-    getter2 = jest.fn((_a: any) => data2);
+    getter2 = vi.fn((_a: any) => data2);
     dp2 = lre.dataProvider("test2", getter2);
   });
 
@@ -1300,7 +1300,7 @@ describe("DataProvider join", () => {
 describe("DataProvider toString", () => {
   test("toString shows dataprovider info with single value", () => {
     const data = "42";
-    const dataGetter = jest.fn((_a: any) => data as any);
+    const dataGetter = vi.fn((_a: any) => data as any);
     const dp = lre.dataProvider("test", dataGetter);
     const result = dp.toString();
 
@@ -1309,7 +1309,7 @@ describe("DataProvider toString", () => {
 
   test("toString shows dataprovider info with array", () => {
     const data = ["a", "b", "c"];
-    const dataGetter = jest.fn((_a: any) => data as any);
+    const dataGetter = vi.fn((_a: any) => data as any);
     const dp = lre.dataProvider("test", dataGetter);
     const result = dp.toString();
 
@@ -1318,7 +1318,7 @@ describe("DataProvider toString", () => {
 
   test("toString shows dataprovider info with object", () => {
     const data = { a: 1, b: 2, c: 3, d: 4 };
-    const dataGetter = jest.fn((_a: any) => data as any);
+    const dataGetter = vi.fn((_a: any) => data as any);
     const dp = lre.dataProvider("test", dataGetter);
     const result = dp.toString();
 
@@ -1327,7 +1327,7 @@ describe("DataProvider toString", () => {
 
   test("toString shows dataprovider info with empty object", () => {
     const data = {};
-    const dataGetter = jest.fn((_a: any) => data as any);
+    const dataGetter = vi.fn((_a: any) => data as any);
     const dp = lre.dataProvider("test", dataGetter);
     const result = dp.toString();
 
