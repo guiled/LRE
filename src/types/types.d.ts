@@ -43,18 +43,11 @@ declare namespace LetsRole {
       }
     | undefined;
   export type ComposedComponentValue =
-    | RepeaterValue
-    | MultiChoiceValue
-    | ViewData
-    | AvatarValue;
+    RepeaterValue | MultiChoiceValue | ViewData | AvatarValue;
   export type ComponentValue =
-    | BaseComponentValue
-    | ChoiceValue
-    | ComposedComponentValue;
+    BaseComponentValue | ChoiceValue | ComposedComponentValue;
   export type ValueAsObject =
-    | Exclude<RepeaterValue, undefined>
-    | ViewData
-    | AvatarValue;
+    Exclude<RepeaterValue, undefined> | ViewData | AvatarValue;
   export type Choices = Record<ChoiceValue, string>;
 
   export type Selector = ComponentID | ClassSelector;

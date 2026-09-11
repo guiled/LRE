@@ -110,9 +110,9 @@ describe("Test simple events", () => {
   });
 
   test("No raw event calls for custom event", () => {
-    subject.on("test", vi.fn());
-    subject.on("test:a", vi.fn());
-    subject.on("test:b", vi.fn());
+    subject.on("test", vi.fn<EventHandler>());
+    subject.on("test:a", vi.fn<EventHandler>());
+    subject.on("test:b", vi.fn<EventHandler>());
 
     expect(rawCmp.on).toHaveBeenCalledTimes(0);
 
@@ -122,9 +122,9 @@ describe("Test simple events", () => {
   });
 
   test("Only one raw event added for custom event", () => {
-    subject.on("click", vi.fn());
-    subject.on("click:a", vi.fn());
-    subject.on("click:b", vi.fn());
+    subject.on("click", vi.fn<EventHandler>());
+    subject.on("click:a", vi.fn<EventHandler>());
+    subject.on("click:b", vi.fn<EventHandler>());
 
     expect(rawCmp.on).toHaveBeenCalledTimes(1);
 
@@ -635,7 +635,7 @@ describe("Disabling event", () => {
   test("Event enabled checks", () => {
     expect(subject.isEventEnabled("click")).toBeFalsy();
 
-    subject.on("click", vi.fn());
+    subject.on("click", vi.fn<EventHandler>());
 
     expect(subject.isEventEnabled("click")).toBeTruthy();
 
@@ -929,7 +929,7 @@ describe("Event holder triggers events", () => {
     expect(added.mock.calls[0][2]).toBeUndefined();
     expect(added.mock.calls[0][3]).toStrictEqual(fcn1);
 
-    subject.on("click:2nd", vi.fn());
+    subject.on("click:2nd", vi.fn<EventHandler>());
 
     expect(added).toHaveBeenCalledTimes(2);
     expect(added2).toHaveBeenCalledTimes(2);

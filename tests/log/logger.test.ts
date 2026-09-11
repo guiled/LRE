@@ -44,7 +44,7 @@ describe("Test all log method", () => {
 
     logger.log("this is a log");
 
-    expect(global.log).toHaveBeenCalledTimes(++nbCall);
+    expect(global.log).toHaveBeenCalledTimes(nbCall + 1);
   });
 
   test("Check no log", () => {

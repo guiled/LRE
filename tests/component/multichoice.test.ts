@@ -215,7 +215,7 @@ describe("MultiChoice", () => {
   });
 
   test("Limit min and max choices with numbers", () => {
-    multiChoice.on("click:other", vi.fn());
+    multiChoice.on("click:other", vi.fn<EventHandler>());
     const data = lre.dataProvider("test", () => {
       return {
         1: { id: "1", lbl: "One", nb: 10 },
@@ -228,7 +228,7 @@ describe("MultiChoice", () => {
     });
     multiChoice.setChoices(data.select("lbl"));
     rawMultiChoice.value([]);
-    multiChoice.on("click", vi.fn());
+    multiChoice.on("click", vi.fn<EventHandler>());
     multiChoice.maxChoiceNb(2);
     rawMultiChoice.value(["1"]);
 

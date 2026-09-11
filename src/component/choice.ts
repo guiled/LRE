@@ -15,11 +15,7 @@ type ChoiceData = Record<
 export const UPDATE_CHECK_CHANGES = "update:checkChanges:__lre__";
 
 export type ChoiceEvents =
-  | "select"
-  | "valselect"
-  | "unselect"
-  | "valunselect"
-  | "valclick"; // todo : check if this is still necessary and remove it. This event seems to be triggered only when value doesn't change but the update event that execute this event should NOT be triggered when the value doesn't change
+  "select" | "valselect" | "unselect" | "valunselect" | "valclick"; // todo : check if this is still necessary and remove it. This event seems to be triggered only when value doesn't change but the update event that execute this event should NOT be triggered when the value doesn't change
 
 const choiceEvents: Array<ChoiceEvents> = [
   "select",

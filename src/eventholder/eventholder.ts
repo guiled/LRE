@@ -79,8 +79,7 @@ export const EventHolder = <
       holderId: string,
       targetGetter: EventTargetGetter<AdditionalEvents> | undefined = undefined,
       attachToRaw:
-        | AttachToRawCallback<AdditionalEvents>
-        | undefined = undefined,
+        AttachToRawCallback<AdditionalEvents> | undefined = undefined,
       eventCanBeRan?: EventRunnableChecker<AdditionalEvents>,
     ) {
       super();

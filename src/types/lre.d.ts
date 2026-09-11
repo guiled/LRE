@@ -12,8 +12,7 @@ declare interface ILREi18n {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-declare interface LREDiceResult
-  extends LetsRole.GenericDiceResult<ILREDiceResult> {}
+declare interface LREDiceResult extends LetsRole.GenericDiceResult<ILREDiceResult> {}
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface ILREDiceResult extends LREDiceResult {}
 
@@ -237,9 +236,7 @@ declare type EventHandler<Holder = any> = (
 ) => void;
 
 declare type EventSubComponent =
-  | LetsRole.ComponentID
-  | EventHandler
-  | undefined;
+  LetsRole.ComponentID | EventHandler | undefined;
 
 declare const EVENT_SEP = ":";
 
@@ -342,8 +339,7 @@ declare type DataProviderDataId =
   | number;
 
 declare type DataProviderDataValue =
-  | LetsRole.TableRow
-  | LetsRole.ComponentValue;
+  LetsRole.TableRow | LetsRole.ComponentValue;
 
 declare type DataProviderCallback<ReturnType> = (
   value: DataProviderDataValue,
@@ -391,9 +387,7 @@ declare interface IDataProvider {
       | DataProviderWhereConditioner
       | IComponent,
     condition?:
-      | LetsRole.ComponentValue
-      | DataProviderWhereConditioner
-      | IComponent,
+      LetsRole.ComponentValue | DataProviderWhereConditioner | IComponent,
   ): IDataProvider;
   singleValue(): DataProviderDataValue;
   singleId(): DataProviderDataId;
@@ -494,8 +488,9 @@ declare type ComponentFinder<T = ComponentSearchResult> = (
 ) => ComponentSearchResult | T;
 declare type ComponentSearchResult = IComponent | null;
 
-declare interface ComponentContainer<T = ComponentSearchResult>
-  extends ComponentBase {
+declare interface ComponentContainer<
+  T = ComponentSearchResult,
+> extends ComponentBase {
   get: ComponentFinder<T>;
   find: ComponentFinder<T>;
 }
@@ -506,10 +501,7 @@ declare interface IHasRaw<T = LetsRole.Sheet | LetsRole.Component> {
 }
 
 declare interface IComponent
-  extends ComponentContainer,
-    IEventHolder,
-    IDataHolder,
-    IHasRaw {
+  extends ComponentContainer, IEventHolder, IDataHolder, IHasRaw {
   num: number | null;
   init(): this;
   repeater(repeater?: Repeater): Repeater | undefined;
@@ -566,11 +558,7 @@ declare type ComponentValueWithData<T = LetsRole.ComponentValue> = {
 };
 
 declare type DynamicSetValue<T> =
-  | T
-  | IDataProvider
-  | IComponent
-  | IGroup
-  | ((...args: any[]) => T);
+  T | IDataProvider | IComponent | IGroup | ((...args: any[]) => T);
 
 declare type TableRow = LetsRole.TableRow<LetsRole.TableValue | number>;
 

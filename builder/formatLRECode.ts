@@ -244,7 +244,6 @@ export const formatLRECode = (
     let takeCodePart = true;
     const lineParts: Array<string> = [];
     let remainingLength = targetedLength;
-    let match: Array<string> | null = [];
 
     while (codeParts.length > 0 && takeCodePart) {
       if (codeParts[0].match(/for/)) {
@@ -276,22 +275,25 @@ export const formatLRECode = (
         );
         codeParts.unshift("+");
         takeCodePart = false;
-      } else if (
-        (match = codeParts[0].match(/^return (["'])/)) &&
-        remainingLength >= 8
-      ) {
-        const codePartToExtract = codeParts.shift()!;
-        lineParts.push(
-          "return" +
-            match[1] +
-            codePartToExtract.substring(8, remainingLength) +
-            match[1],
-        );
-        codeParts.unshift(
-          match[1] + codePartToExtract.substring(remainingLength),
-        );
-        codeParts.unshift("+");
-        takeCodePart = false;
+      } else if (remainingLength >= 8) {
+        const returnMatch = codeParts[0].match(/^return (["'])/);
+
+        if (returnMatch) {
+          const codePartToExtract = codeParts.shift()!;
+          lineParts.push(
+            "return" +
+              returnMatch[1] +
+              codePartToExtract.substring(8, remainingLength) +
+              returnMatch[1],
+          );
+          codeParts.unshift(
+            returnMatch[1] + codePartToExtract.substring(remainingLength),
+          );
+          codeParts.unshift("+");
+          takeCodePart = false;
+        } else {
+          takeCodePart = false;
+        }
       } else {
         takeCodePart = false;
       }

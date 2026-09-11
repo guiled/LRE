@@ -131,10 +131,7 @@ describe("Component group is like a component", () => {
     const methods = ["autoLoadSaveClasses", "toggle", "hide", "show"];
 
     type CommonMethodsBetweenComponentAndGroup =
-      | "autoLoadSaveClasses"
-      | "toggle"
-      | "hide"
-      | "show";
+      "autoLoadSaveClasses" | "toggle" | "hide" | "show";
 
     (methods as Array<CommonMethodsBetweenComponentAndGroup>).forEach(
       (method) => {

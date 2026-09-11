@@ -19,6 +19,8 @@
     "autonum",
     "Cacheable",
     "changetracker",
+    "checkall",
+    "checkcode",
     "cmps",
     "cntr",
     "databatcher",

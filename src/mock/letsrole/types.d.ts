@@ -79,8 +79,7 @@ namespace LetsRoleMock {
   };
 
   type ComponentClassName =
-    | LetsRoleMock.CommonComponentDefinitions["className"]
-    | "View"; // deprecated
+    LetsRoleMock.CommonComponentDefinitions["className"] | "View"; // deprecated
   type WithTooltipDefinitions = {
     tooltip?: true;
     tooltipLabel?: string;

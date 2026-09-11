@@ -7,20 +7,20 @@ import { i18n } from "./i18n";
 const { wait, itHasWaitedEnough, itHasWaitedEverything } = newMockedWait();
 
 const rollBuilderMock = {
-  roll: jest.fn(),
-  expression: jest.fn(),
-  title: jest.fn(),
-  visibility: jest.fn(),
-  addAction: jest.fn(),
-  removeAction: jest.fn(),
-  onRoll: jest.fn(),
+  roll: vi.fn(),
+  expression: vi.fn(),
+  title: vi.fn(),
+  visibility: vi.fn(),
+  addAction: vi.fn(),
+  removeAction: vi.fn(),
+  onRoll: vi.fn(),
 };
 
 const Bindings = {
-  add: jest.fn(),
-  clear: jest.fn(),
-  remove: jest.fn(),
-  send: jest.fn(),
+  add: vi.fn(),
+  clear: vi.fn(),
+  remove: vi.fn(),
+  send: vi.fn(),
 };
 
 const RollBuilderClass = class {
@@ -34,7 +34,7 @@ const RollBuilderClass = class {
 };
 
 const initLetsRole = (server: ServerMock, context?: ProxyModeHandler): void => {
-  global.each = jest.fn((obj: unknown, cb) => {
+  global.each = vi.fn((obj: unknown, cb) => {
     for (const k in obj as object) {
       /* @ts-expect-error can be various type */
       cb(obj[k], k);

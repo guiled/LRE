@@ -143,8 +143,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
     sort(
       sorterOrString:
-        | DataProviderValueComparator<number>
-        | string = defaultSorter,
+        DataProviderValueComparator<number> | string = defaultSorter,
       direction: SortDirection = "ASC",
     ): IDataProvider {
       let sorter: DataProviderValueComparator<number>;

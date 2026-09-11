@@ -10,12 +10,10 @@ type ScriptTableSourceFunction = (
 ) => ScriptTableSourceObject | ScriptTableSourceArray;
 
 type InternalScriptTableSource =
-  | ScriptTableSourceArray
-  | ScriptTableSourceFunction;
+  ScriptTableSourceArray | ScriptTableSourceFunction;
 
 export type AcceptedScriptTableSource =
-  | ScriptTableSourceObject
-  | InternalScriptTableSource;
+  ScriptTableSourceObject | InternalScriptTableSource;
 
 export class ScriptTable extends Mixin(DataProvider) implements ITable {
   //#context: ProxyModeHandler;

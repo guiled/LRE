@@ -27,9 +27,7 @@ const RAW_EVENTS = [
 type ComponentLREEventTypes = string & ("data-updated" | "class-updated");
 
 type ThisComponentEventTypes<T> =
-  | LetsRole.EventType
-  | T
-  | ComponentLREEventTypes;
+  LetsRole.EventType | T | ComponentLREEventTypes;
 
 type ClassChangeApply = {
   loaded: () => void;
@@ -38,9 +36,9 @@ type ClassChangeApply = {
 };
 
 export class Component<
-    TypeValue extends LetsRole.ComponentValue = LetsRole.ComponentValue,
-    AdditionalEvents extends string = LetsRole.EventType,
-  >
+  TypeValue extends LetsRole.ComponentValue = LetsRole.ComponentValue,
+  AdditionalEvents extends string = LetsRole.EventType,
+>
   extends (Mixin(EventHolder, HasRaw<LetsRole.Component>, DataHolder) as new <
     SubTypeEventHolder extends string,
   >(

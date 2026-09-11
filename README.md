@@ -4,6 +4,8 @@ Let's Role Enhanced is a script for Let's Role System builder (SB) that can be a
 
 While it keeps all the original behaviour of the System Builder, LRE adds many new features on sheets and component, and provides a new way to think system scripting.
 
+📖 **[Contributing Guidelines](CONTRIBUTE.md)** - See coding standards and style rules
+
 ## How to use it ?
 
 It takes only 30 sec and 3 steps to manually include LRE in your project.
