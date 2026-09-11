@@ -33,6 +33,19 @@ export const registerLreDiceAPI = (
         args[1] = args[1].raw();
       }
 
+      if (args.length >= 5 && lre.isObject<LetsRole.DiceRollActions>(args[4])) {
+        args[4] = Object.entries(args[4]).reduce(
+          (
+            acc: LetsRole.DiceRollActions,
+            [title, callback]: [string, LetsRole.DiceRollAction],
+          ) => {
+            acc[lre.value(title)] = callback;
+            return acc;
+          },
+          {} as LetsRole.DiceRollActions,
+        );
+      }
+
       return this.#raw.roll.apply(this.#raw, args);
     }
 
