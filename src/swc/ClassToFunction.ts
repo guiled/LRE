@@ -232,10 +232,14 @@ class ClassToFunction extends Visitor {
         assignmentStatement({
           span: n.span,
           left: parentId,
-          right: call({
-            callee: initParentId,
-            args: [{ expression: thisexpression({ span: n.span }) }],
-          }),
+          right: call(
+            {
+              callee: initParentId,
+              args: [{ expression: thisexpression({ span: n.span }) }],
+            },
+            false,
+            { expression: thisexpression({ span: n.span }) },
+          ),
           operator: "=",
         }),
       );

@@ -3,6 +3,7 @@
   "language": "en",
   "ignorePaths": [
     "coverage/**",
+    "swc-plugins/",
     "node_modules/**",
     "*.json",
     "build/**",
@@ -61,7 +62,8 @@
     "valclick",
     "valselect",
     "valunselect",
-    "virtualcall"
+    "virtualcall",
+    "wasip"
   ],
   "flagWords": []
 }

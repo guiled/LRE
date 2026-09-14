@@ -1,12 +1,11 @@
 import esbuild from "esbuild";
-import { transformFile } from "@swc/core";
-import { postCleanup } from "./transpile.conf";
+import { transformFile, transformSync } from "@swc/core";
+import { postCleanup, typeOfCleanup } from "./transpile.conf";
 import fs from "fs";
 import { formatLRECode } from "./builder/formatLRECode";
 import { assembleLRECode, encloseInRegion } from "./builder/assemble";
 import { getArgv, hasArgv } from "./builder/utils";
 import { getEsBuildConfig } from "./builder/config";
-
 const DEBUG_BUILD: boolean = hasArgv("--debug");
 let OUTPUT_FILE: string = getArgv("--output", "build/lre.js");
 const INPUT_FILE: string = getArgv("--input", "src/index.ts");
@@ -26,6 +25,7 @@ esbuild
 
     return transformFile(OUTPUT_FILE + ".0.tmp.js", postCleanup);
   })
+  .then((result) => transformSync(result.code, typeOfCleanup))
   .then((result) =>
     result.code
       .trim()

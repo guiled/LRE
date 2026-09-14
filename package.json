@@ -7,8 +7,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@stylistic/eslint-plugin": "^5.10.0",
-    "@swc/cli": "^0.7.9",
-    "@swc/core": "1.3.16",
+    "@swc/core": "^1.16.2",
     "@types/node": "^26.4.1",
     "@typescript-eslint/eslint-plugin": "^8.69.0",
     "@typescript-eslint/parser": "^8.69.0",
@@ -36,16 +35,20 @@
   "scripts": {
     "test": "vitest run",
     "testwatch": "vitest",
+    "buildswcplugin": "cd swc-plugins/lre-transforms && CARGO_TARGET_DIR=./target cargo build-wasip1 --release",
+    "buildswcpoc": "yarn buildswcplugin && tsx build-swc-poc.ts",
     "testswc": "npx tsx test.ts",
     "count_output": "echo \"Number of lines in $npm_package_config_outLREFile $(cat $npm_package_config_outLREFile | wc -l) ($(cat $npm_package_config_outLREFile | wc -c) caracters)\"",
-    "build": "f() { tsx build.ts --output $npm_package_config_outLREFile && node --check $npm_package_config_outLREFile && yarn count_output; }; f",
-    "builddebug": "f() { tsx build.ts --output $npm_package_config_outLREFile --debug; }; f",
-    "buildtest": "f() { tsx build.ts --input src/test.lre.ts --output $npm_package_config_outLRETestFile --debug; }; f",
+    "build": "f() { yarn buildswcplugin && tsx build.ts --output $npm_package_config_outLREFile && node --check $npm_package_config_outLREFile && yarn count_output; }; f",
+    "builddebug": "f() { yarn buildswcplugin && tsx build.ts --output $npm_package_config_outLREFile --debug && node --check build/lre.debug.js; }; f",
+    "buildtrace": "f() { yarn builddebug && tsx build-trace.ts && node --check build/lre.trace.js; }; f",
+    "buildtest": "f() { yarn buildswcplugin && tsx build.ts --input src/test.lre.ts --output $npm_package_config_outLRETestFile --debug && node --check build/lre-test.debug.js; }; f",
     "buildall": "yarn build && yarn builddebug && yarn buildtest",
+    "cleanbuild": "f() { shopt -s nullglob; for f in build/*; do rm -rf \"$f\"; done; }; f",
     "spell": "yarn cspell --no-progress --no-summary --gitignore .",
     "testsilent": "vitest run --reporter=json --outputFile=/dev/null --no-coverage",
     "tscheck": "tsc --noEmit",
-    "checkcode": "yarn ts-unused-exports tsconfig.json && yarn spell && yarn tscheck && yarn eslint",
-    "checkall": "yarn ts-unused-exports tsconfig.json && yarn spell && yarn tscheck && yarn eslint && yarn testsilent"
+    "checkcode": "yarn ts-unused-exports tsconfig.json --excludePathsFromReport=\"src/mock;src/swc\" && yarn spell && yarn tscheck && yarn eslint",
+    "checkall": "yarn checkcode && yarn testsilent"
   }
 }

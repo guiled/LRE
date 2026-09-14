@@ -17,7 +17,7 @@ const getSWCPlugin = function (debugBuild: boolean): esbuild.Plugin {
         const output = transformSync(input, transformForLR);
         return {
           contents: output.code,
-          loader: "ts",
+          loader: "js",
         };
       });
     },

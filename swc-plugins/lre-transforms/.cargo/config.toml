@@ -1,0 +1,6 @@
+[alias]
+build-wasip1 = "build --target wasm32-wasip1"
+build-wasm32 = "build --target wasm32-unknown-unknown"
+
+[target.'cfg(target_arch = "wasm32")']
+rustflags = ["--cfg=swc_ast_unknown"]

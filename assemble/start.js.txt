@@ -46,7 +46,7 @@ function mx(v) {
   const m = v[0];
   const a = v[1] || [];
   const prev = Oba({}, this);
-  const rev = m.reverse();
+  const rev = m.slice().reverse();
   const resParent = rev.reduce(
     function (acc, cur, idx) {
       const p = new (cur.bind.apply(cur, [null, a[m.length - 1 - idx]]))();
