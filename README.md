@@ -82,3 +82,5 @@ LRE's goal is to facilitate Let's Rôle system coding of some common works that 
 - [NightProwler-2è-édition](https://lets-role.com/system/nightprowler2eedition-12110)
 - [Nightprowler V2](https://lets-role.com/system/nightprowler-v2-19838)
 - [Sigil & Shadow](https://lets-role.com/system/sigil-shadow-14787)
+- [Coriolis v2](https://lets-role.com/system/coriolis-v2-10425)
+- [Dragonbane FR](https://lets-role.com/system/dragonbane-fr-27664)
