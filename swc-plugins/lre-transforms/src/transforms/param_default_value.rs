@@ -3,8 +3,8 @@ use swc_core::ecma::ast::*;
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
 
 use crate::utils::{
-    call_ident, ident, ident_expr, let_decl, num_lit,
-    return_stmt, undefined_expr, var_decl_pat,
+    call_ident, function_body, ident, ident_expr, num_lit, param, return_stmt,
+    undefined_expr, var_decl_pat,
 };
 
 const ARG_PREFIX: &str = "_arg";
@@ -32,6 +32,79 @@ impl ParamDefaultValue {
 
     fn has_array_item_with_value(a: &ArrayPat) -> bool {
         a.elems.iter().flatten().any(|e| matches!(e, Pat::Assign(_)))
+    }
+
+    fn is_undefined_expr(expr: &Expr) -> bool {
+        matches!(expr, Expr::Ident(id) if id.sym == *"undefined")
+            || matches!(expr, Expr::Unary(u) if u.op == op!("void"))
+    }
+
+    fn def_call(span: Span, index: i64, default_val: Expr) -> Expr {
+        if Self::is_undefined_expr(&default_val) {
+            call_ident(
+                span,
+                "def",
+                vec![ident_expr(span, "arguments"), num_lit(span, index as f64)],
+            )
+        } else {
+            call_ident(
+                span,
+                "def",
+                vec![
+                    ident_expr(span, "arguments"),
+                    num_lit(span, index as f64),
+                    default_val,
+                ],
+            )
+        }
+    }
+
+    fn arrow_to_function(&self, arrow: ArrowExpr) -> Expr {
+        let span = arrow.span;
+        let has_this_args = matches!(
+            arrow.params.first(),
+            Some(Pat::Ident(id)) if id.id.sym == "this"
+        );
+
+        let mut stmts_to_add: Vec<Stmt> = Vec::new();
+        let params = arrow
+            .params
+            .into_iter()
+            .enumerate()
+            .filter_map(|(index, pat)| {
+                let (new_pat, new_stmts) = self.parse_pattern(
+                    pat,
+                    (index as i64) - if has_this_args { 1 } else { 0 },
+                    span,
+                );
+                stmts_to_add.extend(new_stmts);
+                new_pat.map(|pat| param(span, pat))
+            })
+            .collect();
+
+        let mut body_stmts = match *arrow.body {
+            ArrowFunctionBody::FunctionBody(body) => body.stmts,
+            ArrowFunctionBody::Expr(expr) => vec![return_stmt(span, Some(*expr))],
+            #[cfg(swc_ast_unknown)]
+            _ => vec![],
+        };
+        body_stmts.splice(0..0, stmts_to_add);
+
+        Expr::Fn(FnExpr {
+            ident: None,
+            function: Box::new(Function {
+                this_param: None,
+                params,
+                decorators: vec![],
+                span,
+                ctxt: Default::default(),
+                body: Some(function_body(span, body_stmts)),
+                is_generator: false,
+                is_async: false,
+                type_params: None,
+                return_type: None,
+            }),
+        })
     }
 
     fn parse_pattern(
@@ -80,99 +153,24 @@ impl ParamDefaultValue {
             stmts.push(var_decl_pat(
                 span,
                 id_pat,
-                Some(call_ident(
-                    span,
-                    "def",
-                    vec![
-                        ident_expr(span, "arguments"),
-                        num_lit(span, index as f64),
-                        default_val,
-                    ],
-                )),
+                Some(Self::def_call(span, index, default_val)),
             ));
             new_pat = None;
         }
 
         (new_pat, stmts)
     }
-
-    fn array_pattern_from_params(params: &[Pat], span: Span) -> Pat {
-        Pat::Array(ArrayPat {
-            span,
-            elems: params
-                .iter()
-                .map(|p| {
-                    Some(if let Pat::Ident(mut id) = p.clone() {
-                        if id.id.optional {
-                            id.id.optional = false;
-                            Pat::Assign(AssignPat {
-                                span,
-                                left: Box::new(Pat::Ident(id)),
-                                right: Box::new(undefined_expr(span)),
-                            })
-                        } else {
-                            p.clone()
-                        }
-                    } else {
-                        p.clone()
-                    })
-                })
-                .collect(),
-            optional: false,
-            type_ann: None,
-        })
-    }
 }
 
 impl VisitMut for ParamDefaultValue {
-    fn visit_mut_arrow_expr(&mut self, arrow: &mut ArrowExpr) {
-        if arrow.params.iter().any(|p| Self::is_default_param(p)) {
-            let span = arrow.span;
-            let args_id = ident(span, "args");
-            let mut body_stmts = vec![let_decl(
-                span,
-                "args",
-                None,
-            )];
-
-            body_stmts[0] = Stmt::Decl(Decl::Var(Box::new(VarDecl {
-                span,
-                ctxt: Default::default(),
-                kind: VarDeclKind::Let,
-                declare: false,
-                decls: vec![VarDeclarator {
-                    span,
-                    name: Self::array_pattern_from_params(&arrow.params, span),
-                    init: Some(Box::new(args_id.clone().into())),
-                    definite: false,
-                }],
-            })));
-
-            match *arrow.body.take() {
-                ArrowFunctionBody::FunctionBody(b) => body_stmts.extend(b.stmts),
-                ArrowFunctionBody::Expr(e) => body_stmts.push(return_stmt(span, Some(*e))),
-                #[cfg(swc_ast_unknown)]
-                _ => {}
+    fn visit_mut_expr(&mut self, expr: &mut Expr) {
+        if let Expr::Arrow(arrow) = expr {
+            if arrow.params.iter().any(|p| Self::is_default_param(p)) {
+                *expr = self.arrow_to_function(arrow.take());
             }
-
-            arrow.params = vec![Pat::Rest(RestPat {
-                span,
-                dot3_token: span,
-                arg: Box::new(Pat::Ident(BindingIdent {
-                    id: args_id,
-                    type_ann: None,
-                })),
-                type_ann: None,
-            })];
-            arrow.body = Box::new(ArrowFunctionBody::FunctionBody(FunctionBody {
-                span,
-                stmts: body_stmts,
-            }));
-            arrow.is_async = false;
-            arrow.is_generator = false;
         }
 
-        arrow.visit_mut_children_with(self);
+        expr.visit_mut_children_with(self);
     }
 
     fn visit_mut_function(&mut self, func: &mut Function) {

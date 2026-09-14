@@ -40,24 +40,27 @@ class NoRestElement extends Visitor {
           type: "VariableDeclarator",
           span,
           id: pat.argument,
-          init: call({
-            callee: member({
-              object: arrayfromarguments(span),
-              property: identifier({
-                span,
-                value: "slice",
-              }),
-            }),
-            args: [
-              {
-                spread: undefined,
-                expression: numericliteral({
-                  span,
-                  value: nameArgsCount,
+          init:
+            nameArgsCount === 0
+              ? arrayfromarguments(span)
+              : call({
+                  callee: member({
+                    object: arrayfromarguments(span),
+                    property: identifier({
+                      span,
+                      value: "slice",
+                    }),
+                  }),
+                  args: [
+                    {
+                      spread: undefined,
+                      expression: numericliteral({
+                        span,
+                        value: nameArgsCount,
+                      }),
+                    },
+                  ],
                 }),
-              },
-            ],
-          }),
           definite: false,
         },
       ],

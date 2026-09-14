@@ -13,7 +13,7 @@ function iOf(a, b) {
 }
 
 function def(args, idx, val) {
-  return args.length < idx + 1 || tpo(args[idx], 1) ? val : args[idx];
+  return args.length < idx + 1 || tpo(args[idx], 1) ? (arguments.length < 3 ? undefined : val) : args[idx];
 }
 
 function ct(name) {
@@ -23,7 +23,7 @@ function ct(name) {
 }
 
 function la() {
-  return Array.from(arguments).at(-1);
+  return arguments[arguments.length - 1];
 }
 
 const types = [

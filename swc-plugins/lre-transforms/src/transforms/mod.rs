@@ -17,6 +17,8 @@ pub mod no_typeof;
 pub mod no_void0;
 pub mod param_default_value;
 pub mod replace_in_operator;
+pub mod remove_redundant_slice_zero;
+pub mod simplify_param_default;
 
 pub use class_to_function::ClassToFunction;
 pub use code_aliases::CodeAliases;
@@ -37,3 +39,5 @@ pub use no_typeof::NoTypeof;
 pub use no_void0::NoVoid0;
 pub use param_default_value::ParamDefaultValue;
 pub use replace_in_operator::ReplaceInOperator;
+pub use remove_redundant_slice_zero::RemoveRedundantSliceZero;
+pub use simplify_param_default::SimplifyParamDefault;

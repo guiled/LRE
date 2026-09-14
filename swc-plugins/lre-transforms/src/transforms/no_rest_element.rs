@@ -17,15 +17,17 @@ impl NoRestElement {
     }
 
     fn rest_var_decl(&self, span: Span, pat: Pat, slice_from: f64) -> Stmt {
-        var_decl_pat(
-            span,
-            pat,
-            Some(call_expr(
+        let init = if slice_from == 0.0 {
+            array_from_arguments(span)
+        } else {
+            call_expr(
                 span,
                 member_expr_from_expr(span, array_from_arguments(span), "slice"),
                 vec![expr_or_spread(num_lit(span, slice_from))],
-            )),
-        )
+            )
+        };
+
+        var_decl_pat(span, pat, Some(init))
     }
 }
 
