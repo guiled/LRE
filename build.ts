@@ -4,6 +4,7 @@ import { postCleanup, typeOfCleanup } from "./transpile.conf";
 import fs from "fs";
 import { formatLRECode } from "./builder/formatLRECode";
 import { assembleLRECode, encloseInRegion } from "./builder/assemble";
+import { stripRedundantFunctionNames } from "./builder/stripRedundantFunctionNames";
 import { getArgv, hasArgv } from "./builder/utils";
 import { getEsBuildConfig } from "./builder/config";
 const DEBUG_BUILD: boolean = hasArgv("--debug");
@@ -27,12 +28,15 @@ esbuild
   })
   .then((result) => transformSync(result.code, typeOfCleanup))
   .then((result) =>
-    result.code
-      .trim()
-      .replace(/void 0/g, "undefined")
-      .replace(/\(\)=>\{/g, "function() {")
-      .replace(/`\n`/gm, '"\\n"')
-      .replace(/bind\(this\)\.(bind|apply)\(this/gm, "$1(this"),
+    stripRedundantFunctionNames(
+      result.code
+        .trim()
+        .replace(/void 0/g, "undefined")
+        .replace(/\(\)=>\{/g, "function() {")
+        .replace(/`\n`/gm, '"\\n"')
+        .replace(/bind\(this\)\.(bind|apply)\(this/gm, "$1(this"),
+      { stripAllNamedExpressions: !DEBUG_BUILD },
+    ),
   )
   .then((code) => {
     code = assembleLRECode(code);
