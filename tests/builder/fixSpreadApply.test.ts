@@ -9,10 +9,18 @@ const normalize = (code: string): string =>
     .replace(/ ;/g, ";")
     .trim();
 
-const fixSpreadApply = (code: string): string => {
+const postCleanupDebug = {
+  ...postCleanup,
+  jsc: {
+    ...postCleanup.jsc,
+    minify: undefined,
+  },
+};
+
+const fixSpreadApply = (code: string, cleanup = postCleanup): string => {
   const wrapped = transformSync(
     `function __fixture() { ${code} }`,
-    postCleanup,
+    cleanup,
   ).code.trim();
 
   return normalize(
@@ -90,5 +98,16 @@ describe("fixSpreadApply", () => {
 
     expect(output).toMatch(/var \w+ = \[\]\.concat\(keys\);/);
     expect(output).not.toContain("apply.apply");
+  });
+
+  test("keeps temp variable bindings in named function expressions", () => {
+    const input =
+      "var prot = { rerolln: function rerolln() { var __raw_rerolln, args = Afr(arguments); return (__raw_rerolln = __raw.rerolln).apply.apply(__raw_rerolln, [].concat([__raw], args)), this; } };";
+
+    const output = fixSpreadApply(input, postCleanupDebug);
+
+    expect(output).not.toMatch(/var _\$__raw_rerolln/);
+    expect(output).toMatch(/var __raw_rerolln, args = Afr\(arguments\)/);
+    expect(output).toMatch(/\(__raw_rerolln = __raw\.rerolln\)\.apply\(__raw_rerolln/);
   });
 });

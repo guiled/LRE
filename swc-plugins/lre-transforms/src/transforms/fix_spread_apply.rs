@@ -2,8 +2,8 @@ use swc_core::ecma::ast::*;
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
 
 use crate::utils::{
-    array_expr, call_expr, expr_or_spread, fn_apply, ident, ident_expr, member_expr_from_expr,
-    paren_expr, this_expr,
+    array_expr, call_expr, expr_or_spread, fn_apply, member_expr_from_expr, paren_expr,
+    this_expr,
 };
 
 pub struct FixSpreadApply {
@@ -49,7 +49,7 @@ impl VisitMut for FixSpreadApply {
 }
 
 fn try_fix_double_apply(call: &mut CallExpr, nested_in_apply: bool) -> bool {
-    let (var_name, assignment_rhs, concat_call) = match parse_double_apply(call) {
+    let (var_id, assignment_rhs, concat_call) = match parse_double_apply(call) {
         Some(parsed) => parsed,
         None => return false,
     };
@@ -73,7 +73,7 @@ fn try_fix_double_apply(call: &mut CallExpr, nested_in_apply: bool) -> bool {
         {
             Expr::Call(build_assign_apply(
                 span,
-                &var_name,
+                var_id.clone(),
                 assignment_rhs,
                 this_expr(span),
                 vec![expr_or_spread(rest_arg)],
@@ -83,9 +83,9 @@ fn try_fix_double_apply(call: &mut CallExpr, nested_in_apply: bool) -> bool {
             let concat = build_concat_call(span, Some(inner_expr), rest_arg);
             Expr::Call(build_assign_apply(
                 span,
-                &var_name,
+                var_id.clone(),
                 assignment_rhs,
-                ident_expr(span, &var_name),
+                Expr::Ident(var_id.clone()),
                 vec![expr_or_spread(concat)],
             ))
         }
@@ -114,7 +114,7 @@ fn try_fix_wrong_this_apply(call: &mut CallExpr) -> bool {
         return false;
     }
 
-    let (var_name, assignment_rhs) = match extract_assign_from_expr(member.obj.as_ref()) {
+    let (var_id, assignment_rhs) = match extract_assign_from_expr(member.obj.as_ref()) {
         Some(parsed) => parsed,
         None => return false,
     };
@@ -123,7 +123,7 @@ fn try_fix_wrong_this_apply(call: &mut CallExpr) -> bool {
         return false;
     }
 
-    if !ident_matches(call.args[0].expr.as_ref(), &var_name) {
+    if !ident_matches(call.args[0].expr.as_ref(), &var_id) {
         return false;
     }
 
@@ -144,7 +144,7 @@ fn try_fix_wrong_this_apply(call: &mut CallExpr) -> bool {
     let rest_arg = *concat_call.args[1].expr.clone();
     *call = build_assign_apply(
         span,
-        &var_name,
+        var_id,
         assignment_rhs,
         this_expr(span),
         vec![expr_or_spread(rest_arg)],
@@ -158,7 +158,7 @@ enum InnerKind {
     WithInner(Expr),
 }
 
-fn parse_double_apply(call: &CallExpr) -> Option<(String, Box<Expr>, CallExpr)> {
+fn parse_double_apply(call: &CallExpr) -> Option<(Ident, Box<Expr>, CallExpr)> {
     let outer_member = callee_member(call)?;
 
     if !is_apply_prop(&outer_member.prop) {
@@ -174,13 +174,13 @@ fn parse_double_apply(call: &CallExpr) -> Option<(String, Box<Expr>, CallExpr)> 
         return None;
     }
 
-    let (var_name, assignment_rhs) = extract_assign_from_expr(inner_member.obj.as_ref())?;
+    let (var_id, assignment_rhs) = extract_assign_from_expr(inner_member.obj.as_ref())?;
 
     if call.args.len() != 2 {
         return None;
     }
 
-    if !ident_matches(call.args[0].expr.as_ref(), &var_name) {
+    if !ident_matches(call.args[0].expr.as_ref(), &var_id) {
         return None;
     }
 
@@ -193,7 +193,7 @@ fn parse_double_apply(call: &CallExpr) -> Option<(String, Box<Expr>, CallExpr)> 
         return None;
     }
 
-    Some((var_name, assignment_rhs, concat_call))
+    Some((var_id, assignment_rhs, concat_call))
 }
 
 fn get_inner_from_assignment(assignment_rhs: &Expr, concat_inner: Option<&Expr>) -> InnerKind {
@@ -257,7 +257,7 @@ fn build_concat_call(span: swc_core::common::Span, inner: Option<Expr>, rest: Ex
 
 fn build_assign_apply(
     span: swc_core::common::Span,
-    var_name: &str,
+    var_id: Ident,
     assignment_rhs: Box<Expr>,
     this_arg: Expr,
     args: Vec<ExprOrSpread>,
@@ -266,7 +266,7 @@ fn build_assign_apply(
         span,
         op: op!("="),
         left: AssignTarget::Simple(SimpleAssignTarget::Ident(BindingIdent {
-            id: ident(span, var_name),
+            id: var_id,
             type_ann: None,
         })),
         right: assignment_rhs,
@@ -288,7 +288,7 @@ fn null_expr(span: swc_core::common::Span) -> Expr {
     Expr::Lit(Lit::Null(Null { span }))
 }
 
-fn extract_assign_from_expr(expr: &Expr) -> Option<(String, Box<Expr>)> {
+fn extract_assign_from_expr(expr: &Expr) -> Option<(Ident, Box<Expr>)> {
     let unwrapped = match expr {
         Expr::Paren(paren) => paren.expr.as_ref(),
         other => other,
@@ -297,7 +297,7 @@ fn extract_assign_from_expr(expr: &Expr) -> Option<(String, Box<Expr>)> {
     match unwrapped {
         Expr::Assign(assign) => {
             if let AssignTarget::Simple(SimpleAssignTarget::Ident(binding)) = &assign.left {
-                Some((binding.id.sym.to_string(), assign.right.clone()))
+                Some((binding.id.clone(), assign.right.clone()))
             } else {
                 None
             }
@@ -327,10 +327,10 @@ fn is_apply_prop(prop: &MemberProp) -> bool {
     matches!(prop, MemberProp::Ident(ident) if ident.sym == *"apply")
 }
 
-fn ident_matches(expr: &Expr, name: &str) -> bool {
+fn ident_matches(expr: &Expr, var_id: &Ident) -> bool {
     matches!(
         expr,
-        Expr::Ident(ident) if ident.sym == *name
+        Expr::Ident(ident) if ident.sym == var_id.sym && ident.ctxt == var_id.ctxt
     )
 }
 
