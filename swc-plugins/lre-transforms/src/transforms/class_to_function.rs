@@ -18,6 +18,7 @@ const TMP_UNNAMED_CLASS: &str = "__tmpLreUnnamedClass";
 
 pub struct ClassToFunction {
     pub current_super_class: Option<Box<Expr>>,
+    fn_depth: usize,
 }
 
 struct MemberDeconstruction {
@@ -41,7 +42,12 @@ impl ClassToFunction {
     pub fn new() -> Self {
         Self {
             current_super_class: None,
+            fn_depth: 0,
         }
+    }
+
+    fn can_flatten_decl(&self, has_super: bool) -> bool {
+        !has_super && self.fn_depth == 0
     }
 
     fn expr_or_spread(expr: Expr) -> ExprOrSpread {
@@ -744,7 +750,14 @@ impl ClassToFunction {
             parent
         });
 
-        stmts.push(let_decl(span, "__declDone", None));
+        stmts.push(let_decl(span, DECL_DONE_NAME, None));
+
+        let has_super = parent_id.is_some();
+        let flatten_decl = self.can_flatten_decl(has_super);
+
+        if flatten_decl {
+            stmts.push(let_decl(span, "prot", None));
+        }
 
         let declarators: Vec<VarDeclarator> = Self::collect_declarators(&method_decls)
             .into_iter()
@@ -782,22 +795,23 @@ impl ClassToFunction {
             .chain(Self::collect_assign_stmts(&ctor_parts.props_from_args))
             .collect();
 
-        let once_stmts: Vec<Stmt> = vec![
-            let_decl(
-                span,
-                "prot",
-                Some(Expr::Object(ObjectLit {
-                    span,
-                    props: proto_members
-                        .into_iter()
-                        .map(|kv| PropOrSpread::Prop(Box::new(Prop::KeyValue(kv))))
-                        .collect(),
-                })),
-            ),
-        ]
-        .into_iter()
-        .chain(assign_stmts)
-        .collect();
+        let prot_object = Expr::Object(ObjectLit {
+            span,
+            props: proto_members
+                .into_iter()
+                .map(|kv| PropOrSpread::Prop(Box::new(Prop::KeyValue(kv))))
+                .collect(),
+        });
+
+        let prot_init_stmt = if flatten_decl {
+            Self::assign_ident_stmt(span, prot_id.clone(), prot_object)
+        } else {
+            let_decl(span, "prot", Some(prot_object))
+        };
+
+        let once_stmts: Vec<Stmt> = std::iter::once(prot_init_stmt)
+            .chain(assign_stmts)
+            .collect();
 
         let mut per_instance_stmts: Vec<Stmt> = vec![Stmt::Expr(ExprStmt {
             span,
@@ -848,22 +862,27 @@ impl ClassToFunction {
 
         let lr_args_id = ident(span, LR_ARGS_NAME);
 
-        let mut ctor_stmts = vec![const_decl(
-            span,
-            "__decl",
-            Some(func_expr(span, decl_params, decl_stmts)),
-        )];
+        let mut ctor_stmts = Vec::new();
 
-        if class.super_class.is_none() {
-            ctor_stmts.push(Stmt::Expr(ExprStmt {
+        if flatten_decl {
+            ctor_stmts.extend(decl_stmts);
+        } else {
+            ctor_stmts.push(const_decl(
                 span,
-                expr: Box::new(call_with_this(
+                DECL_NAME,
+                Some(func_expr(span, decl_params, decl_stmts)),
+            ));
+            if !has_super {
+                ctor_stmts.push(Stmt::Expr(ExprStmt {
                     span,
-                    ident_expr(span, "__decl"),
-                    this_expr(span),
-                    vec![],
-                )),
-            }));
+                    expr: Box::new(call_with_this(
+                        span,
+                        ident_expr(span, DECL_NAME),
+                        this_expr(span),
+                        vec![],
+                    )),
+                }));
+            }
         }
 
         ctor_stmts.extend(ctor_parts.stmts);
@@ -962,6 +981,24 @@ impl Default for ClassToFunction {
 }
 
 impl VisitMut for ClassToFunction {
+    fn visit_mut_fn_expr(&mut self, n: &mut FnExpr) {
+        self.fn_depth += 1;
+        n.visit_mut_children_with(self);
+        self.fn_depth -= 1;
+    }
+
+    fn visit_mut_function(&mut self, n: &mut Function) {
+        self.fn_depth += 1;
+        n.visit_mut_children_with(self);
+        self.fn_depth -= 1;
+    }
+
+    fn visit_mut_arrow_expr(&mut self, n: &mut ArrowExpr) {
+        self.fn_depth += 1;
+        n.visit_mut_children_with(self);
+        self.fn_depth -= 1;
+    }
+
     fn visit_mut_decl(&mut self, decl: &mut Decl) {
         if let Decl::Class(class_decl) = decl {
             let saved = self.current_super_class.take();

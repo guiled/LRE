@@ -1,13 +1,21 @@
 use swc_core::common::{Span, util::take::Take};
 use swc_core::ecma::ast::*;
-use swc_core::ecma::visit::{VisitMut, VisitMutWith};
+use swc_core::ecma::visit::{Visit, VisitMut, VisitMutWith, VisitWith};
 
 use crate::utils::{
-    call_ident, function_body, ident, ident_expr, num_lit, param, return_stmt,
-    undefined_expr, var_decl_pat,
+    call_ident, func_bind, func_expr, ident, ident_expr, num_lit, param, return_stmt,
+    this_expr, undefined_expr, var_decl_pat,
 };
 
 const ARG_PREFIX: &str = "_arg";
+
+struct ArrowUsesThis(bool);
+
+impl Visit for ArrowUsesThis {
+    fn visit_this_expr(&mut self, _: &ThisExpr) {
+        self.0 = true;
+    }
+}
 
 pub struct ParamDefaultValue;
 
@@ -61,6 +69,9 @@ impl ParamDefaultValue {
 
     fn arrow_to_function(&self, arrow: ArrowExpr) -> Expr {
         let span = arrow.span;
+        let mut uses_this = ArrowUsesThis(false);
+        arrow.body.visit_with(&mut uses_this);
+        let has_this = uses_this.0;
         let has_this_args = matches!(
             arrow.params.first(),
             Some(Pat::Ident(id)) if id.id.sym == "this"
@@ -90,21 +101,13 @@ impl ParamDefaultValue {
         };
         body_stmts.splice(0..0, stmts_to_add);
 
-        Expr::Fn(FnExpr {
-            ident: None,
-            function: Box::new(Function {
-                this_param: None,
-                params,
-                decorators: vec![],
-                span,
-                ctxt: Default::default(),
-                body: Some(function_body(span, body_stmts)),
-                is_generator: false,
-                is_async: false,
-                type_params: None,
-                return_type: None,
-            }),
-        })
+        let func = func_expr(span, params, body_stmts);
+
+        if has_this {
+            func_bind(span, func, this_expr(span))
+        } else {
+            func
+        }
     }
 
     fn parse_pattern(

@@ -109,4 +109,14 @@ describe("simplifyParamDefault", () => {
     expect(output).toContain('other = def(arguments, 1, "")');
     expect(output).not.toContain("def(arguments, 0, undefined)");
   });
+
+  test("preserves lexical this when optional arrow params are lowered", () => {
+    const output = runTransform(
+      "function outer() { return (event, rawDest?) => this.raw(); }",
+    );
+
+    expect(output).toContain("def(arguments, 1)");
+    expect(output).toContain(".bind(this)");
+    expect(output).not.toMatch(/=>/);
+  });
 });
