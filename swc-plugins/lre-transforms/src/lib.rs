@@ -45,6 +45,7 @@ fn apply_post_cleanup_passes(program: &mut Program) {
     program.visit_mut_with(&mut NoTypeof);
     program.visit_mut_with(&mut NoSequence);
     program.visit_mut_with(&mut NoCallInIf::new());
+    program.visit_mut_with(&mut UnwrapBlockStmt);
     program.visit_mut_with(&mut FixSpreadApply::new());
     program.visit_mut_with(&mut RemoveRedundantSliceZero);
     program.visit_mut_with(&mut SimplifyParamDefault);

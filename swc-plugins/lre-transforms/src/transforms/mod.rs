@@ -19,6 +19,7 @@ pub mod param_default_value;
 pub mod replace_in_operator;
 pub mod remove_redundant_slice_zero;
 pub mod simplify_param_default;
+pub mod unwrap_block_stmt;
 
 pub use class_to_function::ClassToFunction;
 pub use code_aliases::CodeAliases;
@@ -41,3 +42,4 @@ pub use param_default_value::ParamDefaultValue;
 pub use replace_in_operator::ReplaceInOperator;
 pub use remove_redundant_slice_zero::RemoveRedundantSliceZero;
 pub use simplify_param_default::SimplifyParamDefault;
+pub use unwrap_block_stmt::UnwrapBlockStmt;
