@@ -3,20 +3,22 @@ use swc_core::ecma::ast::*;
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
 
 use crate::utils::{
-    assign_stmt, call_ident, expr_or_spread, ident_box, ident_expr, member_expr_from_expr,
-    undefined_box, var_decl,
+    assign_stmt, call_ident, expr_or_spread, expr_stmt, ident_box, ident_expr,
+    member_expr_from_expr, undefined_box, var_decl,
 };
 
 pub struct NoThrow;
 
 impl VisitMut for NoThrow {
-    fn visit_mut_throw_stmt(&mut self, stmt: &mut ThrowStmt) {
-        let span = stmt.span;
-        let arg = stmt.arg.take();
-        *stmt = ThrowStmt {
-            span,
-            arg: Box::new(call_ident(span, "throwError", vec![*arg])),
-        };
+    fn visit_mut_stmt(&mut self, stmt: &mut Stmt) {
+        if let Stmt::Throw(throw_stmt) = stmt {
+            let span = throw_stmt.span;
+            let arg = throw_stmt.arg.take();
+            *stmt = expr_stmt(span, call_ident(span, "throwError", vec![*arg]));
+            return;
+        }
+
+        stmt.visit_mut_children_with(self);
     }
 
     fn visit_mut_catch_clause(&mut self, catch: &mut CatchClause) {
