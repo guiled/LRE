@@ -136,17 +136,22 @@ fn try_fix_wrong_this_apply(call: &mut CallExpr) -> bool {
         return false;
     }
 
-    if !is_this_array(concat_call.args[0].expr.as_ref()) {
-        return false;
-    }
+    let inner = match single_element_array_inner(concat_call.args[0].expr.as_ref()) {
+        Some(inner) => inner,
+        None => return false,
+    };
 
     let span = call.span;
+    let corrected_this = match correct_apply_this(&inner, assignment_rhs.as_ref(), span) {
+        Some(this_arg) => this_arg,
+        None => return false,
+    };
     let rest_arg = *concat_call.args[1].expr.clone();
     *call = build_assign_apply(
         span,
         var_id,
         assignment_rhs,
-        this_expr(span),
+        corrected_this,
         vec![expr_or_spread(rest_arg)],
     );
 
@@ -371,18 +376,73 @@ fn is_concat_prop(prop: &MemberProp) -> bool {
     matches!(prop, MemberProp::Ident(ident) if ident.sym == *"concat")
 }
 
-fn is_this_array(expr: &Expr) -> bool {
+fn single_element_array_inner(expr: &Expr) -> Option<Expr> {
     match expr {
         Expr::Array(array) => {
-            array.elems.len() == 1
-                && matches!(
-                    array.elems.first(),
-                    Some(Some(ExprOrSpread {
-                        expr,
-                        spread: None,
-                        ..
-                    })) if matches!(expr.as_ref(), Expr::This(_))
-                )
+            if array.elems.len() != 1 {
+                return None;
+            }
+
+            match array.elems.first()? {
+                Some(ExprOrSpread {
+                    expr,
+                    spread: None,
+                    ..
+                }) => Some(*expr.clone()),
+                _ => None,
+            }
+        }
+        _ => None,
+    }
+}
+
+fn correct_apply_this(inner: &Expr, assignment_rhs: &Expr, span: swc_core::common::Span) -> Option<Expr> {
+    if matches!(inner, Expr::This(_)) {
+        return Some(this_expr(span));
+    }
+
+    if matches!(inner, Expr::Lit(Lit::Null(_))) {
+        if matches!(assignment_rhs, Expr::Member(_)) {
+            return None;
+        }
+
+        return Some(null_expr(span));
+    }
+
+    if let Expr::Member(member) = assignment_rhs {
+        if expr_same(inner, member.obj.as_ref()) {
+            return Some(inner.clone());
+        }
+    }
+
+    None
+}
+
+fn expr_same(a: &Expr, b: &Expr) -> bool {
+    match (unwrap_paren(a), unwrap_paren(b)) {
+        (Expr::Ident(a), Expr::Ident(b)) => a.sym == b.sym && a.ctxt == b.ctxt,
+        (Expr::This(_), Expr::This(_)) => true,
+        (Expr::Lit(Lit::Null(_)), Expr::Lit(Lit::Null(_))) => true,
+        (Expr::Member(a), Expr::Member(b)) => {
+            expr_same(a.obj.as_ref(), b.obj.as_ref())
+                && member_prop_same(&a.prop, &b.prop)
+        }
+        _ => false,
+    }
+}
+
+fn unwrap_paren(expr: &Expr) -> &Expr {
+    match expr {
+        Expr::Paren(paren) => paren.expr.as_ref(),
+        other => other,
+    }
+}
+
+fn member_prop_same(a: &MemberProp, b: &MemberProp) -> bool {
+    match (a, b) {
+        (MemberProp::Ident(a), MemberProp::Ident(b)) => a.sym == b.sym,
+        (MemberProp::Computed(a), MemberProp::Computed(b)) => {
+            expr_same(a.expr.as_ref(), b.expr.as_ref())
         }
         _ => false,
     }

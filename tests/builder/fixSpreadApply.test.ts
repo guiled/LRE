@@ -100,6 +100,23 @@ describe("fixSpreadApply", () => {
     expect(output).not.toContain("apply.apply");
   });
 
+  test("fixes method push spread wrong this binding", () => {
+    const input =
+      "(_acc_push = acc.push).apply(_acc_push, [].concat([acc], currentLog));";
+
+    expect(fixSpreadApply(input)).toBe(
+      normalize("(_acc_push = acc.push).apply(acc, currentLog);"),
+    );
+  });
+
+  test("fixes function call spread wrong this binding", () => {
+    const input = "(_fn = fn).apply(_fn, [].concat([null], args));";
+
+    expect(fixSpreadApply(input)).toBe(
+      normalize("(_fn = fn).apply(null, args);"),
+    );
+  });
+
   test("keeps temp variable bindings in named function expressions", () => {
     const input =
       "var prot = { rerolln: function rerolln() { var __raw_rerolln, args = Afr(arguments); return (__raw_rerolln = __raw.rerolln).apply.apply(__raw_rerolln, [].concat([__raw], args)), this; } };";

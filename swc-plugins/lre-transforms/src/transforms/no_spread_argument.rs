@@ -61,7 +61,7 @@ impl VisitMut for NoSpreadArgument {
 
 fn build_apply_args(span: swc_core::common::Span, args: Vec<ExprOrSpread>) -> ExprOrSpread {
     if args.len() == 1 {
-        args[0].clone()
+        expr_or_spread(*args[0].expr.clone())
     } else {
         let (array_init, concat_args) = spread_to_concat(span, &args);
         let obj = array_expr(span, array_init.into_iter().map(Some).collect());
