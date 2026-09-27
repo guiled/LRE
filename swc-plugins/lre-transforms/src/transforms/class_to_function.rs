@@ -809,9 +809,7 @@ impl ClassToFunction {
             let_decl(span, "prot", Some(prot_object))
         };
 
-        let once_stmts: Vec<Stmt> = std::iter::once(prot_init_stmt)
-            .chain(assign_stmts)
-            .collect();
+        let once_stmts: Vec<Stmt> = vec![prot_init_stmt];
 
         let mut per_instance_stmts: Vec<Stmt> = vec![Stmt::Expr(ExprStmt {
             span,
@@ -841,6 +839,9 @@ impl ClassToFunction {
 
         let mut decl_stmts = vec![Self::decl_done_if(span, once_stmts)];
         decl_stmts.extend(per_instance_stmts);
+        if !assign_stmts.is_empty() {
+            decl_stmts.push(Self::decl_done_if(span, assign_stmts));
+        }
         decl_stmts.push(Self::assign_ident_stmt(
             span,
             ident(span, DECL_DONE_NAME),

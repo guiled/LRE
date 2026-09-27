@@ -68,6 +68,24 @@ describe("classToFunction flatten", () => {
     expect(output).toContain("__super = initParent.call(this, this)");
   });
 
+  test("initializes private props after assigning methods to this", () => {
+    const output = runTransform(`
+      class A {
+        #priv = this.fn1();
+        fn1() {
+          return 42;
+        }
+      }
+    `);
+
+    const obaIndex = output.indexOf("Oba(this,");
+    const privInitIndex = output.indexOf("__priv = this.fn1()");
+
+    expect(obaIndex).toBeGreaterThan(-1);
+    expect(privInitIndex).toBeGreaterThan(-1);
+    expect(obaIndex).toBeLessThan(privInitIndex);
+  });
+
   test("keeps __decl wrapper for mixin factory inner classes", () => {
     const output = runTransform(`
       const HasRaw = (superclass = class {}) => class extends superclass {
