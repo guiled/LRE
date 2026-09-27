@@ -40,6 +40,7 @@ class CodeAliases extends Visitor {
         ["Object.assign", "Oba"],
         ["Array.from.call", "Afr"],
         ["Array.isArray", "Ais"],
+        ["Object.getPrototypeOf", "ObgP"],
       ];
 
       const foundAlias = aliases.find(([original]) =>

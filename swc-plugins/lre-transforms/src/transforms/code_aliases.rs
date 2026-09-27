@@ -20,6 +20,7 @@ impl VisitMut for CodeAliases {
                 ("Object.assign", "Oba"),
                 ("Array.from.call", "Afr"),
                 ("Array.isArray", "Ais"),
+                ("Object.getPrototypeOf", "ObgP"),
             ];
 
             if let Callee::Expr(callee) = &call.callee {
