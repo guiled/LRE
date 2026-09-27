@@ -1,4 +1,11 @@
+import { buildExpectFailureArgs } from "./expectMessages";
+
 type TestCb<T = void> = () => T;
+
+function runTestCase(callback: TestCb): void {
+  callback();
+}
+
 type TestLogs = Array<string>;
 type TestSuiteResult = {
   logs: TestLogs;
@@ -127,7 +134,7 @@ const runTestSuiteInCb = (
       } else {
         try {
           suite.lreBeforeEach.forEach((cb) => cb());
-          run();
+          runTestCase(run);
           suite.lreAfterEach.forEach((cb) => cb());
           currentLog.push(`${context.logPrefix}  ✅ Test "${name}" passed`);
         } catch (e) {
@@ -381,10 +388,10 @@ const generateExpectFunctions = (
 
       if (result === not) {
         throw new Error(
-          generateExpectMessage(not ? message.not : message.failed, [
-            value,
-            ...args,
-          ]),
+          generateExpectMessage(
+            not ? message.not : message.failed,
+            buildExpectFailureArgs(value, args),
+          ),
         );
       }
     };
