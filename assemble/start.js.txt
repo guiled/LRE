@@ -9,7 +9,14 @@ NaN = 0/0;
 
 const OhO = function (o, k) { return Object.prototype.hasOwnProperty.call(o, k);},Obk = Object.keys,Obv = Object.values, Oba = Object.assign, Afr = function (a) { return Array.from.call(a,a);}, Ais = Array.isArray, ObgP = Object.getPrototypeOf;
 
+const RxP = ObgP(/./);
+
 function iOf(a, b) {
+  if (b === RegExp) {
+      if (!tpo(a, 3) || a == null) return false;
+      const p = ObgP(a);
+      return p === RxP || (p != null && ObgP(p) === RxP);
+  }
   return a instanceof b;
 }
 
