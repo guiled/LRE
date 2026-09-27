@@ -273,8 +273,8 @@ const messages: Record<TExpectTests, ExpectFailedMessages> = {
   },
   toHaveBeenCalledTimes: {
     general: "Expected value to be a mock but it was not",
-    failed: "Expected function to be called $2 times but it was not",
-    not: "Expected function not to be called $2 times but it was",
+    failed: "Expected function to be called $1 times but it was not",
+    not: "Expected function not to be called $1 times but it was",
   },
   toBeTruthy: {
     failed: "`Expected $2 to be truthy",

@@ -3,24 +3,10 @@ import { errorHandler } from "./globals";
 import { testClasses } from "../tests/transpiler/class.lre";
 import { Error as LreError } from "./error";
 import { testMixins } from "../tests/transpiler/mixin.lre";
+import { testGlobals } from "../tests/transpiler/globals.lre";
+import { findTestTraceLocation } from "../tests/transpiler/traceFinder";
 
-LreError.tracerFinder = (
-  trace: LetsRole.Error["trace"],
-): LetsRole.ErrorTrace | undefined => {
-  const runIdx =
-    trace?.findIndex(function (tr) {
-      return tr.type === "CallExpression" && tr.callee!.name === "run";
-    }) || -1;
-
-  if (runIdx > 0) {
-    const location = trace![runIdx - 1].loc;
-    const start: number = location!.start.line;
-    const end: number = location!.end.line;
-    return trace!.find(
-      (tr) => tr.loc?.start.line >= start && tr.loc?.end.line <= end,
-    );
-  }
-};
+LreError.traceFinder = findTestTraceLocation;
 
 lastException = null;
 // @ts-expect-error trick to avoid error
@@ -33,7 +19,7 @@ newError = errorHandler.newError;
 // eslint-disable-next-line no-global-assign
 Error = LreError;
 
-[testClasses, testMixins].forEach(({ name, run }) => {
+[testClasses, testMixins, testGlobals].forEach(({ name, run }) => {
   const testRunner = tester(name, run);
   const logs = testRunner().logs;
   logs.forEach(log);
