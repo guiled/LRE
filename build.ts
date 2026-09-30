@@ -31,6 +31,7 @@ esbuild
     stripRedundantFunctionNames(
       result.code
         .trim()
+        .replace(/^\s*\/\/ src\/[^\n]+\n/gm, "")
         .replace(/void 0/g, "undefined")
         .replace(/\(\)=>\{/g, "function() {")
         .replace(/`\n`/gm, '"\\n"')
