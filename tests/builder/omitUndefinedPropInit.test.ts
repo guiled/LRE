@@ -124,4 +124,25 @@ describe("omit undefined prop init", () => {
     expectNoUndefinedPropInits(output);
     expect(output).not.toMatch(/if \(!__declDone\) \{ this\./);
   });
+
+  test("still skips @FromRaw declared props", () => {
+    const output = runTransform(`
+      class Example {
+        @FromRaw(true)
+        _children;
+        @FromRaw
+        _tags;
+        title: string;
+        constructor(raw) {
+          this.__raw = raw;
+        }
+      }
+    `);
+
+    expect(output).not.toContain("this._children = undefined");
+    expect(output).not.toContain("this._tags = undefined");
+    expect(output).not.toContain("this.title = undefined");
+    expect(output).toContain('dTR(this, ["_tags"], false)');
+    expect(output).toContain('dTR(this, ["_children"], true)');
+  });
 });

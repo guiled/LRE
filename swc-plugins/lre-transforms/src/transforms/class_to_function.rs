@@ -446,6 +446,108 @@ impl ClassToFunction {
         result
     }
 
+    fn parse_from_raw_expr(expr: &Expr) -> Option<bool> {
+        match expr {
+            Expr::Ident(i) if i.sym == *"FromRaw" => Some(false),
+            Expr::Call(call) => {
+                let Callee::Expr(callee) = &call.callee else {
+                    return None;
+                };
+                let Expr::Ident(i) = callee.as_ref() else {
+                    return None;
+                };
+                if i.sym != *"FromRaw" {
+                    return None;
+                }
+                if call.args.is_empty() {
+                    return Some(false);
+                }
+                if let Some(arg) = call.args.first() {
+                    if let Expr::Lit(Lit::Bool(b)) = arg.expr.as_ref() {
+                        return Some(b.value);
+                    }
+                }
+                Some(false)
+            }
+            _ => None,
+        }
+    }
+
+    fn parse_from_raw_decorator(decorators: &[Decorator]) -> Option<bool> {
+        decorators
+            .iter()
+            .find_map(|decorator| Self::parse_from_raw_expr(&decorator.expr))
+    }
+
+    fn prop_key_to_string(key: &PropName) -> Option<String> {
+        match key {
+            PropName::Ident(i) => Some(i.sym.to_string()),
+            PropName::Str(s) => s.value.as_str().map(|value| value.to_string()),
+            _ => None,
+        }
+    }
+
+    fn collect_from_raw_props(class: &Class) -> Vec<(String, bool)> {
+        class
+            .body
+            .iter()
+            .filter_map(|member| {
+                let ClassMember::ClassProp(prop) = member else {
+                    return None;
+                };
+                let log_warning = Self::parse_from_raw_decorator(&prop.decorators)?;
+                let name = Self::prop_key_to_string(&prop.key)?;
+                Some((name, log_warning))
+            })
+            .collect()
+    }
+
+    fn direct_to_raw_stmt(span: Span, props: &[String], log_warning: bool) -> Stmt {
+        let array_elements: Vec<Option<ExprOrSpread>> = props
+            .iter()
+            .map(|prop| Some(expr_or_spread(str_lit(span, prop))))
+            .collect();
+
+        Stmt::Expr(ExprStmt {
+            span,
+            expr: Box::new(call_expr(
+                span,
+                ident_expr(span, "dTR"),
+                vec![
+                    expr_or_spread(this_expr(span)),
+                    expr_or_spread(array_expr(span, array_elements)),
+                    expr_or_spread(bool_lit(span, log_warning)),
+                ],
+            )),
+        })
+    }
+
+    fn build_direct_to_raw_stmts(class: &Class, span: Span) -> Vec<Stmt> {
+        let props = Self::collect_from_raw_props(class);
+        if props.is_empty() {
+            return vec![];
+        }
+
+        let mut silent_props: Vec<String> = vec![];
+        let mut warn_props: Vec<String> = vec![];
+        for (name, log_warning) in props {
+            if log_warning {
+                warn_props.push(name);
+            } else {
+                silent_props.push(name);
+            }
+        }
+
+        let mut stmts = vec![];
+        if !silent_props.is_empty() {
+            stmts.push(Self::direct_to_raw_stmt(span, &silent_props, false));
+        }
+        if !warn_props.is_empty() {
+            stmts.push(Self::direct_to_raw_stmt(span, &warn_props, true));
+        }
+        stmts
+    }
+
     fn is_undefined_expr(expr: &Expr) -> bool {
         matches!(expr, Expr::Ident(id) if id.sym == *"undefined")
             || matches!(expr, Expr::Unary(u) if u.op == op!("void"))
@@ -460,6 +562,13 @@ impl ClassToFunction {
     }
 
     fn deconstruct_prop(prop: &ClassProp) -> MemberDeconstruction {
+        if Self::parse_from_raw_decorator(&prop.decorators).is_some() {
+            return MemberDeconstruction {
+                declarator: None,
+                assignment: MemberAssignment::None,
+            };
+        }
+
         match Self::class_prop_init(prop) {
             None => MemberDeconstruction {
                 declarator: None,
@@ -750,7 +859,10 @@ impl ClassToFunction {
     }
 
     fn class_to_function(&mut self, class: &Class, span: Span) -> Expr {
-        let ctor_parts = self.get_ctor_parts(class, span);
+        let mut ctor_parts = self.get_ctor_parts(class, span);
+        ctor_parts
+            .stmts
+            .extend(Self::build_direct_to_raw_stmts(class, span));
         let method_decls = Self::get_methods(class);
         let prop_decls = Self::get_props(class);
 

@@ -197,6 +197,7 @@ declare module "lre" {
     var stringify: (obj: unknown, indent?: boolean) => string | undefined;
     var virtualCall: <T>(cb: () => T) => T;
     var mt_rand: (min: number, max: number) => number;
+    var dTR: (obj: IHasRaw, props: Array<string>, logWarning: boolean) => void;
   }
 }
 
