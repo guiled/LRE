@@ -446,24 +446,37 @@ impl ClassToFunction {
         result
     }
 
-    fn deconstruct_prop(prop: &ClassProp) -> MemberDeconstruction {
-        let prop_value = prop
-            .value
-            .as_ref()
-            .map(|v| *v.clone())
-            .unwrap_or_else(|| undefined_expr(prop.span));
+    fn is_undefined_expr(expr: &Expr) -> bool {
+        matches!(expr, Expr::Ident(id) if id.sym == *"undefined")
+            || matches!(expr, Expr::Unary(u) if u.op == op!("void"))
+    }
 
-        MemberDeconstruction {
-            declarator: None,
-            assignment: MemberAssignment::Stmt(Self::assign_expr_stmt(
-                prop.span,
-                Self::member_expr_prop(
+    fn class_prop_init(prop: &ClassProp) -> Option<Expr> {
+        match &prop.value {
+            None => None,
+            Some(v) if Self::is_undefined_expr(v) => None,
+            Some(v) => Some(*v.clone()),
+        }
+    }
+
+    fn deconstruct_prop(prop: &ClassProp) -> MemberDeconstruction {
+        match Self::class_prop_init(prop) {
+            None => MemberDeconstruction {
+                declarator: None,
+                assignment: MemberAssignment::None,
+            },
+            Some(prop_value) => MemberDeconstruction {
+                declarator: None,
+                assignment: MemberAssignment::Stmt(Self::assign_expr_stmt(
                     prop.span,
-                    this_box(prop.span),
-                    Self::method_key(&prop.key, prop.span),
-                ),
-                prop_value,
-            )),
+                    Self::member_expr_prop(
+                        prop.span,
+                        this_box(prop.span),
+                        Self::method_key(&prop.key, prop.span),
+                    ),
+                    prop_value,
+                )),
+            },
         }
     }
 
@@ -659,18 +672,17 @@ impl ClassToFunction {
                 }
                 ClassMember::ClassProp(p) if p.is_static => {
                     let key = Self::method_key(&p.key, p.span);
-                    Some(Self::assign_expr_stmt(
-                        p.span,
-                        Self::member_expr_prop(
+                    Self::class_prop_init(p).map(|prop_value| {
+                        Self::assign_expr_stmt(
                             p.span,
-                            Box::new(Expr::Ident(fn_id.clone())),
-                            key,
-                        ),
-                        p.value
-                            .as_ref()
-                            .map(|v| *v.clone())
-                            .unwrap_or_else(|| undefined_expr(p.span)),
-                    ))
+                            Self::member_expr_prop(
+                                p.span,
+                                Box::new(Expr::Ident(fn_id.clone())),
+                                key,
+                            ),
+                            prop_value,
+                        )
+                    })
                 }
                 _ => None,
             })
