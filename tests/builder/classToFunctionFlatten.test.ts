@@ -13,7 +13,7 @@ const runTransform = (code: string): string =>
   normalize(transformSync(code, transformForLR).code.trim());
 
 describe("classToFunction flatten", () => {
-  test("inlines __decl into ctor for top-level classes without inheritance", () => {
+  test("inline __decl into ctor for top-level classes without inheritance", () => {
     const output = runTransform(`
       class Foo {
         #value = 0;
@@ -101,5 +101,6 @@ describe("classToFunction flatten", () => {
     `);
 
     expect(output).toContain("var __decl = function __decl");
+    expect(output).not.toContain("superclass");
   });
 });

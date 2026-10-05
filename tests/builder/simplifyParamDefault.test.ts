@@ -66,12 +66,12 @@ describe("simplifyParamDefault", () => {
     expect(output).toContain('def(arguments, 1, "")');
   });
 
-  test("converts mixin arrows to def instead of Afr(arguments)", () => {
+  test("strips superclass param from mixin arrows", () => {
     const output = runTransform(
       "const M = (superclass = class {}) => class X extends superclass {};",
     );
 
-    expect(output).toContain("def(arguments, 0, function(__lrArgs)");
+    expect(output).not.toContain("superclass");
     expect(output).not.toContain("Afr(arguments)");
     expect(output).not.toContain("tmp ===");
   });

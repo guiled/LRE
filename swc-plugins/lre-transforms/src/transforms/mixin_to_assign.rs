@@ -179,6 +179,7 @@ impl VisitMut for MixinToAssign {
                     Self::transform_mixable(&mut class_expr.class);
                 }
             }
+            arrow.params.remove(0);
         }
         arrow.visit_mut_children_with(self);
     }

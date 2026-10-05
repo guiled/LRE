@@ -182,6 +182,7 @@ class MixinToAssign extends Visitor {
     if (this.#isMixable(e) && e.body.type === "ClassExpression") {
       const res = this.visitExpression(e.body);
       this.#transformMixable(e.body);
+      e.params.shift();
       return res;
     }
 
