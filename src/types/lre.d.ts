@@ -496,7 +496,14 @@ declare interface ComponentContainer<
   find: ComponentFinder<T>;
 }
 
-declare interface IHasRaw<T = LetsRole.Sheet | LetsRole.Component> {
+declare interface IHasRaw<
+  T =
+    | LetsRole.Sheet
+    | LetsRole.Component
+    | LetsRole.DiceResult
+    | LetsRole.Table
+    | LetsRole.Tables,
+> {
   raw(): T;
   refreshRaw(newRaw?: T): T;
 }

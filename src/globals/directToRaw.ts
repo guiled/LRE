@@ -9,13 +9,18 @@ export const directToRaw = (
   props: Array<string>,
   logWarning: boolean,
 ): void => {
-  for (const prop of props) {
+  for (let i = 0; i < props.length; i++) {
+    const prop = props[i];
     Object.defineProperty(obj, prop, {
       configurable: true,
       enumerable: true,
       get(): unknown {
         logWarning && lre.warn(FROM_RAW_WARN_MSG);
-        return rawFields(obj)[prop];
+        const field = rawFields(obj)[prop];
+        if (typeof field === "function") {
+          return field.bind(obj.raw());
+        }
+        return field;
       },
       set(val: unknown): void {
         logWarning && lre.warn(FROM_RAW_WARN_MSG);

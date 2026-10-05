@@ -73,4 +73,17 @@ describe("directToRaw", () => {
     expect(lre.warn).not.toHaveBeenCalled();
     expect(raw._title).toBe("new");
   });
+
+  test("syncs public DiceResult fields from raw", () => {
+    const raw = { title: "Attack", total: 15, tags: ["damage"] };
+    const subject = hasRawSubject(raw);
+    directToRaw(subject, ["title", "total", "tags"], false);
+
+    expect((subject as unknown as { title: string }).title).toBe("Attack");
+    expect((subject as unknown as { total: number }).total).toBe(15);
+
+    raw.total = 20;
+
+    expect((subject as unknown as { total: number }).total).toBe(20);
+  });
 });

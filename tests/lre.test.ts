@@ -10,7 +10,7 @@ import {
 } from "../src/mock/letsrole/letsrole.mock";
 import { setLang } from "../src/mock/letsrole/i18n";
 import { LREi18n } from "../src/globals/i18n";
-import { DiceResult } from "../src/roll/diceresult";
+import { DiceResult } from "../src/dice/diceresult";
 
 vi.mock("../src/log");
 

@@ -1,76 +1,107 @@
+import { FromRaw } from "../annotations/fromRaw";
+
 // ts-unused-exports:disable-next-line
-export class DiceResult implements LREDiceResult {
+export class DiceResult implements IHasRaw<LetsRole.DiceResult>, LREDiceResult {
   #raw: LetsRole.DiceResult;
+
+  @FromRaw(true)
   _children: Array<any> | undefined;
+
+  @FromRaw(true)
   _dice: Array<any> | undefined;
+
+  @FromRaw(true)
   _expression: string | undefined;
+
+  @FromRaw(true)
   _raw: any | undefined;
+
+  @FromRaw(true)
   _hasExtractedChildren: boolean | undefined;
+
+  @FromRaw(true)
   _hasExtractedDice: boolean | undefined;
+
+  @FromRaw(true)
   _hasExtractedTags: boolean | undefined;
+
+  @FromRaw(true)
   _tags: Array<string> | undefined;
+
+  @FromRaw(true)
   _title: string | null | undefined;
+
+  @FromRaw(true)
   _visibility: LetsRole.RollVisibility | undefined;
 
-  title: string;
-  expression: string;
-  visibility: LetsRole.RollVisibility;
-  type: LetsRole.RollType;
-  total: number;
-  tags: Array<string>;
-  allTags: Array<string>;
-  all: Array<LetsRole.SingleDiceResult>;
-  children: Array<DiceResult>;
-  size: number | null;
-  dimension: number | null;
-  values: Array<number> | null;
-  discarded: Array<number>;
-  left: DiceResult | null;
-  right: DiceResult | null;
-  success: number | null;
-  failure: number | null;
+  @FromRaw()
+  title!: string;
+
+  @FromRaw()
+  expression!: string;
+
+  @FromRaw()
+  visibility!: LetsRole.RollVisibility;
+
+  @FromRaw()
+  type!: LetsRole.RollType;
+
+  @FromRaw()
+  total!: number;
+
+  @FromRaw()
+  tags!: Array<string>;
+
+  @FromRaw()
+  allTags!: Array<string>;
+
+  @FromRaw()
+  all!: Array<LetsRole.SingleDiceResult>;
+
+  children!: Array<DiceResult>;
+  left!: DiceResult | null;
+  right!: DiceResult | null;
+
+  @FromRaw()
+  size!: number | null;
+
+  @FromRaw()
+  dimension!: number | null;
+
+  @FromRaw()
+  values!: Array<number> | null;
+
+  @FromRaw()
+  discarded!: Array<number>;
+
+  @FromRaw()
+  success!: number | null;
+
+  @FromRaw()
+  failure!: number | null;
 
   constructor(raw: LetsRole.DiceResult) {
     this.#raw = raw;
-    this._children = raw._children;
-    this._dice = raw._dice;
-    this._expression = raw._expression;
-    this._raw = raw._raw;
-    this._hasExtractedChildren = raw._hasExtractedChildren;
-    this._hasExtractedDice = raw._hasExtractedDice;
-    this._hasExtractedTags = raw._hasExtractedTags;
-    this._tags = raw._tags;
-    this._title = raw._title;
-    this._visibility = raw._visibility;
 
-    this.title = raw.title;
-    this.expression = raw.expression;
-    this.visibility = raw.visibility;
-    this.type = raw.type;
-    this.total = raw.total;
-    this.tags = raw.tags;
-    this.allTags = raw.allTags;
-    this.all = raw.all;
     this.children = raw.children
       ? raw.children.map(
           (child) => new DiceResult(child as LetsRole.DiceResult),
         )
       : [];
-    this.size = raw.size;
-    this.dimension = raw.dimension;
-    this.values = raw.values;
-    this.discarded = raw.discarded;
     this.left = raw.left
       ? new DiceResult(raw.left as LetsRole.DiceResult)
       : null;
     this.right = raw.right
       ? new DiceResult(raw.right as LetsRole.DiceResult)
       : null;
-    this.success = raw.success;
-    this.failure = raw.failure;
   }
 
   raw(): LetsRole.DiceResult {
+    return this.#raw;
+  }
+
+  refreshRaw(newRaw?: LetsRole.DiceResult): LetsRole.DiceResult {
+    this.#raw = newRaw ?? this.#raw;
     return this.#raw;
   }
 

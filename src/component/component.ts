@@ -7,6 +7,7 @@ import { Entry } from "./entry";
 import { DataHolder } from "../dataholder";
 import { ComponentProxy } from "../proxy/component";
 import { ChangeTracker } from "../globals/changetracker";
+import { FromRaw } from "../annotations/fromRaw";
 
 export const REP_ID_SEP = ".";
 
@@ -60,6 +61,10 @@ export class Component<
       | "virtualValue"
       | "rawValue"
       | "text"
+      | "id"
+      | "index"
+      | "name"
+      | "getClasses"
     >,
     IComponent,
     ComponentContainer,
@@ -78,6 +83,18 @@ export class Component<
   #classChanges: ClassChanges = {};
   #classChangesApply: ClassChangeApply | undefined = undefined;
   #valueDataProvider: IDataProvider | undefined;
+
+  @FromRaw()
+  id!: () => LetsRole.ComponentID | null;
+
+  @FromRaw()
+  index!: () => string | null;
+
+  @FromRaw()
+  getClasses!: () => LetsRole.ClassName[];
+
+  @FromRaw()
+  name!: () => string;
 
   constructor(raw: LetsRole.Component, sheet: ISheet, realId: string) {
     super([
@@ -198,20 +215,8 @@ export class Component<
     return this.#lreType;
   }
 
-  id(): LetsRole.ComponentID | null {
-    return this.raw().id();
-  }
-
   realId(): string {
     return this.#realId;
-  }
-
-  index(): string | null {
-    return this.raw().index();
-  }
-
-  name(): string {
-    return this.raw().name();
   }
 
   setToolTip(text: string, placement?: LetsRole.TooltipPlacement): void {
@@ -321,10 +326,6 @@ export class Component<
     }
 
     return valid;
-  }
-
-  getClasses(): LetsRole.ClassName[] {
-    return this.raw().getClasses();
   }
 
   toggleClass(className: LetsRole.ClassName): this {

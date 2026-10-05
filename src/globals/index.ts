@@ -19,5 +19,5 @@ export const globals = {
   stringify,
   virtualCall,
   mt_rand,
-  directToRaw,
+  dTR: directToRaw,
 };

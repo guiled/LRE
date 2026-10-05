@@ -4,7 +4,14 @@ type HasRawConstructorParams<T> = {
   onRefresh?: (newRaw: T) => void;
 };
 
-export const HasRaw = <T = LetsRole.Sheet | LetsRole.Component>(
+export const HasRaw = <
+  T =
+    | LetsRole.Sheet
+    | LetsRole.Component
+    | LetsRole.DiceResult
+    | LetsRole.Table
+    | LetsRole.Tables,
+>(
   superclass: Newable = class {},
   // defining a type here will break its implementation
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type

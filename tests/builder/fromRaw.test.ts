@@ -21,7 +21,7 @@ describe("FromRaw property transform", () => {
         constructor(raw) {
           this.__raw = raw;
         }
-        getRaw() {
+        raw() {
           return this.__raw;
         }
       }
@@ -279,12 +279,12 @@ describe("FromRaw property transform", () => {
         _title;
         @FromRaw(true)
         _visibility;
+        @FromRaw()
         title;
         constructor(raw) {
           this.#raw = raw;
-          this.title = raw.title;
         }
-        getRaw() {
+        raw() {
           return this.#raw;
         }
       }
@@ -293,9 +293,10 @@ describe("FromRaw property transform", () => {
     expect(output).toContain(
       'dTR(this, ["_children", "_dice", "_expression", "_raw", "_hasExtractedChildren", "_hasExtractedDice", "_hasExtractedTags", "_tags", "_title", "_visibility"], true)',
     );
+    expect(output).toContain('dTR(this, ["title"], false)');
     expect(output).not.toContain("this._children");
     expect(output).not.toContain("this._dice");
-    expect(output).toContain("this.title = raw.title");
+    expect(output).not.toContain("this.title = raw.title");
     expect(output.indexOf("this.#raw = raw")).toBeLessThan(
       output.indexOf("dTR(this"),
     );

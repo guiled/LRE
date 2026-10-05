@@ -6,6 +6,7 @@ import { DataBatcher } from "./databatcher";
 import { ComponentFactory } from "../component/factory";
 import { Mixin } from "../mixin";
 import { Group } from "../component/group";
+import { FromRaw } from "../annotations/fromRaw";
 
 export type ClassChanges = Record<LetsRole.ClassName, 1 | -1>;
 
@@ -30,7 +31,18 @@ export class Sheet
   ) => IEventHolder<SubTypeEventHolder> &
     InstanceType<ReturnType<typeof HasRaw<LetsRole.Sheet>>>)<SheetEvents>
   implements
-    Omit<LetsRole.Sheet, "get" | "find" | "getData" | "prompt">,
+    Omit<
+      LetsRole.Sheet,
+      | "get"
+      | "find"
+      | "getData"
+      | "prompt"
+      | "getSheetType"
+      | "id"
+      | "getSheetId"
+      | "name"
+      | "properName"
+    >,
     ISheet,
     ComponentContainer<ComponentSearchResult | IGroup>,
     ComponentCommon
@@ -45,6 +57,21 @@ export class Sheet
   #alphaId: string | undefined = undefined;
   #context: ProxyModeHandler;
   rand: number;
+
+  @FromRaw()
+  getSheetType!: () => LetsRole.SheetType;
+
+  @FromRaw()
+  id!: () => LetsRole.SheetID;
+
+  @FromRaw()
+  getSheetId!: () => LetsRole.SheetRealID;
+
+  @FromRaw()
+  name!: () => LetsRole.Name;
+
+  @FromRaw()
+  properName!: () => LetsRole.Name;
 
   constructor(
     rawSheet: LetsRole.Sheet,
@@ -273,10 +300,6 @@ export class Sheet
     return this;
   }
 
-  getSheetType(): LetsRole.SheetType {
-    return this.raw().getSheetType();
-  }
-
   getVariable(id: string): number | null {
     return this.raw().getVariable(id);
   }
@@ -296,29 +319,13 @@ export class Sheet
     );
   }
 
-  id(): string {
-    return this.raw().id();
-  }
-
   getSheetAlphaId(): string {
     this.#alphaId ??= lre.numToAlpha(Number(this.getSheetId()));
     return this.#alphaId!;
   }
 
   realId(): string {
-    return this.raw().id();
-  }
-
-  getSheetId(): LetsRole.SheetRealID {
-    return this.raw().getSheetId();
-  }
-
-  name(): string {
-    return this.raw().name();
-  }
-
-  properName(): string {
-    return this.raw().properName();
+    return this.id();
   }
 
   get(id: string, silent = false): ComponentSearchResult | IGroup {

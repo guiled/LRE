@@ -8,3 +8,8 @@ global.stringify = undefined as unknown as (
 ) => string | undefined;
 global.virtualCall = undefined as unknown as <T>(fn: () => T) => T;
 global.mt_rand = undefined as unknown as (min: number, max: number) => number;
+global.dTR = undefined as unknown as (
+  subject: object,
+  properties: Array<string>,
+  logWarning: boolean,
+) => void;
