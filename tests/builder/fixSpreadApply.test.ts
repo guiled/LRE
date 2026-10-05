@@ -125,6 +125,8 @@ describe("fixSpreadApply", () => {
 
     expect(output).not.toMatch(/var _\$__raw_rerolln/);
     expect(output).toMatch(/var __raw_rerolln, args = Afr\(arguments\)/);
-    expect(output).toMatch(/\(__raw_rerolln = __raw\.rerolln\)\.apply\(__raw_rerolln/);
+    expect(output).toMatch(
+      /\(__raw_rerolln = __raw\.rerolln\)\.apply\(__raw_rerolln/,
+    );
   });
 });

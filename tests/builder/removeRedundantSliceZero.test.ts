@@ -33,13 +33,15 @@ describe("removeRedundantSliceZero", () => {
     expect(output).not.toContain(".slice(0)");
   });
 
-  test("removes slice(0) in vararg forwarding", () => {
+  test("removes slice(0) in var arg forwarding", () => {
     const input =
       "var tags = Afr(arguments).slice(0); return fn.apply(fn, tags);";
 
     const output = removeRedundantSliceZero(input);
 
-    expect(output).toMatch(/var \w+ = Afr\(arguments\); return fn\.apply\(fn, \w+\);/);
+    expect(output).toMatch(
+      /var \w+ = Afr\(arguments\); return fn\.apply\(fn, \w+\);/,
+    );
     expect(output).not.toContain(".slice(0)");
   });
 
