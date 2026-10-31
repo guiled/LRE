@@ -289,8 +289,6 @@ export const formatLRECode = (
 
   let currentLine = 0;
   let currentLinePart = 0;
-  let awaitingSemicolon = 0;
-  let foundSemicolon = 0;
 
   while (codeParts.length > 0) {
     let targetedLength = MAX_LINE_LENGTH - lines[currentLine].length;
@@ -317,13 +315,6 @@ export const formatLRECode = (
     skipOrphanedSemicolonBeforeElse(codeParts);
 
     while (codeParts.length > 0 && takeCodePart) {
-      if (codeParts[0].match(/for/)) {
-        awaitingSemicolon = 2;
-        foundSemicolon = 0;
-      } else if (codeParts[0].match(/;/)) {
-        foundSemicolon++;
-      }
-
       if (throwWouldBeOrphanedOnLine(codeParts, remainingLength)) {
         takeCodePart = false;
       } else if (codeParts[0].length <= remainingLength) {
@@ -372,7 +363,6 @@ export const formatLRECode = (
       }
     }
 
-    const nextPart = codeParts[0] || "";
     largestPart = lineParts.reduce((acc: string, value: string) => {
       if (value.length > acc.length) {
         return value;
@@ -386,15 +376,10 @@ export const formatLRECode = (
         lineParts,
         targetedLength,
         " ",
-        awaitingSemicolon === 0 &&
-          !nextPart.match(semicolonFillerBlockedNextPart),
+        false,
       );
     } else {
       lines[currentLine] += lineParts.join("");
-    }
-
-    if (foundSemicolon >= awaitingSemicolon) {
-      awaitingSemicolon = 0;
     }
 
     currentLinePart++;
