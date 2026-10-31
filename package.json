@@ -1,4 +1,5 @@
 {
+  "$schema": "./.vscode/schemas/package.json",
   "name": "letsroleenhanced",
   "version": "7.0.2",
   "main": "src/lre.ts",
