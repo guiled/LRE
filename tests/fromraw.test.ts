@@ -1,4 +1,7 @@
-import { directToRaw } from "../src/globals/directToRaw";
+import {
+  directToRaw,
+  withoutFromRawWarnings,
+} from "../src/globals/directToRaw";
 
 const hasRawSubject = (raw: Record<string, unknown>): IHasRaw => ({
   raw: () => raw as unknown as LetsRole.DiceResult,
@@ -54,12 +57,43 @@ describe("directToRaw", () => {
 
     expect(lre.warn).toHaveBeenCalledTimes(1);
     expect(lre.warn).toHaveBeenCalledWith(
-      "The use of this property is unsure and can be broken in a future version of Let's Role",
+      "The get of _tags is unsure and can be broken in a future version of Let's Role",
     );
 
     (subject as unknown as { _tags: Array<string> })._tags = ["y"];
 
     expect(lre.warn).toHaveBeenCalledTimes(2);
+    expect(lre.warn).toHaveBeenLastCalledWith(
+      "The set of _tags is unsure and can be broken in a future version of Let's Role",
+    );
+  });
+
+  test("warned props are omitted from enumeration", () => {
+    const raw = { _tags: ["x"], title: "ok" };
+    const subject = hasRawSubject(raw);
+    directToRaw(subject, ["_tags"], true);
+    directToRaw(subject, ["title"], false);
+
+    expect(Object.keys(subject as object)).not.toContain("_tags");
+    expect(Object.keys(subject as object)).toContain("title");
+    expect(Object.getOwnPropertyNames(subject as object)).toContain("_tags");
+  });
+
+  test("does not warn while withoutFromRawWarnings is active", () => {
+    const raw = { _tags: ["x"] };
+    const subject = hasRawSubject(raw);
+    directToRaw(subject, ["_tags"], true);
+
+    withoutFromRawWarnings(() => {
+      void (subject as unknown as { _tags: Array<string> })._tags;
+      (subject as unknown as { _tags: Array<string> })._tags = ["y"];
+    });
+
+    expect(lre.warn).not.toHaveBeenCalled();
+
+    void (subject as unknown as { _tags: Array<string> })._tags;
+
+    expect(lre.warn).toHaveBeenCalledTimes(1);
   });
 
   test("does not warn when logWarning is false", () => {

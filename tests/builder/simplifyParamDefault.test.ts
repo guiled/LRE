@@ -101,7 +101,7 @@ describe("simplifyParamDefault", () => {
 
   test("strips undefined third argument from def calls in postCleanup", () => {
     const input =
-      "var value = def(arguments, 0, undefined), other = def(arguments, 1, \"\"); return value;";
+      'var value = def(arguments, 0, undefined), other = def(arguments, 1, ""); return value;';
 
     const output = runPostCleanup(input);
 

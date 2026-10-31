@@ -25,18 +25,14 @@ const runTransform = (code: string, config = transformForLR): string => {
 
 describe("noRestElement", () => {
   test("uses Afr(arguments) without slice(0) for rest-only functions", () => {
-    const output = runTransform(
-      "function tag(...tags) { return tags; }",
-    );
+    const output = runTransform("function tag(...tags) { return tags; }");
 
     expect(output).toMatch(/var \w+ = Afr\(arguments\)/);
     expect(output).not.toContain(".slice(0)");
   });
 
   test("keeps slice offset when named params precede rest", () => {
-    const output = runTransform(
-      "function fn(a, b, ...rest) { return rest; }",
-    );
+    const output = runTransform("function fn(a, b, ...rest) { return rest; }");
 
     expect(output).toContain("Afr(arguments).slice(2)");
   });

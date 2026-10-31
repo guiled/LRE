@@ -396,6 +396,7 @@ export const testGlobals = {
         const fn = function (): number {
           return 1;
         };
+
         lreExpect(typeof fn).toBe("function");
         lreExpect(fn instanceof RegExp).toBe(false);
         lreExpect(fn instanceof Date).toBe(false);

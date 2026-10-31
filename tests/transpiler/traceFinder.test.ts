@@ -1,7 +1,4 @@
-import {
-  findTestFailureLocation,
-  findTestTraceLocation,
-} from "./traceFinder";
+import { findTestFailureLocation, findTestTraceLocation } from "./traceFinder";
 
 const loc = (line: number): LetsRole.ErrorTrace["loc"] => ({
   start: { line, column: 0 },

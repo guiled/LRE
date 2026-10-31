@@ -66,6 +66,7 @@ describe("DiceResult.getTaggedResults", () => {
 
     test("does not match partial tag strings", () => {
       const root = new DiceResult(loadDiceResultFixture("many-different-tags"));
+
       /* cspell:disable This is voluntary misspelling */
       expect(root.getTaggedResults("skil")).toEqual([]);
       expect(root.getTaggedResults("damag")).toEqual([]);

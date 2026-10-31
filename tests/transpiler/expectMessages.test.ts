@@ -8,7 +8,7 @@ describe("formatExpectFailureMessage", () => {
   });
 
   it("uses the expected call count for toHaveBeenCalledTimes message templates", () => {
-    const fn = () => undefined;
+    const fn = (): void => undefined;
 
     expect(
       formatExpectFailureMessage(

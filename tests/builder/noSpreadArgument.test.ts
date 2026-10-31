@@ -22,7 +22,9 @@ describe("noSpreadArgument", () => {
 
     expect(output).toMatch(/\.push\.apply\(\w+, \w+\)/);
     expect(output).not.toContain("apply.apply");
-    expect(output).not.toMatch(/\.apply\(\s*\w+\s*,\s*\[\]\.concat\(\[\s*\w+\s*\]/);
+    expect(output).not.toMatch(
+      /\.apply\(\s*\w+\s*,\s*\[\]\.concat\(\[\s*\w+\s*\]/,
+    );
   });
 
   test("fn(...args) uses null as apply receiver", () => {

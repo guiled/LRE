@@ -8,6 +8,7 @@ describe("formatLRECode", () => {
 
     for (let i = 0; i < 20; i++) {
       const formatted = formatLRECode(code, false);
+
       expect(formatted).not.toMatch(/i<e\.length;{2,}i\+\+/);
       expect(() => new Function(formatted)).not.toThrow();
     }

@@ -91,8 +91,7 @@ export const findTestTraceLocation = (
   }
 
   const runIdx = trace.findIndex(
-    (tr) =>
-      tr.type === "CallExpression" && isTestRunnerCall(getCalleeName(tr)),
+    (tr) => tr.type === "CallExpression" && isTestRunnerCall(getCalleeName(tr)),
   );
 
   if (runIdx > 0) {

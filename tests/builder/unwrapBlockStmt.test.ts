@@ -41,12 +41,15 @@ describe("unwrapBlockStmt", () => {
   });
 
   test("unwraps noCallInIf blocks", () => {
-    const input = "if (!lre.isObject(rowLeft)) { result[keyLeft] = rowLeft; return; }";
+    const input =
+      "if (!lre.isObject(rowLeft)) { result[keyLeft] = rowLeft; return; }";
 
     const output = runPostCleanup(input);
 
     expect(output).toMatch(/_c = !lre\.isObject\(rowLeft\); if \(_c\)/);
-    expect(output).not.toMatch(/\{\s*(const|var) _c = !lre\.isObject\(rowLeft\)/);
+    expect(output).not.toMatch(
+      /\{\s*(const|var) _c = !lre\.isObject\(rowLeft\)/,
+    );
   });
 
   test("keeps blocks with local function declarations", () => {
@@ -56,7 +59,9 @@ describe("unwrapBlockStmt", () => {
     const output = runPostCleanup(input);
 
     expect(output).toContain("var recursive = function recursive()");
-    expect(output).toMatch(/var recursive = function recursive\(\) \{ return 1; \};/);
+    expect(output).toMatch(
+      /var recursive = function recursive\(\) \{ return 1; \};/,
+    );
   });
 
   test("unwraps nested redundant blocks", () => {

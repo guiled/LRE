@@ -31,6 +31,7 @@ describe("omit undefined prop init", () => {
     `);
 
     expectNoUndefinedPropInits(output);
+
     expect(output).toContain("this.title = raw.title");
     expect(output).toContain("this.expression = raw.expression");
   });
@@ -45,6 +46,7 @@ describe("omit undefined prop init", () => {
     `);
 
     expectNoUndefinedPropInits(output);
+
     expect(output).toContain('this.name = "A"');
     expect(output).not.toContain("this.empty");
     expect(output).not.toContain("this.cleared");
@@ -78,6 +80,7 @@ describe("omit undefined prop init", () => {
     `);
 
     expectNoUndefinedPropInits(output);
+
     expect(output).toContain('this.c = "ok"');
     expect(output).toContain('this.a = "x"');
     expect(output).toContain("this.b = 2");
@@ -109,6 +112,7 @@ describe("omit undefined prop init", () => {
     `);
 
     expectNoUndefinedPropInits(output);
+
     expect(output).toContain('this.name = "A"');
   });
 
@@ -122,6 +126,7 @@ describe("omit undefined prop init", () => {
     `);
 
     expectNoUndefinedPropInits(output);
+
     expect(output).not.toMatch(/if \(!__declDone\) \{ this\./);
   });
 

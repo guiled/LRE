@@ -39,6 +39,7 @@ export default tsESlint.config(
         "error",
         { blankLine: "always", prev: "*", next: ["block-like", "function"] },
         { blankLine: "always", prev: ["block-like", "function"], next: "*" },
+        { blankLine: "any", prev: "export", next: "export" },
       ],
       "@stylistic/lines-between-class-members": [
         "error",
