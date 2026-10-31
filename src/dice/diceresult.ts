@@ -3,6 +3,7 @@ import { FromRaw } from "../annotations/fromRaw";
 // ts-unused-exports:disable-next-line
 export class DiceResult implements IHasRaw<LetsRole.DiceResult>, LREDiceResult {
   #raw: LetsRole.DiceResult;
+  #taggedResultsCache: BasicObject<Array<DiceResult>> | undefined;
 
   @FromRaw(true)
   _children: Array<any> | undefined;
@@ -107,5 +108,116 @@ export class DiceResult implements IHasRaw<LetsRole.DiceResult>, LREDiceResult {
 
   containsTag(tag: string): boolean {
     return this.#raw.containsTag(tag);
+  }
+
+  getTaggedResults(tag: string): Array<DiceResult>;
+  getTaggedResults(pattern: RegExp): Array<DiceResult>;
+  getTaggedResults(matcher: string | RegExp): Array<DiceResult> {
+    this.#ensureTaggedResultsCache();
+    const index = this.#taggedResultsCache!;
+
+    if (typeof matcher === "string") {
+      const found = index[matcher];
+
+      return found ? found.slice() : [];
+    }
+
+    const results: Array<DiceResult> = [];
+    const allTagsList = this.allTags ?? [];
+
+    for (let i = 0; i < allTagsList.length; i++) {
+      const tag = allTagsList[i];
+
+      if (!matcher.test(tag)) {
+        continue;
+      }
+
+      const nodes = index[tag];
+
+      if (!nodes) {
+        continue;
+      }
+
+      for (let j = 0; j < nodes.length; j++) {
+        results.push(nodes[j]);
+      }
+    }
+
+    return results;
+  }
+
+  getTaggedValues(tag: string): Array<number>;
+  getTaggedValues(pattern: RegExp): Array<number>;
+  getTaggedValues(matcher: string | RegExp): Array<number> {
+    return (
+      this.getTaggedResults as (matcher: string | RegExp) => Array<DiceResult>
+    )(matcher).map((node) => node.total);
+  }
+
+  #ensureTaggedResultsCache(): void {
+    if (this.#taggedResultsCache !== undefined) {
+      return;
+    }
+
+    const index: BasicObject<Array<DiceResult>> = {};
+    const allTagsList = this.allTags ?? [];
+
+    for (let i = 0; i < allTagsList.length; i++) {
+      index[allTagsList[i]] = [];
+    }
+
+    collectTaggedNodes(this, index, []);
+    this.#taggedResultsCache = index;
+  }
+
+  log(): void {
+    lre.log(this.#raw);
+  }
+}
+
+function directTags(tags: Array<string> | null | undefined): Array<string> {
+  if (!tags || !tags.length) {
+    return [];
+  }
+
+  return tags;
+}
+
+function collectTaggedNodes(
+  node: DiceResult,
+  index: BasicObject<Array<DiceResult>>,
+  visited: Array<LetsRole.DiceResult>,
+): void {
+  const raw = node.raw();
+
+  if (visited.indexOf(raw) !== -1) {
+    return;
+  }
+
+  visited.push(raw);
+
+  const tags = directTags(node.tags);
+
+  for (let i = 0; i < tags.length; i++) {
+    const tag = tags[i];
+    const bucket = index[tag];
+
+    if (bucket) {
+      bucket.push(node);
+    }
+  }
+
+  const childList = node.children;
+
+  for (let i = 0; i < childList.length; i++) {
+    collectTaggedNodes(childList[i], index, visited);
+  }
+
+  if (node.left) {
+    collectTaggedNodes(node.left, index, visited);
+  }
+
+  if (node.right) {
+    collectTaggedNodes(node.right, index, visited);
   }
 }

@@ -1,0 +1,70 @@
+{
+  "title": "",
+  "expression": "skill + damage + sheet id",
+  "visibility": "visible",
+  "type": "number",
+  "total": 19,
+  "tags": [],
+  "allTags": ["skill", "damage", "ID_12345", "ID_67890"],
+  "all": [],
+  "children": [
+    {
+      "title": "",
+      "expression": "",
+      "visibility": "visible",
+      "type": "number",
+      "total": 10,
+      "tags": ["skill"],
+      "allTags": [],
+      "all": [],
+      "children": []
+    },
+    {
+      "title": "",
+      "expression": "",
+      "visibility": "visible",
+      "type": "dice",
+      "total": 8,
+      "tags": ["damage"],
+      "allTags": [],
+      "all": [
+        { "dimension": 6, "value": 3, "discarded": false },
+        { "dimension": 6, "value": 5, "discarded": false }
+      ],
+      "values": [3, 5],
+      "dimension": 6,
+      "size": 2,
+      "children": []
+    },
+    {
+      "title": "",
+      "expression": "",
+      "visibility": "visible",
+      "type": "number",
+      "total": 1,
+      "tags": ["ID_12345"],
+      "allTags": [],
+      "all": [],
+      "children": []
+    },
+    {
+      "title": "",
+      "expression": "",
+      "visibility": "visible",
+      "type": "number",
+      "total": 2,
+      "tags": ["ID_67890"],
+      "allTags": [],
+      "all": [],
+      "children": []
+    }
+  ],
+  "size": null,
+  "dimension": null,
+  "values": null,
+  "discarded": [],
+  "left": null,
+  "right": null,
+  "success": null,
+  "failure": null
+}

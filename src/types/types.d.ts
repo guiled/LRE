@@ -227,6 +227,10 @@ declare namespace LetsRole {
     success: number | null;
     failure: number | null;
     containsTag(tag: string): boolean;
+    getTaggedResults(tag: string): Array<IDiceResult>;
+    getTaggedResults(pattern: RegExp): Array<IDiceResult>;
+    getTaggedValues(tag: string): Array<number>;
+    getTaggedValues(pattern: RegExp): Array<number>;
   }
 
   interface ComparisonDiceResult<T> extends DiceResultDefault<T> {

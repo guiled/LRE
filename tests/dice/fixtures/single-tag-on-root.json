@@ -1,0 +1,452 @@
+{
+  "_children": [],
+  "_dice": [
+    {
+      "dimension": 6,
+      "value": 4,
+      "discarded": false
+    },
+    {
+      "dimension": 6,
+      "value": 2,
+      "discarded": false
+    },
+    {
+      "dimension": 6,
+      "value": 3,
+      "discarded": false
+    },
+    {
+      "dimension": 6,
+      "value": 2,
+      "discarded": false
+    }
+  ],
+  "_expression": "(2d6+2d6)[a]",
+  "_raw": {
+    "type": "number",
+    "total": 11,
+    "tags": ["a"],
+    "children": [
+      {
+        "type": "number",
+        "total": 11,
+        "tags": null,
+        "children": [
+          {
+            "type": "dice",
+            "values": [4, 2],
+            "discarded": [],
+            "total": 6,
+            "size": 2,
+            "dimension": 6,
+            "tags": [],
+            "children": [
+              {
+                "type": "number",
+                "total": 2,
+                "tags": null,
+                "children": []
+              },
+              {
+                "type": "number",
+                "total": 6,
+                "tags": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "type": "dice",
+            "values": [3, 2],
+            "discarded": [],
+            "total": 5,
+            "size": 2,
+            "dimension": 6,
+            "tags": [],
+            "children": [
+              {
+                "type": "number",
+                "total": 2,
+                "tags": null,
+                "children": []
+              },
+              {
+                "type": "number",
+                "total": 6,
+                "tags": null,
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "_hasExtractedChildren": false,
+  "_hasExtractedDice": true,
+  "_hasExtractedTags": false,
+  "_tags": [],
+  "_visibility": "visible",
+  "expression": "(2d6+2d6)[a]",
+  "visibility": "visible",
+  "type": "number",
+  "total": 11,
+  "tags": ["a"],
+  "allTags": ["a"],
+  "all": [
+    {
+      "dimension": 6,
+      "value": 4,
+      "discarded": false
+    },
+    {
+      "dimension": 6,
+      "value": 2,
+      "discarded": false
+    },
+    {
+      "dimension": 6,
+      "value": 3,
+      "discarded": false
+    },
+    {
+      "dimension": 6,
+      "value": 2,
+      "discarded": false
+    }
+  ],
+  "children": [
+    {
+      "_children": [],
+      "_dice": [],
+      "_raw": {
+        "type": "number",
+        "total": 11,
+        "tags": null,
+        "children": [
+          {
+            "type": "dice",
+            "values": [4, 2],
+            "discarded": [],
+            "total": 6,
+            "size": 2,
+            "dimension": 6,
+            "tags": [],
+            "children": [
+              {
+                "type": "number",
+                "total": 2,
+                "tags": null,
+                "children": []
+              },
+              {
+                "type": "number",
+                "total": 6,
+                "tags": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "type": "dice",
+            "values": [3, 2],
+            "discarded": [],
+            "total": 5,
+            "size": 2,
+            "dimension": 6,
+            "tags": [],
+            "children": [
+              {
+                "type": "number",
+                "total": 2,
+                "tags": null,
+                "children": []
+              },
+              {
+                "type": "number",
+                "total": 6,
+                "tags": null,
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "_hasExtractedChildren": false,
+      "_hasExtractedDice": false,
+      "_hasExtractedTags": false,
+      "_tags": [],
+      "type": "number",
+      "total": 11,
+      "tags": null,
+      "allTags": [],
+      "all": [
+        {
+          "dimension": 6,
+          "value": 4,
+          "discarded": false
+        },
+        {
+          "dimension": 6,
+          "value": 2,
+          "discarded": false
+        },
+        {
+          "dimension": 6,
+          "value": 3,
+          "discarded": false
+        },
+        {
+          "dimension": 6,
+          "value": 2,
+          "discarded": false
+        }
+      ],
+      "children": [
+        {
+          "_children": [],
+          "_dice": [],
+          "_raw": {
+            "type": "dice",
+            "values": [4, 2],
+            "discarded": [],
+            "total": 6,
+            "size": 2,
+            "dimension": 6,
+            "tags": [],
+            "children": [
+              {
+                "type": "number",
+                "total": 2,
+                "tags": null,
+                "children": []
+              },
+              {
+                "type": "number",
+                "total": 6,
+                "tags": null,
+                "children": []
+              }
+            ]
+          },
+          "_hasExtractedChildren": false,
+          "_hasExtractedDice": false,
+          "_hasExtractedTags": false,
+          "_tags": [],
+          "type": "dice",
+          "total": 6,
+          "tags": [],
+          "allTags": [],
+          "all": [
+            {
+              "dimension": 6,
+              "value": 4,
+              "discarded": false
+            },
+            {
+              "dimension": 6,
+              "value": 2,
+              "discarded": false
+            }
+          ],
+          "children": [
+            {
+              "_children": [],
+              "_dice": [],
+              "_raw": {
+                "type": "number",
+                "total": 2,
+                "tags": null,
+                "children": []
+              },
+              "_hasExtractedChildren": false,
+              "_hasExtractedDice": false,
+              "_hasExtractedTags": false,
+              "_tags": [],
+              "type": "number",
+              "total": 2,
+              "tags": null,
+              "allTags": [],
+              "all": [],
+              "children": [],
+              "size": null,
+              "dimension": null,
+              "values": null,
+              "discarded": null,
+              "left": null,
+              "right": null,
+              "success": null,
+              "failure": null
+            },
+            {
+              "_children": [],
+              "_dice": [],
+              "_raw": {
+                "type": "number",
+                "total": 6,
+                "tags": null,
+                "children": []
+              },
+              "_hasExtractedChildren": false,
+              "_hasExtractedDice": false,
+              "_hasExtractedTags": false,
+              "_tags": [],
+              "type": "number",
+              "total": 6,
+              "tags": null,
+              "allTags": [],
+              "all": [],
+              "children": [],
+              "size": null,
+              "dimension": null,
+              "values": null,
+              "discarded": null,
+              "left": null,
+              "right": null,
+              "success": null,
+              "failure": null
+            }
+          ],
+          "size": 2,
+          "dimension": 6,
+          "values": [4, 2],
+          "discarded": [],
+          "left": null,
+          "right": null,
+          "success": null,
+          "failure": null
+        },
+        {
+          "_children": [],
+          "_dice": [],
+          "_raw": {
+            "type": "dice",
+            "values": [3, 2],
+            "discarded": [],
+            "total": 5,
+            "size": 2,
+            "dimension": 6,
+            "tags": [],
+            "children": [
+              {
+                "type": "number",
+                "total": 2,
+                "tags": null,
+                "children": []
+              },
+              {
+                "type": "number",
+                "total": 6,
+                "tags": null,
+                "children": []
+              }
+            ]
+          },
+          "_hasExtractedChildren": false,
+          "_hasExtractedDice": false,
+          "_hasExtractedTags": false,
+          "_tags": [],
+          "type": "dice",
+          "total": 5,
+          "tags": [],
+          "allTags": [],
+          "all": [
+            {
+              "dimension": 6,
+              "value": 3,
+              "discarded": false
+            },
+            {
+              "dimension": 6,
+              "value": 2,
+              "discarded": false
+            }
+          ],
+          "children": [
+            {
+              "_children": [],
+              "_dice": [],
+              "_raw": {
+                "type": "number",
+                "total": 2,
+                "tags": null,
+                "children": []
+              },
+              "_hasExtractedChildren": false,
+              "_hasExtractedDice": false,
+              "_hasExtractedTags": false,
+              "_tags": [],
+              "type": "number",
+              "total": 2,
+              "tags": null,
+              "allTags": [],
+              "all": [],
+              "children": [],
+              "size": null,
+              "dimension": null,
+              "values": null,
+              "discarded": null,
+              "left": null,
+              "right": null,
+              "success": null,
+              "failure": null
+            },
+            {
+              "_children": [],
+              "_dice": [],
+              "_raw": {
+                "type": "number",
+                "total": 6,
+                "tags": null,
+                "children": []
+              },
+              "_hasExtractedChildren": false,
+              "_hasExtractedDice": false,
+              "_hasExtractedTags": false,
+              "_tags": [],
+              "type": "number",
+              "total": 6,
+              "tags": null,
+              "allTags": [],
+              "all": [],
+              "children": [],
+              "size": null,
+              "dimension": null,
+              "values": null,
+              "discarded": null,
+              "left": null,
+              "right": null,
+              "success": null,
+              "failure": null
+            }
+          ],
+          "size": 2,
+          "dimension": 6,
+          "values": [3, 2],
+          "discarded": [],
+          "left": null,
+          "right": null,
+          "success": null,
+          "failure": null
+        }
+      ],
+      "size": null,
+      "dimension": null,
+      "values": null,
+      "discarded": null,
+      "left": null,
+      "right": null,
+      "success": null,
+      "failure": null
+    }
+  ],
+  "size": null,
+  "dimension": null,
+  "values": null,
+  "discarded": null,
+  "left": null,
+  "right": null,
+  "success": null,
+  "failure": null
+}

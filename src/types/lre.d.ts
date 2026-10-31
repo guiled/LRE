@@ -11,8 +11,12 @@ declare interface ILREi18n {
   getUntranslated(): string[];
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-declare interface LREDiceResult extends LetsRole.GenericDiceResult<ILREDiceResult> {}
+declare interface LREDiceResult extends LetsRole.GenericDiceResult<ILREDiceResult> {
+  getTaggedResults(tag: string): Array<LREDiceResult>;
+  getTaggedResults(pattern: RegExp): Array<LREDiceResult>;
+  getTaggedValues(tag: string): Array<number>;
+  getTaggedValues(pattern: RegExp): Array<number>;
+}
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface ILREDiceResult extends LREDiceResult {}
 

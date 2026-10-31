@@ -2,7 +2,7 @@ import { DirectDataProvider, ValueGetterSetter } from "./dataprovider";
 import { LREi18n } from "./globals/i18n";
 import { Logger } from "./log";
 import { SheetProxy } from "./proxy/sheet";
-import { DiceResult } from "./roll/diceresult";
+import { DiceResult } from "./dice/diceresult";
 import { Sheet } from "./sheet";
 import { SheetCollection } from "./sheet/collection";
 import { DataBatcher } from "./sheet/databatcher";
@@ -101,25 +101,29 @@ export class LRE extends Logger implements ILRE {
       rawResult: LetsRole.DiceResult,
       rawCallback: LetsRole.InitRollDefineSheetCallback,
     ): void => {
-      const result = new DiceResult(rawResult);
+      try {
+        const result = new DiceResult(rawResult);
 
-      callback(
-        result,
-        (sheetId: LetsRole.SheetID, cb: (sheet: ISheet) => void) => {
-          rawCallback(sheetId, (rawSheet: LetsRole.Sheet) => {
-            const _sheet = this.getSheet(rawSheet);
+        callback(
+          result,
+          (sheetId: LetsRole.SheetID, cb: (sheet: ISheet) => void) => {
+            rawCallback(sheetId, (rawSheet: LetsRole.Sheet) => {
+              const _sheet = this.getSheet(rawSheet);
 
-            try {
-              LRE_DEBUG && this.trace("Run initRoll sheet init");
-              cb(_sheet);
-              LRE_DEBUG && this.pop();
-            } catch (e: unknown) {
-              this.error("[Init] Unhandled error : " + e);
-              LRE_DEBUG && this.pop();
-            }
-          });
-        },
-      );
+              try {
+                LRE_DEBUG && this.trace("Run initRoll sheet init");
+                cb(_sheet);
+                LRE_DEBUG && this.pop();
+              } catch (e: unknown) {
+                this.error("[Init] Unhandled error : " + e);
+                LRE_DEBUG && this.pop();
+              }
+            });
+          },
+        );
+      } catch (e) {
+        this.error("[InitRoll] Unhandled error : " + e);
+      }
     };
   }
 
