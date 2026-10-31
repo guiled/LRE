@@ -1,4 +1,5 @@
 import type { Mock } from "vitest";
+import { directToRaw } from "../../src/globals/directToRaw";
 import { Logger } from "../../src/log";
 import { LRE } from "../../src/lre";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
@@ -186,6 +187,28 @@ describe("Log many args", () => {
     expect((global.log as Mock).mock.calls[0][0]).toContain(firstParam);
     expect((global.log as Mock).mock.calls[1][0]).toContain(secondParam);
     expect((global.log as Mock).mock.calls[2][0]).toContain(thirdParam);
+  });
+
+  test("does not emit FromRaw warnings while logging objects", () => {
+    const raw = { _tags: ["x"] };
+    const subject = {
+      raw: () => raw as unknown as LetsRole.DiceResult,
+      refreshRaw: () => raw as unknown as LetsRole.DiceResult,
+    } as IHasRaw;
+    directToRaw(subject, ["_tags"], true);
+    const lreWarn = vi.fn();
+    global.lre = { warn: lreWarn } as unknown as typeof lre;
+
+    global.log = vi.fn((input: unknown) => {
+      if (typeof input === "object" && input !== null) {
+        JSON.stringify(input);
+      }
+    }) as typeof log;
+
+    logger.setLogLevel("all");
+    logger.log(subject);
+
+    expect(lreWarn).not.toHaveBeenCalled();
   });
 
   test("Log with non string args", () => {

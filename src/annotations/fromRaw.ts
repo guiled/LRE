@@ -1,5 +1,4 @@
 import { directToRaw } from "../globals/directToRaw";
-
 const resolveLogWarning = (value: unknown): boolean => value === true;
 
 const registerFromRaw = (

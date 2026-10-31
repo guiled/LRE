@@ -1,3 +1,5 @@
+import { withoutFromRawWarnings } from "./directToRaw";
+
 const _stringify = function <T>(
   obj: T,
   indent: string | boolean = "",
@@ -90,4 +92,4 @@ const _stringify = function <T>(
 };
 
 export const stringify = (obj: unknown, indent?: boolean): string | undefined =>
-  _stringify(obj, indent ?? "");
+  withoutFromRawWarnings(() => _stringify(obj, indent ?? ""));
