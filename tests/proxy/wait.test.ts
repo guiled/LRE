@@ -47,4 +47,24 @@ describe("Wait proxy", () => {
 
     expect(cb).not.toHaveBeenCalled();
   });
+
+  test("logs unhandled callback errors via lre.error", () => {
+    vi.spyOn(lre, "error");
+    const err = new Error("wait callback failed");
+    const throwingCb = vi.fn(() => {
+      throw err;
+    });
+    const subject = registerLreWait(context, wait);
+
+    subject(100, throwingCb);
+
+    expect(lre.error).not.toHaveBeenCalled();
+
+    mockedWaitDefs.itHasWaitedEverything();
+
+    expect(throwingCb).toHaveBeenCalled();
+    expect(lre.error).toHaveBeenCalledWith(
+      `[Wait] Unhandled error : ${err}`,
+    );
+  });
 });
