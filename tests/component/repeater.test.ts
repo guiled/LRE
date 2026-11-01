@@ -618,6 +618,74 @@ describe("Repeater setMoveComponents", () => {
     warnSpy.mockRestore();
   });
 
+  test("logs warning when configuration entry has invalid component ID", () => {
+    const warnSpy = vi.spyOn(lre, "warn");
+    const onSpy = vi.spyOn(repeater, "on");
+
+    repeater.setMoveComponents({
+      up: 123 as unknown as LetsRole.ComponentID,
+    });
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      "setMoveComponents called with invalid component ID",
+    );
+    expect(
+      onSpy.mock.calls.filter(([event]) => event === "click:__lre__:move"),
+    ).toHaveLength(0);
+
+    warnSpy.mockRestore();
+    onSpy.mockRestore();
+  });
+
+  test("logs warning when configuration entry has invalid move action", () => {
+    const warnSpy = vi.spyOn(lre, "warn");
+    const onSpy = vi.spyOn(repeater, "on");
+
+    repeater.setMoveComponents({
+      sideways: "iconUp",
+    } as unknown as Parameters<Repeater["setMoveComponents"]>[0]);
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      "setMoveComponents called with invalid move action",
+    );
+    expect(
+      onSpy.mock.calls.filter(([event]) => event === "click:__lre__:move"),
+    ).toHaveLength(0);
+
+    warnSpy.mockRestore();
+    onSpy.mockRestore();
+  });
+
+  test("registers move handler that invokes moveEntryUp with clicked entry index", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+    });
+    itHasWaitedEverything();
+
+    const moveSpy = vi.spyOn(repeater, "moveEntryUp");
+    const onSpy = vi.spyOn(repeater, "on");
+    repeater.setMoveComponents({ up: "iconUp" });
+
+    const moveClickCall = onSpy.mock.calls.find(
+      ([event, subComponent]) =>
+        event === "click:__lre__:move" && subComponent === "iconUp",
+    );
+
+    expect(moveClickCall).toBeDefined();
+
+    const moveHandler = moveClickCall![2] as (cmp: Component) => void;
+    const entry = repeater.find("b") as Entry;
+    const icon = entry.find("iconUp") as Component;
+
+    moveHandler(icon);
+
+    expect(moveSpy).toHaveBeenCalledWith("b");
+
+    onSpy.mockRestore();
+    moveSpy.mockRestore();
+  });
+
   test("can be called with up configuration", () => {
     expect(() => {
       repeater.setMoveComponents({ up: "iconUp" });

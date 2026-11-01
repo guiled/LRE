@@ -413,10 +413,10 @@ export class Repeater extends Component<
     this.#moveActionCallbacks = Object.values(config);
 
     const movers: EntryMoveActionCallbacks = {
-      up: this.moveEntryUp,
-      down: this.moveEntryDown,
-      top: this.moveEntryTop,
-      bottom: this.moveEntryBottom,
+      up: this.moveEntryUp.bind(this),
+      down: this.moveEntryDown.bind(this),
+      top: this.moveEntryTop.bind(this),
+      bottom: this.moveEntryBottom.bind(this),
     };
 
     each(
