@@ -27,6 +27,7 @@ export const bootstrap = (): ProxyModeHandler => {
   virtualCall = globals.virtualCall;
   mt_rand = globals.mt_rand;
   dTR = globals.dTR;
+  fFR = globals.fFR;
 
   const firstLaunch = (ctx: ProxyModeHandler): void => {
     LRE_DEBUG && lre.trace("LRE first launch bootstrap");

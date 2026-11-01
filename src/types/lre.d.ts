@@ -202,6 +202,7 @@ declare module "lre" {
     var virtualCall: <T>(cb: () => T) => T;
     var mt_rand: (min: number, max: number) => number;
     var dTR: (obj: IHasRaw, props: Array<string>, logWarning: boolean) => void;
+    var fFR: <T extends { raw(): object }>(obj: T, methods: Array<string>) => T;
   }
 }
 

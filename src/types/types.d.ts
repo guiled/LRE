@@ -329,7 +329,7 @@ declare namespace LetsRole {
     expladd: (...explodes: number[]) => DiceBuilder;
     mul: (multiplier: number) => DiceBuilder;
     reroll: (...reroll: number[]) => DiceBuilder;
-    rerolln: (...reroll: number[], max) => DiceBuilder;
+    rerolln: (...args: [...rerolls: number[], max: number]) => DiceBuilder;
     ternary: (then: string, _else: string) => DiceBuilder;
   };
 

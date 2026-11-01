@@ -4,8 +4,8 @@ use swc_core::ecma::visit::{VisitMut, VisitMutWith};
 
 use crate::utils::{
     array_expr, bool_lit, call_expr, call_with_this, const_decl, expr_or_spread, fn_apply,
-    func_expr, iife, ident, ident_expr, let_decl, member_expr, object_assign_call, return_stmt,
-    str_lit, this_box, this_expr, undefined_expr, unary_not,
+    func_expr, iife, ident, ident_expr, let_decl, member_expr, member_expr_from_expr,
+    object_assign_call, return_stmt, str_lit, this_box, this_expr, undefined_expr, unary_not,
 };
 
 const PARENT_NAME: &str = "__super";
@@ -283,7 +283,20 @@ impl ClassToFunction {
         mut method_function: Expr,
         key_index: usize,
     ) -> (Expr, Option<MemberDeconstruction>) {
-        if function.decorators.is_empty() {
+        let (uses_fluent_from_raw, remaining_decorators) =
+            Self::split_fluent_from_raw_decorators(&function.decorators);
+
+        if uses_fluent_from_raw {
+            if let Some(method_name) = Self::prop_key_to_string(method_key) {
+                method_function = func_expr(
+                    span,
+                    function.params.clone(),
+                    Self::fluent_from_raw_body(span, &method_name),
+                );
+            }
+        }
+
+        if remaining_decorators.is_empty() {
             return (method_function, None);
         }
 
@@ -296,7 +309,7 @@ impl ClassToFunction {
         let context_call =
             call_expr(span, ident_expr(span, "ct"), vec![Self::expr_or_spread(context_name)]);
 
-        for decorator in function.decorators.iter().rev() {
+        for decorator in remaining_decorators.iter().rev() {
             method_function = call_with_this(
                 span,
                 *decorator.expr.clone(),
@@ -388,6 +401,10 @@ impl ClassToFunction {
         is_private_method: bool,
         private_name: Option<&PrivateName>,
     ) -> Vec<MemberDeconstruction> {
+        if Self::only_fluent_from_raw_decorators(&function.decorators) {
+            return vec![];
+        }
+
         let is_private = is_private_method || accessibility == Some(Accessibility::Private);
         let method_key = Self::method_key(key, span);
 
@@ -444,6 +461,134 @@ impl ClassToFunction {
         }
 
         result
+    }
+
+    fn fluent_from_raw_decorator_name(expr: &Expr) -> Option<&str> {
+        match expr {
+            Expr::Ident(i) => Some(i.sym.as_str()),
+            Expr::Call(call) => {
+                let Callee::Expr(callee) = &call.callee else {
+                    return None;
+                };
+                match callee.as_ref() {
+                    Expr::Ident(i) => Some(i.sym.as_str()),
+                    _ => None,
+                }
+            }
+            Expr::Paren(p) => Self::fluent_from_raw_decorator_name(p.expr.as_ref()),
+            Expr::TsAs(ts) => Self::fluent_from_raw_decorator_name(ts.expr.as_ref()),
+            Expr::TsTypeAssertion(ts) => Self::fluent_from_raw_decorator_name(ts.expr.as_ref()),
+            _ => None,
+        }
+    }
+
+    fn is_fluent_from_raw_expr(expr: &Expr) -> bool {
+        Self::fluent_from_raw_decorator_name(expr) == Some("FluentFromRaw")
+    }
+
+    fn split_fluent_from_raw_decorators(
+        decorators: &[Decorator],
+    ) -> (bool, Vec<Decorator>) {
+        let mut uses_fluent_from_raw = false;
+        let remaining = decorators
+            .iter()
+            .filter(|decorator| {
+                if Self::is_fluent_from_raw_expr(&decorator.expr) {
+                    uses_fluent_from_raw = true;
+                    false
+                } else {
+                    true
+                }
+            })
+            .cloned()
+            .collect();
+        (uses_fluent_from_raw, remaining)
+    }
+
+    fn only_fluent_from_raw_decorators(decorators: &[Decorator]) -> bool {
+        !decorators.is_empty()
+            && decorators
+                .iter()
+                .all(|decorator| Self::is_fluent_from_raw_expr(&decorator.expr))
+    }
+
+    fn fluent_from_raw_body(span: Span, method_name: &str) -> Vec<Stmt> {
+        let target_id = ident(span, "__fluentTarget");
+        let raw_call = call_expr(
+            span,
+            member_expr_from_expr(span, this_expr(span), "raw"),
+            vec![],
+        );
+        let method_ref = member_expr(
+            span,
+            Box::new(Expr::Ident(target_id.clone())),
+            method_name,
+        );
+        let forward_call = call_expr(
+            span,
+            member_expr_from_expr(span, method_ref, "apply"),
+            vec![
+                expr_or_spread(Expr::Ident(target_id.clone())),
+                expr_or_spread(ident_expr(span, "arguments")),
+            ],
+        );
+
+        vec![
+            let_decl(span, "__fluentTarget", Some(raw_call)),
+            Stmt::Expr(ExprStmt {
+                span,
+                expr: Box::new(forward_call),
+            }),
+            return_stmt(span, Some(this_expr(span))),
+        ]
+    }
+
+    fn collect_fluent_from_raw_members(class: &Class) -> Vec<String> {
+        class
+            .body
+            .iter()
+            .filter_map(|member| match member {
+                ClassMember::ClassProp(prop)
+                    if Self::only_fluent_from_raw_decorators(&prop.decorators) =>
+                {
+                    Self::prop_key_to_string(&prop.key)
+                }
+                ClassMember::Method(method)
+                    if Self::only_fluent_from_raw_decorators(&method.function.decorators) =>
+                {
+                    Self::prop_key_to_string(&method.key)
+                }
+                _ => None,
+            })
+            .collect()
+    }
+
+    fn fluent_to_raw_stmt(span: Span, methods: &[String]) -> Stmt {
+        let array_elements: Vec<Option<ExprOrSpread>> = methods
+            .iter()
+            .map(|method| Some(expr_or_spread(str_lit(span, method))))
+            .collect();
+
+        Stmt::Expr(ExprStmt {
+            span,
+            expr: Box::new(call_expr(
+                span,
+                ident_expr(span, "fFR"),
+                vec![
+                    expr_or_spread(this_expr(span)),
+                    expr_or_spread(array_expr(span, array_elements)),
+                ],
+            )),
+        })
+    }
+
+    fn build_fluent_from_raw_stmts(class: &Class, span: Span) -> Vec<Stmt> {
+        let methods = Self::collect_fluent_from_raw_members(class);
+        if methods.is_empty() {
+            return vec![];
+        }
+
+        vec![Self::fluent_to_raw_stmt(span, &methods)]
     }
 
     fn parse_from_raw_expr(expr: &Expr) -> Option<bool> {
@@ -563,6 +708,13 @@ impl ClassToFunction {
 
     fn deconstruct_prop(prop: &ClassProp) -> MemberDeconstruction {
         if Self::parse_from_raw_decorator(&prop.decorators).is_some() {
+            return MemberDeconstruction {
+                declarator: None,
+                assignment: MemberAssignment::None,
+            };
+        }
+
+        if Self::only_fluent_from_raw_decorators(&prop.decorators) {
             return MemberDeconstruction {
                 declarator: None,
                 assignment: MemberAssignment::None,
@@ -863,6 +1015,9 @@ impl ClassToFunction {
         ctor_parts
             .stmts
             .extend(Self::build_direct_to_raw_stmts(class, span));
+        ctor_parts
+            .stmts
+            .extend(Self::build_fluent_from_raw_stmts(class, span));
         let method_decls = Self::get_methods(class);
         let prop_decls = Self::get_props(class);
 

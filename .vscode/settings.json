@@ -46,6 +46,5 @@
       "severity": "off"
     }
   ],
-  "vitest.enable": true,
-  "vitest.commandLine": "yarn vitest"
+  "vitest.enable": true
 }

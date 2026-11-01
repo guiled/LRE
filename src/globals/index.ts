@@ -5,6 +5,7 @@ import { structuredClone } from "./structuredClone";
 import { throwError, newError } from "./throwError";
 import { virtualCall } from "./virtualcall";
 import { directToRaw } from "./directToRaw";
+import { fluentToRaw } from "./fluentToRaw";
 
 export const errorHandler = {
   throwError,
@@ -20,4 +21,5 @@ export const globals = {
   virtualCall,
   mt_rand,
   dTR: directToRaw,
+  fFR: fluentToRaw,
 };

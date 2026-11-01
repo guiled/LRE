@@ -13,3 +13,7 @@ global.dTR = undefined as unknown as (
   properties: Array<string>,
   logWarning: boolean,
 ) => void;
+global.fFR = undefined as unknown as <T extends { raw(): object }>(
+  obj: T,
+  methods: Array<string>,
+) => T;

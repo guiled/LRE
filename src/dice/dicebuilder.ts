@@ -1,3 +1,5 @@
+import { FluentFromRaw } from "../annotations/fluentFromRaw";
+
 export class DiceBuilder implements LetsRole.DiceBuilder {
   #raw: LetsRole.DiceBuilder;
 
@@ -11,102 +13,66 @@ export class DiceBuilder implements LetsRole.DiceBuilder {
     return this.#raw;
   }
 
-  add(value: number): DiceBuilder {
-    this.#raw.add(value);
-    return this;
-  }
+  @FluentFromRaw
+  add!: (_value: number) => DiceBuilder;
 
-  minus(value: number): DiceBuilder {
-    this.#raw.minus(value);
-    return this;
-  }
+  @FluentFromRaw
+  minus!: (_value: number) => DiceBuilder;
 
-  multiply(value: number): DiceBuilder {
-    this.#raw.multiply(value);
-    return this;
-  }
+  @FluentFromRaw
+  multiply!: (_value: number) => DiceBuilder;
 
-  divide(value: number): DiceBuilder {
-    this.#raw.divide(value);
-    return this;
-  }
+  @FluentFromRaw
+  divide!: (_value: number) => DiceBuilder;
 
-  tag(...tags: string[]): DiceBuilder {
-    this.#raw.tag(...tags);
-    return this;
-  }
+  @FluentFromRaw
+  tag!: (..._tags: string[]) => DiceBuilder;
 
-  compare(
-    type: LetsRole.DiceCompare,
-    right: number,
-    weights?: unknown,
-  ): DiceBuilder {
-    this.#raw.compare(type, right, weights);
-    return this;
-  }
+  @FluentFromRaw
+  compare!: (
+    _type: LetsRole.DiceCompare,
+    _right: number,
+    _weights?: unknown,
+  ) => DiceBuilder;
 
-  round(): DiceBuilder {
-    this.#raw.round();
-    return this;
-  }
+  @FluentFromRaw
+  round!: () => DiceBuilder;
 
-  ceil(): DiceBuilder {
-    this.#raw.ceil();
-    return this;
-  }
+  @FluentFromRaw
+  ceil!: () => DiceBuilder;
 
-  floor(): DiceBuilder {
-    this.#raw.floor();
-    return this;
-  }
+  @FluentFromRaw
+  floor!: () => DiceBuilder;
 
-  keeph(max: number): DiceBuilder {
-    this.#raw.keeph(max);
-    return this;
-  }
+  @FluentFromRaw
+  keeph!: (_max: number) => DiceBuilder;
 
-  keepl(max: number): DiceBuilder {
-    this.#raw.keepl(max);
-    return this;
-  }
+  @FluentFromRaw
+  keepl!: (_max: number) => DiceBuilder;
 
-  remh(max: number): DiceBuilder {
-    this.#raw.remh(max);
-    return this;
-  }
+  @FluentFromRaw
+  remh!: (_max: number) => DiceBuilder;
 
-  reml(max: number): DiceBuilder {
-    this.#raw.reml(max);
-    return this;
-  }
+  @FluentFromRaw
+  reml!: (_max: number) => DiceBuilder;
 
-  expl(...explodes: number[]): DiceBuilder {
-    this.#raw.expl(...explodes);
-    return this;
-  }
+  @FluentFromRaw
+  expl!: (..._explodes: number[]) => DiceBuilder;
 
-  expladd(...explodes: number[]): DiceBuilder {
-    this.#raw.expladd(...explodes);
-    return this;
-  }
+  @FluentFromRaw
+  expladd!: (..._explodes: number[]) => DiceBuilder;
 
-  mul(multiplier: number): DiceBuilder {
-    this.#raw.mul(multiplier);
-    return this;
-  }
+  @FluentFromRaw
+  mul!: (_multiplier: number) => DiceBuilder;
 
-  reroll(...reroll: number[]): DiceBuilder {
-    this.#raw.reroll(...reroll);
-    return this;
-  }
+  @FluentFromRaw
+  reroll!: (..._reroll: number[]) => DiceBuilder;
 
-  rerolln(...args: Parameters<LetsRole.DiceBuilder["rerolln"]>): DiceBuilder {
-    this.#raw.rerolln(...args);
-    return this;
-  }
+  @FluentFromRaw
+  rerolln!: (
+    ..._args: Parameters<LetsRole.DiceBuilder["rerolln"]>
+  ) => DiceBuilder;
 
-  ternary(then: string, _else: string): DiceBuilder {
-    this.#raw.ternary(then, _else);
-    return this;
-  }
+  @FluentFromRaw
+  ternary!: (_then: string, _else: string) => DiceBuilder;
 }

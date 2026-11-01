@@ -1,53 +1,52 @@
+import { FluentFromRaw } from "../annotations/fluentFromRaw";
+
+class LreRollBuilder {
+  #raw: LetsRole.RollBuilderInstance;
+  readonly #modeHandler: ProxyModeHandler;
+
+  constructor(
+    raw: LetsRole.RollBuilderInstance,
+    modeHandler: ProxyModeHandler,
+  ) {
+    this.#raw = raw;
+    this.#modeHandler = modeHandler;
+  }
+
+  raw(): LetsRole.RollBuilderInstance {
+    return this.#raw;
+  }
+
+  roll(): void {
+    if (this.#modeHandler.getMode() !== "virtual") {
+      this.#raw.roll();
+    }
+  }
+
+  @FluentFromRaw
+  expression!: (expr: string) => LreRollBuilder;
+
+  @FluentFromRaw
+  title!: (title: string) => LreRollBuilder;
+
+  @FluentFromRaw
+  visibility!: (visibility: LetsRole.RollVisibility) => LreRollBuilder;
+
+  @FluentFromRaw
+  addAction!: (title: string, callback: Callback) => LreRollBuilder;
+
+  @FluentFromRaw
+  removeAction!: (title: string) => LreRollBuilder;
+
+  @FluentFromRaw
+  onRoll!: (callback: (...args: unknown[]) => void) => LreRollBuilder;
+}
+
 export const registerLreRollBuilder = (
   modeHandler: ProxyModeHandler,
   initialRollBuilder: LetsRole.RollBuilder,
 ): typeof RollBuilder =>
-  class {
-    #raw: LetsRole.RollBuilderInstance;
-
+  class extends LreRollBuilder {
     constructor(sheet: unknown) {
-      this.#raw = new initialRollBuilder(sheet);
-    }
-
-    public roll(): void {
-      if (modeHandler.getMode() !== "virtual") {
-        this.#raw.roll();
-      }
-    }
-
-    public expression(expr: string): this {
-      this.#raw.expression(expr);
-
-      return this;
-    }
-
-    public title(title: string): this {
-      this.#raw.title(title);
-
-      return this;
-    }
-
-    public visibility(visibility: LetsRole.RollVisibility): this {
-      this.#raw.visibility(visibility);
-
-      return this;
-    }
-
-    public addAction(title: string, callback: Callback): this {
-      this.#raw.addAction(title, callback);
-
-      return this;
-    }
-
-    public removeAction(title: string): this {
-      this.#raw.removeAction(title);
-
-      return this;
-    }
-
-    public onRoll(callback: (...args: unknown[]) => void): this {
-      this.#raw.onRoll(callback);
-
-      return this;
+      super(new initialRollBuilder(sheet), modeHandler);
     }
   };

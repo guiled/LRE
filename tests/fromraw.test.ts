@@ -1,7 +1,37 @@
+import { FromRaw } from "../src/annotations/fromRaw";
+import * as directToRawModule from "../src/globals/directToRaw";
 import {
   directToRaw,
   withoutFromRawWarnings,
 } from "../src/globals/directToRaw";
+
+const createFieldDecoratorContext = (
+  name: string,
+): {
+  context: ClassFieldDecoratorContext<IHasRaw, unknown>;
+  initializers: Array<(this: IHasRaw) => void>;
+} => {
+  const initializers: Array<(this: IHasRaw) => void> = [];
+  const context = {
+    kind: "field" as const,
+    name,
+    static: false,
+    private: false,
+    access: {
+      has: (): boolean => false,
+      get: (): undefined => undefined,
+      set: (): void => {},
+    },
+    addInitializer(fn: (this: IHasRaw) => void): void {
+      initializers.push(fn);
+    },
+  };
+
+  return {
+    context: context as ClassFieldDecoratorContext<IHasRaw, unknown>,
+    initializers,
+  };
+};
 
 const hasRawSubject = (raw: Record<string, unknown>): IHasRaw => ({
   raw: () => raw as unknown as LetsRole.DiceResult,
@@ -119,5 +149,44 @@ describe("directToRaw", () => {
     raw.total = 20;
 
     expect((subject as unknown as { total: number }).total).toBe(20);
+  });
+});
+
+describe("FromRaw decorator", () => {
+  test("bare @FromRaw registers directToRaw without warnings", () => {
+    const directToRawSpy = vi.spyOn(directToRawModule, "directToRaw");
+    const { context, initializers } = createFieldDecoratorContext("_dice");
+
+    const result = FromRaw(context);
+
+    expect(result).toBeUndefined();
+    expect(initializers).toHaveLength(1);
+
+    const subject = hasRawSubject({ _dice: [1] });
+    initializers[0]!.call(subject);
+
+    expect(directToRawSpy).toHaveBeenCalledOnce();
+    expect(directToRawSpy).toHaveBeenCalledWith(subject, ["_dice"], false);
+
+    directToRawSpy.mockRestore();
+  });
+
+  test("FromRaw(true) factory registers directToRaw with warnings", () => {
+    const directToRawSpy = vi.spyOn(directToRawModule, "directToRaw");
+    const { context, initializers } = createFieldDecoratorContext("_tags");
+    const decorator = FromRaw(true);
+
+    expect(typeof decorator).toBe("function");
+
+    decorator(undefined, context);
+
+    expect(initializers).toHaveLength(1);
+
+    const subject = hasRawSubject({ _tags: ["x"] });
+    initializers[0]!.call(subject);
+
+    expect(directToRawSpy).toHaveBeenCalledWith(subject, ["_tags"], true);
+
+    directToRawSpy.mockRestore();
   });
 });
