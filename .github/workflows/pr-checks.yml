@@ -161,16 +161,33 @@ jobs:
             for (const job of checkJobs) {
               const link = job.html_url || `https://github.com/${owner}/${repo}/actions/runs/${runId}`;
               const hint = hints[job.name] || "See job logs for details.";
-              body += `| **${job.name}** | ${icon(job.conclusion)} [${job.conclusion}](${link}) | ${hint} |\n`;
+              body +=
+                "| **" +
+                job.name +
+                "** | " +
+                icon(job.conclusion) +
+                " [" +
+                job.conclusion +
+                "](" +
+                link +
+                ") | " +
+                hint +
+                " |\n";
             }
 
             if (failed.length > 0) {
               body += "\n### Likely impact\n\n";
               for (const job of failed) {
-                body += `- **${job.name}**: ${hints[job.name] || "See logs."}\n";
+                body +=
+                  "- **" +
+                  job.name +
+                  "**: " +
+                  (hints[job.name] || "See logs.") +
+                  "\n";
               }
               body += "\n### Quick local command\n\n";
-              body += "```bash\nyarn checkcode && yarn buildswcplugin && yarn test && yarn buildall\n```\n";
+              body +=
+                "```bash\nyarn checkcode && yarn buildswcplugin && yarn test && yarn buildall\n```\n";
             }
 
             body += `\n[Full workflow run](https://github.com/${owner}/${repo}/actions/runs/${runId})\n`;
