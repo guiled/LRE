@@ -6,9 +6,16 @@ describe("fluentToRaw", () => {
     const add = vi.fn();
     const tag = vi.fn();
     const raw = { add, tag };
-    const wrapper = {
-      raw: (): object => raw,
+
+    type Wrapper = {
+      raw(): typeof raw;
+      add(value: number): Wrapper;
+      tag(...tags: string[]): Wrapper;
     };
+
+    const wrapper = {
+      raw: (): typeof raw => raw,
+    } as Wrapper;
 
     fluentToRaw(wrapper, ["add", "tag"]);
 

@@ -51,12 +51,13 @@ describe("DiceBuilder", () => {
     ["remh", 3],
     ["reml", 1],
     ["mul", 2],
-  ] as const satisfies ReadonlyArray<
-    [keyof RawDiceBuilderMock, number]
-  >)("%s forwards its numeric argument to the native builder", (method, value) => {
-    expect(builder[method](value)).toBe(builder);
-    expect(raw[method]).toHaveBeenCalledWith(value);
-  });
+  ] as const satisfies ReadonlyArray<[keyof RawDiceBuilderMock, number]>)(
+    "%s forwards its numeric argument to the native builder",
+    (method, value) => {
+      expect(builder[method](value)).toBe(builder);
+      expect(raw[method]).toHaveBeenCalledWith(value);
+    },
+  );
 
   test.each(["round", "ceil", "floor"] as const)(
     "%s forwards to the native builder",
@@ -100,12 +101,7 @@ describe("DiceBuilder", () => {
   });
 
   test("supports fluent chaining through the wrapper", () => {
-    const chained = builder
-      .add(1)
-      .minus(2)
-      .tag("damage")
-      .round()
-      .keeph(3);
+    const chained = builder.add(1).minus(2).tag("damage").round().keeph(3);
 
     expect(chained).toBe(builder);
     expect(raw.add).toHaveBeenCalledWith(1);

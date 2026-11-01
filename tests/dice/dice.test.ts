@@ -92,7 +92,12 @@ describe("registerLreDiceAPI", () => {
         raw: vi.fn(() => rawSheet),
       } as unknown as ISheet;
 
-      dice.roll(lreSheet as unknown as LetsRole.Sheet, "1d20", "Attack", "visible");
+      dice.roll(
+        lreSheet as unknown as LetsRole.Sheet,
+        "1d20",
+        "Attack",
+        "visible",
+      );
 
       expect(lreSheet.raw).toHaveBeenCalled();
       expect(rawDice.roll).toHaveBeenCalledWith(
@@ -152,7 +157,10 @@ describe("registerLreDiceAPI", () => {
         });
 
         expect(rawDice.roll).toHaveBeenCalledTimes(1);
-        const actions = rawDice.roll.mock.calls[0][4] as LetsRole.DiceRollActions;
+
+        const actions = rawDice.roll.mock
+          .calls[0][4] as LetsRole.DiceRollActions;
+
         expect(actions[12]).toBe(callback);
         expect(Object.keys(actions)).toEqual(["12"]);
       });

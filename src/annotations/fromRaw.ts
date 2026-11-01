@@ -12,7 +12,6 @@ const registerFromRaw = (
 };
 
 export function FromRaw(
-  target: undefined,
   context: ClassFieldDecoratorContext<IHasRaw, unknown>,
 ): void;
 export function FromRaw(

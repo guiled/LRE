@@ -24,24 +24,29 @@ const registerFluentFromRawField = (
   });
 };
 
-export function FluentFromRaw<This extends { raw(): object }, Args extends unknown[]>(
+export function FluentFromRaw<
+  This extends { raw(): object },
+  Args extends unknown[],
+>(
   target: (this: This, ...args: Args) => This,
-  context: ClassMethodDecoratorContext<This, (this: This, ...args: Args) => This>,
+  context: ClassMethodDecoratorContext<
+    This,
+    (this: This, ...args: Args) => This
+  >,
 ): (this: This, ...args: Args) => This;
 export function FluentFromRaw(
   target: undefined,
   context: ClassFieldDecoratorContext<{ raw(): object }, unknown>,
 ): void;
-export function FluentFromRaw<This extends { raw(): object }, Args extends unknown[]>(
-  _target:
-    | undefined
-    | ((this: This, ...args: Args) => This),
+export function FluentFromRaw<
+  This extends { raw(): object },
+  Args extends unknown[],
+>(
+  _target: undefined | ((this: This, ...args: Args) => This),
   context:
     | ClassFieldDecoratorContext<{ raw(): object }, unknown>
     | ClassMethodDecoratorContext<This, (this: This, ...args: Args) => This>,
-):
-  | void
-  | ((this: This, ...args: Args) => This) {
+): void | ((this: This, ...args: Args) => This) {
   if (context.kind === "field") {
     registerFluentFromRawField(
       context as ClassFieldDecoratorContext<{ raw(): object }, unknown>,

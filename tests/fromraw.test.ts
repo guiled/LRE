@@ -28,7 +28,7 @@ const createFieldDecoratorContext = (
   };
 
   return {
-    context: context as ClassFieldDecoratorContext<IHasRaw, unknown>,
+    context: context as unknown as ClassFieldDecoratorContext<IHasRaw, unknown>,
     initializers,
   };
 };
