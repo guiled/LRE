@@ -70,7 +70,12 @@ jobs:
         with:
           node-version-file: ".nvmrc"
           cache: yarn
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
       - run: yarn install --frozen-lockfile
+      - name: Build SWC plugin (required by transform tests)
+        run: yarn buildswcplugin
       - name: Run Vitest
         run: yarn test --coverage.enabled=false
 
@@ -130,7 +135,7 @@ jobs:
               "Unused exports":
                 "Dead exports detected — symbols exported but never used (may indicate incomplete refactors). Run the `ts-unused-exports` part of `yarn checkcode` locally.",
               "Unit tests":
-                "Tests failed — behavior regressed or fixtures need updating. Run `yarn test` locally.",
+                "Tests failed — behavior regressed or fixtures need updating. Many tests need the SWC plugin: run `yarn buildswcplugin && yarn test` locally.",
               "Build (SWC + bundles)":
                 "Build failed — Rust SWC plugin, transpile, or output JS syntax check. Run `yarn buildall` locally (requires wasm32-wasip1).",
             };
@@ -165,7 +170,7 @@ jobs:
                 body += `- **${job.name}**: ${hints[job.name] || "See logs."}\n";
               }
               body += "\n### Quick local command\n\n";
-              body += "```bash\nyarn checkcode && yarn test && yarn buildall\n```\n";
+              body += "```bash\nyarn checkcode && yarn buildswcplugin && yarn test && yarn buildall\n```\n";
             }
 
             body += `\n[Full workflow run](https://github.com/${owner}/${repo}/actions/runs/${runId})\n`;
