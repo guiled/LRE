@@ -1,0 +1,209 @@
+name: PR checks
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: pr-checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  typescript:
+    name: TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn tscheck
+
+  eslint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn eslint
+
+  spell:
+    name: Spelling
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn spell
+
+  unused-exports:
+    name: Unused exports
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn ts-unused-exports tsconfig.json --excludePathsFromReport="src/mock;src/swc"
+
+  tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - name: Run Vitest
+        run: yarn test --coverage.enabled=false
+
+  build:
+    name: Build (SWC + bundles)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: yarn
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
+      - run: yarn install --frozen-lockfile
+      - run: yarn buildall
+
+  report:
+    name: Report
+    runs-on: ubuntu-latest
+    needs:
+      - typescript
+      - eslint
+      - spell
+      - unused-exports
+      - tests
+      - build
+    if: always()
+    steps:
+      - name: Write workflow summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const runId = context.runId;
+
+            const { data } = await github.rest.actions.listJobsForWorkflowRun({
+              owner,
+              repo,
+              run_id: runId,
+              per_page: 100,
+            });
+
+            const checkJobs = data.jobs.filter(
+              (job) => job.name !== "Report" && !job.name.startsWith("Report /"),
+            );
+
+            const hints = {
+              TypeScript:
+                "Type-check failed — wrong types, broken imports, or API mismatches. Run `yarn tscheck` locally.",
+              ESLint:
+                "Lint failed — style/rules or patterns ESLint flags as risky. Run `yarn eslint` locally.",
+              Spelling:
+                "Spelling check failed — typos in source or docs. Run `yarn spell` locally.",
+              "Unused exports":
+                "Dead exports detected — symbols exported but never used (may indicate incomplete refactors). Run the `ts-unused-exports` part of `yarn checkcode` locally.",
+              "Unit tests":
+                "Tests failed — behavior regressed or fixtures need updating. Run `yarn test` locally.",
+              "Build (SWC + bundles)":
+                "Build failed — Rust SWC plugin, transpile, or output JS syntax check. Run `yarn buildall` locally (requires wasm32-wasip1).",
+            };
+
+            const icon = (conclusion) => {
+              if (conclusion === "success") return "✅";
+              if (conclusion === "failure") return "❌";
+              if (conclusion === "cancelled") return "⚪";
+              if (conclusion === "skipped") return "⏭️";
+              return "⚠️";
+            };
+
+            const failed = checkJobs.filter((j) => j.conclusion === "failure");
+            const overall =
+              failed.length === 0 && checkJobs.every((j) => j.conclusion === "success")
+                ? "All checks passed"
+                : `${failed.length} check(s) failed`;
+
+            let body = `## PR checks — ${overall}\n\n`;
+            body += "| Check | Result | What it protects |\n";
+            body += "| --- | --- | --- |\n";
+
+            for (const job of checkJobs) {
+              const link = job.html_url || `https://github.com/${owner}/${repo}/actions/runs/${runId}`;
+              const hint = hints[job.name] || "See job logs for details.";
+              body += `| **${job.name}** | ${icon(job.conclusion)} [${job.conclusion}](${link}) | ${hint} |\n`;
+            }
+
+            if (failed.length > 0) {
+              body += "\n### Likely impact\n\n";
+              for (const job of failed) {
+                body += `- **${job.name}**: ${hints[job.name] || "See logs."}\n";
+              }
+              body += "\n### Quick local command\n\n";
+              body += "```bash\nyarn checkcode && yarn test && yarn buildall\n```\n";
+            }
+
+            body += `\n[Full workflow run](https://github.com/${owner}/${repo}/actions/runs/${runId})\n`;
+
+            core.summary.addRaw(body).write();
+
+            const prNumber = context.payload.pull_request?.number;
+            if (!prNumber) {
+              core.info("Not a pull_request event — skipping PR comment.");
+              return;
+            }
+
+            const marker = "<!-- lre-pr-checks-report -->";
+            const commentBody = `${marker}\n${body}`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number: prNumber,
+              per_page: 100,
+            });
+
+            const existing = comments.find(
+              (c) => c.user.type === "Bot" && c.body.includes(marker),
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body: commentBody,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: prNumber,
+                body: commentBody,
+              });
+            }
