@@ -316,6 +316,7 @@ describe("setData edge cases", () => {
     dataBatcher.on("pending", pendingCallback);
 
     const data: LetsRole.ViewData = {};
+
     for (let i = 0; i < 25; i++) {
       data["key" + i] = i;
     }
@@ -325,9 +326,11 @@ describe("setData edge cases", () => {
     expect(pendingCallback).toHaveBeenCalledTimes(1);
 
     itHasWaitedEnough();
+
     expect(pendingCallback).toHaveBeenCalledTimes(1);
 
     itHasWaitedEnough();
+
     expect(pendingCallback).toHaveBeenCalledTimes(1);
   });
 });

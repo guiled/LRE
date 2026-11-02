@@ -77,7 +77,7 @@ describe("registerLreBindings", () => {
       context.setMode("virtual");
     });
 
-    test("add does not call original and returns an invokable no-op", () => {
+    test("add does not call original and returns an callable no-op", () => {
       const subject = registerLreBindings(context, originalBindings);
       const dataCallback = vi.fn(() => ({}));
 
@@ -93,7 +93,7 @@ describe("registerLreBindings", () => {
       expect(() => (result as unknown as () => void)()).not.toThrow();
     });
 
-    test("clear does not call original and returns an invokable no-op", () => {
+    test("clear does not call original and returns an callable no-op", () => {
       const subject = registerLreBindings(context, originalBindings);
 
       const result = subject.clear("componentId");
@@ -103,7 +103,7 @@ describe("registerLreBindings", () => {
       expect(() => (result as unknown as () => void)()).not.toThrow();
     });
 
-    test("remove does not call original and returns an invokable no-op", () => {
+    test("remove does not call original and returns an callable no-op", () => {
       const subject = registerLreBindings(context, originalBindings);
 
       const result = subject.remove("bindingName");
@@ -113,7 +113,7 @@ describe("registerLreBindings", () => {
       expect(() => (result as unknown as () => void)()).not.toThrow();
     });
 
-    test("send does not call original and returns an invokable no-op", () => {
+    test("send does not call original and returns an callable no-op", () => {
       const subject = registerLreBindings(context, originalBindings);
       const sheet = { id: "sheet-1" } as unknown as LetsRole.Sheet;
 
@@ -132,14 +132,17 @@ describe("registerLreBindings", () => {
 
       context.setMode("real");
       subject.add("a", "c1", "v1", dataCallback);
+
       expect(originalBindings.add).toHaveBeenCalledTimes(1);
 
       context.setMode("virtual");
       subject.add("b", "c2", "v2", dataCallback);
+
       expect(originalBindings.add).toHaveBeenCalledTimes(1);
 
       context.setMode("real");
       subject.remove("a");
+
       expect(originalBindings.remove).toHaveBeenCalledOnce();
     });
   });

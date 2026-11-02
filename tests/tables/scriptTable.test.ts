@@ -85,6 +85,7 @@ describe("ScriptTable get", () => {
     expect(table.get("a")).toEqual(sampleRows[0]);
 
     rows = [{ id: "z", col1: "only" }];
+
     expect(table.get("a")).toBeNull();
     expect(table.get("z")).toEqual({ id: "z", col1: "only" });
   });
@@ -98,8 +99,8 @@ describe("ScriptTable get", () => {
   });
 
   test("function source with constructor arg", () => {
-    const fn = vi.fn((filter: { keep: string }) =>
-      sampleRows.filter((row) => row.id === filter.keep),
+    const fn = vi.fn((filter?: unknown) =>
+      sampleRows.filter((row) => row.id === (filter as { keep: string }).keep),
     );
     const table = new ScriptTable(fn, context, "t", { keep: "b" });
 
@@ -164,7 +165,9 @@ describe("ScriptTable random", () => {
 
   test("count and callback return multiple rows without mutating source", () => {
     const table = new ScriptTable(sampleRows, context, "t");
-    vi.spyOn(global.Math, "random").mockReturnValueOnce(0).mockReturnValueOnce(0);
+    vi.spyOn(global.Math, "random")
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(0);
     const fn = vi.fn();
 
     const picked = table.random(2, fn);

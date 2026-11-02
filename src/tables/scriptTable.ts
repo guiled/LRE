@@ -7,7 +7,8 @@ type ScriptTableSourceArray = Array<LetsRole.TableRow>;
 type ScriptTableSourceObject = Record<string, Omit<LetsRole.TableRow, "id">>;
 type ScriptTableSourceFunction = (
   arg?: unknown,
-) => ScriptTableSourceObject | ScriptTableSourceArray;
+) =>
+  ScriptTableSourceObject | ScriptTableSourceArray | ScriptTableSourceFunction;
 
 type InternalScriptTableSource =
   ScriptTableSourceArray | ScriptTableSourceFunction;

@@ -63,8 +63,6 @@ describe("Wait proxy", () => {
     mockedWaitDefs.itHasWaitedEverything();
 
     expect(throwingCb).toHaveBeenCalled();
-    expect(lre.error).toHaveBeenCalledWith(
-      `[Wait] Unhandled error : ${err}`,
-    );
+    expect(lre.error).toHaveBeenCalledWith(`[Wait] Unhandled error : ${err}`);
   });
 });
