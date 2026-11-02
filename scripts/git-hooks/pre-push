@@ -1,0 +1,10 @@
+#!/bin/sh
+# Compare semver tags being pushed with package.json (warn + confirm).
+# Installed by scripts/install-git-hooks.sh
+
+set -e
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT" || exit 1
+
+exec yarn -s tsx scripts/check-tag-version.ts
