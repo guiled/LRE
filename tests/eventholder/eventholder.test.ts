@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { LRE } from "../../src/lre";
 import { EventDef, EventHolder } from "../../src/eventholder/index";
 import { ComponentMock } from "../../src/mock/letsrole/component.mock";
@@ -60,7 +61,7 @@ let vw: ViewMock;
 let rawCmp: ComponentMock;
 
 beforeEach(() => {
-  global.log = jest.fn();
+  global.log = vi.fn();
   global.lre = new LRE(context);
 
   const cmpDef: LetsRoleMock.ComponentDefinitions = {
@@ -97,8 +98,8 @@ beforeEach(() => {
   });
   vw = server.openView("main", "123", {});
   rawCmp = vw.get("lbl") as ComponentMock;
-  jest.spyOn(rawCmp, "on");
-  jest.spyOn(rawCmp, "off");
+  vi.spyOn(rawCmp, "on");
+  vi.spyOn(rawCmp, "off");
 });
 
 describe("Test simple events", () => {
@@ -109,9 +110,9 @@ describe("Test simple events", () => {
   });
 
   test("No raw event calls for custom event", () => {
-    subject.on("test", jest.fn());
-    subject.on("test:a", jest.fn());
-    subject.on("test:b", jest.fn());
+    subject.on("test", vi.fn<EventHandler>());
+    subject.on("test:a", vi.fn<EventHandler>());
+    subject.on("test:b", vi.fn<EventHandler>());
 
     expect(rawCmp.on).toHaveBeenCalledTimes(0);
 
@@ -121,9 +122,9 @@ describe("Test simple events", () => {
   });
 
   test("Only one raw event added for custom event", () => {
-    subject.on("click", jest.fn());
-    subject.on("click:a", jest.fn());
-    subject.on("click:b", jest.fn());
+    subject.on("click", vi.fn<EventHandler>());
+    subject.on("click:a", vi.fn<EventHandler>());
+    subject.on("click:b", vi.fn<EventHandler>());
 
     expect(rawCmp.on).toHaveBeenCalledTimes(1);
 
@@ -145,7 +146,7 @@ describe("Test simple events", () => {
   });
 
   test("Handlers triggered from raw", () => {
-    const eventHandler = jest.fn();
+    const eventHandler = vi.fn();
     subject.on("click", eventHandler);
 
     expect(rawCmp.on).toHaveBeenCalled();
@@ -154,9 +155,9 @@ describe("Test simple events", () => {
 
     expect(eventHandler).toHaveBeenCalled();
 
-    (rawCmp.on as jest.Mock).mockClear();
+    (rawCmp.on as Mock).mockClear();
     eventHandler.mockClear();
-    const eventHandler2 = jest.fn();
+    const eventHandler2 = vi.fn();
     subject.on("click:second", eventHandler2);
 
     expect(rawCmp.on).not.toHaveBeenCalled();
@@ -166,10 +167,10 @@ describe("Test simple events", () => {
     expect(eventHandler).toHaveBeenCalled();
     expect(eventHandler2).toHaveBeenCalled();
 
-    (rawCmp.on as jest.Mock).mockClear();
+    (rawCmp.on as Mock).mockClear();
     eventHandler.mockClear();
     eventHandler2.mockClear();
-    const eventHandler3 = jest.fn();
+    const eventHandler3 = vi.fn();
     subject.on("click:third", undefined, eventHandler3);
 
     expect(rawCmp.on).not.toHaveBeenCalled();
@@ -222,7 +223,7 @@ describe("Test simple events", () => {
 
   test("Simple trigger", () => {
     let receivedCmp;
-    const eventHandler = jest.fn((cmp) => {
+    const eventHandler = vi.fn((cmp) => {
       receivedCmp = cmp;
     });
     subject.on("test", eventHandler);
@@ -259,7 +260,7 @@ describe("Test simple events", () => {
 
     expect(eventholder.id()).toBe("123");
 
-    const cb = jest.fn();
+    const cb = vi.fn();
     eventholder.on("click", cb);
 
     expect(cb).not.toHaveBeenCalled();
@@ -277,7 +278,7 @@ describe("Test simple events", () => {
   });
 
   test("Simple trigger with additional parameters", () => {
-    const eventHandler = jest.fn();
+    const eventHandler = vi.fn();
     subject.on("test", eventHandler);
     const param = 42;
     subject.trigger("test", param);
@@ -298,8 +299,8 @@ describe("Test simple events", () => {
   });
 
   test("Simple trigger with two handlers", () => {
-    const eventHandler1 = jest.fn();
-    const eventHandler2 = jest.fn();
+    const eventHandler1 = vi.fn();
+    const eventHandler2 = vi.fn();
     subject.on("test", eventHandler1);
     subject.on("test", eventHandler2);
     subject.trigger("test");
@@ -309,14 +310,14 @@ describe("Test simple events", () => {
   });
 
   test("Trigger an non-existing event", () => {
-    const eventHandler = jest.fn();
+    const eventHandler = vi.fn();
     subject.trigger("test");
 
     expect(eventHandler).toHaveBeenCalledTimes(0);
   });
 
   test("Off an event handler", () => {
-    const eventHandler = jest.fn();
+    const eventHandler = vi.fn();
     subject.on("test", eventHandler);
     subject.trigger("test");
 
@@ -330,8 +331,8 @@ describe("Test simple events", () => {
   });
 
   test("Disable events", () => {
-    const eventHandler = jest.fn();
-    const disableEvent = jest.fn();
+    const eventHandler = vi.fn();
+    const disableEvent = vi.fn();
     subject.on("test", eventHandler);
     subject.on("eventhandler-disabled", disableEvent);
     subject.trigger("test");
@@ -360,7 +361,7 @@ describe("Many working handlers on same event", () => {
   });
 
   test("Named event trigger of named event", () => {
-    const eventHandler = jest.fn();
+    const eventHandler = vi.fn();
     subject.on("test:first", eventHandler);
     subject.trigger("test:first");
 
@@ -368,8 +369,8 @@ describe("Many working handlers on same event", () => {
   });
 
   test("Named events are trigger when main event triggered", () => {
-    const eventHandler1 = jest.fn();
-    const eventHandler2 = jest.fn();
+    const eventHandler1 = vi.fn();
+    const eventHandler2 = vi.fn();
     subject.on("test:first", eventHandler1);
     subject.on("test:second", eventHandler2);
     subject.trigger("test");
@@ -379,8 +380,8 @@ describe("Many working handlers on same event", () => {
   });
 
   test("Named event trigger specifically of named event", () => {
-    const eventHandler1 = jest.fn();
-    const eventHandler2 = jest.fn();
+    const eventHandler1 = vi.fn();
+    const eventHandler2 = vi.fn();
     subject.on("test:first", eventHandler1);
     subject.on("test:second", eventHandler2);
     subject.trigger("test:first");
@@ -390,8 +391,8 @@ describe("Many working handlers on same event", () => {
   });
 
   test("Named event trigger for overwritten event", () => {
-    const eventHandler1 = jest.fn();
-    const eventHandler2 = jest.fn();
+    const eventHandler1 = vi.fn();
+    const eventHandler2 = vi.fn();
     subject.on("test:first", eventHandler1);
     subject.on("test:first", eventHandler2);
     subject.trigger("test:first");
@@ -401,8 +402,8 @@ describe("Many working handlers on same event", () => {
   });
 
   test("Switch off a named trigger", () => {
-    const eventHandler1 = jest.fn();
-    const eventHandler2 = jest.fn();
+    const eventHandler1 = vi.fn();
+    const eventHandler2 = vi.fn();
     subject.on("test:first", eventHandler1);
     subject.on("test:second", eventHandler2);
     subject.trigger("test");
@@ -418,8 +419,8 @@ describe("Many working handlers on same event", () => {
   });
 
   test("Switch off unset event", () => {
-    const eventHandler1 = jest.fn();
-    const eventHandler2 = jest.fn();
+    const eventHandler1 = vi.fn();
+    const eventHandler2 = vi.fn();
     subject.on("test:first", eventHandler1);
     subject.on("test:second", eventHandler2);
     subject.trigger("test");
@@ -449,7 +450,7 @@ describe("Event executed only once", () => {
   });
 
   test("Event executed only once", () => {
-    const eventHandler = jest.fn();
+    const eventHandler = vi.fn();
     subject.once("test", eventHandler);
     subject.trigger("test");
 
@@ -461,8 +462,8 @@ describe("Event executed only once", () => {
   });
 
   test("Named event executed only once", () => {
-    const eventHandler1 = jest.fn();
-    const eventHandler2 = jest.fn();
+    const eventHandler1 = vi.fn();
+    const eventHandler2 = vi.fn();
     subject.on("test", eventHandler1);
     subject.once("test:ah", eventHandler2);
     subject.trigger("test");
@@ -477,8 +478,8 @@ describe("Event executed only once", () => {
   });
 
   test("Handlers triggered once from raw", () => {
-    const eventHandler = jest.fn();
-    const eventHandler2 = jest.fn();
+    const eventHandler = vi.fn();
+    const eventHandler2 = vi.fn();
     subject.once("click", eventHandler);
 
     expect(rawCmp.on).toHaveBeenCalledTimes(1);
@@ -489,7 +490,7 @@ describe("Event executed only once", () => {
     expect(eventHandler).toHaveBeenCalledTimes(1);
 
     eventHandler.mockClear();
-    (rawCmp.on as jest.Mock).mockClear();
+    (rawCmp.on as Mock).mockClear();
     subject.once("click", eventHandler);
     subject.once("click:second", eventHandler2);
 
@@ -515,7 +516,7 @@ describe("Delegated events", () => {
   });
 
   test("Delegate an event", () => {
-    const eventHandler1 = jest.fn();
+    const eventHandler1 = vi.fn();
     subject.on("click", rawCmpSub.id()!, eventHandler1);
     rawCmpSub.trigger("click");
 
@@ -523,7 +524,7 @@ describe("Delegated events", () => {
   });
 
   test("Delegate an once event", () => {
-    const eventHandler1 = jest.fn();
+    const eventHandler1 = vi.fn();
     subject.once("click", rawCmpSub.id()!, eventHandler1);
     rawCmpSub.trigger("click");
     rawCmpSub.trigger("click");
@@ -541,9 +542,9 @@ describe("Delegated events", () => {
   });
 
   test("Switch off a delegated event", () => {
-    const eventHandler0 = jest.fn();
-    const eventHandler1 = jest.fn();
-    const eventHandler2 = jest.fn();
+    const eventHandler0 = vi.fn();
+    const eventHandler1 = vi.fn();
+    const eventHandler2 = vi.fn();
     subject.on("click", rawCmpSub.id()!, eventHandler1);
     subject.off("click", rawCmpSub.id()!);
     rawCmpSub.trigger("click");
@@ -588,13 +589,13 @@ describe("Disabling event", () => {
   });
 
   test("Simple test disabling", () => {
-    const eventHandler = jest.fn();
-    const eventHandler2 = jest.fn((cmp) => {
+    const eventHandler = vi.fn();
+    const eventHandler2 = vi.fn((cmp) => {
       cmp.disableEvent("test");
     });
-    const eventHandler3 = jest.fn();
-    const disableEventCb = jest.fn();
-    const enableEventCb = jest.fn();
+    const eventHandler3 = vi.fn();
+    const disableEventCb = vi.fn();
+    const enableEventCb = vi.fn();
 
     subject.on("test", eventHandler);
     subject.on("test:shit", eventHandler2);
@@ -634,7 +635,7 @@ describe("Disabling event", () => {
   test("Event enabled checks", () => {
     expect(subject.isEventEnabled("click")).toBeFalsy();
 
-    subject.on("click", jest.fn());
+    subject.on("click", vi.fn<EventHandler>());
 
     expect(subject.isEventEnabled("click")).toBeTruthy();
 
@@ -675,11 +676,11 @@ describe("Cancel event", () => {
   });
 
   test("Cancel event", () => {
-    const eventHandler = jest.fn();
-    const eventHandler2 = jest.fn((cmp) => {
+    const eventHandler = vi.fn();
+    const eventHandler2 = vi.fn((cmp) => {
       cmp.cancelEvent("test");
     });
-    const eventHandler3 = jest.fn();
+    const eventHandler3 = vi.fn();
     subject.on("test", eventHandler);
     subject.on("test:shit", eventHandler2);
     subject.on("test:glue", eventHandler3);
@@ -707,8 +708,8 @@ describe("Handle error in event", () => {
   });
 
   test("Handle error", () => {
-    jest.spyOn(lre, "error");
-    const eventHandler = jest.fn(() => {
+    vi.spyOn(lre, "error");
+    const eventHandler = vi.fn(() => {
       const a = undefined;
       /* @ts-expect-error This is intended to be erroneous */
       a();
@@ -734,7 +735,7 @@ describe("Transfer events", () => {
   });
 
   test("Events are transferred", () => {
-    const eventHandler = jest.fn();
+    const eventHandler = vi.fn();
     subject.on("click", eventHandler);
     rawCmp.trigger("click");
 
@@ -778,7 +779,7 @@ describe("Handle on change event trigger", () => {
   });
 
   test("Update is triggered only when value changed", () => {
-    const eventHandler = jest.fn();
+    const eventHandler = vi.fn();
     subject.on("update", eventHandler);
 
     expect(eventHandler).not.toHaveBeenCalled();
@@ -814,7 +815,7 @@ describe("Handle on change event trigger", () => {
 
   test("Update is not triggered if value remains identical as object ", () => {
     rawCmp.value({ a: 42, b: { c: 13 } });
-    const eventHandler = jest.fn();
+    const eventHandler = vi.fn();
     subject.on("update", eventHandler);
 
     expect(eventHandler).not.toHaveBeenCalled();
@@ -853,7 +854,7 @@ describe("Component has not targeting", () => {
   });
 
   test("Update is triggered when value changed", () => {
-    const eventHandler = jest.fn();
+    const eventHandler = vi.fn();
     subject.on("test", eventHandler);
 
     expect(eventHandler).not.toHaveBeenCalled();
@@ -875,14 +876,14 @@ describe("Event holder triggers events", () => {
   });
 
   test("Events triggered", () => {
-    const added = jest.fn();
-    const added2 = jest.fn();
-    const updated = jest.fn();
-    const removed = jest.fn();
-    const enabled = jest.fn();
-    const disabled = jest.fn();
-    const created = jest.fn();
-    const destroyed = jest.fn();
+    const added = vi.fn();
+    const added2 = vi.fn();
+    const updated = vi.fn();
+    const removed = vi.fn();
+    const enabled = vi.fn();
+    const disabled = vi.fn();
+    const created = vi.fn();
+    const destroyed = vi.fn();
 
     subject.on("eventhandler-added", added);
 
@@ -928,7 +929,7 @@ describe("Event holder triggers events", () => {
     expect(added.mock.calls[0][2]).toBeUndefined();
     expect(added.mock.calls[0][3]).toStrictEqual(fcn1);
 
-    subject.on("click:2nd", jest.fn());
+    subject.on("click:2nd", vi.fn<EventHandler>());
 
     expect(added).toHaveBeenCalledTimes(2);
     expect(added2).toHaveBeenCalledTimes(2);
@@ -973,11 +974,11 @@ describe("Event holder triggers events", () => {
     expect(removed).toHaveBeenCalledTimes(2);
     expect(destroyed).toHaveBeenCalledTimes(1);
 
-    (added as jest.Mock).mockClear();
-    (created as jest.Mock).mockClear();
-    (updated as jest.Mock).mockClear();
-    (removed as jest.Mock).mockClear();
-    (destroyed as jest.Mock).mockClear();
+    (added as Mock).mockClear();
+    (created as Mock).mockClear();
+    (updated as Mock).mockClear();
+    (removed as Mock).mockClear();
+    (destroyed as Mock).mockClear();
     subject.on("click", "bla", fcn1);
 
     expect(added).toHaveBeenCalledTimes(1);
@@ -1016,8 +1017,8 @@ describe("Event holder triggers events", () => {
     });
 
     test("Link event", () => {
-      const subject1Cb = jest.fn();
-      const subject2Cb = jest.fn();
+      const subject1Cb = vi.fn();
+      const subject2Cb = vi.fn();
       subject1.on("click", subject1Cb);
       subject2.on("test", subject2Cb);
       subject1.linkEventTo("click", subject2, "test");
@@ -1038,9 +1039,9 @@ describe("Event holder triggers events", () => {
     });
 
     test("Link event by default", () => {
-      const subject1Cb = jest.fn();
-      const subject2Cb = jest.fn();
-      const subject2Cb2 = jest.fn();
+      const subject1Cb = vi.fn();
+      const subject2Cb = vi.fn();
+      const subject2Cb2 = vi.fn();
       subject1.on("click", subject1Cb);
       subject2.on("test", subject2Cb);
       subject2.on("click", subject2Cb2);
@@ -1065,7 +1066,7 @@ describe("Event holder triggers events", () => {
     });
 
     test("Test linked event params", () => {
-      const subject2Cb = jest.fn();
+      const subject2Cb = vi.fn();
       subject2.on("click", subject2Cb);
       subject1.linkEventTo("click", subject2);
       subject1.trigger("click");
@@ -1094,7 +1095,7 @@ describe("Copy events from a component to an other", () => {
   let rawSource: ComponentMock;
   let rawDest: ComponentMock;
   let rawDest2: ComponentMock;
-  const clickCbs: Array<jest.Mock> = [];
+  const clickCbs: Array<Mock> = [];
 
   beforeEach(() => {
     rawSource = vw.get("lbl") as ComponentMock;
@@ -1105,13 +1106,13 @@ describe("Copy events from a component to an other", () => {
     dest2 = new Dummy(rawDest2, undefined);
 
     for (let i = 0; i < 6; i++) {
-      clickCbs[i] = jest.fn();
+      clickCbs[i] = vi.fn();
     }
   });
 
   test("Link / unlink", () => {
-    const click1 = jest.fn();
-    const click2 = jest.fn();
+    const click1 = vi.fn();
+    const click2 = vi.fn();
     dest.on("click", click1);
     dest.on("click:second", click2);
 
@@ -1136,8 +1137,8 @@ describe("Copy events from a component to an other", () => {
     expect(click1).toHaveBeenCalledWith(dest);
     expect(click2).toHaveBeenCalledWith(dest);
 
-    const customCb = jest.fn();
-    const customCb2 = jest.fn();
+    const customCb = vi.fn();
+    const customCb2 = vi.fn();
     dest.on("test", customCb);
     dest.on("test:hop", customCb2);
     source.trigger("test");
@@ -1152,7 +1153,7 @@ describe("Copy events from a component to an other", () => {
 
     source.unpropagateEventTo(dest);
 
-    const click3 = jest.fn();
+    const click3 = vi.fn();
     source.on("click", click3);
 
     click1.mockClear();
@@ -1172,7 +1173,7 @@ describe("Copy events from a component to an other", () => {
     expect(click2).toHaveBeenCalledWith(dest);
     expect(click3).toHaveBeenCalledWith(source);
 
-    const click4 = jest.fn();
+    const click4 = vi.fn();
     source.on("click:test", click4);
     click1.mockClear();
     click2.mockClear();
@@ -1184,7 +1185,7 @@ describe("Copy events from a component to an other", () => {
     expect(click3).toHaveBeenCalledWith(source);
     expect(click4).toHaveBeenCalledWith(source);
 
-    const click5 = jest.fn();
+    const click5 = vi.fn();
     dest2.on("click", click5);
 
     source.propagateEventTo(dest, ["click"]);
@@ -1247,7 +1248,7 @@ describe("Copy events from a component to an other", () => {
     expect(clickCbs[4]).toHaveBeenCalledWith(source);
     expect(clickCbs[5]).toHaveBeenCalledWith(source);
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     source.trigger("test:second");
 
     expect(clickCbs[0]).not.toHaveBeenCalled();
@@ -1269,7 +1270,7 @@ describe("Copy events from a component to an other", () => {
     expect(clickCbs[0]).toHaveBeenCalledTimes(1);
     expect(clickCbs[1]).toHaveBeenCalledTimes(1);
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     source.off("click");
 
@@ -1278,7 +1279,7 @@ describe("Copy events from a component to an other", () => {
     expect(clickCbs[0]).toHaveBeenCalledTimes(0);
     expect(clickCbs[1]).toHaveBeenCalledTimes(1);
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 });
 
@@ -1290,7 +1291,7 @@ describe("Event can be ran or not", () => {
   });
 
   test("Not-runnable event is triggered manually", () => {
-    const eventHandler = jest.fn();
+    const eventHandler = vi.fn();
     subject.on("click", eventHandler);
 
     expect(eventHandler).not.toHaveBeenCalled();
@@ -1301,7 +1302,7 @@ describe("Event can be ran or not", () => {
   });
 
   test("Not-runnable event is not triggered from raw event", () => {
-    const eventHandler = jest.fn();
+    const eventHandler = vi.fn();
     subject.on("click", eventHandler);
 
     expect(eventHandler).not.toHaveBeenCalled();
@@ -1312,7 +1313,7 @@ describe("Event can be ran or not", () => {
   });
 
   test("Not-runnable event is triggered from raw event when added with onAlways", () => {
-    const eventHandler = jest.fn();
+    const eventHandler = vi.fn();
     subject.onAlways("click", eventHandler);
 
     rawCmp.trigger("click");

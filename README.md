@@ -4,6 +4,8 @@ Let's Role Enhanced is a script for Let's Role System builder (SB) that can be a
 
 While it keeps all the original behaviour of the System Builder, LRE adds many new features on sheets and component, and provides a new way to think system scripting.
 
+📖 **[Contributing Guidelines](CONTRIBUTE.md)** - See coding standards and style rules
+
 ## How to use it ?
 
 It takes only 30 sec and 3 steps to manually include LRE in your project.
@@ -51,6 +53,7 @@ LRE's goal is to facilitate Let's Rôle system coding of some common works that 
 
 - [Vampire The Masquerade, 5 Ed.](https://lets-role.com/system/vampire-the-masquerade-5-ed-5234)
 - [ALIEN RPG (unofficial)](https://lets-role.com/system/alien-rpg-unofficial-2001)
+- [Avatar Legends: The Roleplaying Game](https://lets-role.com/system/avatar-legends-the-roleplaying-game-22719)
 - [shadowrun 6](https://lets-role.com/system/shadowrun-6-8150)
 - [Cyberpunk Red](https://lets-role.com/system/cyberpunk-red-10661)
 - Sigillum Divina Caelest
@@ -62,3 +65,22 @@ LRE's goal is to facilitate Let's Rôle system coding of some common works that 
 - [Berlin XVIII (PBTA)](https://lets-role.com/system/berlin-xviii-pbta-21777)
 - [Fallen](https://lets-role.com/system/fallen-21323)
 - [Vaesen](https://lets-role.com/system/vaesen-21606)
+- [Les apprentis sorciers](https://lets-role.com/system/les-apprentis-sorciers-22549)
+- [Unknown Armies V3](https://lets-role.com/system/unknown-armies-v3-20066)
+- [Fléaux!](https://lets-role.com/system/fleaux-19554)
+- [Dragonbane](https://lets-role.com/system/dragonbane-16232)
+- [Neon Heaven](https://lets-role.com/system/neon-heaven-23807)
+- [Primal Quest](https://lets-role.com/system/primal-quest-20091)
+- [CY_BORG](https://lets-role.com/system/cyborg-14841)
+- [Post Apo ! Year Zero Engine](https://lets-role.com/system/post-apo-year-zero-engine-24447)
+- [Legend of the Five Rings, 4 Ed.](https://lets-role.com/system/legend-of-the-five-rings-4-ed-11073)
+- [Beyond the Wall](https://lets-role.com/system/beyond-the-wall-16441)
+- [Chroniques Oubliées Fantasy 2e édition](https://lets-role.com/system/chroniques-oubliees-fantasy-2e-edition-19614)
+- [Dungeon Crawl Classics](https://lets-role.com/system/dungeon-crawl-classics-2946)
+- [Faut {Pas} Pousser !](https://lets-role.com/system/faut-pas-pousser--17703)
+- [Monster Of The Week [FR]](https://lets-role.com/system/monster-of-the-week-fr-8060)
+- [NightProwler-2è-édition](https://lets-role.com/system/nightprowler2eedition-12110)
+- [Nightprowler V2](https://lets-role.com/system/nightprowler-v2-19838)
+- [Sigil & Shadow](https://lets-role.com/system/sigil-shadow-14787)
+- [Coriolis v2](https://lets-role.com/system/coriolis-v2-10425)
+- [Dragonbane FR](https://lets-role.com/system/dragonbane-fr-27664)

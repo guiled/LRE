@@ -53,4 +53,11 @@ export class Checkbox extends Component {
   #disableMethod(): void {
     this.value(this.#valueWhenDisabled);
   }
+
+  toString(): string {
+    const id = this.realId();
+    const value = this.value();
+    const disabled = this.#disabled ? ", disabled" : "";
+    return `Checkbox<${id}>(${value}${disabled})`;
+  }
 }

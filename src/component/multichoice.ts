@@ -440,4 +440,21 @@ export class MultiChoice extends Choice<
       }
     });
   }
+
+  toString(): string {
+    const id = this.realId();
+    const values = this.value();
+    const count = Array.isArray(values) ? values.length : 0;
+    let preview: string;
+
+    if (count === 0) {
+      preview = "[]";
+    } else if (count <= 3 && Array.isArray(values)) {
+      preview = `[${values.join(", ")}]`;
+    } else {
+      preview = `[${count} items]`;
+    }
+
+    return `MultiChoice<${id}>(${preview})`;
+  }
 }

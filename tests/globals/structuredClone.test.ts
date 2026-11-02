@@ -1,6 +1,6 @@
 import { structuredClone as lreStructuredClone } from "../../src/globals/structuredClone";
 
-global.each = jest.fn(
+global.each = vi.fn(
   <T extends Array<unknown> | Record<string, unknown>>(
     obj: T,
     cb: LetsRole.EachCallback<T>,

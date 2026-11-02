@@ -18,6 +18,8 @@ const LOG_PREFIXES: Record<keyof typeof LogLevel, string> = {
   all: "",
 };
 
+import { withoutFromRawWarnings } from "../globals/directToRaw";
+
 type LogTrace = {
   title: string;
   start: number;
@@ -27,45 +29,47 @@ export class Logger {
   #logLevel: keyof typeof LogLevel = "none";
   #stack: LogTrace[] = [];
 
-  #_log(level: keyof typeof LogLevel, ...args: any[]): void {
+  #_log(level: keyof typeof LogLevel, args: any[]): void {
     if (LogLevel[this.#logLevel] >= LogLevel[level]) {
-      const stackPrefix = "  ".repeat(this.#stack.length);
-      args.forEach((a) => {
-        log(`[LRE]${LOG_PREFIXES[level]}${stackPrefix} ${a?.toString?.()}`);
+      withoutFromRawWarnings(() => {
+        const stackPrefix = "  ".repeat(this.#stack.length);
+        args.forEach((a) => {
+          log(`[LRE]${LOG_PREFIXES[level]}${stackPrefix} ${a?.toString?.()}`);
 
-        if (
-          typeof a !== "number" &&
-          typeof a !== "string" &&
-          typeof a !== "undefined"
-        ) {
-          log(a);
-        }
+          if (
+            typeof a !== "number" &&
+            typeof a !== "string" &&
+            typeof a !== "undefined"
+          ) {
+            log(a);
+          }
+        });
       });
     }
   }
 
   error(...args: any[]): void {
-    this.#_log.apply(this, ["error", ...args]);
+    this.#_log("error", args);
   }
 
   warn(...args: any[]): void {
-    this.#_log.apply(this, ["warn", ...args]);
+    this.#_log("warn", args);
   }
 
   info(...args: any[]): void {
-    this.#_log.apply(this, ["info", ...args]);
+    this.#_log("info", args);
   }
 
   trace(...args: any[]): void {
-    this.#_log.apply(this, ["trace", ...args]);
+    this.#_log("trace", args);
   }
 
   profile(...args: any[]): void {
-    this.#_log.apply(this, ["profile", ...args]);
+    this.#_log("profile", args);
   }
 
   log(...args: any[]): void {
-    this.#_log.apply(this, ["all", ...args]);
+    this.#_log("all", args);
   }
 
   setLogLevel(level: keyof typeof LogLevel): void {

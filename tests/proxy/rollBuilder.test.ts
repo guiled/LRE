@@ -1,5 +1,5 @@
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
-import { registerLreRollBuilder } from "../../src/proxy/rollBuilder";
+import { registerLreRollBuilder } from "../../src/dice/rollBuilder";
 import {
   initLetsRole,
   rollBuilderMock,

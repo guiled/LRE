@@ -389,7 +389,7 @@ describe("Toggle", () => {
 
   test("Update event trigger on toggle", () => {
     const toggle = sheet.get("toggle") as Toggle;
-    const cb = jest.fn();
+    const cb = vi.fn();
     toggle.toggling({
       state1: "Value 1",
       state2: "Value 1",
@@ -434,7 +434,7 @@ describe("Toggle", () => {
 
     expect(cb).toHaveBeenCalledTimes(4);
 
-    const rawCb = jest.fn();
+    const rawCb = vi.fn();
     const rawToggle = rawSheet.get("toggle")!;
     rawToggle.on("update", rawCb);
 
@@ -485,7 +485,7 @@ describe("Toggle", () => {
   test("Update is triggered even is no value change", () => {
     const toggle = sheet.get("toggle") as Toggle;
     toggle.value("OK");
-    const cb = jest.fn();
+    const cb = vi.fn();
     toggle.toggling({
       state1: {
         classes: ["class1"],
@@ -623,7 +623,7 @@ describe("Toggle", () => {
       on: "text1",
       off: "text2",
     };
-    const fn = jest.fn(() => data);
+    const fn = vi.fn(() => data);
     const dp = new DirectDataProvider("source", context, fn);
     toggle.toggling(dp);
 
@@ -664,15 +664,15 @@ describe("Toggle", () => {
     toggle.toggling(data);
 
     const dp = new DirectDataProvider("source", context, () => "on");
-    jest.spyOn(dp, "subscribeRefresh");
-    jest.spyOn(dp, "unsubscribeRefresh");
+    vi.spyOn(dp, "subscribeRefresh");
+    vi.spyOn(dp, "unsubscribeRefresh");
 
     toggle.value(dp);
 
     expect(dp.subscribeRefresh).toHaveBeenCalledTimes(1);
     expect(dp.unsubscribeRefresh).not.toHaveBeenCalled();
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     data.on = "text3";
     data.off = "text4";
     toggle.toggling(data);
@@ -760,7 +760,7 @@ describe("Toggle", () => {
         clickable: false,
       },
     );
-    const updateEventMock = jest.fn();
+    const updateEventMock = vi.fn();
     toggle.on("update", updateEventMock);
 
     expect(toggle.hasClass("clickable")).toStrictEqual(false);
@@ -770,5 +770,73 @@ describe("Toggle", () => {
 
     expect(toggle.value()).toBe("1");
     expect(updateEventMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("Toggle toString", () => {
+  test("toString returns empty string when no toggling data", () => {
+    // Create a Toggle instance directly (not a Label subclass)
+    const rawToggle = rawSheet.get("toggle");
+    const toggle = new Toggle(rawToggle, sheet, "toggle");
+    const result = toggle.toString();
+
+    expect(result).toBe("");
+  });
+
+  test("toString shows toggle info with toggling active", () => {
+    const rawToggle = rawSheet.get("toggle");
+    const toggle = new Toggle(rawToggle, sheet, "toggle");
+    toggle.toggling({ "1": "icon1", "2": "icon2" }, "1");
+    const result = toggle.toString();
+
+    expect(result).toBe("Toggle<toggle>(component, toggling=1)");
+  });
+
+  test("toString shows toggle info with different toggling value", () => {
+    const rawToggle = rawSheet.get("toggle");
+    const toggle = new Toggle(rawToggle, sheet, "toggle");
+    toggle.toggling({ "1": "icon1", "2": "icon2" }, "2");
+    const result = toggle.toString();
+
+    expect(result).toBe("Toggle<toggle>(component, toggling=2)");
+  });
+
+  test("toString returns empty string after untoggling", () => {
+    const rawToggle = rawSheet.get("toggle");
+    const toggle = new Toggle(rawToggle, sheet, "toggle");
+    toggle.toggling({ "1": "icon1", "2": "icon2" }, "1");
+
+    expect(toggle.toString()).not.toBe("");
+
+    toggle.untoggling();
+
+    expect(toggle.toString()).toBe("");
+  });
+});
+
+describe("Label toString", () => {
+  test("toString shows label info without toggling", () => {
+    const label = sheet.get("lbl1") as Toggle;
+
+    expect(label).not.toBeNull();
+
+    if (label && label.lreType && label.lreType() === "label") {
+      const result = label.toString();
+
+      expect(result).toMatch(/^Label<lbl1>\(label\)$/);
+    }
+  });
+
+  test("toString shows label info with toggling active", () => {
+    const label = sheet.get("lbl2") as Toggle;
+
+    expect(label).not.toBeNull();
+
+    if (label && label.toggling) {
+      label.toggling({ "1": "text1", "2": "text2" }, "2");
+      const result = label.toString();
+
+      expect(result).toBe("Label<lbl2>(label, toggling=2)");
+    }
   });
 });

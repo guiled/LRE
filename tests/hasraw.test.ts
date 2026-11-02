@@ -3,8 +3,8 @@ import { HasRaw } from "../src/hasraw";
 describe("Hasraw", () => {
   test("Hasraw construction and public methods", () => {
     let raw = {};
-    const getRaw = jest.fn(() => raw);
-    const onRefresh = jest.fn();
+    const getRaw = vi.fn(() => raw);
+    const onRefresh = vi.fn();
     const subject = new (HasRaw<any>())({
       getRaw,
       onRefresh,

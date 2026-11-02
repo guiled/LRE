@@ -1,12 +1,12 @@
 import esbuild from "esbuild";
-import { transformFile } from "@swc/core";
-import { postCleanup } from "./transpile.conf";
+import { transformFile, transformSync } from "@swc/core";
+import { postCleanup, typeOfCleanup } from "./transpile.conf";
 import fs from "fs";
 import { formatLRECode } from "./builder/formatLRECode";
 import { assembleLRECode, encloseInRegion } from "./builder/assemble";
+import { stripRedundantFunctionNames } from "./builder/stripRedundantFunctionNames";
 import { getArgv, hasArgv } from "./builder/utils";
 import { getEsBuildConfig } from "./builder/config";
-
 const DEBUG_BUILD: boolean = hasArgv("--debug");
 let OUTPUT_FILE: string = getArgv("--output", "build/lre.js");
 const INPUT_FILE: string = getArgv("--input", "src/index.ts");
@@ -26,13 +26,18 @@ esbuild
 
     return transformFile(OUTPUT_FILE + ".0.tmp.js", postCleanup);
   })
+  .then((result) => transformSync(result.code, typeOfCleanup))
   .then((result) =>
-    result.code
-      .trim()
-      .replace(/void 0/g, "undefined")
-      .replace(/\(\)=>\{/g, "function() {")
-      .replace(/`\n`/gm, '"\\n"')
-      .replace(/bind\(this\)\.(bind|apply)\(this/gm, "$1(this"),
+    stripRedundantFunctionNames(
+      result.code
+        .trim()
+        .replace(/^\s*\/\/ src\/[^\n]+\n/gm, "")
+        .replace(/void 0/g, "undefined")
+        .replace(/\(\)=>\{/g, "function() {")
+        .replace(/`\n`/gm, '"\\n"')
+        .replace(/bind\(this\)\.(bind|apply)\(this/gm, "$1(this"),
+      { stripAllNamedExpressions: !DEBUG_BUILD },
+    ),
   )
   .then((code) => {
     code = assembleLRECode(code);

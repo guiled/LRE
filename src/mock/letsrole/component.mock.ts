@@ -2,8 +2,7 @@ import { ViewMock } from "./view.mock";
 
 export class ComponentMock<
   T extends LetsRole.ComponentValue = LetsRole.ComponentValue,
-> implements LetsRole.Component<T>
-{
+> implements LetsRole.Component<T> {
   #sheet: ViewMock;
   #realId: LetsRole.ComponentID;
   #definitions: LetsRoleMock.ComponentDefinitions;

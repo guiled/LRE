@@ -2,7 +2,7 @@ import { Error } from "../../src/error";
 import { LRE } from "../../src/lre";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 
-jest.mock("../../src/lre");
+vi.mock("../../src/lre");
 
 const context = modeHandlerMock();
 

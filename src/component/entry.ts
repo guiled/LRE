@@ -12,4 +12,46 @@ export class Entry extends Component<LetsRole.ViewData> {
       silent,
     ) as Component | null;
   }
+
+  moveUp(): void {
+    const repeater = this.repeater();
+    const index = this.index();
+
+    if (repeater && index) {
+      repeater.moveEntryUp(index);
+    }
+  }
+
+  moveDown(): void {
+    const repeater = this.repeater();
+    const index = this.index();
+
+    if (repeater && index) {
+      repeater.moveEntryDown(index);
+    }
+  }
+
+  moveTop(): void {
+    const repeater = this.repeater();
+    const index = this.index();
+
+    if (repeater && index) {
+      repeater.moveEntryTop(index);
+    }
+  }
+
+  moveBottom(): void {
+    const repeater = this.repeater();
+    const index = this.index();
+
+    if (repeater && index) {
+      repeater.moveEntryBottom(index);
+    }
+  }
+
+  toString(): string {
+    const id = this.realId();
+    const index = this.index();
+    return `Entry<${id}>(${index || "no index"})`;
+  }
 }

@@ -11,6 +11,73 @@ import {
   logoWidth,
 } from "./characters";
 
+const semicolonFillerBlockedNextPart = /\W*(else|,|\))\W*/;
+
+function isElseKeyword(part: string): boolean {
+  return /^else\b/.test(part);
+}
+
+function skipOrphanedSemicolonBeforeElse(codeParts: Array<string>): void {
+  if (
+    codeParts.length >= 2 &&
+    codeParts[0].match(/^;/) &&
+    isElseKeyword(codeParts[1])
+  ) {
+    codeParts.shift();
+  }
+}
+
+function isThrowKeyword(part: string): boolean {
+  return /^throw\s*$/.test(part);
+}
+
+function canPlaceThrowWithExpressionStart(
+  expressionStart: string,
+  remainingAfterThrow: number,
+): boolean {
+  if (remainingAfterThrow <= 0) {
+    return false;
+  }
+
+  if (expressionStart.length <= remainingAfterThrow) {
+    return true;
+  }
+
+  if (
+    expressionStart.match(/^["'`]/) &&
+    remainingAfterThrow >= 3 &&
+    !expressionStart
+      .substring(remainingAfterThrow - 2, remainingAfterThrow)
+      .match(/\\/)
+  ) {
+    return true;
+  }
+
+  if (remainingAfterThrow >= 8 && expressionStart.match(/^return (["'])/)) {
+    return true;
+  }
+
+  return false;
+}
+
+function throwWouldBeOrphanedOnLine(
+  codeParts: Array<string>,
+  remainingLength: number,
+): boolean {
+  if (
+    !isThrowKeyword(codeParts[0]) ||
+    codeParts.length < 2 ||
+    codeParts[1].match(/^;/)
+  ) {
+    return false;
+  }
+
+  return !canPlaceThrowWithExpressionStart(
+    codeParts[1],
+    remainingLength - codeParts[0].length,
+  );
+}
+
 function getPaddedCodeWithUselessCode(
   codeParts: Array<string>,
   length: number,
@@ -31,7 +98,8 @@ function getPaddedCodeWithUselessCode(
     // remainingLength < 5 for security because in the "else" part, we can need 5 characters to add a space + /**/
     if (remainingLength < 5) {
       let partIdsContainingSemiColon = tmpResult.map((part, index) =>
-        part.includes(";") && !codeParts[index + 1]?.match(/\W*else\W*/)
+        part.includes(";") &&
+        !codeParts[index + 1]?.match(semicolonFillerBlockedNextPart)
           ? index
           : -1,
       );
@@ -93,6 +161,7 @@ export const formatLRECode = (
     /([{[])\n+\s*/g, // remove spaces after opening brackets
     /\n+\s*([}\]]\)?;?)/g, // remove spaces before opening brackets
     /((?=^.*,)(?!^.+[:;]).+?)\n[\s\n]*/gm,
+    /\bthrow[ \t]*\n+[ \t]*(?!;)/g, // keep throw with its expression
     /[ \t]*([^\s\w"'$]+)[ \t]*/g,
   ].forEach((e) => (code = code.replace(e, "$1")));
 
@@ -220,8 +289,6 @@ export const formatLRECode = (
 
   let currentLine = 0;
   let currentLinePart = 0;
-  let awaitingSemicolon = 0;
-  let foundSemicolon = 0;
 
   while (codeParts.length > 0) {
     let targetedLength = MAX_LINE_LENGTH - lines[currentLine].length;
@@ -244,17 +311,13 @@ export const formatLRECode = (
     let takeCodePart = true;
     const lineParts: Array<string> = [];
     let remainingLength = targetedLength;
-    let match: Array<string> | null = [];
+
+    skipOrphanedSemicolonBeforeElse(codeParts);
 
     while (codeParts.length > 0 && takeCodePart) {
-      if (codeParts[0].match(/for/)) {
-        awaitingSemicolon = 2;
-        foundSemicolon = 0;
-      } else if (codeParts[0].match(/;/)) {
-        foundSemicolon++;
-      }
-
-      if (codeParts[0].length <= remainingLength) {
+      if (throwWouldBeOrphanedOnLine(codeParts, remainingLength)) {
+        takeCodePart = false;
+      } else if (codeParts[0].length <= remainingLength) {
         remainingLength -= codeParts[0].length;
         lineParts.push(codeParts.shift()!);
         takeCodePart = remainingLength > 0;
@@ -276,28 +339,30 @@ export const formatLRECode = (
         );
         codeParts.unshift("+");
         takeCodePart = false;
-      } else if (
-        (match = codeParts[0].match(/^return (["'])/)) &&
-        remainingLength >= 8
-      ) {
-        const codePartToExtract = codeParts.shift()!;
-        lineParts.push(
-          "return" +
-            match[1] +
-            codePartToExtract.substring(8, remainingLength) +
-            match[1],
-        );
-        codeParts.unshift(
-          match[1] + codePartToExtract.substring(remainingLength),
-        );
-        codeParts.unshift("+");
-        takeCodePart = false;
+      } else if (remainingLength >= 8) {
+        const returnMatch = codeParts[0].match(/^return (["'])/);
+
+        if (returnMatch) {
+          const codePartToExtract = codeParts.shift()!;
+          lineParts.push(
+            "return" +
+              returnMatch[1] +
+              codePartToExtract.substring(8, remainingLength) +
+              returnMatch[1],
+          );
+          codeParts.unshift(
+            returnMatch[1] + codePartToExtract.substring(remainingLength),
+          );
+          codeParts.unshift("+");
+          takeCodePart = false;
+        } else {
+          takeCodePart = false;
+        }
       } else {
         takeCodePart = false;
       }
     }
 
-    const nextPart = codeParts[0] || "";
     largestPart = lineParts.reduce((acc: string, value: string) => {
       if (value.length > acc.length) {
         return value;
@@ -311,14 +376,10 @@ export const formatLRECode = (
         lineParts,
         targetedLength,
         " ",
-        awaitingSemicolon === 0 && !nextPart.match(/\W*else\W*/),
+        false,
       );
     } else {
       lines[currentLine] += lineParts.join("");
-    }
-
-    if (foundSemicolon >= awaitingSemicolon) {
-      awaitingSemicolon = 0;
     }
 
     currentLinePart++;

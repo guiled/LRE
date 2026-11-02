@@ -12,7 +12,7 @@ export class Error {
   public trace: Array<LetsRole.ErrorTrace> = [];
   public stack = {};
 
-  public static tracerFinder(
+  public static traceFinder(
     trace: LetsRole.Error["trace"],
   ): LetsRole.ErrorTrace | undefined {
     const idx =
@@ -32,7 +32,7 @@ export class Error {
   #handleTrace(trace: LetsRole.Error["trace"]): void {
     if (!trace) return;
     this.trace = trace;
-    const throwErrorLocation = Error.tracerFinder(trace);
+    const throwErrorLocation = Error.traceFinder(trace);
 
     if (throwErrorLocation) {
       this.lineNumber = throwErrorLocation?.loc?.start?.line;

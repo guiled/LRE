@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { LRE } from "../../src/lre";
 import {
   initLetsRole,
@@ -34,7 +35,7 @@ afterEach(() => {
 
 describe("Tables overload", () => {
   test("Overload", () => {
-    const get: jest.Mock = jest.fn();
+    const get: Mock = vi.fn();
     global.Tables = {
       get,
     } as LetsRole.Tables;
@@ -52,9 +53,9 @@ describe("Tables overload", () => {
       {
         get: (_id: LetsRole.TableID): LetsRole.Table => {
           return {
-            get: jest.fn() as LetsRole.Table["get"],
-            each: jest.fn() as LetsRole.Table["each"],
-            random: jest.fn() as LetsRole.Table["random"],
+            get: vi.fn() as LetsRole.Table["get"],
+            each: vi.fn() as LetsRole.Table["each"],
+            random: vi.fn() as LetsRole.Table["random"],
           };
         },
       },
@@ -89,7 +90,7 @@ describe("Script tables", () => {
     expect(table!.get("c")).toEqual(data[2]);
     expect(table!.get("d")).toBeNull();
 
-    const fn = jest.fn();
+    const fn = vi.fn();
     table!.each(fn);
 
     expect(fn).toHaveBeenCalledTimes(3);
@@ -97,8 +98,8 @@ describe("Script tables", () => {
     expect(fn).toHaveBeenNthCalledWith(2, data[1], "b", data[1]);
     expect(fn).toHaveBeenNthCalledWith(3, data[2], "c", data[2]);
 
-    jest.spyOn(global.Math, "random").mockReturnValue(0);
-    const fn2 = jest.fn();
+    vi.spyOn(global.Math, "random").mockReturnValue(0);
+    const fn2 = vi.fn();
     table!.random(fn2);
 
     expect(fn2).toHaveBeenCalledTimes(1);
@@ -134,7 +135,7 @@ describe("Script tables", () => {
 
     expect(table!.get("d")).toBeNull();
 
-    const fn = jest.fn();
+    const fn = vi.fn();
     table!.each(fn);
 
     expect(fn).toHaveBeenCalledTimes(3);
@@ -151,8 +152,8 @@ describe("Script tables", () => {
       ...data.c,
     });
 
-    jest.spyOn(global.Math, "random").mockReturnValue(0);
-    const fn2 = jest.fn();
+    vi.spyOn(global.Math, "random").mockReturnValue(0);
+    const fn2 = vi.fn();
     table!.random(fn2);
 
     expect(fn2).toHaveBeenCalledTimes(1);
@@ -166,7 +167,7 @@ describe("Script tables", () => {
       { id: "c", col1: "val5", col2: "val6" },
     ];
 
-    const fnData = jest.fn(() => data);
+    const fnData = vi.fn(() => data);
     Tables.register("testTable", fnData);
     const table = Tables.get("testTable");
 
@@ -177,7 +178,7 @@ describe("Script tables", () => {
     expect(table!.get("c")).toEqual(data[2]);
     expect(table!.get("d")).toBeNull();
 
-    const fn = jest.fn();
+    const fn = vi.fn();
     table!.each(fn);
 
     expect(fn).toHaveBeenCalledTimes(3);
@@ -185,8 +186,8 @@ describe("Script tables", () => {
     expect(fn).toHaveBeenNthCalledWith(2, data[1], "b", data[1]);
     expect(fn).toHaveBeenNthCalledWith(3, data[2], "c", data[2]);
 
-    jest.spyOn(global.Math, "random").mockReturnValue(0);
-    const fn2 = jest.fn();
+    vi.spyOn(global.Math, "random").mockReturnValue(0);
+    const fn2 = vi.fn();
     table!.random(fn2);
 
     expect(fn2).toHaveBeenCalledTimes(1);
@@ -203,7 +204,7 @@ describe("Script tables", () => {
 
     const obj = {};
 
-    const fnData = jest.fn(() => data);
+    const fnData = vi.fn(() => data);
     Tables.register("testTable", fnData);
     const table = Tables.get("testTable", obj);
 
@@ -215,7 +216,7 @@ describe("Script tables", () => {
     expect(table!.get("c")).toEqual(data[2]);
     expect(table!.get("d")).toBeNull();
 
-    const fn = jest.fn();
+    const fn = vi.fn();
     table!.each(fn);
 
     expect(fn).toHaveBeenCalledTimes(3);
@@ -223,8 +224,8 @@ describe("Script tables", () => {
     expect(fn).toHaveBeenNthCalledWith(2, data[1], "b", data[1]);
     expect(fn).toHaveBeenNthCalledWith(3, data[2], "c", data[2]);
 
-    jest.spyOn(global.Math, "random").mockReturnValue(0);
-    const fn2 = jest.fn();
+    vi.spyOn(global.Math, "random").mockReturnValue(0);
+    const fn2 = vi.fn();
     table!.random(fn2);
 
     expect(fn2).toHaveBeenCalledTimes(1);

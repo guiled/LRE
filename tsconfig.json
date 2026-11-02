@@ -11,6 +11,7 @@
     /* Language and Environment */
     "target": "es2023" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
     "lib": [
+      "ES2024",
       "ES2022.String",
       "ES2023.Array",
       "ES2024.Object"
@@ -35,11 +36,11 @@
     // "typeRoots": [],                                  /* Specify multiple folders that act like './node_modules/@types'. */
     "types": [
       "node",
+      "vitest/globals",
       "./src/types/types",
       "./src/types/lre",
       "./src/types/mixin",
-      "./src/mock/letsrole/types",
-      "jest"
+      "./src/mock/letsrole/types"
     ] /* Specify type package names to be included without being referenced in a source file. */,
     // "allowUmdGlobalAccess": true,                     /* Allow accessing UMD globals from modules. */
     // "moduleSuffixes": [],                             /* List of file name suffixes to search when resolving a module. */
@@ -88,7 +89,6 @@
     // "strictPropertyInitialization": true,             /* Check for class properties that are declared but not set in the constructor. */
     "noImplicitThis": true /* Enable error reporting when 'this' is given the type 'any'. */,
     // "useUnknownInCatchVariables": true,               /* Default catch clause variables as 'unknown' instead of 'any'. */
-    "alwaysStrict": false /* Ensure 'use strict' is always emitted. */,
     "noUnusedLocals": true /* Enable error reporting when local variables aren't read. */,
     "noUnusedParameters": true /* Raise an error when a function parameter isn't read. */,
     // "exactOptionalPropertyTypes": true,               /* Interpret optional property types as written, rather than adding 'undefined'. */

@@ -1,3 +1,4 @@
+import { directToRaw } from "../../src/globals/directToRaw";
 import { stringify } from "../../src/globals/stringify";
 
 describe("stringify test", () => {
@@ -54,5 +55,20 @@ b`),
     expect(stringify(obj, false)).toStrictEqual(
       `{"a":1,"b":"2","c":"{recursive}"}`,
     );
+  });
+
+  test("does not emit FromRaw warnings while stringify", () => {
+    global.lre = { warn: vi.fn() } as unknown as typeof lre;
+
+    const raw = { _tags: ["x"] };
+    const subject = {
+      raw: () => raw as unknown as LetsRole.DiceResult,
+      refreshRaw: () => raw as unknown as LetsRole.DiceResult,
+    } as IHasRaw;
+    directToRaw(subject, ["_tags"], true);
+
+    stringify(subject, false);
+
+    expect(lre.warn).not.toHaveBeenCalled();
   });
 });

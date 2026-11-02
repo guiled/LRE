@@ -143,8 +143,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
 
     sort(
       sorterOrString:
-        | DataProviderValueComparator<number>
-        | string = defaultSorter,
+        DataProviderValueComparator<number> | string = defaultSorter,
       direction: SortDirection = "ASC",
     ): IDataProvider {
       let sorter: DataProviderValueComparator<number>;
@@ -459,7 +458,9 @@ export const DataProvider = (superclass: Newable = class {}) =>
       }
     }
 
-    countDistinct(dataValueOrColumn?: string | DataProviderGetValue): number {
+    countDistinct(
+      dataValueOrColumn?: string | DataProviderGetValue | undefined,
+    ): number {
       const values: Array<LetsRole.ComponentValue> = [];
       dataValueOrColumn = this.#getDataValueGetter(dataValueOrColumn)[1];
       this.each((value, key, data) => {
@@ -655,7 +656,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
       return [comparisonId, dataValueOrColumn];
     }
 
-    sum(dataValueOrColumn?: string | DataProviderGetValue): number {
+    sum(dataValueOrColumn?: string | DataProviderGetValue | undefined): number {
       let total: number = 0;
       let hasNaN = false;
 
@@ -665,7 +666,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
       this.each((v, k, data) => {
         const val = dataValueOrColumn(v, k, data);
 
-        if (typeof val === "number" || !isNaN(val as unknown as number)) {
+        if (typeof val !== "number" || isNaN(val as unknown as number)) {
           hasNaN = true;
         }
 
@@ -706,7 +707,7 @@ export const DataProvider = (superclass: Newable = class {}) =>
     }
 
     getBy(
-      dataValueOrColumn: string | DataProviderGetValue,
+      dataValueOrColumn: string | DataProviderGetValue | undefined,
       value: LetsRole.ComponentValue,
     ): DataProviderDataValue {
       dataValueOrColumn = this.#getDataValueGetter(dataValueOrColumn)[1];
@@ -1028,6 +1029,25 @@ export const DataProvider = (superclass: Newable = class {}) =>
       }
 
       return key + suffix;
+    }
+
+    toString(): string {
+      const id = this.id();
+      let count = 0;
+
+      try {
+        const values = this.#getCurrentValue();
+
+        if (Array.isArray(values)) {
+          count = values.length;
+        } else if (lre.isObject(values)) {
+          count = Object.keys(values).length;
+        } else {
+          count = 1;
+        }
+      } catch (e) {}
+
+      return `DataProvider<${id}>(${count} items)`;
     }
   };
 

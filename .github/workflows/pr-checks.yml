@@ -77,7 +77,14 @@ jobs:
       - name: Build SWC plugin (required by transform tests)
         run: yarn buildswcplugin
       - name: Run Vitest
-        run: yarn test --coverage.enabled=false
+        run: yarn test --coverage.reporter=json-summary
+      - name: Upload coverage summary
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-summary
+          path: coverage/coverage-summary.json
+          if-no-files-found: ignore
 
   build:
     name: Build (SWC + bundles)
@@ -106,10 +113,19 @@ jobs:
       - build
     if: always()
     steps:
+      - name: Download coverage summary
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-summary
+          path: coverage
       - name: Write workflow summary
         uses: actions/github-script@v7
         with:
           script: |
+            const fs = require("fs");
+            const path = require("path");
+
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const runId = context.runId;
@@ -192,9 +208,103 @@ jobs:
 
             body += `\n[Full workflow run](https://github.com/${owner}/${repo}/actions/runs/${runId})\n`;
 
+            const prNumber = context.payload.pull_request?.number;
+
+            const isCoverageEligibleSrc = (file) =>
+              file.startsWith("src/") &&
+              file.endsWith(".ts") &&
+              !file.endsWith(".d.ts") &&
+              !file.includes("/swc/") &&
+              file !== "src/index.ts" &&
+              !/\/I[A-Z][^/]*\.ts$/.test(file);
+
+            const formatPct = (metric) => {
+              if (!metric || metric.pct === undefined || metric.pct === "Unknown") {
+                return "—";
+              }
+              return `${metric.pct}%`;
+            };
+
+            const findCoverageEntry = (summary, relPath) => {
+              if (summary[relPath]) return summary[relPath];
+              const suffix = `/${relPath}`;
+              const key = Object.keys(summary).find(
+                (k) => k !== "total" && (k === relPath || k.endsWith(suffix)),
+              );
+              return key ? summary[key] : null;
+            };
+
+            let coverageSection = "";
+
+            if (prNumber) {
+              const prFilenames = [];
+              for (let page = 1; ; page++) {
+                const { data: prFiles } = await github.rest.pulls.listFiles({
+                  owner,
+                  repo,
+                  pull_number: prNumber,
+                  per_page: 100,
+                  page,
+                });
+                if (prFiles.length === 0) break;
+                for (const f of prFiles) {
+                  if (f.status !== "removed") prFilenames.push(f.filename);
+                }
+                if (prFiles.length < 100) break;
+              }
+
+              const modifiedSrc = [
+                ...new Set(prFilenames.filter(isCoverageEligibleSrc)),
+              ].sort();
+
+              const summaryPath = path.join(
+                process.env.GITHUB_WORKSPACE,
+                "coverage",
+                "coverage-summary.json",
+              );
+
+              if (modifiedSrc.length === 0) {
+                coverageSection =
+                  "\n### Unit test coverage (PR `src/` changes)\n\nNo eligible `src/**/*.ts` files in this PR diff.\n";
+              } else if (!fs.existsSync(summaryPath)) {
+                coverageSection =
+                  "\n### Unit test coverage (PR `src/` changes)\n\nCoverage summary unavailable (unit tests did not produce `coverage-summary.json`).\n";
+              } else {
+                const summary = JSON.parse(fs.readFileSync(summaryPath, "utf8"));
+                coverageSection =
+                  "\n### Unit test coverage (PR `src/` changes)\n\n";
+                coverageSection +=
+                  "Line / statement / branch / function coverage from the full Vitest run, filtered to files changed in this PR (same include/exclude rules as `vitest.config.ts`).\n\n";
+                coverageSection +=
+                  "| File | Lines | Statements | Branches | Functions |\n";
+                coverageSection += "| --- | --- | --- | --- | --- |\n";
+
+                for (const file of modifiedSrc) {
+                  const entry = findCoverageEntry(summary, file);
+                  if (!entry) {
+                    coverageSection += `| \`${file}\` | — | — | — | — |\n`;
+                    continue;
+                  }
+                  coverageSection +=
+                    "| `" +
+                    file +
+                    "` | " +
+                    formatPct(entry.lines) +
+                    " | " +
+                    formatPct(entry.statements) +
+                    " | " +
+                    formatPct(entry.branches) +
+                    " | " +
+                    formatPct(entry.functions) +
+                    " |\n";
+                }
+              }
+
+              body += coverageSection;
+            }
+
             core.summary.addRaw(body).write();
 
-            const prNumber = context.payload.pull_request?.number;
             if (!prNumber) {
               core.info("Not a pull_request event — skipping PR comment.");
               return;

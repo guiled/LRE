@@ -12,8 +12,8 @@ import { ViewMock } from "../../src/mock/letsrole/view.mock";
 import { Component } from "../../src/component";
 import { FailingComponent } from "../../src/mock/letsrole/component.mock";
 
-jest.mock("../../src/lre");
-jest.mock("../../src/component/component");
+vi.mock("../../src/lre");
+vi.mock("../../src/component/component");
 
 let cache: ComponentCache;
 let server: ServerMock;
@@ -138,7 +138,7 @@ afterEach(() => {
   terminateLetsRole();
 });
 
-const newCmp = jest.fn((id: string): ComponentSearchResult => {
+const newCmp = vi.fn((id: string): ComponentSearchResult => {
   const rawCmp = rawSheet.get(id);
 
   if (rawCmp instanceof FailingComponent) {
@@ -147,7 +147,7 @@ const newCmp = jest.fn((id: string): ComponentSearchResult => {
 
   const cmp = new Component(rawSheet.get(id), sheet, id);
 
-  jest.spyOn(cmp, "realId").mockReturnValue(id);
+  vi.spyOn(cmp, "realId").mockReturnValue(id);
 
   return cmp;
 });

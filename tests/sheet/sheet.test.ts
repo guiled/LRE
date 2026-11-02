@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { Component } from "../../src/component";
 import { ClassChanges, Sheet } from "../../src/sheet/index";
 import { LRE } from "../../src/lre";
@@ -9,6 +10,7 @@ import {
   terminateLetsRole,
 } from "../../src/mock/letsrole/letsrole.mock";
 import { ViewMock } from "../../src/mock/letsrole/view.mock";
+import { SheetProxy } from "../../src/proxy/sheet";
 
 const createLargeObject = (nbKeys: number): Record<string, number> =>
   Array(nbKeys)
@@ -100,8 +102,8 @@ describe("Sheet basics", () => {
 
   beforeEach(() => {
     raw = server.openView(sheetId, "4242", {});
-    jest.spyOn(raw, "getData");
-    jest.spyOn(raw, "getVariable");
+    vi.spyOn(raw, "getData");
+    vi.spyOn(raw, "getVariable");
     sheet = new Sheet(raw, new DataBatcher(context, raw), context);
   });
 
@@ -133,7 +135,7 @@ describe("Sheet basics", () => {
   });
 
   test("getSheetId calls raw method", () => {
-    jest.spyOn(raw, "getSheetId");
+    vi.spyOn(raw, "getSheetId");
     const res = sheet.getSheetId();
 
     expect(res).toEqual("4242");
@@ -142,8 +144,8 @@ describe("Sheet basics", () => {
   });
 
   test("name and properName call raw methods", () => {
-    jest.spyOn(raw, "name");
-    jest.spyOn(raw, "properName");
+    vi.spyOn(raw, "name");
+    vi.spyOn(raw, "properName");
     sheet.name();
     sheet.properName();
 
@@ -153,9 +155,9 @@ describe("Sheet basics", () => {
 
   test("prompt calls raw method", () => {
     let view: LetsRole.Sheet;
-    jest.spyOn(raw, "prompt");
-    const fnResult = jest.fn();
-    const fnInit = jest.fn((promptView, _v) => (view = promptView.raw()));
+    vi.spyOn(raw, "prompt");
+    const fnResult = vi.fn();
+    const fnInit = vi.fn((promptView, _v) => (view = promptView.raw()));
     sheet.prompt("title", "testedSheet", fnResult, fnInit);
 
     expect(raw.prompt).toHaveBeenCalledTimes(1);
@@ -182,7 +184,7 @@ describe("Sheet basics", () => {
   });
 
   test("id() and readId() calls", () => {
-    jest.spyOn(raw, "id");
+    vi.spyOn(raw, "id");
 
     expect(sheet.id()).toEqual(sheetId);
     expect(sheet.realId()).toEqual(sheetId);
@@ -200,12 +202,12 @@ describe("Sheet data handling", () => {
   });
 
   test("Test sheet mock", () => {
-    jest.spyOn(server, "showError");
+    vi.spyOn(server, "showError");
     raw.setData(createLargeObject(30));
 
     expect(server.showError).toHaveBeenCalled();
 
-    (server.showError as jest.Mock).mockClear();
+    (server.showError as Mock).mockClear();
     const validObject = createLargeObject(20);
 
     expect(server.showError).not.toHaveBeenCalled();
@@ -217,8 +219,8 @@ describe("Sheet data handling", () => {
   });
 
   test("setData and getData are batched and events are triggered", () => {
-    const processedCb: jest.Mock = jest.fn();
-    const pendingCb: jest.Mock = jest.fn();
+    const processedCb: Mock = vi.fn();
+    const pendingCb: Mock = vi.fn();
     sheet.on("data-processed", processedCb);
     sheet.on("data-pending", pendingCb);
     const data: LetsRole.ViewData = {
@@ -226,10 +228,10 @@ describe("Sheet data handling", () => {
       b: 2,
       c: 3,
     };
-    raw.getData = jest.fn(() => {
+    raw.getData = vi.fn(() => {
       return data;
     });
-    raw.setData = jest.fn((d: LetsRole.ViewData) => {
+    raw.setData = vi.fn((d: LetsRole.ViewData) => {
       for (const i in d) {
         data[i] = d[i];
       }
@@ -288,7 +290,7 @@ describe("Sheet data handling", () => {
   });
 
   test("No error when sending too much data", () => {
-    jest.spyOn(raw, "setData");
+    vi.spyOn(raw, "setData");
     sheet.setData(createLargeObject(35));
 
     expect(raw.setData).not.toHaveBeenCalled();
@@ -310,7 +312,7 @@ describe("Sheet data handling", () => {
       c: 3,
       rep: repValue,
     };
-    raw.getData = jest.fn(() => {
+    raw.getData = vi.fn(() => {
       return data;
     });
 
@@ -442,7 +444,7 @@ describe("Sheet persisting data", () => {
       v2: 2,
     };
     const v = sheet1.persistingCmpData("123", newData);
-    jest.spyOn(sheet1.raw(), "setData");
+    vi.spyOn(sheet1.raw(), "setData");
 
     expect(sheet1.raw().setData).not.toHaveBeenCalled();
     expect(itHasWaitedEverything).not.toThrow();
@@ -555,8 +557,8 @@ describe("Sheet clean data", () => {
         initialized: false,
       },
     };
-    raw.getData = jest.fn(() => data);
-    raw.setData = jest.fn((d) => (data = { ...data, ...d }));
+    raw.getData = vi.fn(() => data);
+    raw.setData = vi.fn((d) => (data = { ...data, ...d }));
     let save = structuredClone(data);
     let sheet = new Sheet(raw, new DataBatcher(context, raw), context);
     sheet.cleanCmpData();
@@ -698,7 +700,7 @@ describe("Sheet get component", () => {
   });
 
   test("Non existing component search", () => {
-    const errorLogSpy = jest.spyOn(lre, "error");
+    const errorLogSpy = vi.spyOn(lre, "error");
 
     expect(sheet1.get("unknown")).toBeNull();
     expect(errorLogSpy).toHaveBeenCalled();
@@ -754,7 +756,7 @@ describe("Sheet get component", () => {
     expect(sheet1.componentExists("nullCmp")).toBeFalsy();
     expect(sheet1.componentExists("unknown")).toBeFalsy();
 
-    sheet1.raw().getData = jest.fn(() => {
+    sheet1.raw().getData = vi.fn(() => {
       return {
         a: {
           b: {
@@ -784,7 +786,7 @@ describe("Sheet get component", () => {
   });
 
   test("Sheet remember/forget component", () => {
-    jest.spyOn(raw, "get");
+    vi.spyOn(raw, "get");
 
     expect(raw.get).toHaveBeenCalledTimes(0);
 
@@ -841,5 +843,35 @@ describe("Sheet get component", () => {
     const grp4 = sheet1.get(`grpUnknown`);
 
     expect(grp4).toBe(grp);
+  });
+});
+
+describe("Sheet toString", () => {
+  test("toString shows sheet info with id and name", () => {
+    const rawSheet = server.openView("main", "12345");
+    const sheetProxy = new SheetProxy(context, rawSheet);
+    const sheet = new Sheet(
+      sheetProxy,
+      new DataBatcher(context, sheetProxy),
+      context,
+    );
+    const result = sheet.toString();
+    const name = sheet.name();
+
+    expect(result).toBe(`Sheet<main>(${name || ""})`);
+  });
+
+  test("toString shows sheet info with different sheet", () => {
+    const rawSheet = server.openView("testedSheet", "12345");
+    const sheetProxy = new SheetProxy(context, rawSheet);
+    const sheet = new Sheet(
+      sheetProxy,
+      new DataBatcher(context, sheetProxy),
+      context,
+    );
+    const result = sheet.toString();
+    const name = sheet.name();
+
+    expect(result).toBe(`Sheet<testedSheet>(${name || ""})`);
   });
 });

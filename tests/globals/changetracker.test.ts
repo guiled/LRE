@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { Context } from "../../src/context";
 import { DirectDataProvider } from "../../src/dataprovider";
 import { ChangeTracker } from "../../src/globals/changetracker";
@@ -43,7 +44,7 @@ describe("ChangeTracker linkParams", () => {
 
     ClassA = class implements IDataProviderAsSource {
       #id: string;
-      #fn: (a: number, b?: number) => void = jest.fn();
+      #fn: (a: number, b?: number) => void = vi.fn();
       #tracker: ChangeTracker = new ChangeTracker(this, context);
       #value: number | undefined = undefined;
       #refresher: Record<string, any> = {};
@@ -119,9 +120,9 @@ describe("ChangeTracker linkParams", () => {
 
     const cmp = sheet.get("a")!;
 
-    jest.spyOn(cmp, "on");
+    vi.spyOn(cmp, "on");
 
-    const fn = jest.fn();
+    const fn = vi.fn();
     a.method(() => {
       fn();
       return cmp.value();
@@ -132,7 +133,7 @@ describe("ChangeTracker linkParams", () => {
     });
     expect(cmp.on).toHaveBeenCalledTimes(1);
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     cmp.value("42");
 
     expect(fn).toHaveBeenCalledTimes(1);
@@ -147,14 +148,14 @@ describe("ChangeTracker linkParams", () => {
 
     const cmp1 = sheet.get("a")!;
     cmp1.value("a1");
-    jest.spyOn(cmp1, "on");
-    jest.spyOn(cmp1, "off");
+    vi.spyOn(cmp1, "on");
+    vi.spyOn(cmp1, "off");
     const cmp2 = sheet.get("b")!;
     cmp2.value("b1");
-    jest.spyOn(cmp2, "on");
-    jest.spyOn(cmp2, "off");
+    vi.spyOn(cmp2, "on");
+    vi.spyOn(cmp2, "off");
 
-    const fn = jest.fn();
+    const fn = vi.fn();
     let switcher = true;
     a.method(() => {
       if (switcher) {
@@ -174,7 +175,7 @@ describe("ChangeTracker linkParams", () => {
     expect(cmp2.on).not.toHaveBeenCalled();
     expect(cmp2.off).not.toHaveBeenCalled();
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     switcher = false;
     cmp1.value("a42");
 
@@ -188,12 +189,12 @@ describe("ChangeTracker linkParams", () => {
     expect(cmp2.on).toHaveBeenCalledTimes(1);
     expect(cmp2.off).not.toHaveBeenCalled();
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     cmp1.value("a43");
 
     expect(fn).not.toHaveBeenCalled();
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     cmp2.value("b41");
 
     expect(fn).toHaveBeenCalledTimes(1);
@@ -212,12 +213,12 @@ describe("ChangeTracker linkParams", () => {
 
     const cmp1 = sheet.get("a")!;
     cmp1.value("a1");
-    jest.spyOn(cmp1, "on");
-    jest.spyOn(cmp1, "off");
+    vi.spyOn(cmp1, "on");
+    vi.spyOn(cmp1, "off");
     const cmp2 = sheet.get("b")!;
     cmp2.value(1);
-    jest.spyOn(cmp2, "on");
-    jest.spyOn(cmp2, "off");
+    vi.spyOn(cmp2, "on");
+    vi.spyOn(cmp2, "off");
 
     const result = a.method(() => {
       return cmp1.value();
@@ -242,10 +243,10 @@ describe("ChangeTracker linkParams", () => {
     const cmp1 = sheet.get("a")!;
     const cmp2 = sheet.get("b")!;
 
-    jest.spyOn(cmp1, "on");
-    jest.spyOn(cmp1, "off");
-    jest.spyOn(cmp2, "on");
-    jest.spyOn(cmp2, "off");
+    vi.spyOn(cmp1, "on");
+    vi.spyOn(cmp1, "off");
+    vi.spyOn(cmp2, "on");
+    vi.spyOn(cmp2, "off");
 
     a.method(() => {
       return cmp1.value();
@@ -256,7 +257,7 @@ describe("ChangeTracker linkParams", () => {
     expect(cmp2.on).not.toHaveBeenCalled();
     expect(cmp2.off).not.toHaveBeenCalled();
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     a.method(() => {
       return cmp2.value();
     });
@@ -266,7 +267,7 @@ describe("ChangeTracker linkParams", () => {
     expect(cmp2.on).toHaveBeenCalledTimes(1);
     expect(cmp2.off).not.toHaveBeenCalled();
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     a.method(42);
 
     expect(cmp1.on).not.toHaveBeenCalled();
@@ -282,11 +283,11 @@ describe("ChangeTracker linkParams", () => {
     const cmp = sheet.get("a")!;
     cmp.value("a1");
 
-    jest.spyOn(cmp, "on");
-    jest.spyOn(cmp, "off");
+    vi.spyOn(cmp, "on");
+    vi.spyOn(cmp, "off");
 
-    const fna = jest.fn();
-    const fnb = jest.fn();
+    const fna = vi.fn();
+    const fnb = vi.fn();
     let switcher = true;
     a.method(() => {
       if (switcher) {
@@ -302,7 +303,7 @@ describe("ChangeTracker linkParams", () => {
     expect(cmp.on).toHaveBeenCalledTimes(2);
     expect(cmp.off).toHaveBeenCalledTimes(0);
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     cmp.value("a42");
 
     expect(fna).toHaveBeenCalledTimes(1);
@@ -313,7 +314,7 @@ describe("ChangeTracker linkParams", () => {
     expect(cmp.off).toHaveBeenCalledTimes(0);
 
     switcher = false;
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     cmp.value("a43");
 
     expect(fna).toHaveBeenCalledTimes(1);
@@ -323,7 +324,7 @@ describe("ChangeTracker linkParams", () => {
     expect(cmp.on).toHaveBeenCalledTimes(0);
     expect(cmp.off).toHaveBeenCalledTimes(1);
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     cmp.value("a44");
 
     expect(fna).toHaveBeenCalledTimes(0);
@@ -346,8 +347,8 @@ describe("ChangeTracker linkParams", () => {
     test.each(testCases)("Event for $type is $match", ({ type, match }) => {
       const a = new ClassA("Aa");
       const cmp = sheet.get("a")!;
-      jest.spyOn(cmp, "on");
-      jest.spyOn(cmp, "off");
+      vi.spyOn(cmp, "on");
+      vi.spyOn(cmp, "off");
 
       a.method(() => {
         context.logAccess(type, ["123", "a"]);
@@ -355,31 +356,31 @@ describe("ChangeTracker linkParams", () => {
 
       expect(cmp.on).toHaveBeenCalledTimes(1);
 
-      let eventId = (cmp.on as jest.Mock).mock.calls[0][0];
+      let eventId = (cmp.on as Mock).mock.calls[0][0];
 
       expect(eventId).toMatch(match);
       expect(cmp.off).not.toHaveBeenCalled();
 
-      jest.clearAllMocks();
+      vi.clearAllMocks();
       a.method(42);
 
       expect(cmp.on).not.toHaveBeenCalled();
       expect(cmp.off).toHaveBeenCalledTimes(1);
 
-      eventId = (cmp.off as jest.Mock).mock.calls[0][0];
+      eventId = (cmp.off as Mock).mock.calls[0][0];
 
       expect(eventId).toMatch(match);
     });
   });
 
   test("Direct component as argument create a value log", () => {
-    const cb = jest.fn();
+    const cb = vi.fn();
     const a = new ClassA("Aa", cb);
     const cmp = sheet.get("a")!;
     cmp.value("a1");
-    jest.spyOn(cmp, "on");
-    jest.spyOn(cmp, "off");
-    jest.spyOn(a, "method");
+    vi.spyOn(cmp, "on");
+    vi.spyOn(cmp, "off");
+    vi.spyOn(a, "method");
 
     a.method(cmp);
 
@@ -392,7 +393,7 @@ describe("ChangeTracker linkParams", () => {
     expect(cmp.off).not.toHaveBeenCalled();
     expect(cb).toHaveBeenCalledWith("a1");
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     cmp.value("a42");
 
     expect(context.getLastLog()).toStrictEqual({
@@ -404,13 +405,13 @@ describe("ChangeTracker linkParams", () => {
   });
 
   test("DataProvider as argument create a provider log", () => {
-    const cb = jest.fn();
+    const cb = vi.fn();
     const a = new ClassA("Aa", cb);
     let val = 42;
     const dp = new DirectDataProvider("dp", context, () => val);
 
-    jest.spyOn(dp, "subscribeRefresh");
-    jest.spyOn(dp, "unsubscribeRefresh");
+    vi.spyOn(dp, "subscribeRefresh");
+    vi.spyOn(dp, "unsubscribeRefresh");
 
     a.method(dp);
 
@@ -420,7 +421,7 @@ describe("ChangeTracker linkParams", () => {
     expect(dp.unsubscribeRefresh).not.toHaveBeenCalled();
 
     val = 43;
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     dp.refresh();
 
     expect(cb).toHaveBeenCalledTimes(1);
@@ -428,7 +429,7 @@ describe("ChangeTracker linkParams", () => {
     expect(dp.subscribeRefresh).not.toHaveBeenCalled();
     expect(dp.unsubscribeRefresh).not.toHaveBeenCalled();
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     a.method(22);
 
     expect(cb).toHaveBeenCalledTimes(1);
@@ -443,10 +444,10 @@ describe("ChangeTracker linkParams", () => {
 
     const a = new ClassA("Aa");
 
-    jest.spyOn(dp, "subscribeRefresh");
-    jest.spyOn(dp, "unsubscribeRefresh");
-    jest.spyOn(a, "subscribeRefresh");
-    jest.spyOn(a, "unsubscribeRefresh");
+    vi.spyOn(dp, "subscribeRefresh");
+    vi.spyOn(dp, "unsubscribeRefresh");
+    vi.spyOn(a, "subscribeRefresh");
+    vi.spyOn(a, "unsubscribeRefresh");
 
     a.method(dp);
 
@@ -458,7 +459,7 @@ describe("ChangeTracker linkParams", () => {
 
     expect(a.providedValue()).toBe(43);
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     const b = new ClassA("Ab");
 
     expect(dp.subscribeRefresh).toHaveBeenCalledTimes(0);
@@ -486,7 +487,7 @@ describe("ChangeTracker linkParams with flags", () => {
 
     ClassA = class {
       #id: string;
-      #fn: (a: number, b?: number) => void = jest.fn();
+      #fn: (a: number, b?: number) => void = vi.fn();
       #tracker: ChangeTracker = new ChangeTracker(this, context);
       value: Array<number> | undefined = undefined;
       givenCb: undefined | (() => void);
@@ -529,7 +530,7 @@ describe("ChangeTracker linkParams with flags", () => {
     const dp1 = new DirectDataProvider("dp", context, () => val);
     const dp2 = new DirectDataProvider("dp", context, () => val + 1);
 
-    const cb = jest.fn(() => val);
+    const cb = vi.fn(() => val);
 
     a.method(dp1, dp2, cb);
 
@@ -555,7 +556,7 @@ describe("ChangeTracker extract data providers", () => {
 
     ClassA = class {
       #id: string;
-      #fn: (a: number, b?: number) => void = jest.fn();
+      #fn: (a: number, b?: number) => void = vi.fn();
       #tracker: ChangeTracker = new ChangeTracker(this, context);
       #dp1: IDataProvider | undefined;
       #dp2: IDataProvider | undefined;
@@ -617,7 +618,7 @@ describe("ChangeTracker extract data providers", () => {
 
   test("Extracted DataProvider is undefined", () => {
     const a = new ClassA("Aa");
-    const cb = jest.fn();
+    const cb = vi.fn();
 
     a.method(42, cb);
 
@@ -693,8 +694,8 @@ describe("ChangeTracker on derived class", () => {
   });
 
   test("ChangeTracker keeps the links on the overloaded tracked method", () => {
-    const fn1 = jest.fn();
-    const fn2 = jest.fn();
+    const fn1 = vi.fn();
+    const fn2 = vi.fn();
 
     const obj = new ClassB("Aa", fn1, fn2);
 
@@ -705,10 +706,10 @@ describe("ChangeTracker on derived class", () => {
 
     const val = 42;
     const dp = new DirectDataProvider("dp", context, () => val);
-    jest.spyOn(dp, "subscribeRefresh");
-    jest.spyOn(dp, "unsubscribeRefresh");
+    vi.spyOn(dp, "subscribeRefresh");
+    vi.spyOn(dp, "unsubscribeRefresh");
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     obj.method(dp);
 

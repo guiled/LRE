@@ -5,4 +5,15 @@ export class Label extends Toggle {
     super(raw, sheet, realId);
     this.lreType("label");
   }
+
+  toString(): string {
+    const parentStr = super.toString();
+
+    if (parentStr) {
+      return parentStr.replace("Toggle<", "Label<");
+    }
+
+    const id = this.realId();
+    return `Label<${id}>(label)`;
+  }
 }

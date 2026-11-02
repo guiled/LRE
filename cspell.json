@@ -3,6 +3,7 @@
   "language": "en",
   "ignorePaths": [
     "coverage/**",
+    "swc-plugins/",
     "node_modules/**",
     "*.json",
     "build/**",
@@ -19,11 +20,14 @@
     "autonum",
     "Cacheable",
     "changetracker",
+    "checkall",
+    "checkcode",
     "cmps",
     "cntr",
     "databatcher",
     "dataholder",
     "dataprovider",
+    "dicebuilder",
     "diceresult",
     "endregion",
     "entrychange",
@@ -58,7 +62,8 @@
     "valclick",
     "valselect",
     "valunselect",
-    "virtualcall"
+    "virtualcall",
+    "wasip"
   ],
   "flagWords": []
 }

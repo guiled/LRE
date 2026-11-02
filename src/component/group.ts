@@ -394,4 +394,10 @@ export class Group
   dataProvider(): IDataProvider | undefined {
     return;
   }
+
+  toString(): string {
+    const id = this.#id;
+    const count = this.#components.length;
+    return `Group<${id}>(${count} components)`;
+  }
 }

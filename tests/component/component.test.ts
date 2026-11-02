@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { Component } from "../../src/component";
 import { Container } from "../../src/component/container";
 import { Entry } from "../../src/component/entry";
@@ -16,6 +17,7 @@ import { LreTables } from "../../src/tables";
 import { SheetProxy } from "../../src/proxy/sheet";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { ComponentMock } from "../../src/mock/letsrole/component.mock";
+import { ViewMock } from "../../src/mock/letsrole/view.mock";
 
 let rawSheet: LetsRole.Sheet;
 let sheet: Sheet;
@@ -122,10 +124,10 @@ beforeEach(() => {
 
   sheet = new Sheet(proxySheet, new DataBatcher(context, proxySheet), context);
   lre.sheets.add(sheet);
-  sheet.raw = jest.fn(() => proxySheet);
-  jest.spyOn(sheet, "get");
-  jest.spyOn(sheet, "componentExists");
-  jest.spyOn(sheet, "knownChildren");
+  sheet.raw = vi.fn(() => proxySheet);
+  vi.spyOn(sheet, "get");
+  vi.spyOn(sheet, "componentExists");
+  vi.spyOn(sheet, "knownChildren");
   rawCmp = rawSheet.get(cmpId) as ComponentMock;
   cmp = new Component(rawCmp, sheet, realId);
 });
@@ -146,19 +148,19 @@ describe("Component construction", () => {
 
     expect(cmp.lreType()).toBe("container");
 
-    jest.spyOn(rawCmp, "id");
+    vi.spyOn(rawCmp, "id");
 
     expect(cmp.id()).toEqual(cmpId);
     expect(rawCmp.id).toHaveBeenCalledTimes(1);
 
     expect(cmp.realId()).toEqual(realId);
 
-    jest.spyOn(rawCmp, "index");
+    vi.spyOn(rawCmp, "index");
 
     expect(cmp.index()).toBeNull();
     expect(rawCmp.index).toHaveBeenCalledTimes(1);
 
-    jest.spyOn(rawCmp, "name");
+    vi.spyOn(rawCmp, "name");
 
     expect(cmp.name()).toBe(cmpName);
     expect(rawCmp.name).toHaveBeenCalledTimes(1);
@@ -166,27 +168,27 @@ describe("Component construction", () => {
     expect(cmp.sheet()).toBe(sheet);
     expect(cmp.parent()).toBeUndefined();
 
-    jest.spyOn(rawCmp, "hide");
+    vi.spyOn(rawCmp, "hide");
     cmp.hide();
 
     expect(rawCmp.hide).toHaveBeenCalledTimes(1);
 
-    jest.spyOn(rawCmp, "visible");
+    vi.spyOn(rawCmp, "visible");
 
     expect(cmp.visible()).toBeFalsy();
     expect(rawCmp.visible).toHaveBeenCalledTimes(1);
 
-    jest.spyOn(rawCmp, "show");
+    vi.spyOn(rawCmp, "show");
     cmp.show();
 
     expect(rawCmp.show).toHaveBeenCalledTimes(1);
 
-    (rawCmp.visible as jest.Mock).mockClear();
+    (rawCmp.visible as Mock).mockClear();
 
     expect(cmp.visible()).toBeTruthy();
     expect(rawCmp.visible).toHaveBeenCalledTimes(1);
 
-    jest.spyOn(rawCmp, "text");
+    vi.spyOn(rawCmp, "text");
 
     expect(cmp.text()).toBe(cmpText);
     expect(rawCmp.text).toHaveBeenCalledTimes(1);
@@ -197,12 +199,12 @@ describe("Component construction", () => {
     expect(cmp.text()).toBe(newText);
     expect(rawCmp.text).toHaveBeenCalledTimes(3);
 
-    jest.spyOn(rawCmp, "setChoices");
+    vi.spyOn(rawCmp, "setChoices");
     cmp.setChoices({ a: "a", b: "b" });
 
     expect(rawCmp.setChoices).toHaveBeenCalledTimes(1);
 
-    jest.spyOn(rawCmp, "virtualValue");
+    vi.spyOn(rawCmp, "virtualValue");
     cmp.virtualValue();
 
     expect(rawCmp.virtualValue).toHaveBeenCalledTimes(1);
@@ -211,25 +213,23 @@ describe("Component construction", () => {
 
     expect(rawCmp.virtualValue).toHaveBeenCalledTimes(2);
 
-    jest.spyOn(rawCmp, "rawValue");
+    vi.spyOn(rawCmp, "rawValue");
     cmp.rawValue();
 
     expect(rawCmp.rawValue).toHaveBeenCalledTimes(1);
 
-    jest.spyOn(rawCmp, "setToolTip");
+    vi.spyOn(rawCmp, "setToolTip");
     cmp.setToolTip("the tool tip");
 
     expect(rawCmp.setToolTip).toHaveBeenCalledTimes(1);
-    expect((rawCmp.setToolTip as jest.Mock).mock.calls[0].length).toBe(1);
-    expect((rawCmp.setToolTip as jest.Mock).mock.calls[0][0]).toBe(
-      "the tool tip",
-    );
+    expect((rawCmp.setToolTip as Mock).mock.calls[0].length).toBe(1);
+    expect((rawCmp.setToolTip as Mock).mock.calls[0][0]).toBe("the tool tip");
 
     cmp.setToolTip("the tool tip", "top");
 
     expect(rawCmp.setToolTip).toHaveBeenCalledTimes(2);
-    expect((rawCmp.setToolTip as jest.Mock).mock.calls[1].length).toBe(2);
-    expect((rawCmp.setToolTip as jest.Mock).mock.calls[1][1]).toBe("top");
+    expect((rawCmp.setToolTip as Mock).mock.calls[1].length).toBe(2);
+    expect((rawCmp.setToolTip as Mock).mock.calls[1][1]).toBe("top");
 
     expect(cmp.visible()).toBeTruthy();
 
@@ -243,10 +243,10 @@ describe("Component construction", () => {
   });
 
   test("Component classes", () => {
-    jest.spyOn(rawCmp, "addClass");
-    jest.spyOn(rawCmp, "removeClass");
-    jest.spyOn(rawCmp, "hasClass");
-    jest.spyOn(rawCmp, "getClasses");
+    vi.spyOn(rawCmp, "addClass");
+    vi.spyOn(rawCmp, "removeClass");
+    vi.spyOn(rawCmp, "hasClass");
+    vi.spyOn(rawCmp, "getClasses");
 
     expect(cmp.getClasses()).toEqual(expect.arrayContaining(cmpClasses));
     expect(rawCmp.getClasses).toHaveBeenCalledTimes(1);
@@ -278,7 +278,7 @@ describe("Component construction", () => {
   });
 
   test("Adding invalid class name trigger a warning", () => {
-    jest.spyOn(lre, "warn");
+    vi.spyOn(lre, "warn");
     cmp.addClass("cl0");
 
     expect(lre.warn).not.toHaveBeenCalled();
@@ -287,7 +287,7 @@ describe("Component construction", () => {
 
     expect(lre.warn).toHaveBeenCalled();
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     cmp.removeClass("cl0");
 
     expect(lre.warn).not.toHaveBeenCalled();
@@ -296,9 +296,9 @@ describe("Component construction", () => {
 
     expect(lre.warn).toHaveBeenCalled();
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     cmp.hasClass("cl0");
 
     expect(lre.warn).not.toHaveBeenCalled();
@@ -307,11 +307,11 @@ describe("Component construction", () => {
 
     expect(lre.warn).toHaveBeenCalled();
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   test("Component save classes", () => {
-    jest.spyOn(sheet, "persistingCmpClasses");
+    vi.spyOn(sheet, "persistingCmpClasses");
 
     expect(sheet.persistingCmpClasses).toHaveBeenCalledTimes(0);
     expect(cmp.autoLoadSaveClasses()).toBe(cmp);
@@ -347,6 +347,57 @@ describe("Component construction", () => {
   });
 });
 
+describe("Component toString", () => {
+  test("toString shows component info with string value", () => {
+    rawSheet.setData({ cmp: "test value" });
+    const result = cmp.toString();
+
+    expect(result).toMatch(/^Component<cmp>\(component="test value"\)$/);
+  });
+
+  test("toString shows component info with number value", () => {
+    rawSheet.setData({ cmp: 42 });
+    const result = cmp.toString();
+
+    expect(result).toMatch(/^Component<cmp>\(component=42\)$/);
+  });
+
+  test("toString shows component info with long string value (truncated)", () => {
+    rawSheet.setData({ cmp: "a".repeat(30) });
+    const result = cmp.toString();
+
+    expect(result).toMatch(/^Component<cmp>\(component=".{17}\.\.\."\)$/);
+  });
+
+  test("toString shows component info with object value", () => {
+    rawSheet.setData({ cmp: { a: 1, b: 2, c: 3 } });
+    const result = cmp.toString();
+
+    expect(result).toMatch(/^Component<cmp>\(component=\{3 keys\}\)$/);
+  });
+
+  test("toString shows component info with array value", () => {
+    rawSheet.setData({ cmp: ["a", "b", "c", "d", "e"] });
+    const result = cmp.toString();
+
+    expect(result).toMatch(/^Component<cmp>\(component=\[5\]\)$/);
+  });
+
+  test("toString shows component info with empty value", () => {
+    rawSheet.setData({ cmp: null });
+    const result = cmp.toString();
+
+    expect(result).toMatch(/^Component<cmp>\(component\)$/);
+  });
+
+  test("toString shows component info with different lreType", () => {
+    cmp.lreType("container");
+    const result = cmp.toString();
+
+    expect(result).toMatch(/^Component<cmp>\(container/);
+  });
+});
+
 describe("Component tree", () => {
   test("Getters and setters test", () => {
     expect(cmp.repeater()).toBeUndefined();
@@ -374,7 +425,7 @@ describe("Component tree", () => {
 
     expect(sheet.get).toHaveBeenCalled();
 
-    jest.spyOn(sheet, "get");
+    vi.spyOn(sheet, "get");
     cmp.get("test");
 
     expect(sheet.get).toHaveBeenCalled();
@@ -393,7 +444,7 @@ describe("Component tree", () => {
 
 describe("Component update event handling", () => {
   test("Update not triggered after sheet setData if data not changed", () => {
-    const updateEvent = jest.fn();
+    const updateEvent = vi.fn();
     cmp.on("update", updateEvent);
 
     expect(updateEvent).not.toHaveBeenCalled();
@@ -415,7 +466,7 @@ describe("Component update event handling", () => {
   });
 
   test("Raw sheet set data triggers update event", () => {
-    const updateEvent = jest.fn();
+    const updateEvent = vi.fn();
     cmp.on("update", updateEvent);
     rawSheet.setData({
       [cmp.id()!]: 43,
@@ -474,7 +525,7 @@ describe("Component get and set value", () => {
   test("Value get", () => {
     const cmp = sheet.get("cmp2")!;
     const raw = cmp.raw() as LetsRole.Component;
-    jest.spyOn(raw, "value");
+    vi.spyOn(raw, "value");
 
     expect(cmp.value()).toBe("42");
     expect(raw.value).toHaveBeenCalled();
@@ -482,7 +533,7 @@ describe("Component get and set value", () => {
     sheet.setData({
       [cmp.realId()]: "4242",
     });
-    (raw.value as jest.Mock).mockClear();
+    (raw.value as Mock).mockClear();
 
     expect(cmp.value()).toBe("4242");
 
@@ -497,7 +548,7 @@ describe("Component get and set value", () => {
     expect(raw.value).toHaveBeenCalled();
 
     /* @ts-expect-error Typing this mock is not important */
-    raw.value = jest.fn(() => {
+    raw.value = vi.fn(() => {
       /* @ts-expect-error Intended error */
       null();
     });
@@ -507,7 +558,7 @@ describe("Component get and set value", () => {
   });
 
   test("normal value set", () => {
-    const updateEvent = jest.fn();
+    const updateEvent = vi.fn();
     cmp.on("update", updateEvent);
     cmp.value(cmp.value());
     const newVal = "44";
@@ -531,7 +582,7 @@ describe("Component get and set value", () => {
     const cmp2 = sheet.get("cmp2")!;
     cmp1.value(4242);
     cmp2.value(1313);
-    const valSet = jest.fn(() => {
+    const valSet = vi.fn(() => {
       return cmp2.value();
     });
 
@@ -597,8 +648,8 @@ describe("Component get and set value", () => {
 
 describe("Component visible setter", () => {
   test("Visible set with boolean", () => {
-    jest.spyOn(cmp, "hide");
-    jest.spyOn(cmp, "show");
+    vi.spyOn(cmp, "hide");
+    vi.spyOn(cmp, "show");
     cmp.visible(false);
 
     expect(cmp.hide).toHaveBeenCalledTimes(1);
@@ -611,8 +662,8 @@ describe("Component visible setter", () => {
   });
 
   test("Visible set with a function", () => {
-    jest.spyOn(cmp, "hide");
-    jest.spyOn(cmp, "show");
+    vi.spyOn(cmp, "hide");
+    vi.spyOn(cmp, "show");
 
     expect(cmp.visible()).toBeTruthy();
 
@@ -636,8 +687,8 @@ describe("Component visible setter", () => {
 
     expect(cmp.visible()).toBeTruthy();
 
-    (cmp.hide as jest.Mock).mockClear();
-    (cmp.show as jest.Mock).mockClear();
+    (cmp.hide as Mock).mockClear();
+    (cmp.show as Mock).mockClear();
     chk.value(false);
 
     expect(cmp.hide).toHaveBeenCalledTimes(1);
@@ -646,8 +697,8 @@ describe("Component visible setter", () => {
 
     expect(cmp.show).toHaveBeenCalledTimes(1);
 
-    (cmp.hide as jest.Mock).mockClear();
-    (cmp.show as jest.Mock).mockClear();
+    (cmp.hide as Mock).mockClear();
+    (cmp.show as Mock).mockClear();
     chk.value(false);
 
     expect(cmp.hide).toHaveBeenCalledTimes(0);
@@ -665,8 +716,8 @@ describe("Component visible setter", () => {
   });
 
   test("Visible set with a component", () => {
-    jest.spyOn(cmp, "hide");
-    jest.spyOn(cmp, "show");
+    vi.spyOn(cmp, "hide");
+    vi.spyOn(cmp, "show");
 
     const chk = sheet.get("chk")!;
     chk.value(false);
@@ -682,10 +733,10 @@ describe("Component visible setter", () => {
 describe("Component simple event handling", () => {
   test("Click is triggered", () => {
     let eventTarget;
-    const handler = jest.fn((target) => {
+    const handler = vi.fn((target) => {
       eventTarget = target;
     });
-    const handlerLabeled = jest.fn();
+    const handlerLabeled = vi.fn();
     cmp.on("click", handler);
     cmp.on("click:label", handlerLabeled);
 
@@ -702,7 +753,326 @@ describe("Component simple event handling", () => {
 });
 
 describe("Component events on sub component", () => {
-  test.todo("Test of event delegation");
+  let delegationServer: ServerMock;
+  let delegationRawSheet: LetsRole.Sheet;
+  let delegationSheet: Sheet;
+  let container: Container;
+  let subContainer: Container;
+  let label: Component;
+  let input: Component;
+
+  beforeEach(() => {
+    delegationServer = new ServerMock({
+      views: [
+        {
+          id: "main",
+          className: "View",
+          children: [
+            {
+              id: "container",
+              className: "Container",
+              children: [
+                {
+                  id: "subContainer",
+                  className: "Container",
+                  classes: "subClass",
+                  children: [
+                    {
+                      id: "label",
+                      className: "Label",
+                      classes: "labelClass",
+                      text: "Test Label",
+                    },
+                  ],
+                },
+                {
+                  id: "input",
+                  className: "TextInput",
+                  classes: "inputClass",
+                  defaultValue: "test",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    initLetsRole(delegationServer);
+    context.setMode("real");
+    global.lre = new LRE(context);
+    lre.autoNum(false);
+
+    delegationRawSheet = delegationServer.openView("main", "456", {
+      input: "test",
+    });
+    const proxySheet = new SheetProxy(context, delegationRawSheet);
+    delegationSheet = new Sheet(
+      proxySheet,
+      new DataBatcher(context, proxySheet),
+      context,
+    );
+    lre.sheets.add(delegationSheet);
+
+    container = delegationSheet.get("container") as Container;
+    subContainer = delegationSheet.get("subContainer") as Container;
+    label = delegationSheet.get("label") as Component;
+    input = delegationSheet.get("input") as Component;
+  });
+
+  afterEach(() => {
+    // @ts-expect-error intentional deletion
+    delete global.lre;
+    terminateLetsRole();
+  });
+
+  test.each([
+    { childId: "input", description: "direct child" },
+    { childId: "label", description: "nested grandchild" },
+  ])(
+    "Event delegation by component ID triggers handler on $description click",
+    ({ childId }) => {
+      let eventTarget: Component | undefined;
+      const handler = vi.fn((target) => {
+        eventTarget = target;
+      });
+
+      container.on("click", childId, handler);
+
+      expect(handler).not.toHaveBeenCalled();
+
+      (delegationRawSheet.get(childId) as ComponentMock).trigger("click");
+
+      expect(handler).toHaveBeenCalledTimes(1);
+      expect(eventTarget).toBeDefined();
+      expect(eventTarget!.id()).toBe(childId);
+    },
+  );
+
+  test("Event delegation by CSS class selector triggers handler", () => {
+    let eventTarget: Component | undefined;
+    const handler = vi.fn((target) => {
+      eventTarget = target;
+    });
+
+    container.on("click", ".inputClass", handler);
+
+    expect(handler).not.toHaveBeenCalled();
+
+    (delegationRawSheet.get("input") as ComponentMock).trigger("click");
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(eventTarget).toBeDefined();
+    expect(eventTarget!.id()).toBe("input");
+  });
+
+  test("Event delegation does not trigger for non-matching child", () => {
+    const handler = vi.fn();
+
+    container.on("click", "nonExistent", handler);
+    (delegationRawSheet.get("input") as ComponentMock).trigger("click");
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("Event delegation with class selector does not trigger for non-matching class", () => {
+    const handler = vi.fn();
+
+    container.on("click", ".nonExistentClass", handler);
+    (delegationRawSheet.get("input") as ComponentMock).trigger("click");
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("Event delegation at multiple levels of hierarchy", () => {
+    const containerHandler = vi.fn();
+    const subContainerHandler = vi.fn();
+
+    container.on("click", "label", containerHandler);
+    subContainer.on("click", "label", subContainerHandler);
+
+    (delegationRawSheet.get("label") as ComponentMock).trigger("click");
+
+    expect(containerHandler).toHaveBeenCalledTimes(1);
+    expect(subContainerHandler).toHaveBeenCalledTimes(1);
+  });
+
+  test("Event delegation with CSS class at multiple levels", () => {
+    const containerHandler = vi.fn();
+    const subContainerHandler = vi.fn();
+
+    container.on("click", ".labelClass", containerHandler);
+    subContainer.on("click", ".labelClass", subContainerHandler);
+
+    (delegationRawSheet.get("label") as ComponentMock).trigger("click");
+
+    expect(containerHandler).toHaveBeenCalledTimes(1);
+    expect(subContainerHandler).toHaveBeenCalledTimes(1);
+  });
+
+  test("Unsubscribing delegated event by ID stops handler from being called", () => {
+    const handler = vi.fn();
+
+    container.on("click", "input", handler);
+    (delegationRawSheet.get("input") as ComponentMock).trigger("click");
+
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    container.off("click", "input");
+    (delegationRawSheet.get("input") as ComponentMock).trigger("click");
+
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  test("Unsubscribing delegated event by class selector stops handler", () => {
+    const handler = vi.fn();
+
+    container.on("click", ".inputClass", handler);
+    (delegationRawSheet.get("input") as ComponentMock).trigger("click");
+
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    container.off("click", ".inputClass");
+    (delegationRawSheet.get("input") as ComponentMock).trigger("click");
+
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  test("Event delegation with labeled handler", () => {
+    const handler1 = vi.fn();
+    const handler2 = vi.fn();
+
+    container.on("click:first", "input", handler1);
+    container.on("click:second", "input", handler2);
+
+    (delegationRawSheet.get("input") as ComponentMock).trigger("click");
+
+    expect(handler1).toHaveBeenCalledTimes(1);
+    expect(handler2).toHaveBeenCalledTimes(1);
+
+    container.off("click:first", "input");
+    (delegationRawSheet.get("input") as ComponentMock).trigger("click");
+
+    expect(handler1).toHaveBeenCalledTimes(1);
+    expect(handler2).toHaveBeenCalledTimes(2);
+  });
+
+  test("Multiple delegated handlers for same event and selector", () => {
+    const handler1 = vi.fn();
+    const handler2 = vi.fn();
+
+    container.on("click:h1", "input", handler1);
+    container.on("click:h2", "input", handler2);
+
+    (delegationRawSheet.get("input") as ComponentMock).trigger("click");
+
+    expect(handler1).toHaveBeenCalledTimes(1);
+    expect(handler2).toHaveBeenCalledTimes(1);
+  });
+
+  test("Direct event and delegated event both fire on same component click", () => {
+    const directHandler = vi.fn();
+    const delegatedHandler = vi.fn();
+
+    input.on("click", directHandler);
+    container.on("click", "input", delegatedHandler);
+
+    (delegationRawSheet.get("input") as ComponentMock).trigger("click");
+
+    expect(directHandler).toHaveBeenCalledTimes(1);
+    expect(delegatedHandler).toHaveBeenCalledTimes(1);
+  });
+
+  test("Direct event fires before delegated events (event bubbling order)", () => {
+    const directHandler = vi.fn();
+    const delegatedHandler = vi.fn();
+
+    input.on("click", directHandler);
+    container.on("click", "input", delegatedHandler);
+
+    (delegationRawSheet.get("input") as ComponentMock).trigger("click");
+
+    expect(directHandler.mock.invocationCallOrder[0]).toBeLessThan(
+      delegatedHandler.mock.invocationCallOrder[0],
+    );
+  });
+
+  test("Change event works with delegation", () => {
+    const handler = vi.fn();
+
+    container.on("change", ".inputClass", handler);
+    (delegationRawSheet as unknown as ViewMock).componentChangedManually(
+      "input",
+      "new value",
+    );
+
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  test("Update event does not work with delegation (non-bubbling)", () => {
+    const handler = vi.fn();
+
+    container.on("update", ".inputClass", handler);
+    delegationRawSheet.setData({ input: "new value" });
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("Delegated click on subContainer triggers handler on container", () => {
+    let eventTarget: Component | undefined;
+    const handler = vi.fn((target) => {
+      eventTarget = target;
+    });
+
+    container.on("click", ".subClass", handler);
+
+    (delegationRawSheet.get("subContainer") as ComponentMock).trigger("click");
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(eventTarget).toBeDefined();
+    expect(eventTarget!.id()).toBe("subContainer");
+  });
+
+  test("Delegation does not trigger on parent click", () => {
+    const handler = vi.fn();
+
+    container.on("click", "input", handler);
+    (delegationRawSheet.get("container") as ComponentMock).trigger("click");
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("Delegation handler receives the clicked component, not the parent", () => {
+    let receivedComponent: Component | undefined;
+    const handler = vi.fn((cmp) => {
+      receivedComponent = cmp;
+    });
+
+    container.on("click", "label", handler);
+    (delegationRawSheet.get("label") as ComponentMock).trigger("click");
+
+    expect(receivedComponent).toBeDefined();
+    expect(receivedComponent!.id()).toBe("label");
+    expect(receivedComponent!.realId()).toBe("label");
+    expect(receivedComponent!.id()).toBe(label.id());
+  });
+
+  test("Event delegation on intermediate container triggers for its direct child", () => {
+    const handler = vi.fn();
+
+    subContainer.on("click", "label", handler);
+    (delegationRawSheet.get("label") as ComponentMock).trigger("click");
+
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  test("Event delegation with ID selector on intermediate container does not trigger for sibling", () => {
+    const handler = vi.fn();
+
+    subContainer.on("click", "input", handler);
+    (delegationRawSheet.get("input") as ComponentMock).trigger("click");
+
+    expect(handler).not.toHaveBeenCalled();
+  });
 });
 
 describe("Component behavior with context", () => {

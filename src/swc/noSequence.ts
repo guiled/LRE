@@ -2,6 +2,8 @@ import {
   BlockStatement,
   Expression,
   ExprOrSpread,
+  ForInStatement,
+  ForOfStatement,
   ForStatement,
   IfStatement,
   ParenthesisExpression,
@@ -116,16 +118,29 @@ class NoSequence extends Visitor {
   }
 
   visitForStatement(stmt: ForStatement): Statement {
+    stmt.body = this.#transformSequenceExpressionBody(stmt.body);
+    return super.visitForStatement(stmt);
+  }
+
+  visitForInStatement(stmt: ForInStatement): Statement {
+    stmt.body = this.#transformSequenceExpressionBody(stmt.body);
+    return super.visitForInStatement(stmt);
+  }
+
+  visitForOfStatement(stmt: ForOfStatement): Statement {
+    stmt.body = this.#transformSequenceExpressionBody(stmt.body);
+    return super.visitForOfStatement(stmt);
+  }
+
+  #transformSequenceExpressionBody(body: Statement): Statement {
     if (
-      stmt.body.type === "ExpressionStatement" &&
-      stmt.body.expression.type === "SequenceExpression"
+      body.type === "ExpressionStatement" &&
+      body.expression.type === "SequenceExpression"
     ) {
-      stmt.body = this.#transformSequenceExpressionToBlockStatement(
-        stmt.body.expression,
-      );
+      return this.#transformSequenceExpressionToBlockStatement(body.expression);
     }
 
-    return super.visitForStatement(stmt);
+    return body;
   }
 
   #transformSequenceExpressionToBlockStatement(

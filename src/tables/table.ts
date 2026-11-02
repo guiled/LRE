@@ -100,4 +100,17 @@ export class Table
       return result;
     }
   }
+
+  toString(): string {
+    const id = this.id();
+    let rowCount = 0;
+
+    try {
+      this.each(() => {
+        rowCount++;
+      });
+    } catch (e) {}
+
+    return `Table<${id}>(${rowCount} rows)`;
+  }
 }

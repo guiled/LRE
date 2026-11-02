@@ -1,32 +1,40 @@
 {
+  "json.schemas": [
+    {
+      "fileMatch": ["package.json"],
+      "url": "./schemas/package.json"
+    }
+  ],
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
-  "javascript.format.semicolons": "insert",
-  "typescript.format.semicolons": "insert",
+  "editor.formatOnSaveMode": "file",
   "editor.tabSize": 2,
   "editor.detectIndentation": false,
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
   },
   "[javascript]": {
-    "editor.formatOnSave": false
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
   },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "prettier.prettierPath": "./node_modules/prettier",
+  "prettier.requireConfig": true,
+  "eslint.format.enable": false,
+  "eslint.useFlatConfig": true,
+  "eslint.workingDirectories": [{ "mode": "auto" }],
   "editor.codeActionsOnSave": {
-    "source.fixAll": "explicit",
-    "source.fixAll.ts": "never"
+    "source.fixAll.eslint": "always"
   },
-  "eslint.codeActionsOnSave.rules": ["!prefer-const", "*"],
   "eslint.rules.customizations": [
     {
       "rule": "prettier/prettier",
-      "severity": "off"
-    },
-    {
-      "rule": "@stylistic/padding-line-between-statements",
-      "severity": "off"
-    },
-    {
-      "rule": "@stylistic/lines-between-class-members",
       "severity": "off"
     },
     {
@@ -34,8 +42,9 @@
       "severity": "off"
     },
     {
-      "rule": "jest/padding-around-all",
+      "rule": "vitest/padding-around-all",
       "severity": "off"
     }
-  ]
+  ],
+  "vitest.enable": true
 }

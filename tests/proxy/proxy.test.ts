@@ -14,7 +14,7 @@ describe("Proxy generic class tests", () => {
     expect(() => subject.getDest()).toThrow();
 
     const obj2 = {};
-    const newProxyCreator = jest.fn((_obj) => obj2);
+    const newProxyCreator = vi.fn((_obj) => obj2);
     subject.setModeDest("virtual", newProxyCreator);
 
     expect(newProxyCreator).not.toHaveBeenCalled();

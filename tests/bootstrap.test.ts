@@ -16,23 +16,23 @@ beforeEach(() => {
   global.isNaN = null as unknown as (c: unknown) => boolean;
   global.structuredClone = null as unknown as typeof structuredClone;
   global.Tables = {
-    get: jest.fn((_id: string) => ({
-      each: jest.fn(),
-      get: jest.fn(),
-      random: jest.fn(),
+    get: vi.fn((_id: string) => ({
+      each: vi.fn(),
+      get: vi.fn(),
+      random: vi.fn(),
     })),
   };
-  // global.each = jest.fn((o, f) => {
+  // global.each = vi.fn((o, f) => {
   //   for (let k in o) {
   //     f(o[k], k);
   //   }
   // });
-  // global.wait = jest.fn();
+  // global.wait = vi.fn();
   // global.Bindings = {
-  //   add: jest.fn(),
-  //   clear: jest.fn(),
-  //   remove: jest.fn(),
-  //   send: jest.fn(),
+  //   add: vi.fn(),
+  //   clear: vi.fn(),
+  //   remove: vi.fn(),
+  //   send: vi.fn(),
   // };
   // global.RollBuilder = {
 

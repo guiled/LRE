@@ -98,4 +98,10 @@ export class Container
 
     return null;
   }
+
+  toString(): string {
+    const id = this.realId();
+    const children = Object.keys(this.#children).length;
+    return `Container<${id}>(${children} children)`;
+  }
 }

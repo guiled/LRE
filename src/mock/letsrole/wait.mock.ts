@@ -1,7 +1,9 @@
+import type { Mock } from "vitest";
+
 type WaitedCallback = (...args: any[]) => any;
 
 type MockedWait = {
-  wait: jest.Mock;
+  wait: Mock;
   itHasWaitedEnough: () => void;
   itHasWaitedEverything: () => void;
 };
@@ -18,7 +20,7 @@ const newMockedWait = (): MockedWait => {
   };
 
   return {
-    wait: jest.fn((_delay: number, cb: WaitedCallback) => {
+    wait: vi.fn((_delay: number, cb: WaitedCallback) => {
       waitedCallbacks.push(cb);
     }),
     itHasWaitedEnough,

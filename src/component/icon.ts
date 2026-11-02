@@ -5,4 +5,15 @@ export class Icon extends Toggle {
     super(raw, sheet, realId);
     this.lreType("icon");
   }
+
+  toString(): string {
+    const parentStr = super.toString();
+
+    if (parentStr) {
+      return parentStr.replace("Toggle<", "Icon<").replace("(label", "(icon");
+    }
+
+    const id = this.realId();
+    return `Icon<${id}>(icon)`;
+  }
 }

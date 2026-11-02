@@ -15,7 +15,7 @@ import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { Sheet } from "../../src/sheet";
 import { DataBatcher } from "../../src/sheet/databatcher";
 
-jest.mock("../../src/lre");
+vi.mock("../../src/lre");
 
 let server: ServerMock;
 

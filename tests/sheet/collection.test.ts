@@ -5,7 +5,7 @@ import { SheetCollection } from "../../src/sheet/collection";
 import { DataBatcher } from "../../src/sheet/databatcher";
 import { modeHandlerMock } from "../mock/modeHandler.mock";
 
-jest.mock("../../src/lre");
+vi.mock("../../src/lre");
 
 const context = modeHandlerMock();
 global.lre = new LRE(context);
@@ -46,7 +46,7 @@ describe("Sheet collection", () => {
 
     expect(subject.get("4243")).toEqual(sheet2);
 
-    const cb = jest.fn();
+    const cb = vi.fn();
 
     expect(cb).toHaveBeenCalledTimes(0);
 

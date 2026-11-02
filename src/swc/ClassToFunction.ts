@@ -232,10 +232,14 @@ class ClassToFunction extends Visitor {
         assignmentStatement({
           span: n.span,
           left: parentId,
-          right: call({
-            callee: initParentId,
-            args: [{ expression: thisexpression({ span: n.span }) }],
-          }),
+          right: call(
+            {
+              callee: initParentId,
+              args: [{ expression: thisexpression({ span: n.span }) }],
+            },
+            false,
+            { expression: thisexpression({ span: n.span }) },
+          ),
           operator: "=",
         }),
       );
@@ -386,15 +390,14 @@ class ClassToFunction extends Visitor {
 
     return {
       args: ctor?.params
-        .map(
-          (p): Param =>
-            p.type === "Parameter"
-              ? p
-              : {
-                  span: p.span,
-                  type: "Parameter",
-                  pat: p.param.type === "Identifier" ? p.param : p.param.left,
-                },
+        .map((p): Param =>
+          p.type === "Parameter"
+            ? p
+            : {
+                span: p.span,
+                type: "Parameter",
+                pat: p.param.type === "Identifier" ? p.param : p.param.left,
+              },
         )
         .filter((p) => !!p),
       stmts: ctor.body.stmts,

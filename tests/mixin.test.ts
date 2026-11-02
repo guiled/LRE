@@ -1,9 +1,10 @@
+import type { Mock } from "vitest";
 import { Mixin } from "../src/mixin";
 
 describe("Mixin tests", () => {
   const createDummyMixableClass = function (
-    ctorMock: jest.Mock | null,
-    methods: Record<string, jest.Mock> = {},
+    ctorMock: Mock | null,
+    methods: Record<string, Mock> = {},
   ): Mixable<any[], any> {
     const c: Mixable<any[], any> = (superclass: Newable = class {}) => {
       const tmpClass = class extends superclass {
@@ -27,10 +28,10 @@ describe("Mixin tests", () => {
   };
 
   test("Test dummy class", () => {
-    const ctor = jest.fn();
+    const ctor = vi.fn();
     const methods = {
-      getA: jest.fn(),
-      getB: jest.fn(),
+      getA: vi.fn(),
+      getB: vi.fn(),
     };
     const Dummy = createDummyMixableClass(ctor, methods)(class {}) as Newable;
 
@@ -57,7 +58,7 @@ describe("Mixin tests", () => {
   });
 
   test("Single Class Mixin calls constructor", () => {
-    const ctor = jest.fn();
+    const ctor = vi.fn();
     const Subject = Mixin(createDummyMixableClass(ctor));
 
     expect(ctor).toHaveBeenCalledTimes(0);
@@ -73,7 +74,7 @@ describe("Mixin tests", () => {
     const nbClasses = 5;
 
     for (let i = 0; i < nbClasses; i++) {
-      const mock = jest.fn();
+      const mock = vi.fn();
       mocks.push(mock);
       classes.push(createDummyMixableClass(mock));
     }
@@ -85,8 +86,8 @@ describe("Mixin tests", () => {
   });
 
   test("Mixin calls all constructors with args", () => {
-    const ctor1 = jest.fn();
-    const ctor2 = jest.fn();
+    const ctor1 = vi.fn();
+    const ctor2 = vi.fn();
     const args1 = [42, "tooth"];
     const args2 = [{ a: 13 }];
     const Subject = Mixin(
@@ -127,12 +128,12 @@ describe("Mixin tests", () => {
 
   test("Mixin have all public methods", () => {
     const methods1 = {
-      getA: jest.fn(),
-      getB: jest.fn(),
-      getC: jest.fn(),
+      getA: vi.fn(),
+      getB: vi.fn(),
+      getC: vi.fn(),
     };
     const methods2 = {
-      getC: jest.fn(),
+      getC: vi.fn(),
     };
     const class1 = createDummyMixableClass(null, methods1);
     const class2 = createDummyMixableClass(null, methods2);
@@ -162,7 +163,7 @@ describe("Mixin tests", () => {
   });
 
   test("mixin pass this", () => {
-    const cb = jest.fn();
+    const cb = vi.fn();
     // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     const A = (superclass: Newable = class {}) =>
       class A extends superclass {
@@ -342,8 +343,8 @@ describe("Mixin tests", () => {
   });
 
   test("Mixin instantiation into mixin instantiation", () => {
-    const ctorCbA = jest.fn();
-    const ctorCbB = jest.fn();
+    const ctorCbA = vi.fn();
+    const ctorCbB = vi.fn();
     // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     const A = (superclass: Newable = class {}) =>
       class A extends superclass {

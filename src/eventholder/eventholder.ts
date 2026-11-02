@@ -1,5 +1,3 @@
-import { Error } from "../error";
-
 type RunnableEventHandler = {
   handler: EventHandler<any>;
   alwaysRan: boolean;
@@ -81,13 +79,10 @@ export const EventHolder = <
       holderId: string,
       targetGetter: EventTargetGetter<AdditionalEvents> | undefined = undefined,
       attachToRaw:
-        | AttachToRawCallback<AdditionalEvents>
-        | undefined = undefined,
+        AttachToRawCallback<AdditionalEvents> | undefined = undefined,
       eventCanBeRan?: EventRunnableChecker<AdditionalEvents>,
     ) {
       super();
-
-      (() => new Error())(); // todo see what is the use of that
 
       this.#holderId = holderId;
       this.#getTarget = targetGetter;

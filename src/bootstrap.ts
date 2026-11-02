@@ -1,10 +1,11 @@
 import { Context } from "./context";
+import { registerLreDiceAPI } from "./dice/dice";
 import { Error as LreError } from "./error";
 import { globals } from "./globals";
 import { LREi18n } from "./globals/i18n";
 import { LRE } from "./lre";
 import { registerLreBindings } from "./proxy/bindings";
-import { registerLreRollBuilder } from "./proxy/rollBuilder";
+import { registerLreRollBuilder } from "./dice/rollBuilder";
 import { registerLreWait } from "./proxy/wait";
 
 export const bootstrap = (): ProxyModeHandler => {
@@ -16,6 +17,7 @@ export const bootstrap = (): ProxyModeHandler => {
   Error = LreError;
   /* eslint-enable no-global-assign */
 
+  // @ts-expect-error: defining structuredClone for polyfill
   structuredClone = globals.structuredClone;
 
   lastException = null;
@@ -24,6 +26,8 @@ export const bootstrap = (): ProxyModeHandler => {
   stringify = globals.stringify;
   virtualCall = globals.virtualCall;
   mt_rand = globals.mt_rand;
+  dTR = globals.dTR;
+  fFR = globals.fFR;
 
   const firstLaunch = (ctx: ProxyModeHandler): void => {
     LRE_DEBUG && lre.trace("LRE first launch bootstrap");
@@ -33,6 +37,7 @@ export const bootstrap = (): ProxyModeHandler => {
     _ = lre.i18n._;
     Bindings = registerLreBindings(ctx, Bindings);
     RollBuilder = registerLreRollBuilder(ctx, RollBuilder);
+    Dice = registerLreDiceAPI(ctx, Dice);
   };
 
   lre = new LRE(ctx, firstLaunch);

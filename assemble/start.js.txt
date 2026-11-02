@@ -5,15 +5,23 @@ try {
 } catch (e) {
   errExclFirstLine = e.trace[0].loc.start.line;
 }
+NaN = 0/0;
 
-const OhO = function (o, k) { return Object.prototype.hasOwnProperty.call(o, k);},Obk = Object.keys,Obv = Object.values, Oba = Object.assign, Afr = function (a) { return Array.from.call(a,a);}, Ais = Array.isArray;
+const OhO = function (o, k) { return Object.prototype.hasOwnProperty.call(o, k);},Obk = Object.keys,Obv = Object.values, Oba = Object.assign, Afr = function (a) { return Array.from.call(a,a);}, Ais = Array.isArray, ObgP = Object.getPrototypeOf;
+
+const RxP = ObgP(/./);
 
 function iOf(a, b) {
+  if (b === RegExp) {
+      if (!tpo(a, 3) || a == null) return false;
+      const p = ObgP(a);
+      return p === RxP || (p != null && ObgP(p) === RxP);
+  }
   return a instanceof b;
 }
 
 function def(args, idx, val) {
-  return args.length < idx + 1 || tpo(args[idx], 1) ? val : args[idx];
+  return args.length < idx + 1 || tpo(args[idx], 1) ? (arguments.length < 3 ? undefined : val) : args[idx];
 }
 
 function ct(name) {
@@ -23,7 +31,7 @@ function ct(name) {
 }
 
 function la() {
-  return Array.from(arguments).at(-1);
+  return arguments[arguments.length - 1];
 }
 
 const types = [
@@ -46,7 +54,7 @@ function mx(v) {
   const m = v[0];
   const a = v[1] || [];
   const prev = Oba({}, this);
-  const rev = m.reverse();
+  const rev = m.slice().reverse();
   const resParent = rev.reduce(
     function (acc, cur, idx) {
       const p = new (cur.bind.apply(cur, [null, a[m.length - 1 - idx]]))();

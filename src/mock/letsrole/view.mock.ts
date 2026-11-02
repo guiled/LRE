@@ -346,7 +346,7 @@ export class ViewMock implements LetsRole.Sheet {
   }
 
   // This method is created in order to be used internally
-  // and prevent a jest.spyOn getData triggered
+  // and prevent a vi.spyOn getData triggered
   #getData(): LetsRole.ViewData {
     if (this.#sheetId) {
       return this.#server.loadViewData(this.#sheetId);
@@ -608,7 +608,7 @@ export class ViewMock implements LetsRole.Sheet {
         }
       });
 
-      parent = this.findParent(parent.id()!);
+      parent = this.findParent(parent.realId()!);
     }
   }
 
@@ -681,7 +681,7 @@ export class ViewMock implements LetsRole.Sheet {
       (definition) => !!definition.children?.some((child) => child.id === id),
     );
 
-    if (!def) {
+    if (!def || (def.id === this.#definitionId && !!this.#realView)) {
       return new FailingComponent(this, id);
     }
 

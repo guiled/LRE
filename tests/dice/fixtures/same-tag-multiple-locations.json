@@ -1,0 +1,42 @@
+{
+  "title": "",
+  "expression": "pool + pool",
+  "visibility": "visible",
+  "type": "number",
+  "total": 3,
+  "tags": [],
+  "allTags": ["pool"],
+  "all": [],
+  "children": [
+    {
+      "title": "",
+      "expression": "",
+      "visibility": "visible",
+      "type": "number",
+      "total": 1,
+      "tags": ["pool"],
+      "allTags": [],
+      "all": [],
+      "children": []
+    },
+    {
+      "title": "",
+      "expression": "",
+      "visibility": "visible",
+      "type": "number",
+      "total": 2,
+      "tags": ["pool"],
+      "allTags": [],
+      "all": [],
+      "children": []
+    }
+  ],
+  "size": null,
+  "dimension": null,
+  "values": null,
+  "discarded": [],
+  "left": null,
+  "right": null,
+  "success": null,
+  "failure": null
+}

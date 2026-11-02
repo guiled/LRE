@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { Choice, ChoicesWithData } from "../../src/component/choice";
 import { LRE } from "../../src/lre";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
@@ -81,7 +82,7 @@ describe("Choice basic", () => {
   });
 
   test("setChoices", () => {
-    jest.spyOn(raw, "setChoices");
+    vi.spyOn(raw, "setChoices");
     const choice = new Choice(raw, sheet, "ch");
 
     expect(choice.value()).toBeNull();
@@ -98,13 +99,13 @@ describe("Choice basic", () => {
 
   test("Events", () => {
     const choice = new Choice(raw, sheet, "ch");
-    const select = jest.fn();
-    const unselect = jest.fn();
-    const valselect1 = jest.fn();
-    const valselect2 = jest.fn();
-    const valunselect1 = jest.fn();
-    const valunselect2 = jest.fn();
-    const valclick = jest.fn();
+    const select = vi.fn();
+    const unselect = vi.fn();
+    const valselect1 = vi.fn();
+    const valselect2 = vi.fn();
+    const valunselect1 = vi.fn();
+    const valunselect2 = vi.fn();
+    const valclick = vi.fn();
     choice.on("select", select);
     choice.on("unselect", unselect);
     choice.on("valselect:1", valselect1);
@@ -124,7 +125,7 @@ describe("Choice basic", () => {
 describe("Choice get and set choices", () => {
   test("empty getChoices gives a message", () => {
     const ch = new Choice(raw, sheet, "ch");
-    jest.spyOn(lre, "warn");
+    vi.spyOn(lre, "warn");
 
     expect(ch.getChoices()).toStrictEqual({});
     expect(lre.warn).toHaveBeenCalled();
@@ -160,7 +161,7 @@ describe("Choice get and set choices", () => {
       b: "2",
     });
     ch.value("a");
-    const update = jest.fn();
+    const update = vi.fn();
     ch.on("update", update);
 
     expect(update).not.toHaveBeenCalled();
@@ -180,7 +181,7 @@ describe("Choice get and set choices", () => {
       b: "2",
     });
     ch.value("a");
-    const update = jest.fn();
+    const update = vi.fn();
     ch.on("update", update);
 
     expect(update).not.toHaveBeenCalled();
@@ -450,7 +451,7 @@ describe("set choices with optional", () => {
   });
 
   test("setChoices with optional", () => {
-    jest.spyOn(rawChoice, "setChoices");
+    vi.spyOn(rawChoice, "setChoices");
     const ch = new Choice(rawChoice, sheet, "chA");
     ch.optional(true);
     ch.setChoices({
@@ -470,7 +471,7 @@ describe("set choices with optional", () => {
   });
 
   test("dynamic optional change", () => {
-    jest.spyOn(rawChoice, "setChoices");
+    vi.spyOn(rawChoice, "setChoices");
     const ch = new Choice(rawChoice, sheet, "chA");
     ch.setChoices({
       a: "1",
@@ -486,7 +487,7 @@ describe("set choices with optional", () => {
       b: "2",
     });
 
-    (rawChoice.setChoices as jest.Mock).mockClear();
+    (rawChoice.setChoices as Mock).mockClear();
     const defaultLabel = "no choice";
     ch.optional(true, defaultLabel);
 
@@ -499,5 +500,36 @@ describe("set choices with optional", () => {
       a: "1",
       b: "2",
     });
+  });
+});
+
+describe("Choice toString", () => {
+  test("toString shows choice info with selected value", () => {
+    const choice = new Choice(rawSheet.get("chA"), sheet, "chA");
+    choice.setChoices({ a: "Choice A", b: "Choice B" });
+    rawSheet.setData({ chA: "a" });
+    const result = choice.toString();
+
+    expect(result).toMatch(/^Choice<chA>\(selected=a "theChoiceA"\)$/);
+  });
+
+  test("toString shows choice info without label when label equals value", () => {
+    const choice = new Choice(raw, sheet, "ch");
+    choice.setChoices({ a: "a", b: "b" });
+    rawSheet.setData({ ch: "a" });
+    // Mock text() to return the same as value to simulate label equals value
+    vi.spyOn(choice.raw(), "text").mockImplementation(() => "a");
+    const result = choice.toString();
+
+    expect(result).toBe("Choice<ch>(selected=a)");
+  });
+
+  test("toString shows choice info with null value", () => {
+    const choice = new Choice(raw, sheet, "ch");
+    choice.setChoices({ a: "Choice A", b: "Choice B" });
+    rawSheet.setData({ ch: null });
+    const result = choice.toString();
+
+    expect(result).toMatch(/^Choice<ch>\(selected=null\)$/);
   });
 });

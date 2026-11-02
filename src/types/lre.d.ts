@@ -11,8 +11,17 @@ declare interface ILREi18n {
   getUntranslated(): string[];
 }
 
+declare interface LREDiceResult extends LetsRole.GenericDiceResult<ILREDiceResult> {
+  getTaggedResults(tag: string): Array<LREDiceResult>;
+  getTaggedResults(pattern: RegExp): Array<LREDiceResult>;
+  getTaggedValues(tag: string): Array<number>;
+  getTaggedValues(pattern: RegExp): Array<number>;
+}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface ILREDiceResult extends LREDiceResult {}
+
 declare type LREInitRollCallback = (
-  result: DiceResult,
+  result: LREDiceResult,
   callback: (
     viewId: LetsRole.SheetID,
     onRender: (sheet: ISheet) => void,
@@ -25,7 +34,7 @@ declare interface ILRE {
   init(
     callback: LetsRole.InitCallback<LetsRole.Sheet | Sheet>,
   ): LetsRole.InitCallback;
-  initRoll: LREInitRollCallback;
+  initRoll: (callback: LREInitRollCallback) => LetsRole.InitRollCallback;
   deepMerge(target: any, ...sources: any[]): any;
   deepEqual(x: any, y: any): boolean;
   numToAlpha(n: number): string;
@@ -35,6 +44,7 @@ declare interface ILRE {
   autoNum(v: boolean = true): void;
   autoTransl(v: boolean = true): void;
   value<T = any>(n: T): T;
+  isSheet(value: any): value is ISheet;
   isComponent(value: any): value is IComponent;
   isDataProvider(value: any): value is IDataProvider;
   isIterableByEach(
@@ -191,6 +201,8 @@ declare module "lre" {
     var stringify: (obj: unknown, indent?: boolean) => string | undefined;
     var virtualCall: <T>(cb: () => T) => T;
     var mt_rand: (min: number, max: number) => number;
+    var dTR: (obj: IHasRaw, props: Array<string>, logWarning: boolean) => void;
+    var fFR: <T extends { raw(): object }>(obj: T, methods: Array<string>) => T;
   }
 }
 
@@ -230,9 +242,7 @@ declare type EventHandler<Holder = any> = (
 ) => void;
 
 declare type EventSubComponent =
-  | LetsRole.ComponentID
-  | EventHandler
-  | undefined;
+  LetsRole.ComponentID | EventHandler | undefined;
 
 declare const EVENT_SEP = ":";
 
@@ -335,8 +345,7 @@ declare type DataProviderDataId =
   | number;
 
 declare type DataProviderDataValue =
-  | LetsRole.TableRow
-  | LetsRole.ComponentValue;
+  LetsRole.TableRow | LetsRole.ComponentValue;
 
 declare type DataProviderCallback<ReturnType> = (
   value: DataProviderDataValue,
@@ -384,9 +393,7 @@ declare interface IDataProvider {
       | DataProviderWhereConditioner
       | IComponent,
     condition?:
-      | LetsRole.ComponentValue
-      | DataProviderWhereConditioner
-      | IComponent,
+      LetsRole.ComponentValue | DataProviderWhereConditioner | IComponent,
   ): IDataProvider;
   singleValue(): DataProviderDataValue;
   singleId(): DataProviderDataId;
@@ -487,22 +494,27 @@ declare type ComponentFinder<T = ComponentSearchResult> = (
 ) => ComponentSearchResult | T;
 declare type ComponentSearchResult = IComponent | null;
 
-declare interface ComponentContainer<T = ComponentSearchResult>
-  extends ComponentBase {
+declare interface ComponentContainer<
+  T = ComponentSearchResult,
+> extends ComponentBase {
   get: ComponentFinder<T>;
   find: ComponentFinder<T>;
 }
 
-declare interface IHasRaw<T = LetsRole.Sheet | LetsRole.Component> {
+declare interface IHasRaw<
+  T =
+    | LetsRole.Sheet
+    | LetsRole.Component
+    | LetsRole.DiceResult
+    | LetsRole.Table
+    | LetsRole.Tables,
+> {
   raw(): T;
   refreshRaw(newRaw?: T): T;
 }
 
 declare interface IComponent
-  extends ComponentContainer,
-    IEventHolder,
-    IDataHolder,
-    IHasRaw {
+  extends ComponentContainer, IEventHolder, IDataHolder, IHasRaw {
   num: number | null;
   init(): this;
   repeater(repeater?: Repeater): Repeater | undefined;
@@ -559,11 +571,7 @@ declare type ComponentValueWithData<T = LetsRole.ComponentValue> = {
 };
 
 declare type DynamicSetValue<T> =
-  | T
-  | IDataProvider
-  | IComponent
-  | IGroup
-  | ((...args: any[]) => T);
+  T | IDataProvider | IComponent | IGroup | ((...args: any[]) => T);
 
 declare type TableRow = LetsRole.TableRow<LetsRole.TableValue | number>;
 

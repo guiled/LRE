@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { Context } from "../../src/context";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { ViewMock } from "../../src/mock/letsrole/view.mock";
@@ -56,15 +57,15 @@ beforeEach(() => {
 });
 
 const spyView = (vw: ViewMock): ViewMock => {
-  jest.spyOn(vw, "id");
-  jest.spyOn(vw, "getSheetId");
-  jest.spyOn(vw, "name");
-  jest.spyOn(vw, "properName");
-  jest.spyOn(vw, "getVariable");
-  jest.spyOn(vw, "prompt");
-  jest.spyOn(vw, "getData");
-  jest.spyOn(vw, "setData");
-  jest.spyOn(vw, "get");
+  vi.spyOn(vw, "id");
+  vi.spyOn(vw, "getSheetId");
+  vi.spyOn(vw, "name");
+  vi.spyOn(vw, "properName");
+  vi.spyOn(vw, "getVariable");
+  vi.spyOn(vw, "prompt");
+  vi.spyOn(vw, "getData");
+  vi.spyOn(vw, "setData");
+  vi.spyOn(vw, "get");
   return vw;
 };
 
@@ -97,17 +98,17 @@ describe("SheetProxy test", () => {
 
     expect(subject.getVariable("var2")).toBe(102);
     expect(raw.getVariable).toHaveBeenCalled();
-    expect((raw.getVariable as jest.Mock).mock.calls[0][0]).toBe("var2");
+    expect((raw.getVariable as Mock).mock.calls[0][0]).toBe("var2");
 
-    const cbPrompt = jest.fn();
-    const cbInit = jest.fn();
+    const cbPrompt = vi.fn();
+    const cbInit = vi.fn();
     subject.prompt("the title", "viewId", cbPrompt, cbInit);
 
     expect(raw.prompt).toHaveBeenCalled();
-    expect((raw.prompt as jest.Mock).mock.calls[0][0]).toBe("the title");
-    expect((raw.prompt as jest.Mock).mock.calls[0][1]).toBe("viewId");
-    expect((raw.prompt as jest.Mock).mock.calls[0][2]).toBe(cbPrompt);
-    expect((raw.prompt as jest.Mock).mock.calls[0][3]).toBe(cbInit);
+    expect((raw.prompt as Mock).mock.calls[0][0]).toBe("the title");
+    expect((raw.prompt as Mock).mock.calls[0][1]).toBe("viewId");
+    expect((raw.prompt as Mock).mock.calls[0][2]).toBe(cbPrompt);
+    expect((raw.prompt as Mock).mock.calls[0][3]).toBe(cbInit);
 
     expect(raw.getData).not.toHaveBeenCalled();
     expect(subject.getData()).toMatchObject(data);
@@ -134,7 +135,7 @@ describe("SheetProxy test", () => {
     spyView(raw);
     const subject = new SheetProxy(context, raw);
     context.setMode("virtual");
-    (raw.getData as jest.Mock).mockClear();
+    (raw.getData as Mock).mockClear();
 
     expect(subject.id()).toBe("main");
     expect(raw.id).toHaveBeenCalled();
@@ -148,7 +149,7 @@ describe("SheetProxy test", () => {
     expect(subject.getSheetId()).toBe("12345");
     expect(raw.getSheetId).toHaveBeenCalled();
 
-    (raw.getData as jest.Mock).mockClear();
+    (raw.getData as Mock).mockClear();
 
     expect(subject.getData()).toMatchObject(data);
     expect(raw.getData).not.toHaveBeenCalled();
@@ -159,12 +160,17 @@ describe("SheetProxy test", () => {
     expect(raw.setData).not.toHaveBeenCalled();
     expect(subject.getData()).toMatchObject({ ...data, ...addedData });
 
-    subject.prompt("title", "view", jest.fn, jest.fn);
+    // Use callback functions matching the expected type instead of vi.fn directly
+    const cbPrompt = (): void => {};
+
+    const cbInit = (): void => {};
+
+    subject.prompt("title", "view", cbPrompt, cbInit);
 
     expect(raw.prompt).not.toHaveBeenCalled();
 
     const cmp = subject.get("cmp1");
-    (raw.getData as jest.Mock).mockClear();
+    (raw.getData as Mock).mockClear();
 
     expect(raw.get).toHaveBeenCalled();
     expect(cmp.value()).toBe(data.cmp1);

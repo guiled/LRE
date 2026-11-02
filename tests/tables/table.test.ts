@@ -45,9 +45,9 @@ describe("Table test", () => {
 
   test("Get, each, random on raw", () => {
     const rawTable = Tables.get("theTable")!;
-    jest.spyOn(rawTable, "get");
-    jest.spyOn(rawTable, "each");
-    jest.spyOn(rawTable, "random");
+    vi.spyOn(rawTable, "get");
+    vi.spyOn(rawTable, "each");
+    vi.spyOn(rawTable, "random");
     const table = new Table(rawTable, context, "123");
     table.get("123");
 
@@ -93,7 +93,7 @@ describe("Table basic operations", () => {
     const table = new Table(Tables.get("a"), context, "a");
     let result: string[] = [];
 
-    jest.spyOn(global.Math, "random").mockReturnValue(0);
+    vi.spyOn(global.Math, "random").mockReturnValue(0);
 
     table.random((row: LetsRole.TableRow) => {
       result.push(row.a);
@@ -102,14 +102,14 @@ describe("Table basic operations", () => {
     expect(result).toStrictEqual(["42"]);
 
     result = [];
-    jest.spyOn(global.Math, "random").mockReturnValue(0.999);
+    vi.spyOn(global.Math, "random").mockReturnValue(0.999);
     table.random(2, (row: LetsRole.TableRow) => {
       result.push(row.a);
     });
 
     expect(result).toStrictEqual(["2", "4"]);
 
-    jest.spyOn(global.Math, "random").mockRestore();
+    vi.spyOn(global.Math, "random").mockRestore();
   });
 });
 
@@ -138,7 +138,7 @@ describe("Table additional features", () => {
   test("Autonum of fields with Table.each", () => {
     const rawTable = Tables.get("theTable")!;
     const table = new Table(rawTable, context, "theTable");
-    const fn = jest.fn();
+    const fn = vi.fn();
     lre.autoNum();
     table.each(fn);
 
@@ -160,7 +160,7 @@ describe("Table additional features", () => {
   test("Autonum of fields with Table.random", () => {
     const rawTable = Tables.get("theTable")!;
     const table = new Table(rawTable, context, "theTable");
-    const fn = jest.fn();
+    const fn = vi.fn();
     table.random(2, fn);
 
     expect(fn).toHaveBeenCalledTimes(2);
@@ -217,5 +217,30 @@ describe("Table as DataProvider", () => {
         _3: "4",
       }),
     );
+  });
+});
+
+describe("Table toString", () => {
+  test("toString shows table info with row count", () => {
+    const table = new Table(Tables.get("theTable")!, context, "theTable");
+    const result = table.toString();
+
+    expect(result).toBe("Table<theTable>(4 rows)");
+  });
+
+  test("toString shows table info with different table", () => {
+    const table = new Table(Tables.get("a")!, context, "a");
+    const result = table.toString();
+
+    expect(result).toBe("Table<a>(4 rows)");
+  });
+
+  test("toString shows table info with empty table", () => {
+    const emptyTable = Tables.get("theTable")!;
+    vi.spyOn(emptyTable, "each").mockImplementation(() => {});
+    const table = new Table(emptyTable, context, "empty");
+    const result = table.toString();
+
+    expect(result).toBe("Table<empty>(0 rows)");
   });
 });

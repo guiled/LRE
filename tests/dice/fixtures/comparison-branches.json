@@ -1,0 +1,39 @@
+{
+  "title": "",
+  "expression": "1d100 <= 50",
+  "visibility": "visible",
+  "type": "comparison",
+  "total": 0,
+  "tags": [],
+  "allTags": ["rolled", "target"],
+  "all": [],
+  "children": [],
+  "size": null,
+  "dimension": null,
+  "values": null,
+  "discarded": [],
+  "success": 1,
+  "failure": 0,
+  "left": {
+    "title": "",
+    "expression": "",
+    "visibility": "visible",
+    "type": "number",
+    "total": 42,
+    "tags": ["rolled"],
+    "allTags": [],
+    "all": [],
+    "children": []
+  },
+  "right": {
+    "title": "",
+    "expression": "",
+    "visibility": "visible",
+    "type": "number",
+    "total": 50,
+    "tags": ["target"],
+    "allTags": [],
+    "all": [],
+    "children": []
+  }
+}

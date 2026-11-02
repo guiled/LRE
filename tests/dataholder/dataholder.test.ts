@@ -10,7 +10,7 @@ import { initLetsRole } from "../../src/mock/letsrole/letsrole.mock";
 const { wait, itHasWaitedEverything } = newMockedWait();
 global.wait = wait;
 const context = modeHandlerMock();
-global.log = jest.fn();
+global.log = vi.fn();
 global.lre = new LRE(context);
 
 describe("Dataholder", () => {
