@@ -200,7 +200,7 @@ export class Choice<
       value !== this.value() &&
       typeof value !== "undefined"
     ) {
-      if (!this.#choices) {
+      if (!this.#choices || lre.isObjectEmpty(this.#choices)) {
         lre.error("No choices known for this component. Use setChoices first.");
         return "";
       }
@@ -226,7 +226,7 @@ export class Choice<
     }
 
     if (arguments.length <= 0 || typeof value === "undefined") {
-      return this.#choiceData || null;
+      return lre.isObjectEmpty(this.#choiceData) ? null : this.#choiceData;
     }
 
     return this.#choiceData[value!] || null;
@@ -276,7 +276,10 @@ export class Choice<
   ])
   populate(
     tableOrCb: DynamicSetValue<
-      string | Array<LetsRole.TableRow> | LetsRole.Choices
+      | string
+      | Array<LetsRole.TableRow>
+      | LetsRole.Choices
+      | BasicObject<string | LetsRole.TableRow>
     >,
     label: string = "id",
     optional: boolean = false,

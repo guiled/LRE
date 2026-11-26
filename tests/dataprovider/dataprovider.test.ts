@@ -1,3 +1,4 @@
+import { DataProvider, DirectDataProvider } from "../../src/dataprovider";
 import { LRE } from "../../src/lre";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import {
@@ -59,6 +60,14 @@ describe("Data provider basics", () => {
 
     expect(dp.providedValue()).toBe(data);
     expect(dataGetter).toHaveBeenCalled();
+  });
+
+  test("mixin DataProvider id is auto-generated dp prefix", () => {
+    const DpClass = DataProvider(class {});
+    const dp = new DpClass(context, () => 1);
+
+    expect(dp.id()).toMatch(/^dp-/);
+    expect(dp.id()).toBe(dp.realId());
   });
 });
 
@@ -287,6 +296,31 @@ describe("Data provider sort", () => {
       }),
     );
   });
+
+  test("sort throws when random derived id cannot be allocated", () => {
+    const dp = lre.dataProvider("rndExhaust", () => ({ a: 1 }));
+    const sortSlot = `${dp.realId()}-sort-same`;
+    vi.spyOn(lre, "getRandomId").mockReturnValue("same");
+    dp.subscribeRefresh(sortSlot, () => {});
+
+    expect(() => dp.sort()).toThrow("Could not generate a unique random id");
+  });
+
+  test("sort warns on numeric object keys when debug is enabled", () => {
+    const warnSpy = vi.spyOn(lre, "warn").mockImplementation(() => {});
+    const dp = lre.dataProvider("numKeys", () => ({
+      1: { a: 2 },
+      2: { a: 1 },
+    }));
+
+    dp.sort("a").providedValue();
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      "Numeric keys prevent sort from working properly",
+    );
+
+    warnSpy.mockRestore();
+  });
 });
 
 describe("DataProvider each", () => {
@@ -488,6 +522,34 @@ describe("Dataprovider getData", () => {
     expect(result.getData("1")).toStrictEqual({ a: "42", b: "13", c: "24" });
     expect(result.getData("2")).toStrictEqual({ a: "1", b: "2", c: "3" });
     expect(result.getData("3")).toStrictEqual({ a: "4", b: "5", c: "6" });
+  });
+
+  test("getData with array of ids returns map of rows", () => {
+    const dp = lre.dataProvider("multiId", () => ({
+      "1": { a: "A" },
+      "2": { a: "B" },
+    }));
+
+    expect(dp.getData(["1", "2"])).toStrictEqual({
+      "1": { a: "A" },
+      "2": { a: "B" },
+    });
+  });
+
+  test("getData with non-index id returns empty object map", () => {
+    const dp = lre.dataProvider("nonIndexId", () => ({
+      "1": { a: "A" },
+    }));
+
+    expect(dp.getData({ invalid: true } as unknown as string[])).toStrictEqual(
+      {},
+    );
+  });
+
+  test("getData with single id on array-backed rows", () => {
+    const dp = lre.dataProvider("arrRow", () => [{ a: "A" }, { a: "B" }]);
+
+    expect(dp.getData(1)).toStrictEqual({ a: "B" });
   });
 });
 
@@ -805,6 +867,51 @@ describe("DataProvider analysis", () => {
       { a: 2, b: 6 },
     ]);
   });
+
+  test("sum with non-numeric column values still adds totals", () => {
+    const dp = lre.dataProvider("strSum", () => ({
+      a: { tag: "x" },
+      b: { tag: "y" },
+    }));
+
+    expect(dp.sum("tag")).toBeNaN();
+  });
+
+  test("sum sets hasNaN when column value is number NaN", () => {
+    const dp = lre.dataProvider("nanSum", () => ({
+      a: { score: Number.NaN },
+      b: { score: 3 },
+    }));
+
+    expect(dp.sum("score")).toBeNaN();
+  });
+
+  test("sum warns when non-numeric values were summed", () => {
+    const warnSpy = vi.spyOn(lre, "warn").mockImplementation(() => {});
+    const dp = lre.dataProvider("sumWarn", () => ({
+      a: { score: "not-a-num" },
+    }));
+
+    expect(dp.sum("score")).toBeNaN();
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "could have failed because of non numeric values",
+      ),
+    );
+
+    warnSpy.mockRestore();
+  });
+
+  test("countDistinct treats deep-equal objects as one value", () => {
+    const shared = { score: 1 };
+    const dp = lre.dataProvider("distinctObj", () => ({
+      "1": shared,
+      "2": { score: 1 },
+      "3": { score: 2 },
+    }));
+
+    expect(dp.countDistinct()).toBe(2);
+  });
 });
 
 describe("DataProvider transform", () => {
@@ -975,6 +1082,22 @@ describe("Dataprovider from cb refresh", () => {
     expect(fn).toHaveBeenCalledTimes(0);
     expect(derived).toHaveBeenCalledTimes(0);
   });
+
+  test("dataProvider with original and source refresh callbacks", () => {
+    const sourceRefresh = vi.fn();
+    const dp = lre.dataProvider(
+      "withRefresh",
+      () => ({ v: 1 }),
+      () => ({ v: 0 }),
+      sourceRefresh,
+    );
+
+    expect(dp.getData("v")).toBe(0);
+
+    dp.refresh();
+
+    expect(sourceRefresh).toHaveBeenCalled();
+  });
 });
 
 describe("Dataprovider search", () => {
@@ -1125,6 +1248,15 @@ describe("Dataprovider toArray", () => {
         { identifier: "c", value: 66 },
       ]),
     );
+  });
+
+  test("default toArray assigns random id when each passes undefined key", () => {
+    const dp = lre.dataProvider("undefKey", () => "scalar");
+    vi.spyOn(dp, "each").mockImplementation((mapper) => {
+      mapper("scalar", undefined as any, "scalar");
+    });
+
+    expect(dp.toArray()).toEqual([{ id: expect.any(String), value: "scalar" }]);
   });
 });
 
@@ -1294,6 +1426,533 @@ describe("DataProvider join", () => {
         value_: "82",
       },
     });
+  });
+});
+
+describe("DataProvider original value and getData branches", () => {
+  test("getData uses originalValueCb when provided", () => {
+    const current = { "1": { a: "current", b: "1" } };
+    const original = { "1": { a: "original", b: "1" } };
+    const dp = lre.dataProvider(
+      "orig",
+      () => current,
+      () => original,
+    );
+
+    expect(dp.getData("1")).toStrictEqual({ a: "original", b: "1" });
+    expect(dp.select("a").getData("1")).toStrictEqual({
+      a: "original",
+      b: "1",
+    });
+  });
+
+  test("getData without id when current is array builds index map", () => {
+    const dp = lre.dataProvider("arr", () => [10, 20, 30]);
+
+    expect(dp.getData()).toStrictEqual({ 0: 10, 1: 20, 2: 30 });
+  });
+
+  test("getData without id returns original array when shape differs", () => {
+    const dp = lre.dataProvider(
+      "mixed",
+      () => ({ only: "current" }),
+      () => [1, 2] as unknown as LetsRole.ComponentValue,
+    );
+
+    expect(dp.getData()).toStrictEqual([1, 2]);
+  });
+
+  test("getData without id returns scalar original", () => {
+    const dp = lre.dataProvider(
+      "scalarOrig",
+      () => ({ x: 1 }),
+      () => "original-scalar" as LetsRole.ComponentValue,
+    );
+
+    expect(dp.getData()).toBe("original-scalar");
+  });
+
+  test("getData maps object keys from current to original rows", () => {
+    const current = { a: "1", b: "2" };
+    const original = { a: { v: "A" }, b: { v: "B" } };
+    const dp = lre.dataProvider(
+      "map",
+      () => current,
+      () => original,
+    );
+
+    expect(dp.getData()).toStrictEqual({ a: { v: "A" }, b: { v: "B" } });
+  });
+
+  test("getData with id on avatar original values returns undefined", () => {
+    const avatar: LetsRole.AvatarValue = {
+      avatar: "pic.png",
+      token: "tok.png",
+      frame: { avatar: null, token: null },
+    };
+    const dp = lre.dataProvider(
+      "avatarOrig",
+      () => ({ row: 1 }),
+      () => avatar,
+    );
+
+    expect(dp.getData("row")).toBeUndefined();
+  });
+
+  test("getData without id uses empty object when current is null and original is object", () => {
+    const dp = lre.dataProvider(
+      "noCurrent",
+      () => null as any,
+      () => ({ a: { v: 1 }, b: { v: 2 } }),
+    );
+
+    expect(dp.getData()).toStrictEqual({});
+  });
+
+  test("original value callback undefined falls back to current for getData", () => {
+    const dp = lre.dataProvider(
+      "origFallback",
+      () => ({ k: { v: 2 } }),
+      () => undefined as unknown as LetsRole.ComponentValue,
+    );
+
+    expect(dp.getData()).toStrictEqual({ k: { v: 2 } });
+  });
+});
+
+describe("DataProvider select and column edge cases", () => {
+  test("select falls back to id when column provider is not string or number", () => {
+    const rows = {
+      a: { id: "a", label: "first" },
+      b: { id: "b", label: "second" },
+    };
+    const dp = lre.dataProvider("rows", () => rows);
+    const colDp = lre.dataProvider("col", () => ({ bad: true }) as any);
+
+    expect(dp.select(colDp).providedValue()).toStrictEqual({
+      a: "a",
+      b: "b",
+    });
+  });
+
+  test("select on scalar value returns single column value", () => {
+    const dp = lre.dataProvider("scalar", () => "hello");
+
+    expect(dp.select("anything").providedValue()).toBeUndefined();
+  });
+
+  test("select detects membership on array row values", () => {
+    const dp = lre.dataProvider("tags", () => ({
+      "1": ["alpha", "beta"],
+      "2": ["gamma"],
+    }));
+
+    expect(dp.select("alpha").providedValue()).toStrictEqual({
+      "1": true,
+      "2": false,
+    });
+  });
+
+  test("select skips undefined row values when reading column", () => {
+    const dp = lre.dataProvider("undefRow", () => ({
+      "1": undefined as unknown as LetsRole.ComponentValue,
+      "2": { a: 5 },
+    }));
+
+    expect(dp.select("a").providedValue()).toStrictEqual({
+      "1": undefined,
+      "2": 5,
+    });
+  });
+});
+
+describe("DataProvider where edge cases", () => {
+  test("where with no args returns same provider", () => {
+    const dp = lre.dataProvider("noop", () => ({ a: 1 }));
+
+    // @ts-expect-error zero-arg where is a runtime no-op, not in the public signature
+    expect(dp.where()).toBe(dp);
+  });
+
+  test("where with undefined condition returns same provider", () => {
+    const dp = lre.dataProvider("noop2", () => ({ a: 1 }));
+
+    expect(dp.where(undefined as any)).toBe(dp);
+  });
+
+  test("where compares column to component value", () => {
+    const rawSheet = server.openView("main", "where-comp");
+    const sheetProxy = new SheetProxy(context, rawSheet);
+    const sheet = new Sheet(
+      sheetProxy,
+      new DataBatcher(context, sheetProxy),
+      context,
+    );
+    lre.sheets.add(sheet);
+    rawSheet.componentChangedManually("txt1", "World");
+
+    const data = {
+      "1": { b: "World", a: "1" },
+      "2": { b: "Other", a: "2" },
+    };
+    const dp = lre.dataProvider("whereComp", () => data);
+    const txt = sheet.get("txt1")! as IComponent;
+    const filtered = dp.where("b", txt);
+
+    expect(filtered.providedValue()).toStrictEqual({
+      "1": { b: "World", a: "1" },
+    });
+  });
+
+  test("where throws on invalid column type", () => {
+    const dp = lre.dataProvider("badWhere", () => ({ a: 1 }));
+
+    expect(() => dp.where(42 as any, "x")).toThrow("Invalid where condition");
+  });
+});
+
+describe("DataProvider scalar and single entry helpers", () => {
+  test("count length and single helpers on scalar value", () => {
+    const dp = lre.dataProvider("scalarCount", () => 99);
+
+    expect(dp.count()).toBe(1);
+    expect(dp.length()).toBe(1);
+    expect(dp.singleValue()).toBe(99);
+    expect(dp.singleId()).toBe(0);
+  });
+
+  test("singleId uses id field on first array row when present", () => {
+    const dp = lre.dataProvider("arrId", () => [
+      { id: "row-7", a: 1 },
+      { id: "row-8", a: 2 },
+    ]);
+
+    expect(dp.singleValue()).toStrictEqual({ id: "row-7", a: 1 });
+    expect(dp.singleId()).toBe("row-7");
+  });
+
+  test("singleId on array without id field is zero", () => {
+    const dp = lre.dataProvider("arrNoId", () => ["x", "y"]);
+
+    expect(dp.singleId()).toBe(0);
+  });
+
+  test("limit on scalar returns the scalar", () => {
+    const dp = lre.dataProvider("scalarLimit", () => "only");
+
+    expect(dp.limit(2).providedValue()).toBe("only");
+  });
+
+  test("min skips falsy numeric column values", () => {
+    const data = {
+      _1: { a: 0, b: "1" },
+      _2: { a: 5, b: "2" },
+    };
+    const dp = lre.dataProvider("minSkip", () => data);
+
+    expect(dp.min("a").providedValue()).toStrictEqual({
+      _2: { a: 5, b: "2" },
+    });
+  });
+});
+
+describe("DataProvider transform string source", () => {
+  test("transform string reads missing key from original row data", () => {
+    const data = {
+      "1": { a: "1", c: "from-original" },
+      "2": { a: "2", c: "other" },
+    };
+    const dp = lre.dataProvider("transformStr", () => data);
+
+    expect(dp.select("a").transform("c").providedValue()).toStrictEqual({
+      "1": "from-original",
+      "2": "other",
+    });
+  });
+
+  test("transform with top-level string column name", () => {
+    const data = {
+      "1": { a: "10", b: "20" },
+    };
+    const dp = lre.dataProvider("transformTop", () => data);
+
+    expect(dp.transform("b").providedValue()).toStrictEqual({
+      "1": "20",
+    });
+  });
+
+  test("transform with function callback", () => {
+    const data = {
+      "1": { a: "10", b: "20" },
+    };
+    const dp = lre.dataProvider("transformFn", () => data);
+
+    expect(
+      dp.transform((_v, k) => `${k}-merged`).providedValue(),
+    ).toStrictEqual({
+      "1": "1-merged",
+    });
+  });
+
+  test("transform string returns undefined when key missing everywhere", () => {
+    const data = { "1": { a: "10" } };
+    const dp = lre.dataProvider("transformMiss", () => data);
+
+    expect(dp.select("a").transform("missing").providedValue()).toStrictEqual({
+      "1": undefined,
+    });
+  });
+});
+
+describe("DataProvider each on avatar value", () => {
+  test("each treats avatar value as single scalar entry", () => {
+    const avatar: LetsRole.AvatarValue = {
+      avatar: "pic.png",
+      token: "tok.png",
+      frame: { avatar: null, token: null },
+    };
+    const dp = lre.dataProvider("avatar", () => avatar);
+    const fn = vi.fn();
+
+    dp.each(fn);
+
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(fn.mock.calls[0][0]).toStrictEqual(avatar);
+    expect(fn.mock.calls[0][1]).toBe("");
+  });
+});
+
+describe("DataProvider refresh subscription", () => {
+  test("unsubscribeRefresh stops refreshSelf on derived provider", () => {
+    const dp = lre.dataProvider("sub", () => ({ a: 1 }));
+    const sorted = dp.sort("a");
+    const refreshSelfSpy = vi.spyOn(
+      sorted as unknown as { refreshSelf: () => void },
+      "refreshSelf",
+    );
+
+    dp.unsubscribeRefresh(sorted.realId());
+    dp.refresh();
+
+    expect(refreshSelfSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("DataProvider providedValue setter", () => {
+  test("providedValue setter forwards to value callback", () => {
+    const data = { a: "1" };
+    const getter = vi.fn((patch?: typeof data) => {
+      if (patch) {
+        Object.assign(data, patch);
+      }
+
+      return data;
+    });
+    const dp = lre.dataProvider("set", getter);
+
+    dp.providedValue({ a: "2" });
+
+    expect(getter).toHaveBeenCalledWith({ a: "2" });
+    expect(data.a).toBe("2");
+  });
+});
+
+describe("DataProvider join extended", () => {
+  test("leftJoin matches innerJoin for string columns", () => {
+    const left = {
+      a: { ref: "d", v: 1 },
+    };
+    const right = [{ id: "d", name: "joined" }];
+    const dp1 = lre.dataProvider("left", () => left);
+    const dp2 = lre.dataProvider("right", () => right);
+
+    expect(dp1.leftJoin(dp2, "ref", "id").providedValue()).toStrictEqual({
+      a: { ref: "d", v: 1, name: "joined" },
+    });
+  });
+
+  test("innerJoin defaults right column to id when omitted", () => {
+    const left = { a: { ref: "x", v: 1 } };
+    const right = [{ id: "x", label: "ok" }];
+    const dp1 = lre.dataProvider("defaultRight", () => left);
+    const dp2 = lre.dataProvider("defaultRight2", () => right);
+
+    expect(dp1.innerJoin(dp2, "ref").providedValue()).toStrictEqual({
+      a: { ref: "x", v: 1, label: "ok" },
+    });
+  });
+
+  test("innerJoin accepts JoinOptions object", () => {
+    const left = { a: { ref: "x", v: 1 } };
+    const right = [{ id: "x", extra: "yes" }];
+    const dp1 = lre.dataProvider("l", () => left);
+    const dp2 = lre.dataProvider("r", () => right);
+
+    const joined = dp1.innerJoin(dp2, {
+      leftColumn: "ref",
+      rightColumn: "id",
+    });
+
+    expect(joined.providedValue()).toStrictEqual({
+      a: { ref: "x", v: 1, extra: "yes" },
+    });
+  });
+
+  test("innerJoin reuses indexed right row for duplicate left keys", () => {
+    const left = {
+      a: { ref: "d", tag: "first" },
+      b: { ref: "d", tag: "second" },
+    };
+    const right = [{ id: "d", name: "shared" }];
+    const dp1 = lre.dataProvider("dupLeft", () => left);
+    const dp2 = lre.dataProvider("dupRight", () => right);
+
+    const joined = dp1.innerJoin(dp2, "ref", "id");
+
+    expect(joined.length()).toBe(2);
+    expect(joined.providedValue()).toStrictEqual({
+      a: { ref: "d", tag: "first", name: "shared" },
+      b: { ref: "d", tag: "second", name: "shared" },
+    });
+  });
+
+  test("innerJoin keeps scalar rows on the left", () => {
+    const left = { k: "plain-string" };
+    const right = [{ id: "1", x: 1 }];
+    const dp1 = lre.dataProvider("scalarLeft", () => left);
+    const dp2 = lre.dataProvider("r2", () => right);
+
+    expect(dp1.innerJoin(dp2, "id", "id").providedValue()).toStrictEqual({
+      k: "plain-string",
+    });
+  });
+
+  test("innerJoin throws on invalid join options", () => {
+    const dp1 = lre.dataProvider("j1", () => ({}));
+    const dp2 = lre.dataProvider("j2", () => []);
+
+    expect(() => dp1.innerJoin(dp2, true as any).providedValue()).toThrow(
+      "Invalid join options",
+    );
+    expect(() =>
+      dp1
+        .innerJoin(dp2, { leftColumn: true as any, rightColumn: "id" })
+        .providedValue(),
+    ).toThrow("Invalid join options, missing comparison function");
+  });
+
+  test("innerJoin with invalid left ref logs error and yields undefined value", () => {
+    const left = { a: { ref: false, v: 1 } };
+    const right = [{ id: "x", label: "ok" }];
+    const dp1 = lre.dataProvider("badLeftCol", () => left);
+    const dp2 = lre.dataProvider("badRightCol", () => right);
+    const eachSpy = vi.spyOn(dp1, "each");
+    const errorSpy = vi.spyOn(lre, "error").mockImplementation(() => {});
+    const joined = dp1.innerJoin(dp2, "ref", "id");
+
+    expect(joined.providedValue()).toBeUndefined();
+    expect(eachSpy).toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalled();
+
+    errorSpy.mockRestore();
+    eachSpy.mockRestore();
+  });
+
+  test("innerJoin mergeRows when right row is not an object", () => {
+    const left = { a: { mark: "hit", v: 1 } };
+    const right = { b: "scalar-right" };
+    const dp1 = lre.dataProvider("mergeL", () => left);
+    const dp2 = lre.dataProvider("mergeR", () => right);
+
+    const joined = dp1.innerJoin(
+      dp2,
+      (rowLeft, rowRight) =>
+        lre.isObject(rowLeft) && rowRight === "scalar-right",
+    );
+
+    expect(joined.providedValue()).toStrictEqual({
+      a: { mark: "hit", v: 1 },
+    });
+  });
+});
+
+describe("DirectDataProvider", () => {
+  test("id returns constructor id and refresh triggers event", () => {
+    const onRefresh = vi.fn();
+    const dp = new DirectDataProvider("direct-id", context, () => 1);
+    dp.on("refresh", onRefresh);
+
+    dp.refresh();
+
+    expect(dp.id()).toBe("direct-id");
+    expect(onRefresh).toHaveBeenCalled();
+  });
+
+  test("constructor with only id and context skips optional callback slots", () => {
+    const dp = new DirectDataProvider("id-context-only", context);
+
+    expect(dp.id()).toBe("id-context-only");
+    expect(dp.provider).toBe(true);
+  });
+
+  test("constructor with original value only omits source refresh arg", () => {
+    const dp = new DirectDataProvider(
+      "original-only",
+      context,
+      () => ({ live: 1 }),
+      () => ({ live: 0 }),
+    );
+
+    expect(dp.getData("live")).toBe(0);
+    expect(dp.providedValue()).toStrictEqual({ live: 1 });
+  });
+
+  test("event target getter binds to the provider instance", () => {
+    const handler = vi.fn(function (this: IDataProvider) {
+      expect(this).toBe(dp);
+    });
+    const dp = new DirectDataProvider("target-getter", context, () => 1);
+    dp.on("refresh", handler);
+
+    dp.refresh();
+
+    expect(handler).toHaveBeenCalled();
+  });
+
+  test("constructor wires original value and source refresh callbacks", () => {
+    const sourceRefresh = vi.fn();
+    const dp = new DirectDataProvider(
+      "ctor-full",
+      context,
+      () => ({ live: 1 }),
+      () => ({ live: 0 }),
+      sourceRefresh,
+    );
+
+    expect(dp.id()).toBe("ctor-full");
+    expect(dp.getData("live")).toBe(0);
+
+    dp.refresh();
+
+    expect(sourceRefresh).toHaveBeenCalled();
+  });
+
+  test("providedValue read triggers refresh event", () => {
+    const onRefresh = vi.fn();
+    const dp = new DirectDataProvider("read-refresh", context, () => 7);
+    dp.on("refresh", onRefresh);
+
+    expect(dp.providedValue()).toBe(7);
+    expect(onRefresh).toHaveBeenCalled();
+  });
+});
+
+describe("DataProvider sort array DESC", () => {
+  test("sort array descending", () => {
+    const dp = lre.dataProvider("sortDesc", () => [3, 1, 2]);
+    const sorted = dp.sort(undefined, "DESC");
+
+    expect(sorted.providedValue()).toStrictEqual([3, 2, 1]);
   });
 });
 

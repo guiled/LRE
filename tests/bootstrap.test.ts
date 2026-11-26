@@ -49,7 +49,33 @@ afterEach(() => {
   terminateLetsRole();
 });
 
+const nativeConsole = {
+  log: console.log,
+  error: console.error,
+  warn: console.warn,
+  trace: console.trace,
+};
+
 describe("LRE bootstrap", () => {
+  describe("when LRE_DEBUG is false", () => {
+    beforeEach(() => {
+      global.LRE_DEBUG = false;
+    });
+
+    afterEach(() => {
+      global.LRE_DEBUG = true;
+    });
+
+    test("does not override console", () => {
+      bootstrap();
+
+      expect(console.log).toBe(nativeConsole.log);
+      expect(console.error).toBe(nativeConsole.error);
+      expect(console.warn).toBe(nativeConsole.warn);
+      expect(console.trace).toBe(nativeConsole.trace);
+    });
+  });
+
   test("Launch correctly", () => {
     expect(global.isNaN).toBeNull();
     expect(global.lre).not.toBeInstanceOf(LRE);

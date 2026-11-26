@@ -1,4 +1,5 @@
 import { Component } from "../../src/component";
+import { Checkbox } from "../../src/component/checkbox";
 import { Choice } from "../../src/component/choice";
 import { Container } from "../../src/component/container";
 import { ComponentFactory } from "../../src/component/factory";
@@ -57,6 +58,10 @@ describe("Component factory", () => {
               id: "icon",
               className: "Icon",
               iconName: "icon",
+            },
+            {
+              id: "checkbox",
+              className: "Checkbox",
             },
             {
               id: "widgetContainer",
@@ -212,6 +217,15 @@ describe("Component factory", () => {
         sheet as ComponentContainer<ComponentSearchResult>,
       ),
     ).toBeInstanceOf(Icon);
+
+    const rawCheckbox = rawSheet.get("checkbox");
+
+    expect(
+      ComponentFactory.create(
+        rawCheckbox,
+        sheet as ComponentContainer<ComponentSearchResult>,
+      ),
+    ).toBeInstanceOf(Checkbox);
 
     const label = rawSheet.get("lbl");
 

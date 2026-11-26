@@ -1001,12 +1001,10 @@ export const DataProvider = (superclass: Newable = class {}) =>
       const result: DataProviderDataValue = {};
       let keys: Array<string | number> = [];
 
-      if (lre.isObject(rowLeft)) {
-        keys = Object.keys(rowLeft);
-        keys.forEach((k) => {
-          result[k] = (rowLeft as Record<string, LetsRole.ComponentValue>)[k];
-        });
-      }
+      keys = Object.keys(rowLeft!);
+      keys.forEach((k) => {
+        result[k] = (rowLeft as Record<string, LetsRole.ComponentValue>)[k];
+      });
 
       if (lre.isObject(rowRight)) {
         Object.keys(rowRight).forEach((k) => {
@@ -1078,7 +1076,7 @@ export class DirectDataProvider extends Mixin(
       dataProviderArgs.push(sourceRefresh!);
     }
 
-    super([dataProviderArgs, [id, () => this]]);
+    super([dataProviderArgs, [id]]);
     this.#directId = id;
   }
 

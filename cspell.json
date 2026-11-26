@@ -4,6 +4,7 @@
   "ignorePaths": [
     "coverage/**",
     "swc-plugins/",
+    "scripts/git-hooks/",
     "node_modules/**",
     "*.json",
     "build/**",
@@ -59,6 +60,7 @@
     "uncopy",
     "unpropagate",
     "untoggling",
+    "usecases",
     "valclick",
     "valselect",
     "valunselect",

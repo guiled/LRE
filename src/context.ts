@@ -55,7 +55,7 @@ export class Context implements ProxyModeHandler {
       this.#log[type] = [];
     }
 
-    const logs: ContextLog[T] = this.#log[type] || [];
+    const logs: ContextLog[T] = this.#log[type]!;
 
     if (
       !logs.some((l) => {
