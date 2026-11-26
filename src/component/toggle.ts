@@ -51,6 +51,11 @@ export class Toggle<
   ): this;
   toggling(
     data: TogglingDataMap | Record<TogglingValue, string>,
+    defaultValue: TogglingOptions,
+    save: boolean,
+  ): this;
+  toggling(
+    data: TogglingDataMap | Record<TogglingValue, string>,
     defaultValue?: TogglingValue,
     save?: boolean,
   ): this;
@@ -200,13 +205,12 @@ export class Toggle<
       return;
     }
 
-    const oldData: TogglingData = {
-      classes: [],
-      show: [],
-      hide: [],
-      showflex: [],
-      hideflex: [],
-    };
+    const oldData: Partial<
+      Record<
+        TogglingDataArrayItem,
+        Array<LetsRole.ClassName | LetsRole.ComponentID>
+      >
+    > = {};
 
     if (!force) {
       this.#togglingValues
@@ -216,8 +220,13 @@ export class Toggle<
             v === this.#currentTogglingValue,
         )
         .forEach((v) => {
-          for (const k in oldData) {
-            const key = k as TogglingDataArrayItem;
+          for (const key of [
+            "classes",
+            "show",
+            "hide",
+            "showflex",
+            "hideflex",
+          ] as TogglingDataArrayItem[]) {
             oldData[key] = this.#arrayMergeUnique(
               oldData[key] || [],
               this.#togglingData[v][key] || [],
@@ -233,7 +242,10 @@ export class Toggle<
         });
     }
 
-    this.#changeTogglingData(oldData, this.#togglingData[value]);
+    this.#changeTogglingData(
+      oldData as TogglingData,
+      this.#togglingData[value],
+    );
     this.#currentTogglingValue = value;
     this.#options.save && this.data(VALUE_DATA_ID, value, true);
 
@@ -331,9 +343,9 @@ export class Toggle<
   }
 
   #handleToggleClick(): void {
-    let index =
-      this.#togglingValues.findIndex((e) => this.#currentTogglingValue === e) ??
-      -1;
+    let index = this.#togglingValues.findIndex(
+      (e) => this.#currentTogglingValue === e,
+    );
 
     index++;
 

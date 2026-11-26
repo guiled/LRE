@@ -149,6 +149,16 @@ afterEach(() => {
   terminateLetsRole();
 });
 
+const existingMockedComponent: IComponent = {
+  exists: () => true,
+  refreshRaw: vi.fn(),
+} as unknown as IComponent;
+
+const missingMockedComponent: IComponent = {
+  exists: () => false,
+  refreshRaw: vi.fn(),
+} as unknown as IComponent;
+
 describe("Repeater is correctly initialized", () => {
   test("has the good type", () => {
     expect(repeater.lreType()).toBe("repeater");
@@ -161,6 +171,27 @@ describe("Repeater is correctly initialized", () => {
 
     expect(rawRepeater.text).toHaveBeenCalled();
     expect((rawRepeater.text as Mock).mock.calls[0].length).toBe(0);
+  });
+
+  test("saveValue loads from sheet when no value argument", () => {
+    const getDataSpy = vi.spyOn(sheet, "getData");
+    getDataSpy.mockClear();
+    repeater.value({
+      "1": {
+        name: "synced",
+      },
+    });
+
+    expect(getDataSpy).toHaveBeenCalledWith(repeater.realId());
+  });
+
+  test("saveValue uses empty object when sheet has no data for repeater id", () => {
+    rawSheet.setData({
+      cmd: "2",
+    });
+    const repWithoutData = sheet.get("rep2") as Repeater;
+
+    expect(repWithoutData.value()).toMatchObject({});
   });
 
   test.each([
@@ -181,6 +212,237 @@ describe("Repeater is correctly initialized", () => {
     itHasWaitedEverything();
 
     expect(rawSheet.getData().rep2).toMatchObject({});
+  });
+});
+
+describe("Repeater initread registration and click handler", () => {
+  test("initread on handler registration runs for each non-editing entry", () => {
+    repeater.value({
+      "1": { name: "one" },
+      "2": { name: "two" },
+    });
+    const handler = vi.fn();
+    repeater.on("initread", handler);
+
+    expect(handler).toHaveBeenCalledTimes(2);
+    expect(handler.mock.calls[0][1].id()).toBe(repeater.find("1")!.id());
+    expect(handler.mock.calls[1][1].id()).toBe(repeater.find("2")!.id());
+  });
+
+  test("initread on handler registration skips entries in editing mode", () => {
+    repeater.value({
+      "1": { name: "one" },
+      "2": { name: "two" },
+    });
+    rawSheet.setEntryState("rep.1", "write");
+    rawSheet.addComponentClass("rep.1", "editing");
+    (repeater.find("1") as Entry).refreshRaw();
+
+    const handler = vi.fn();
+    repeater.on("initread", handler);
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(handler.mock.calls[0][2]).toBe("2");
+  });
+
+  test("click handler returns when repeater value is falsy", () => {
+    const initHandler = vi.fn();
+    repeater.on("init", initHandler);
+    vi.spyOn(repeater, "value").mockImplementation(() => {
+      return null as unknown as LetsRole.RepeaterValue;
+    });
+    rawSheet.triggerComponentEvent(repeater.realId()!, "click");
+
+    expect(initHandler).not.toHaveBeenCalled();
+  });
+
+  test("click handler stores known children when initializing a new entry", () => {
+    const childRealId = "rep.newEntry.child";
+    vi.mocked(sheet.knownChildren).mockImplementation((cmp) => {
+      if (lre.isComponent(cmp) && cmp.lreType() === "entry") {
+        return [
+          {
+            realId: () => childRealId,
+          } as IComponent,
+        ];
+      }
+
+      return [];
+    });
+
+    rawSheet.repeaterClickOnAdd(repeater.id()!);
+
+    const entryIds = Object.keys(repeater.value()!);
+    const newEntry = repeater.find(entryIds[0]!) as Entry;
+
+    expect(newEntry.data("_lreChildren")).toStrictEqual([childRealId]);
+  });
+
+  test("click handler skips init when entry is already initialized but not saved yet", () => {
+    repeater.value({});
+    itHasWaitedEverything();
+
+    rawSheet.setData(
+      {
+        rep: {
+          ghost: { name: "ghost" },
+        },
+      },
+      true,
+    );
+
+    const entry = repeater.find("ghost") as Entry;
+    entry.data("initialized", true);
+
+    const initHandler = vi.fn();
+    const initeditHandler = vi.fn();
+    repeater.on("init", initHandler);
+    repeater.on("initedit", initeditHandler);
+    rawSheet.triggerComponentEvent(repeater.realId()!, "click");
+
+    expect(initHandler).not.toHaveBeenCalled();
+    expect(initeditHandler).not.toHaveBeenCalled();
+  });
+
+  test("click handler on edit stores children and refreshes entry components", () => {
+    repeater.value({
+      "1": { name: "test" },
+    });
+    itHasWaitedEverything();
+
+    const entry = repeater.find("1") as Entry;
+    const sheetChildRealId = "rep.1.name";
+
+    vi.mocked(sheet.knownChildren).mockReturnValue([
+      { realId: () => sheetChildRealId } as IComponent,
+    ]);
+    vi.spyOn(entry, "knownChildren").mockReturnValue([existingMockedComponent]);
+
+    rawSheet.repeaterClickOnEdit(`${repeater.realId()!}.1`);
+
+    expect(entry.data("_lreChildren")).toStrictEqual([sheetChildRealId]);
+    expect(existingMockedComponent.refreshRaw).toHaveBeenCalled();
+  });
+
+  test("click handler on edit skips refreshRaw for absent or non-existing children", () => {
+    repeater.value({
+      "1": { name: "test" },
+    });
+    itHasWaitedEverything();
+
+    const entry = repeater.find("1") as Entry;
+
+    vi.mocked(sheet.knownChildren).mockReturnValue([]);
+    vi.spyOn(entry, "knownChildren").mockReturnValue([
+      null as unknown as IComponent,
+      missingMockedComponent,
+      existingMockedComponent,
+    ]);
+
+    rawSheet.repeaterClickOnEdit(`${repeater.realId()!}.1`);
+
+    expect(missingMockedComponent.refreshRaw).toHaveBeenCalledTimes(0);
+    expect(existingMockedComponent.refreshRaw).toHaveBeenCalledTimes(1);
+  });
+
+  test("update handler refreshes raw children when entry data changes", () => {
+    repeater.value({
+      "1": { name: "before" },
+    });
+    itHasWaitedEverything();
+
+    const entry = repeater.find("1") as Entry;
+    vi.spyOn(entry, "knownChildren").mockReturnValue([existingMockedComponent]);
+
+    repeater.value({
+      "1": { name: "after" },
+    });
+
+    expect(existingMockedComponent.refreshRaw).toHaveBeenCalled();
+  });
+
+  test("update handler skips refreshRaw for absent or non-existing children", () => {
+    vi.spyOn(Entry.prototype, "knownChildren").mockReturnValue([
+      null as unknown as IComponent,
+      missingMockedComponent,
+      existingMockedComponent,
+    ]);
+
+    repeater.value({
+      "1": { name: "before" },
+    });
+    itHasWaitedEverything();
+    (missingMockedComponent.refreshRaw as Mock).mockClear();
+    (existingMockedComponent.refreshRaw as Mock).mockClear();
+
+    repeater.value({
+      "1": { name: "after" },
+    });
+
+    expect(missingMockedComponent.refreshRaw).not.toHaveBeenCalled();
+    expect(existingMockedComponent.refreshRaw).toHaveBeenCalled();
+  });
+
+  test("update handler treats non-array _lreChildren as empty", () => {
+    repeater.value({
+      "1": { name: "before" },
+    });
+    itHasWaitedEverything();
+
+    const childRealId = "rep.1.name";
+    vi.mocked(sheet.knownChildren).mockReturnValue([
+      { realId: () => childRealId } as IComponent,
+    ]);
+    vi.spyOn(Entry.prototype, "knownChildren").mockReturnValue([]);
+
+    const forgetSpy = vi.spyOn(sheet, "forget");
+    const knownChildrenSpy = vi.mocked(sheet.knownChildren);
+    knownChildrenSpy.mockClear();
+
+    let entryFromUpdate: Entry | undefined;
+    repeater.on("entrychange", (_repeater, changedEntry: Entry) => {
+      changedEntry.data("_lreChildren", ["stale-child"]);
+      changedEntry.data(
+        "_lreChildren",
+        "not-a-list" as unknown as Array<LetsRole.ComponentID>,
+      );
+      entryFromUpdate = changedEntry;
+    });
+
+    repeater.value({
+      "1": { name: "after" },
+    });
+
+    expect(knownChildrenSpy).toHaveBeenCalled();
+    expect(entryFromUpdate).toBeDefined();
+    expect(entryFromUpdate!.data("_lreChildren")).toStrictEqual([childRealId]);
+    expect(forgetSpy).not.toHaveBeenCalled();
+  });
+
+  test("update handler forgets children no longer on entry", () => {
+    repeater.value({
+      "1": { name: "before" },
+    });
+    itHasWaitedEverything();
+
+    const removedChild = "rep.1.removed";
+    const keptChild = "rep.1.name";
+    vi.mocked(sheet.knownChildren).mockReturnValue([
+      { realId: () => keptChild } as IComponent,
+    ]);
+    vi.spyOn(Entry.prototype, "knownChildren").mockReturnValue([]);
+
+    const forgetSpy = vi.spyOn(sheet, "forget");
+    repeater.on("entrychange", (_repeater, changedEntry: Entry) => {
+      changedEntry.data("_lreChildren", [removedChild, keptChild]);
+    });
+
+    repeater.value({
+      "1": { name: "after" },
+    });
+
+    expect(forgetSpy).toHaveBeenCalledWith(removedChild);
+    expect(forgetSpy).not.toHaveBeenCalledWith(keptChild);
   });
 });
 
@@ -369,6 +631,20 @@ describe("Repeater as data provider", () => {
     expect(repeater.provider().provider).toBeTruthy();
     expect(repeater.provider().providedValue()).toMatchObject(data);
   });
+
+  test("provider original value accessor delegates to valueData", () => {
+    repeater.value({
+      "1": { name: "test" },
+    });
+
+    const valueDataSpy = vi.spyOn(repeater, "valueData");
+    const provider = repeater.provider();
+
+    provider.getData();
+
+    expect(valueDataSpy).toHaveBeenCalled();
+    expect(repeater.valueData()).toBeUndefined();
+  });
 });
 
 describe("Repeater can be readonly", () => {
@@ -470,6 +746,39 @@ describe("Repeater each", () => {
     });
     expect(cb.mock.calls[2][2]).toBe("3");
   });
+
+  test("each returns early when value is null", () => {
+    const cb = vi.fn();
+    vi.spyOn(repeater, "value").mockImplementation(() => {
+      return null as unknown as LetsRole.RepeaterValue;
+    });
+
+    repeater.each(cb);
+
+    expect(cb).not.toHaveBeenCalled();
+  });
+
+  test("each returns early when value is not a repeater object", () => {
+    const cb = vi.fn();
+    vi.spyOn(repeater, "value").mockImplementation(() => {
+      return "invalid" as unknown as LetsRole.RepeaterValue;
+    });
+
+    repeater.each(cb);
+
+    expect(cb).not.toHaveBeenCalled();
+  });
+
+  test("each with column id but no callback returns when value is null", () => {
+    vi.spyOn(repeater, "value").mockImplementation(() => {
+      return null as unknown as LetsRole.RepeaterValue;
+    });
+
+    expect(() => {
+      /* @ts-expect-error column form requires a callback */
+      repeater.each("name");
+    }).not.toThrow();
+  });
 });
 
 describe("Repeater map", () => {
@@ -495,6 +804,18 @@ describe("Repeater map", () => {
       "2": "test2",
       "3": "test3",
     });
+  });
+
+  test("map uses empty object when value is falsy", () => {
+    vi.spyOn(repeater, "value").mockImplementation(() => {
+      return null as unknown as LetsRole.RepeaterValue;
+    });
+    const cb = vi.fn();
+
+    const res = repeater.map(cb);
+
+    expect(res).toEqual({});
+    expect(cb).not.toHaveBeenCalled();
   });
 });
 
@@ -573,6 +894,73 @@ describe("Repeater setSorter", () => {
 
     expect(repeater.value()).toMatchObject({});
   });
+
+  test("setSorter click uses empty object when value is falsy", () => {
+    repeater.setSorter("cmp", "name");
+    const valueSpy = vi.spyOn(repeater, "value").mockImplementation(() => {
+      return null as unknown as LetsRole.RepeaterValue;
+    });
+
+    expect(() => rawSheet.triggerComponentEvent("cmp", "click")).not.toThrow();
+
+    expect(valueSpy).toHaveBeenCalled();
+  });
+
+  test("setSorter resolves column through find when missing in entry data", () => {
+    repeater.value({
+      "1": { score: 1 },
+      "2": { score: 2 },
+    });
+
+    const origFind = repeater.find.bind(repeater);
+    const findSpy = vi
+      .spyOn(repeater, "find")
+      .mockImplementation((id, silent) => {
+        if (id === "1.name") {
+          return {
+            id: () => "1.name",
+            exists: () => true,
+            value: () => "B",
+          } as Component;
+        }
+
+        if (id === "2.name") {
+          return {
+            id: () => "2.name",
+            exists: () => true,
+            value: () => "A",
+          } as Component;
+        }
+
+        return origFind(id, silent);
+      });
+
+    repeater.setSorter("cmp", "name");
+    rawSheet.triggerComponentEvent("cmp", "click");
+
+    expect(findSpy).toHaveBeenCalledWith("1.name", true);
+    expect(findSpy).toHaveBeenCalledWith("2.name", true);
+  });
+
+  test("setSorter getVal returns empty string when column component is missing", () => {
+    repeater.value({
+      "1": { score: 1 },
+      "2": { score: 2 },
+    });
+
+    const origFind = repeater.find.bind(repeater);
+    vi.spyOn(repeater, "find").mockImplementation((id, silent) => {
+      if (String(id).endsWith(".name")) {
+        return null;
+      }
+
+      return origFind(id, silent);
+    });
+
+    repeater.setSorter("cmp", "name");
+
+    expect(() => rawSheet.triggerComponentEvent("cmp", "click")).not.toThrow();
+  });
 });
 
 describe("Repeater add and remove", () => {
@@ -592,6 +980,51 @@ describe("Repeater add and remove", () => {
     });
   });
 
+  test("Add generates entry id when none is provided", () => {
+    vi.spyOn(lre, "getRandomId").mockReturnValue("generated-id");
+
+    repeater.add({ label: "new" });
+
+    expect(repeater.value()).toMatchObject({
+      "generated-id": { label: "new" },
+    });
+  });
+
+  test("Add uses empty view data when viewData is omitted", () => {
+    /* @ts-expect-error viewData may be omitted at runtime */
+    repeater.add(undefined, "no-data");
+
+    expect(repeater.value()).toMatchObject({
+      "no-data": {},
+    });
+  });
+
+  test("Add uses empty repeater value when current value is falsy", () => {
+    const origValue = repeater.value.bind(repeater);
+    let returnNullOnRead = true;
+    vi.spyOn(repeater, "value").mockImplementation(function (
+      this: Repeater,
+      newVal?: unknown,
+    ): LetsRole.RepeaterValue | void {
+      if (arguments.length > 0) {
+        returnNullOnRead = false;
+        return origValue(newVal as unknown as LetsRole.RepeaterValue);
+      }
+
+      if (returnNullOnRead) {
+        return null as unknown as LetsRole.RepeaterValue;
+      }
+
+      return origValue();
+    });
+
+    repeater.add({ name: "solo" }, "only");
+
+    expect(repeater.value()).toMatchObject({
+      only: { name: "solo" },
+    });
+  });
+
   test("Remove an entry", () => {
     const d: LetsRole.ViewData = { a: "123", b: "456" };
 
@@ -602,6 +1035,29 @@ describe("Repeater add and remove", () => {
     repeater.remove("a");
 
     expect(repeater.value()).toMatchObject({ b: {} });
+  });
+
+  test("Remove uses empty object when current value is falsy", () => {
+    const origValue = repeater.value.bind(repeater);
+    let returnNullOnRead = true;
+    vi.spyOn(repeater, "value").mockImplementation(function (
+      this: Repeater,
+      newVal?: unknown,
+    ) {
+      if (arguments.length > 0) {
+        returnNullOnRead = false;
+        return origValue(newVal);
+      }
+
+      if (returnNullOnRead) {
+        return null as unknown as LetsRole.RepeaterValue;
+      }
+
+      return origValue();
+    });
+
+    expect(repeater.remove("missing")).toBeUndefined();
+    expect(repeater.value()).toMatchObject({});
   });
 });
 
@@ -751,6 +1207,45 @@ describe("Repeater setMoveComponents", () => {
 });
 
 describe("Repeater moveEntryUp", () => {
+  test("uses empty object in getEntryIds when value is falsy", () => {
+    vi.spyOn(repeater, "value").mockImplementation(() => {
+      return null as unknown as LetsRole.RepeaterValue;
+    });
+
+    expect(() => repeater.moveEntryUp("a")).not.toThrow();
+  });
+
+  test("uses empty object in getEntriesFromEntryIds when value is falsy", () => {
+    repeater.value({
+      a: { name: "First" },
+      b: { name: "Second" },
+    });
+    itHasWaitedEverything();
+
+    const origValue = repeater.value.bind(repeater);
+    let readCount = 0;
+    vi.spyOn(repeater, "value").mockImplementation(function (
+      this: Repeater,
+      newVal?: unknown,
+    ) {
+      if (arguments.length > 0) {
+        return origValue(newVal);
+      }
+
+      readCount++;
+
+      if (readCount === 2) {
+        return null as unknown as LetsRole.RepeaterValue;
+      }
+
+      return origValue();
+    });
+
+    repeater.moveEntryUp("b");
+
+    expect(Object.keys(repeater.value()!)).toEqual(["b", "a"]);
+  });
+
   test("moves entry up by one position", () => {
     repeater.value({
       a: { name: "First" },
@@ -1177,5 +1672,21 @@ describe("Repeater toString", () => {
     const result = repeater.toString();
 
     expect(result).toBe("Repeater<rep>(3 entries)");
+  });
+
+  test("toString reports zero entries when value is falsy", () => {
+    vi.spyOn(repeater, "value").mockImplementation(() => {
+      return null as unknown as LetsRole.RepeaterValue;
+    });
+
+    expect(repeater.toString()).toBe("Repeater<rep>(0 entries)");
+  });
+
+  test("toString reports zero entries when value is not an object", () => {
+    vi.spyOn(repeater, "value").mockImplementation(() => {
+      return "invalid" as unknown as LetsRole.RepeaterValue;
+    });
+
+    expect(repeater.toString()).toBe("Repeater<rep>(0 entries)");
   });
 });

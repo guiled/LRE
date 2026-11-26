@@ -18,6 +18,7 @@ import { SheetProxy } from "../../src/proxy/sheet";
 import { ServerMock } from "../../src/mock/letsrole/server.mock";
 import { ComponentMock } from "../../src/mock/letsrole/component.mock";
 import { ViewMock } from "../../src/mock/letsrole/view.mock";
+import { ComponentProxy } from "../../src/proxy/component";
 
 let rawSheet: LetsRole.Sheet;
 let sheet: Sheet;
@@ -277,6 +278,24 @@ describe("Component construction", () => {
     expect(cmp.hasClass("cl2")).toBeFalsy();
   });
 
+  test("addClass is a no-op when the class is already present", () => {
+    const triggerSpy = vi.spyOn(cmp, "trigger");
+
+    cmp.addClass("cl1");
+
+    expect(triggerSpy).not.toHaveBeenCalled();
+  });
+
+  test("removeClass logs when the class is absent", () => {
+    vi.spyOn(lre, "info");
+
+    cmp.removeClass("clMissing");
+
+    expect(lre.info).toHaveBeenCalledWith(
+      `${realId} Class not found: clMissing`,
+    );
+  });
+
   test("Adding invalid class name trigger a warning", () => {
     vi.spyOn(lre, "warn");
     cmp.addClass("cl0");
@@ -390,6 +409,21 @@ describe("Component toString", () => {
     expect(result).toMatch(/^Component<cmp>\(component\)$/);
   });
 
+  test("toString shows empty object value as zero keys", () => {
+    rawSheet.setData({ cmp: {} });
+    const result = cmp.toString();
+
+    expect(result).toBe("Component<cmp>(component={})");
+  });
+
+  test("toString shows error when value cannot be read", () => {
+    vi.spyOn(lre, "value").mockImplementation(() => {
+      throw new Error("read failed");
+    });
+
+    expect(cmp.toString()).toBe("Component<cmp>(component=<error>)");
+  });
+
   test("toString shows component info with different lreType", () => {
     cmp.lreType("container");
     const result = cmp.toString();
@@ -420,15 +454,28 @@ describe("Component tree", () => {
     expect(cmp.entry()).toBe(entry);
   });
 
-  test("Find in a component (not complete yet… todo : test to find a sub component", () => {
+  test("find with a single segment delegates to sheet.get with that id", () => {
+    const getSpy = vi.spyOn(sheet, "get");
+
     cmp.find("test");
 
-    expect(sheet.get).toHaveBeenCalled();
+    expect(getSpy).toHaveBeenCalledWith("test");
+  });
 
-    vi.spyOn(sheet, "get");
+  test("find with dotted completeId joins entry prefix and child id for sheet.get", () => {
+    const getSpy = vi.spyOn(sheet, "get");
+
+    cmp.find("123.b");
+
+    expect(getSpy).toHaveBeenCalledWith("123.b");
+  });
+
+  test("get delegates to find", () => {
+    const getSpy = vi.spyOn(sheet, "get");
+
     cmp.get("test");
 
-    expect(sheet.get).toHaveBeenCalled();
+    expect(getSpy).toHaveBeenCalledWith("test");
   });
 
   test("Sheet methods shortcuts", () => {
@@ -644,6 +691,28 @@ describe("Component get and set value", () => {
     expect(cmp1.value()).toBe("1");
     expect(cmp1.valueData()).toBe(choice.choiceData());
   });
+
+  test("value set writes through raw when grouped setValue is disabled", () => {
+    const rawSet = vi.spyOn(rawCmp, "value");
+    const previous = lre.__enableGroupedSetValue;
+
+    lre.__enableGroupedSetValue = false;
+    cmp.value("99");
+
+    expect(rawSet).toHaveBeenCalledWith("99");
+
+    lre.__enableGroupedSetValue = previous;
+  });
+
+  test("valueData returns undefined when value is an object", () => {
+    rawSheet.setData({ cmp: { nested: 1 } });
+
+    expect(cmp.valueData()).toBeUndefined();
+  });
+
+  test("valueData returns null when there is no value provider", () => {
+    expect(cmp.valueData()).toBeNull();
+  });
 });
 
 describe("Component visible setter", () => {
@@ -727,6 +796,163 @@ describe("Component visible setter", () => {
     cmp.visible(chk);
 
     expect(cmp.visible()).toBeFalsy();
+  });
+});
+
+describe("Component raw event attachment", () => {
+  test("Click on registers handler on raw component", () => {
+    const onSpy = vi.spyOn(rawCmp, "on");
+    const handler = vi.fn();
+
+    cmp.on("click", handler);
+
+    expect(onSpy).toHaveBeenCalledWith("click", expect.any(Function));
+  });
+
+  test("refreshRaw re-attaches direct handlers on the refreshed raw component", () => {
+    const handler = vi.fn();
+    const onSpy = vi.spyOn(rawCmp, "on");
+
+    cmp.on("click", handler);
+    onSpy.mockClear();
+
+    cmp.refreshRaw(rawCmp);
+
+    expect(onSpy).toHaveBeenCalledWith("click", expect.any(Function));
+  });
+
+  test("refreshRaw without argument reloads raw through sheet getRaw", () => {
+    const rawAccessor = sheet.raw() as SheetProxy;
+    const getSpy = vi.spyOn(rawAccessor, "get");
+
+    cmp.refreshRaw();
+
+    expect(getSpy).toHaveBeenCalledWith(realId);
+  });
+
+  test("refreshRaw invokes transferEvents on the loaded raw via onRefresh", () => {
+    const transferSpy = vi.spyOn(cmp, "transferEvents");
+    const refreshedRaw = rawSheet.get(cmpId) as ComponentMock;
+
+    cmp.on("click", vi.fn() as EventHandler);
+    transferSpy.mockClear();
+
+    cmp.refreshRaw(refreshedRaw);
+
+    expect(transferSpy).toHaveBeenCalledWith(refreshedRaw);
+  });
+
+  test("Delegated on registers selector and handler on raw component", () => {
+    const containerCmp = sheet.get("container") as Container;
+    const rawContainer = containerCmp.raw() as ComponentMock;
+    const onSpy = vi.spyOn(rawContainer, "on");
+
+    containerCmp.on("click", "cmp1", vi.fn());
+
+    expect(onSpy).toHaveBeenCalledWith("click", "cmp1", expect.any(Function));
+  });
+
+  test("Delegated off forwards selector to raw off without handler", () => {
+    const containerCmp = sheet.get("container") as Container;
+    const rawContainer = containerCmp.raw() as ComponentMock;
+    const offSpy = vi.spyOn(rawContainer, "off");
+
+    containerCmp.on("click", "cmp1", vi.fn());
+    offSpy.mockClear();
+
+    containerCmp.off("click", "cmp1");
+
+    expect(offSpy).toHaveBeenCalledWith("click", "cmp1");
+    expect(offSpy.mock.calls[0]).toHaveLength(2);
+  });
+
+  test("attachToRaw does not call raw on when raw on is not a function", () => {
+    const handler = vi.fn();
+    const onSpy = vi.fn();
+    const rawStub = {
+      id: () => cmpId,
+      name: () => cmpName,
+      index: () => null,
+      getClasses: () => [],
+      text: () => "",
+      value: () => cmpValue,
+      visible: () => true,
+      hide: () => undefined,
+      show: () => undefined,
+      on: undefined,
+      off: onSpy,
+    } as unknown as LetsRole.Component;
+    const stubCmp = new Component(rawStub, sheet, realId);
+
+    expect(() => stubCmp.on("click", handler)).not.toThrow();
+    expect(onSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("Component constructor HasRaw and proxy wiring", () => {
+  test("constructor calls setDestGetter when raw owns setDestGetter", () => {
+    let destGetter: (() => Component) | undefined;
+    const setDestGetter = vi.fn((getter: () => Component) => {
+      destGetter = getter;
+    });
+    const rawWithDestGetter = {
+      id: () => cmpId,
+      name: () => cmpName,
+      index: () => null,
+      getClasses: () => cmpClasses,
+      text: () => cmpText,
+      value: () => cmpValue,
+      visible: () => true,
+      hide: () => undefined,
+      show: () => undefined,
+      on: (...args: Parameters<ComponentMock["on"]>) => rawCmp.on(...args),
+      off: (...args: Parameters<ComponentMock["off"]>) => rawCmp.off(...args),
+      find: rawCmp.find.bind(rawCmp),
+      parent: rawCmp.parent.bind(rawCmp),
+      sheet: () => rawSheet,
+      setDestGetter,
+    } as unknown as LetsRole.Component;
+
+    const wiredCmp = new Component(rawWithDestGetter, sheet, realId);
+
+    expect(setDestGetter).toHaveBeenCalledTimes(1);
+    expect(destGetter?.()).toBe(wiredCmp);
+  });
+
+  test("constructor wires setDestGetter on ComponentProxy with own setDestGetter property", () => {
+    const proxySheet = sheet.raw() as SheetProxy;
+    const lblProxy = new ComponentProxy(context, rawCmp, proxySheet, () => ({
+      cmpClasses: {},
+      cmpTexts: {},
+      sheetData: {},
+      virtualValues: {},
+      visible: {},
+    }));
+    const setDestGetterFn = vi.fn();
+    Object.defineProperty(lblProxy, "setDestGetter", {
+      value: setDestGetterFn,
+      writable: true,
+      enumerable: true,
+      configurable: true,
+    });
+
+    const wiredCmp = new Component(lblProxy, sheet, realId);
+
+    expect(setDestGetterFn).toHaveBeenCalledTimes(1);
+    expect(setDestGetterFn.mock.calls[0][0]()).toBe(wiredCmp);
+  });
+
+  test("constructor does not call setDestGetter when raw has no own setDestGetter", () => {
+    const setDestGetter = vi.fn();
+    vi.spyOn(ComponentProxy.prototype, "setDestGetter").mockImplementation(
+      setDestGetter,
+    );
+
+    new Component(rawCmp, sheet, realId);
+
+    expect(setDestGetter).not.toHaveBeenCalled();
+
+    vi.restoreAllMocks();
   });
 });
 
@@ -1073,9 +1299,75 @@ describe("Component events on sub component", () => {
 
     expect(handler).not.toHaveBeenCalled();
   });
+
+  test("Delegated click resolves target with child id when raw component has no index", () => {
+    const findSpy = vi.spyOn(container, "find");
+    const handler = vi.fn();
+
+    container.on("click", "input", handler);
+    (delegationRawSheet.get("input") as ComponentMock).trigger("click");
+
+    expect(findSpy).toHaveBeenCalledWith("input");
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  test("Delegated click resolves target with entry index and child id when raw component has index", () => {
+    const indexSpy = vi
+      .spyOn(ComponentMock.prototype, "index")
+      .mockImplementation(function (this: ComponentMock) {
+        if (this.id() === "input") {
+          return "123";
+        }
+
+        return null;
+      });
+    const findSpy = vi.spyOn(container, "find");
+    const handler = vi.fn();
+
+    container.on("click", "input", handler);
+    (delegationRawSheet.get("input") as ComponentMock).trigger("click");
+
+    expect(findSpy).toHaveBeenCalledWith("123.input");
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    indexSpy.mockRestore();
+  });
+});
+
+describe("Component dataProvider and change tracker", () => {
+  test("getChangeTracker returns the component change tracker", () => {
+    const tracker = cmp.getChangeTracker();
+
+    expect(tracker).toBeDefined();
+    expect(cmp.getChangeTracker()).toBe(tracker);
+  });
+
+  test("dataProvider getter and setter sync with component value", () => {
+    const provider = cmp.dataProvider()!;
+
+    expect(provider.providedValue()).toBe(cmpValue);
+
+    provider.providedValue("88");
+
+    expect(cmp.value()).toBe("88");
+  });
 });
 
 describe("Component behavior with context", () => {
+  test("value read with pending data logs component when sheet has no id", () => {
+    context.enableAccessLog();
+    vi.spyOn(context, "logAccess");
+    vi.spyOn(sheet, "getSheetId").mockReturnValue(undefined as never);
+    vi.spyOn(sheet, "getPendingData").mockReturnValue("pending");
+
+    cmp.value();
+
+    expect(context.logAccess).toHaveBeenCalledWith("value", cmp);
+
+    context.disableAccessLog();
+    vi.restoreAllMocks();
+  });
+
   test("Context has component ref when value is get", () => {
     context.enableAccessLog();
     const cmpProxy = sheet.get(cmpId)!;

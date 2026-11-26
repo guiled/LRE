@@ -92,7 +92,7 @@ beforeEach(() => {
   });
   initLetsRole(server);
   global.lre = new LRE(context);
-  lre.wait = wait;
+  lre.wait = global.wait;
   rawSheet = server.openView("sheet", "realId", {
     rep: {
       1: {
@@ -218,6 +218,26 @@ describe("Component cache forget/remember", () => {
   beforeEach(() => {
     newCmp.mockClear();
     cache = new ComponentCache(context, newCmp);
+  });
+
+  test("forget does not enqueue deferredForget again while a forget chain is already scheduled", () => {
+    const waitSpy = vi.spyOn(lre, "wait");
+    const deferredForgetWaitCount = (): number =>
+      waitSpy.mock.calls.filter((call) => call[2] === "deferredForget").length;
+
+    cache.set("a", newCmp("a")!);
+    cache.set("b", newCmp("b")!);
+
+    cache.forget("a");
+    cache.forget("b");
+
+    expect(deferredForgetWaitCount()).toBe(1);
+
+    itHasWaitedEverything();
+
+    expect(deferredForgetWaitCount()).toBe(2);
+
+    waitSpy.mockRestore();
   });
 
   test("forget/remember", () => {

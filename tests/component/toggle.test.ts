@@ -143,6 +143,28 @@ describe("Toggle", () => {
     });
   });
 
+  test("Toggling state kept as string updates display value", () => {
+    const toggle = sheet.get("toggle") as Toggle;
+    const data: Record<string, string> = {
+      on: "text1",
+      off: "text2",
+    };
+
+    toggle.toggling(data, "off");
+
+    data.on = "plain-label";
+
+    toggle.value("on");
+
+    expect(toggle.value()).toStrictEqual("on");
+
+    itHasWaitedEverything();
+
+    expect(rawSheet.getData()).toMatchObject({
+      toggle: "plain-label",
+    });
+  });
+
   test("Initialization with default value from component", () => {
     const toggle = sheet.get("toggle") as Toggle;
     toggle.value("off");
@@ -154,6 +176,64 @@ describe("Toggle", () => {
       },
       "unknown",
     );
+    itHasWaitedEverything();
+
+    expect(toggle.value()).toStrictEqual("off");
+  });
+
+  test("Toggling does not pick a state when default and raw value are unknown", () => {
+    const toggle = sheet.get("toggle") as Toggle;
+
+    toggle.toggling(
+      {
+        on: "text1",
+        off: "text2",
+      },
+      "unknown",
+      false,
+    );
+
+    expect(toggle.value()).toBeNull();
+  });
+
+  test("Click when no current toggling state cycles from first value", () => {
+    const toggle = sheet.get("toggle") as Toggle;
+
+    toggle.toggling(
+      {
+        on: "text1",
+        off: "text2",
+      },
+      "unknown",
+      false,
+    );
+
+    expect(toggle.value()).toBeNull();
+
+    rawSheet.triggerComponentEvent("toggle", "click");
+    itHasWaitedEverything();
+
+    expect(toggle.value()).toStrictEqual("on");
+  });
+
+  test("Toggling tolerates non-array layout properties", () => {
+    const toggle = sheet.get("toggle") as Toggle;
+
+    toggle.toggling({
+      on: {
+        icon: "icon1",
+        classes: ["class1"],
+      },
+      off: {
+        icon: "icon2",
+        classes: "bad-class" as unknown as LetsRole.ClassName[],
+        show: 1 as unknown as LetsRole.ComponentID[],
+      },
+    });
+
+    itHasWaitedEverything();
+
+    rawSheet.triggerComponentEvent("toggle", "click");
     itHasWaitedEverything();
 
     expect(toggle.value()).toStrictEqual("off");
@@ -302,6 +382,32 @@ describe("Toggle", () => {
     expect(lbl2.hasClass("d-none")).toStrictEqual(true);
     expect(lbl3.hasClass("d-none")).toStrictEqual(false);
     expect(lbl4.hasClass("d-none")).toStrictEqual(false);
+  });
+
+  test("Initial toggling aggregates sibling states with partial layout keys", () => {
+    const toggle = sheet.get("toggle") as Toggle;
+    const lbl1 = sheet.get("lbl1")!;
+    const lbl3 = sheet.get("lbl3")!;
+
+    toggle.toggling(
+      {
+        active: {
+          icon: "icon1",
+          show: ["lbl1"],
+        },
+        other: {
+          icon: "icon2",
+          hide: ["lbl3"],
+        },
+      },
+      "active",
+    );
+
+    itHasWaitedEverything();
+
+    expect(toggle.value()).toStrictEqual("active");
+    expect(lbl1.hasClass("d-none")).toStrictEqual(false);
+    expect(lbl3.hasClass("d-none")).toStrictEqual(false);
   });
 
   test("Toggling showflex and hideflex", () => {
@@ -593,6 +699,45 @@ describe("Toggle", () => {
     expect(toggle2.value()).toStrictEqual("off");
   });
 
+  test("Third save argument overrides save in toggling options", () => {
+    const toggle = sheet.get("toggle") as Toggle;
+
+    toggle.toggling(
+      {
+        on: "text1",
+        off: "text2",
+      },
+      { default: "off", save: true },
+      false,
+    );
+
+    expect(toggle.value()).toStrictEqual("off");
+
+    rawSheet.triggerComponentEvent("toggle", "click");
+
+    expect(toggle.value()).toStrictEqual("on");
+
+    itHasWaitedEverything();
+
+    const rawSheet2 = server.openView("main", "12345");
+    const sheet2 = new Sheet(
+      rawSheet2,
+      new DataBatcher(context, rawSheet2),
+      context,
+    );
+    const toggle2 = sheet2.get("toggle") as Toggle;
+    toggle2.toggling(
+      {
+        on: "text1",
+        off: "text2",
+      },
+      { default: "off", save: true },
+      false,
+    );
+
+    expect(toggle2.value()).toStrictEqual("off");
+  });
+
   test("Refresh raw restores current value", () => {
     const toggle = sheet.get("toggle") as Toggle;
     toggle.toggling(
@@ -615,6 +760,14 @@ describe("Toggle", () => {
     itHasWaitedEverything();
 
     expect(toggle.value()).toStrictEqual("on");
+  });
+
+  test("refreshRaw without toggling does not reapply state", () => {
+    const toggle = sheet.get("toggle") as Toggle;
+
+    toggle.refreshRaw();
+
+    expect(toggle.value()).toStrictEqual("");
   });
 
   test("Toggle based on data provider", () => {
@@ -747,6 +900,28 @@ describe("Toggle", () => {
     expect(lbl1.value()).toStrictEqual("1");
   });
 
+  test("next and prev return current when toggling state is unknown", () => {
+    const toggle = sheet.get("toggle") as Toggle;
+    const warnSpy = vi.spyOn(lre, "warn");
+
+    toggle.toggling(
+      {
+        on: "text1",
+        off: "text2",
+      },
+      "unknown",
+      false,
+    );
+
+    expect(toggle.value()).toBeNull();
+    expect(toggle.next()).toBeNull();
+    expect(toggle.prev()).toBeNull();
+    expect(warnSpy).toHaveBeenCalledTimes(2);
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[Toggle] Unable to get next/prev value of null",
+    );
+  });
+
   test("Disable click", () => {
     const toggle = sheet.get("toggle") as Toggle;
     toggle.toggling(
@@ -770,6 +945,29 @@ describe("Toggle", () => {
 
     expect(toggle.value()).toBe("1");
     expect(updateEventMock).not.toHaveBeenCalled();
+
+    toggle.untoggling();
+
+    expect(toggle.hasClass("clickable")).toStrictEqual(false);
+  });
+
+  test("value() reads saved toggling key when inactive and toggling data remains", () => {
+    const toggle = sheet.get("toggle") as Toggle;
+
+    toggle.toggling(
+      {
+        on: "text1",
+        off: "text2",
+      },
+      { clickable: false },
+    );
+
+    toggle.value("off");
+    itHasWaitedEverything();
+
+    toggle.untoggling();
+
+    expect(toggle.value()).toStrictEqual("off");
   });
 });
 
@@ -811,6 +1009,15 @@ describe("Toggle toString", () => {
     toggle.untoggling();
 
     expect(toggle.toString()).toBe("");
+  });
+
+  test("toString shows none when toggling has no current state", () => {
+    const rawToggle = rawSheet.get("toggle");
+    const toggle = new Toggle(rawToggle, sheet, "toggle");
+
+    toggle.toggling({ "1": "icon1", "2": "icon2" }, "unknown");
+
+    expect(toggle.toString()).toBe("Toggle<toggle>(component, toggling=none)");
   });
 });
 

@@ -155,7 +155,7 @@ export class ComponentCache {
         this.#deferredForget.bind(this),
         "deferredForget",
       );
-      this.#isWaitingRemember = false;
+      this.#isWaitingForget = true;
     }
   }
 

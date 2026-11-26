@@ -54,10 +54,8 @@ export class Repeater extends Component<
     this.onAlways("update:__lre__", this.#updateHandler.bind(this));
   }
 
-  #saveValue(value?: LetsRole.RepeaterValue): DefinedRepeaterValue {
-    if (arguments.length === 0) {
-      value = this.sheet().getData(this.realId()) as LetsRole.RepeaterValue;
-    }
+  #saveValue(): DefinedRepeaterValue {
+    const value = this.sheet().getData(this.realId()) as LetsRole.RepeaterValue;
 
     this.#savedValue = structuredClone(value || {});
 

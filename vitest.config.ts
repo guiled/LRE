@@ -11,7 +11,13 @@ export default defineConfig({
       enabled: true,
       provider: "v8",
       include: ["src/**"],
-      exclude: ["**/*.d.ts", "**/I[A-Z]*.ts", "src/swc/**", "src/index.ts"],
+      exclude: [
+        "**/*.d.ts",
+        "**/I[A-Z]*.ts",
+        "src/swc/**",
+        "src/index.ts",
+        "src/test.lre.ts",
+      ],
       reportsDirectory: "coverage",
     },
 

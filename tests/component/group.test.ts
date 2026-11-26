@@ -111,6 +111,7 @@ describe("Component group is like a component", () => {
     expect(group.realId()).toBe("group1");
     expect(group.lreType()).toBe("group");
     expect(group.raw()).toBe(group);
+    expect(group.refreshRaw()).toBe(group);
     expect(group.init()).toBe(group);
     expect(group.repeater()).toBeUndefined();
     expect(group.entry()).toBeUndefined();
@@ -118,6 +119,8 @@ describe("Component group is like a component", () => {
     expect(group.sheet()).toBe(sheet);
     expect(group.index()).toBeNull();
     expect(group.parent()).toBe(sheet);
+    expect(group.valueProvider()).toBeUndefined();
+    expect(group.dataProvider()).toBeUndefined();
   });
 
   test("Group has LRE component methods", () => {
@@ -202,6 +205,12 @@ describe("Component group is like a component", () => {
     expect(cmp1.toggleClass).toHaveBeenCalled();
     expect(cmp2.toggleClass).toHaveBeenCalled();
     expect(subCmp.toggleClass).toHaveBeenCalled();
+  });
+
+  test("setChoices is a no-op", () => {
+    const group = new Group(context, "group1", sheet);
+
+    expect(() => group.setChoices({ a: "A", b: "B" })).not.toThrow();
   });
 });
 
@@ -347,6 +356,16 @@ describe("Component group basics", () => {
       expect(lre.error).toHaveBeenCalled();
     },
   );
+
+  test("add throws when argument is not a component id or IComponent", () => {
+    const group = new Group(context, "group1", sheet);
+    const notAComponent = { exists: () => false };
+
+    /* @ts-expect-error intentional invalid add */
+    expect(() => group.add(notAComponent)).toThrow(
+      "Invalid given component for group group1",
+    );
+  });
 });
 
 describe("Event attached to group are attached to all items", () => {
@@ -493,6 +512,12 @@ describe("Group get values", () => {
     expect(sheet.get("cmp2")!.value()).toBe("Hello");
     expect(sheet.get("cmp3")!.value()).toBe("Hello");
     expect(sheet.get("cmp4")!.value()).toBe("Hello");
+  });
+
+  test("valueData returns null", () => {
+    const group = new Group(context, "group2", sheet, ["cmp1", "cmp2"]);
+
+    expect(group.valueData()).toBeNull();
   });
 
   test("Get/Set virtual values and rawValue", () => {
@@ -644,6 +669,20 @@ describe("Group and context", () => {
     expect(accessLog).not.toContain("a");
     expect(accessLog).not.toContain("b");
     expect(accessLog).not.toContain("c");
+  });
+
+  test("Group value read logs group when sheet has no id (prompt view)", () => {
+    const group = new Group(context, "grp", sheet, ["cmp1", "cmp2"]);
+    context.enableAccessLog();
+    vi.spyOn(context, "logAccess");
+    vi.spyOn(sheet, "getSheetId").mockReturnValue(undefined as never);
+
+    group.value();
+
+    expect(context.logAccess).toHaveBeenCalledWith("value", group);
+
+    context.disableAccessLog();
+    vi.restoreAllMocks();
   });
 });
 

@@ -1,5 +1,36 @@
 import { DiceResult } from "../../src/dice/diceresult";
-import { loadDiceResultFixture } from "./loadDiceResultFixture";
+import {
+  loadDiceResultFixture,
+  prepareDiceResultRaw,
+} from "./loadDiceResultFixture";
+
+function minimalDiceResultRaw(
+  partial: Pick<LetsRole.DiceResult, "total" | "tags" | "allTags"> & {
+    children?: Array<LetsRole.DiceResult>;
+    left?: LetsRole.DiceResult | null;
+    right?: LetsRole.DiceResult | null;
+  },
+): LetsRole.DiceResult {
+  return {
+    title: "",
+    expression: "",
+    visibility: "visible",
+    type: "comparison",
+    total: partial.total,
+    tags: partial.tags,
+    allTags: partial.allTags,
+    all: [],
+    children: partial.children ?? [],
+    size: null,
+    dimension: null,
+    values: null,
+    discarded: [],
+    success: 0,
+    failure: 0,
+    left: partial.left ?? null,
+    right: partial.right ?? null,
+  } as unknown as LetsRole.DiceResult;
+}
 
 describe("DiceResult.getTaggedResults", () => {
   describe("fixture: single-tag-on-root", () => {
@@ -107,6 +138,30 @@ describe("DiceResult.getTaggedResults", () => {
       expect(root.getTaggedResults("rolled")[0].total).toBe(42);
       expect(root.getTaggedResults("target")[0].total).toBe(50);
     });
+  });
+
+  test("does not loop when the same raw node is reachable again via left or children", () => {
+    const sharedTagged = minimalDiceResultRaw({
+      total: 5,
+      tags: ["shared"],
+      allTags: [],
+    });
+    const rootRaw = minimalDiceResultRaw({
+      total: 10,
+      tags: [],
+      allTags: ["shared"],
+      children: [sharedTagged],
+      left: sharedTagged,
+    });
+
+    const root = new DiceResult(prepareDiceResultRaw(rootRaw));
+
+    root.children[0].children.push(root);
+
+    const tagged = root.getTaggedResults("shared");
+
+    expect(tagged).toHaveLength(1);
+    expect(tagged[0].total).toBe(5);
   });
 });
 

@@ -148,6 +148,18 @@ describe("Container", () => {
     expect(lre.error).not.toHaveBeenCalled();
   });
 
+  test("find returns cached child on second lookup", () => {
+    const container = sheet.get("container") as Container;
+    const first = container.find("subTxt1");
+
+    vi.spyOn(sheet, "get");
+
+    const second = container.find("subTxt1");
+
+    expect(second).toBe(first);
+    expect(sheet.get).not.toHaveBeenCalled();
+  });
+
   test("Find a child that does not exist returns null and error be logged", () => {
     const container = sheet.get("container") as Container;
     vi.spyOn(lre, "error");
@@ -242,6 +254,33 @@ describe("Container value", () => {
       subTxt1: 40,
       subTxt2: 44,
     });
+  });
+
+  test("get value aggregates values from cached children that still exist", () => {
+    const container = sheet.get("container") as Container;
+
+    container.find("subTxt1");
+    sheet.get("subTxt1")?.value("aggregated");
+
+    expect(container.value()).toStrictEqual({
+      subTxt1: "aggregated",
+    });
+  });
+
+  test("get value omits cached children that no longer exist", () => {
+    const container = sheet.get("container") as Container;
+    const child = container.find("subTxt1");
+
+    expect(child).not.toBeNull();
+
+    const realId = child!.realId();
+    const componentExists = sheet.componentExists.bind(sheet);
+
+    vi.spyOn(sheet, "componentExists").mockImplementation((id) =>
+      id === realId ? false : componentExists(id),
+    );
+
+    expect(container.value()).toStrictEqual({});
   });
 });
 

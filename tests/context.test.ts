@@ -59,6 +59,34 @@ describe("Context access logs", () => {
     );
   });
 
+  test("access log deduplicates identical tuple entries", () => {
+    const context = new Context();
+    context.enableAccessLog();
+    const entry: [string, string] = ["123", "same"];
+
+    context.logAccess("value", entry);
+    context.logAccess("value", entry);
+    context.logAccess("value", ["123", "same"]);
+
+    expect(context.getAccessLog("value")).toStrictEqual([entry]);
+  });
+
+  test("provider access log deduplicates by reference", () => {
+    const context = new Context();
+    context.enableAccessLog();
+    const providerA = {} as IDataProvider;
+    const providerB = {} as IDataProvider;
+
+    context.logAccess("provider", providerA);
+    context.logAccess("provider", providerA);
+    context.logAccess("provider", providerB);
+
+    expect(context.getAccessLog("provider")).toStrictEqual([
+      providerA,
+      providerB,
+    ]);
+  });
+
   test("Disable log access", () => {
     const context = new Context();
     context.enableAccessLog();
@@ -71,6 +99,39 @@ describe("Context access logs", () => {
     expect(context.getAccessLog("value")).toStrictEqual([
       ["123", "a"],
       ["123", "c"],
+    ]);
+  });
+
+  test("getLastLog returns empty object initially", () => {
+    const context = new Context();
+
+    expect(context.getLastLog()).toStrictEqual({});
+  });
+
+  test("getLastLog returns log snapshot after popLogContext", () => {
+    const context = new Context();
+    context.enableAccessLog();
+    context.pushLogContext();
+    context.logAccess("value", ["1", "inner"]);
+    context.popLogContext();
+
+    expect(context.getLastLog()).toStrictEqual({
+      value: [["1", "inner"]],
+    });
+    expect(context.getAccessLog("value")).toStrictEqual([]);
+  });
+
+  test("getLastLog matches previous access log after mode switch", () => {
+    const context = new Context();
+    context.enableAccessLog();
+    context.logAccess("value", ["123", "Message"]);
+    context.setMode("virtual");
+
+    expect(context.getLastLog()).toStrictEqual({
+      value: [["123", "Message"]],
+    });
+    expect(context.getPreviousAccessLog("value")).toStrictEqual([
+      ["123", "Message"],
     ]);
   });
 

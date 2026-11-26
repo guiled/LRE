@@ -15,6 +15,7 @@ import {
 import { ComponentProxy } from "../../src/proxy/component";
 import { Choice } from "../../src/component/choice";
 import { DirectDataProvider } from "../../src/dataprovider";
+import { ChangeTracker } from "../../src/globals/changetracker";
 
 let rawSheet: LetsRole.Sheet;
 let sheet: Sheet;
@@ -84,6 +85,35 @@ describe("MultiChoice", () => {
     expect(multiChoice.lreType()).toBe("multichoice");
   });
 
+  test("constructor uses empty array when native value is falsy", () => {
+    const raw = rawSheet.get("multi");
+    vi.spyOn(raw, "value").mockImplementation(() => null);
+
+    const instance = new MultiChoice(raw, sheet, "multi");
+
+    expect(instance.value()).toEqual([]);
+  });
+
+  test("select handler registration uses empty array when native value is falsy", () => {
+    const raw = rawSheet.get("multi");
+    vi.spyOn(raw, "value").mockImplementation(() => null);
+
+    const instance = new MultiChoice(raw, sheet, "multi");
+    instance.on("select", vi.fn() as EventHandler);
+
+    expect(instance.value()).toEqual([]);
+  });
+
+  test("setDefaultValue clears selection", () => {
+    multiChoice.value(["1", "2"]);
+
+    expect(multiChoice.value()).toEqual(["1", "2"]);
+
+    multiChoice.setDefaultValue();
+
+    expect(multiChoice.value()).toEqual([]);
+  });
+
   test("Multichoice values are converted to number", () => {
     const value = ["1", "2", "3", "a"];
     rawMultiChoice.value(value);
@@ -94,6 +124,16 @@ describe("MultiChoice", () => {
 
     expect(multiChoice.value()).toEqual([1, 2, 3, "a"]);
     expect(multiChoice.value()).not.toEqual(["1", "2", "3", "a"]);
+  });
+
+  test("Multichoice scalar value is normalized to a single-element array", () => {
+    multiChoice.value("1" as unknown as LetsRole.MultiChoiceValue);
+
+    expect(multiChoice.value()).toEqual(["1"]);
+
+    rawMultiChoice.value("2");
+
+    expect(multiChoice.value()).toEqual(["2"]);
   });
 
   test("Remove values in the multichoice values call a setChoices", () => {
@@ -129,7 +169,7 @@ describe("MultiChoice", () => {
     expect(mockSelectEvent).toHaveBeenCalledWith(
       multiChoice,
       value[0],
-      undefined,
+      "",
       null,
     );
 
@@ -214,6 +254,29 @@ describe("MultiChoice", () => {
     expect(multiChoice.value()).toEqual(["2", "4", "6"]);
   });
 
+  test("maxChoiceNb and minChoiceNb getters resolve stored function limiters", () => {
+    const maxLimiter = (): number => 4;
+    const minLimiter = (): number => 2;
+    const analyzeArg = ChangeTracker.analyzeArg.bind(ChangeTracker);
+    const spy = vi
+      .spyOn(ChangeTracker, "analyzeArg")
+      .mockImplementation((arg, canBeDynamic) => {
+        if (canBeDynamic && (arg === maxLimiter || arg === minLimiter)) {
+          return { arg, type: "value" };
+        }
+
+        return analyzeArg(arg, canBeDynamic);
+      });
+
+    multiChoice.maxChoiceNb(maxLimiter);
+    multiChoice.minChoiceNb(minLimiter);
+
+    expect(multiChoice.maxChoiceNb()).toBe(4);
+    expect(multiChoice.minChoiceNb()).toBe(2);
+
+    spy.mockRestore();
+  });
+
   test("Limit min and max choices with numbers", () => {
     multiChoice.on("click:other", vi.fn<EventHandler>());
     const data = lre.dataProvider("test", () => {
@@ -230,6 +293,9 @@ describe("MultiChoice", () => {
     rawMultiChoice.value([]);
     multiChoice.on("click", vi.fn<EventHandler>());
     multiChoice.maxChoiceNb(2);
+
+    expect(multiChoice.maxChoiceNb()).toBe(2);
+
     rawMultiChoice.value(["1"]);
 
     expect(multiChoice.value()).toEqual(["1"]);
@@ -248,6 +314,9 @@ describe("MultiChoice", () => {
 
     multiChoice.maxChoiceNb(3);
     multiChoice.minChoiceNb(2);
+
+    expect(multiChoice.maxChoiceNb()).toBe(3);
+
     multiChoice.value(["1", "2", "3"]);
 
     expect(multiChoice.value()).toEqual(["1", "2", "3"]);
@@ -319,6 +388,9 @@ describe("MultiChoice", () => {
     multiChoice.maxChoiceNb(50, (_lbl, _id, data: any, _prev) => {
       return data?.nb;
     });
+
+    expect(multiChoice.maxChoiceNb()).toBe(50);
+
     rawMultiChoice.value(["1", "2", "3", "4"]);
 
     expect(multiChoice.value()).toEqual(["1", "2", "3"]);
@@ -409,6 +481,44 @@ describe("MultiChoice", () => {
     expect(limitEvent).toHaveBeenCalledTimes(2);
     expect(limitEventMin).toHaveBeenCalledTimes(1);
     expect(limitEventMax).toHaveBeenCalledTimes(1);
+  });
+
+  test("max calculator resets object accumulator when a choice returns a number", () => {
+    const data = lre.dataProvider("test", () => {
+      return {
+        1: { id: "1", lbl: "One", weight: 30 },
+        2: { id: "2", lbl: "Two", weight: 10 },
+      };
+    });
+    multiChoice.setChoices(data.select("lbl"));
+    multiChoice.maxChoiceNb(5, (_lbl, id, data: any) => {
+      if (id === "1") {
+        return { weight: data?.weight };
+      }
+
+      return 1;
+    });
+
+    rawMultiChoice.value(["1", "2"]);
+
+    expect(multiChoice.value()).toEqual(["1", "2"]);
+  });
+
+  test("numeric limit ignores object-shaped calculator totals", () => {
+    const data = lre.dataProvider("test", () => {
+      return {
+        1: { id: "1", lbl: "One", weight: 30 },
+        2: { id: "2", lbl: "Two", weight: 10 },
+      };
+    });
+    multiChoice.setChoices(data.select("lbl"));
+    multiChoice.maxChoiceNb(1, (_lbl, _id, data: any) => {
+      return { weight: data?.weight };
+    });
+
+    rawMultiChoice.value(["1", "2"]);
+
+    expect(multiChoice.value()).toEqual(["1", "2"]);
   });
 
   test("Limit multichoice with object as condition", () => {
@@ -823,6 +933,23 @@ describe("MultiChoice toString", () => {
     const result = multiChoice.toString();
 
     expect(result).toBe("MultiChoice<multi>([])");
+  });
+
+  test("toString treats non-array value as empty", () => {
+    multiChoice.setChoices({ a: "A" });
+    const valueSpy = vi.spyOn(multiChoice, "value").mockImplementation(((
+      ...args: unknown[]
+    ) => {
+      if (args.length > 0) {
+        return;
+      }
+
+      return null as unknown as LetsRole.MultiChoiceValue;
+    }) as typeof multiChoice.value);
+
+    expect(multiChoice.toString()).toBe("MultiChoice<multi>([])");
+
+    valueSpy.mockRestore();
   });
 
   test("toString shows multichoice info with single selection", () => {

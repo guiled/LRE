@@ -37,6 +37,8 @@
     "prepare": "bash scripts/install-git-hooks.sh",
     "hooks:install": "bash scripts/install-git-hooks.sh",
     "test": "vitest run",
+    "testcoverage": "tsx test-coverage-pairs.ts",
+    "testcoverage:report": "tsx test-coverage-pairs.ts --report-only",
     "testwatch": "vitest",
     "buildswcplugin": "cd swc-plugins/lre-transforms && CARGO_TARGET_DIR=./target cargo build-wasip1 --release",
     "buildswcpoc": "yarn buildswcplugin && tsx build-swc-poc.ts",

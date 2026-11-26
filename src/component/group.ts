@@ -262,6 +262,7 @@ export class Group
     if (sheetId) {
       this.#context.logAccess("value", [sheetId, this.#id]);
     } else {
+      // for prompt views
       this.#context.logAccess("value", this);
     }
 

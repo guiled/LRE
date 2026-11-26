@@ -89,4 +89,23 @@ describe("FluentFromRaw decorator", () => {
     expect(subject.multiply(4)).toBe(subject);
     expect(multiply).toHaveBeenCalledWith(4);
   });
+
+  test("returns this without calling raw when the delegate is not a function", () => {
+    const raw: Record<string, unknown> = { add: "not-a-function" };
+
+    class Example {
+      raw(): object {
+        return raw;
+      }
+
+      @FluentFromRaw
+      add(_value: number): Example {
+        return this;
+      }
+    }
+
+    const subject = new Example();
+
+    expect(subject.add(2)).toBe(subject);
+  });
 });
